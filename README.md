@@ -165,6 +165,26 @@ The design called for the Web executor to be a Worker. It is currently a promise
 on the calling thread, so the hang above would freeze the tab. Moving it behind a Worker
 is the fix, and would also make `terminate()` a real mitigation.
 
+### Scale
+
+Measured on generated multi-page documents (`node conformance/make-large-doc.mjs`,
+then `node --expose-gc conformance/scale.mjs`). These are **WASM-on-Node** numbers;
+native iOS and Android are faster.
+
+| | 200 pages, 18.8 MB | 400 pages, 2.4 MB | 300 pages, 1.2 MB |
+|---|---|---|---|
+| open | 26 ms | <1 ms | <1 ms |
+| thumbnail every page (120px) | 0.3 s | 0.1 s | 0.6 s |
+| per page: mean / p95 | 1.6 / 2.0 ms | 0.2 / 0.3 ms | 1.9 / 2.0 ms |
+| single 1600px render | 14 ms | 8 ms | 18 ms |
+| text, all pages | 65 ms | 6 ms | 153 ms |
+| save | 181 ms | 11 ms | 2 ms |
+
+**No memory leak.** Opening, rendering, and closing the 18.8 MB document 40 times
+leaves the WASM heap flat at 25.6 MB and RSS plateaued. Note that RSS never *falls*
+after `close()` — Emscripten does not return heap to the OS — so watch the WASM heap,
+not RSS, when looking for leaks here.
+
 ### Robustness sweep
 
 ```bash
