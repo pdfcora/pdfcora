@@ -184,9 +184,33 @@ the work keeps running.
 
 This is PDFium behaviour, not a binding bug; it reproduces with raw `FPDF_*` calls.
 
-**On Web there is a supported way out** — see below. On iOS and Android you must render
-untrusted documents somewhere you can abandon (a thread you can leave, or a subprocess);
-neither has a built-in equivalent yet.
+**On Web there is a supported way out** — see below. On iOS and Android the damage is
+contained but the thread is not recoverable — see the measurements below.
+
+#### How far the damage spreads, measured
+
+The hang reproduces natively, not only in WASM: on the iOS simulator the render never
+returns and the process spins a core at ~99%.
+
+The per-document executor design contains it. Measured by deliberately starting more
+simultaneous hangs than the machine has cores:
+
+| | hangs started | other documents still render? | unrelated async work? |
+|---|---|---|---|
+| iOS (14 cores) | 16 | ✅ | ✅ |
+| Android (8 cores) | 10 | ✅ | ✅ |
+
+So a hung render costs:
+
+- **that one document, permanently** — every later call on it never returns
+- **one thread and one core**, spinning until the process exits
+
+It does *not* cascade: other documents, and the rest of the app, keep working. Process
+isolation would only buy back the thread and the CPU, not containment.
+
+**What to do in an app:** race your own deadline around a render of an untrusted
+document, and on timeout treat that `PdfDocument` as lost — stop using it and open a
+fresh one. Do not retry on the same document; it will never answer again.
 
 ### Web: run untrusted documents in a Worker
 
