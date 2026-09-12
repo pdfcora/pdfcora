@@ -1,0 +1,69 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>PdfiumKit worker test</title></head>
+<body>
+<pre id="log">running…</pre>
+<script type="module">
+import { PdfWorker, PdfError } from '../dist/src/index.js';
+
+const log = [];
+const say = (m) => { log.push(m); document.getElementById('log').textContent = log.join('\n'); };
+window.__done = false;
+
+const opts = {
+  workerUrl: new URL('./worker-entry.js', import.meta.url),
+  glueUrl:   new URL('../../vendor/web/pdfium.esm.js', import.meta.url),
+  wasmUrl:   new URL('../../vendor/web/pdfium.esm.wasm', import.meta.url),
+};
+
+async function bytes(path) {
+  const r = await fetch(path);
+  if (!r.ok) throw new Error(`${path}: ${r.status}`);
+  return new Uint8Array(await r.arrayBuffer());
+}
+
+try {
+  // 1. Normal work through the worker.
+  let w = new PdfWorker(opts);
+  const doc = await w.open(await bytes('../../conformance/corpus/hello_world.pdf'));
+  const page = await doc.page(0);
+  const img = await page.render({ width: 200 });
+  const text = await page.text.string();
+  say(`ok: ${await doc.pageCount()} page, render ${img.width}x${img.height}, text "${text.trim().slice(0,20)}"`);
+  const distinct = new Set();
+  for (let i = 0; i < img.data.length; i += 4) distinct.add(`${img.data[i]},${img.data[i+1]},${img.data[i+2]}`);
+  say(`ok: ${distinct.size} distinct colours (real pixels crossed the boundary)`);
+  await doc.close();
+  w.terminate();
+
+  // 2. The hang: main thread must stay alive, and terminate() must rescue it.
+  w = new PdfWorker(opts);
+  const hangDoc = await w.open(await bytes('./bug_451265.pdf'));
+  const hangPage = await hangDoc.page(0);
+  say('ok: hang document opened via worker');
+
+  let mainThreadTicks = 0;
+  const ticker = setInterval(() => { mainThreadTicks++; }, 50);
+
+  const renderPromise = hangPage.render({ width: 80 }).then(
+    () => 'RESOLVED (unexpected)',
+    (e) => (e instanceof PdfError ? `rejected: ${e.code}` : `rejected: ${e.message}`),
+  );
+  const raced = await Promise.race([
+    renderPromise,
+    new Promise((r) => setTimeout(() => r('still-hanging'), 3000)),
+  ]);
+  clearInterval(ticker);
+
+  say(`ok: after 3s the render is "${raced}" and the main thread ticked ${mainThreadTicks} times`);
+  if (mainThreadTicks < 30) throw new Error('main thread was blocked — worker is not isolating');
+
+  w.terminate();
+  say(`ok: terminate() -> render ${await renderPromise}`);
+
+  say('ALL PASS');
+} catch (e) {
+  say(`FAIL: ${e.message}`);
+}
+window.__done = true;
+</script>
+</body></html>

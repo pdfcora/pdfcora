@@ -56,6 +56,7 @@ Every row is exercised by the shared conformance suite on every platform that cl
 | Page count, size, rotation | ✅ | ✅ | ✅ |
 | Render (scaled or exact pixels) | ✅ | ✅ | ✅ |
 | Cancellable progressive render | ⚠️ | — | — |
+| Recoverable from an engine hang | — | — | ✅ (Worker) |
 | Text extraction, char count | ✅ | ✅ | ✅ |
 | Text hash-verified vs reference engine | ✅ | ✅ | ✅ |
 | Search with rects | ✅ | ✅ | ✅ |
@@ -153,17 +154,45 @@ the SDK. No cancellation mechanism on any platform can break out of it, includin
 iOS progressive path.
 
 **What this means for you:** if you render PDFs that users supply, a 1 KB file can wedge
-the thread doing the rendering, permanently. Mitigate by rendering untrusted documents
-somewhere you can abandon: a thread you can leave, a Web Worker you can `terminate()`,
-or a subprocess. A timeout around the `await` is not enough — the work keeps running.
+the thread doing the rendering, permanently. A timeout around the `await` is not enough —
+the work keeps running.
 
 This is PDFium behaviour, not a binding bug; it reproduces with raw `FPDF_*` calls.
 
-### The Web SDK is not yet in a Worker
+**On Web there is a supported way out** — see below. On iOS and Android you must render
+untrusted documents somewhere you can abandon (a thread you can leave, or a subprocess);
+neither has a built-in equivalent yet.
 
-The design called for the Web executor to be a Worker. It is currently a promise chain
-on the calling thread, so the hang above would freeze the tab. Moving it behind a Worker
-is the fix, and would also make `terminate()` a real mitigation.
+### Web: run untrusted documents in a Worker
+
+`PdfWorker` runs the whole SDK inside a Worker and exposes the *same* document and page
+API, so calling code is unchanged. What you gain is `terminate()`, which is the only way
+to recover from the hang above.
+
+```ts
+import { PdfWorker } from '@pdfiumkit/web'
+
+const worker = new PdfWorker({
+  workerUrl: new URL('./pdfium-worker.js', import.meta.url),
+  glueUrl:   new URL('./vendor/pdfium.esm.js', import.meta.url),
+  wasmUrl:   new URL('./vendor/pdfium.esm.wasm', import.meta.url),
+})
+
+const doc  = await worker.open(bytes)
+const page = await doc.page(0)
+const img  = await page.render({ width: 1200 })   // identical to the in-process API
+
+// If a render does not come back, this is your escape hatch.
+worker.terminate()   // pending calls reject with PdfError code 'cancelled'
+```
+
+It needs the **ESM** build of the glue (`pdfium.esm.js`); a module worker cannot load the
+classic `pdfium.js` via `importScripts`. Rendered pixels are transferred rather than
+copied across the boundary.
+
+Verified in Chromium against the hanging document: the render never returns, the main
+thread keeps ticking uninterrupted, and `terminate()` rejects the pending call with
+`cancelled`. See `web/demo/worker-test.html`.
 
 ### Scale
 
