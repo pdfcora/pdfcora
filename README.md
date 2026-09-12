@@ -57,6 +57,7 @@ Every row is exercised by the shared conformance suite on every platform that cl
 | Render (scaled or exact pixels) | ✅ | ✅ | ✅ |
 | Cancellable progressive render | ✅ | — | — |
 | Text extraction, char count | ✅ | ✅ | ✅ |
+| Text hash-verified vs reference engine | ✅ | ✅ | ✅ |
 | Search with rects | ✅ | ✅ | ✅ |
 | Character bounding boxes | ✅ | — | — |
 | Annotations: read (15 kinds) | ✅ | ✅ | ✅ |
@@ -115,10 +116,19 @@ node conformance/validate.mjs        # check them
 ```
 
 Expected values come from PDFium itself, with page counts independently cross-checked
-against poppler so the suite is not purely self-referential. Rendering is checked
-positionally: Android and Web both assert that a known RGB test page places blue,
-green, and red at the same coordinates the reference engine does — which catches
-channel-order bugs that pixel counting alone cannot.
+against poppler so the suite is not purely self-referential.
+
+**Rendering** is checked positionally: Android and Web both assert that a known RGB
+test page places blue, green, and red at the coordinates the reference engine does —
+which catches channel-order bugs that pixel counting alone cannot, since the page has
+equal numbers of red and blue pixels.
+
+**Text** is checked by exact character count plus a SHA-256 of the normalised page
+text, on all three platforms. This is the sharpest check in the suite: the three SDKs
+share an engine but have three independently written UTF-16 decoders, and this is
+where an off-by-one on the string terminator would show up. Normalisation strips
+whitespace by explicit codepoint rather than `\s`, because `\s` is not portable —
+U+00A0 matches it in JavaScript but not in Java's `Character.isWhitespace`.
 
 **Test totals:** 28 iOS (simulator) · 25 Android (device) · 24 Web · 12 host.
 

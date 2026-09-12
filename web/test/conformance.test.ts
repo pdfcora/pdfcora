@@ -1,6 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -12,6 +13,19 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..', '..');
 const CORPUS = join(ROOT, 'conformance', 'corpus');
 
+/** Must match conformance/generate.mjs exactly — see the note there on portability. */
+const STRIPPED = new Set([0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x20, 0xa0, 0x2028, 0x2029, 0x202f, 0x3000]);
+
+function normalizeText(text: string): string {
+  let out = '';
+  for (const ch of text) if (!STRIPPED.has(ch.codePointAt(0)!)) out += ch;
+  return out;
+}
+
+function textHash(text: string): string {
+  return createHash('sha256').update(normalizeText(text), 'utf8').digest('hex');
+}
+
 interface Expectations {
   engine: string;
   documents: Record<string, {
@@ -19,7 +33,10 @@ interface Expectations {
     opens: boolean;
     openError?: string;
     pageCount?: number;
-    pages?: { width: number; height: number }[];
+    pages?: {
+      width: number; height: number;
+      charCount?: number; textSha256?: string; textContains?: string[];
+    }[];
   }>;
 }
 
@@ -67,9 +84,24 @@ describe('conformance', () => {
         assert.equal(await document.pageCount(), expected.pageCount, `${name}: page count`);
 
         for (const [i, expectedPage] of (expected.pages ?? []).entries()) {
-          const size = await (await document.page(i)).size();
+          const page = await document.page(i);
+          const size = await page.size();
           assert.ok(Math.abs(size.width - expectedPage.width) < 0.01, `${name} page ${i} width`);
           assert.ok(Math.abs(size.height - expectedPage.height) < 0.01, `${name} page ${i} height`);
+
+          if (expectedPage.charCount !== undefined) {
+            assert.equal(await page.text.characterCount(), expectedPage.charCount,
+              `${name} page ${i} character count`);
+          }
+          if (expectedPage.textSha256) {
+            const text = await page.text.string();
+            assert.equal(textHash(text), expectedPage.textSha256,
+              `${name} page ${i} text differs from the reference engine; got ${JSON.stringify(text.slice(0, 60))}`);
+            for (const anchor of expectedPage.textContains ?? []) {
+              assert.ok(text.replace(/\s+/g, ' ').trim().includes(anchor),
+                `${name} page ${i} missing expected text ${JSON.stringify(anchor)}`);
+            }
+          }
         }
       } finally {
         await document.close();

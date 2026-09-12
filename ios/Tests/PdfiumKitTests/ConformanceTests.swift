@@ -1,4 +1,5 @@
 import XCTest
+import CryptoKit
 @testable import PdfiumKit
 
 /// Locates the repository from this file's compile-time path, so the shared corpus and
@@ -18,6 +19,9 @@ struct Expectations: Decodable {
     struct Page: Decodable {
         let width: Double
         let height: Double
+        let charCount: Int?
+        let textSha256: String?
+        let textContains: [String]?
     }
     struct Document: Decodable {
         let category: String
@@ -74,12 +78,45 @@ final class ConformanceTests: XCTestCase {
                     let size = try await page.size
                     XCTAssertEqual(size.width, expectedPage.width, accuracy: 0.01, "\(name) page \(i) width")
                     XCTAssertEqual(size.height, expectedPage.height, accuracy: 0.01, "\(name) page \(i) height")
+
+                    if let expectedCount = expectedPage.charCount {
+                        let actual = try await page.text.characterCount
+                        XCTAssertEqual(actual, expectedCount, "\(name) page \(i) character count")
+                    }
+                    if let expectedHash = expectedPage.textSha256 {
+                        let text = try await page.text.string()
+                        XCTAssertEqual(Self.textHash(text), expectedHash,
+                            "\(name) page \(i) text differs from the reference engine; got \(text.prefix(60))")
+                        for anchor in expectedPage.textContains ?? [] {
+                            XCTAssertTrue(Self.collapsed(text).contains(anchor),
+                                "\(name) page \(i) missing expected text \(anchor)")
+                        }
+                    }
                 }
             }
             await doc.close()
             checked += 1
         }
         XCTAssertEqual(checked, Self.expectations.documents.count)
+    }
+
+    /// Must match conformance/generate.mjs exactly — see the note there on portability.
+    private static let stripped: Set<UInt32> = [
+        0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x20, 0xa0, 0x2028, 0x2029, 0x202f, 0x3000,
+    ]
+
+    private static func normalize(_ text: String) -> String {
+        String(text.unicodeScalars.filter { !stripped.contains($0.value) })
+    }
+
+    private static func textHash(_ text: String) -> String {
+        let digest = SHA256.hash(data: Data(normalize(text).utf8))
+        return digest.map { String(format: "%02x", $0) }.joined()
+    }
+
+    /// Whitespace collapsed to single spaces, for the human-readable anchor only.
+    private static func collapsed(_ text: String) -> String {
+        text.split(whereSeparator: { $0.isWhitespace }).joined(separator: " ")
     }
 
     private func assertOpenError(_ error: PdfError, matches expected: String?, for name: String) {

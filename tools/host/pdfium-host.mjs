@@ -61,6 +61,43 @@ export async function loadPdfium() {
         M._free(out);
         return text;
       },
+      /** Number of characters on a page, including layout whitespace. */
+      charCount(i) {
+        guard();
+        const page = M.ccall('FPDF_LoadPage', 'number', ['number', 'number'], [handle, i]);
+        if (!page) throw new Error(`page ${i} failed to load`);
+        const textPage = M.ccall('FPDFText_LoadPage', 'number', ['number'], [page]);
+        const count = textPage ? M.ccall('FPDFText_CountChars', 'number', ['number'], [textPage]) : 0;
+        if (textPage) M.ccall('FPDFText_ClosePage', null, ['number'], [textPage]);
+        M.ccall('FPDF_ClosePage', null, ['number'], [page]);
+        return Math.max(0, count);
+      },
+
+      /** A page's full text in reading order. */
+      text(i) {
+        guard();
+        const page = M.ccall('FPDF_LoadPage', 'number', ['number', 'number'], [handle, i]);
+        if (!page) throw new Error(`page ${i} failed to load`);
+        const textPage = M.ccall('FPDFText_LoadPage', 'number', ['number'], [page]);
+        let out = '';
+        if (textPage) {
+          const count = M.ccall('FPDFText_CountChars', 'number', ['number'], [textPage]);
+          if (count > 0) {
+            const buf = M._malloc((count + 1) * 2);
+            const written = M.ccall('FPDFText_GetText', 'number',
+              ['number', 'number', 'number', 'number'], [textPage, 0, count, buf]);
+            if (written > 0) {
+              const view = new Uint16Array(M.HEAPU8.buffer, buf, written - 1);
+              out = String.fromCharCode(...view);
+            }
+            M._free(buf);
+          }
+          M.ccall('FPDFText_ClosePage', null, ['number'], [textPage]);
+        }
+        M.ccall('FPDF_ClosePage', null, ['number'], [page]);
+        return out;
+      },
+
       close() {
         if (closed) return;
         M.ccall('FPDF_CloseDocument', null, ['number'], [handle]);

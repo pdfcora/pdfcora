@@ -11,6 +11,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.security.MessageDigest
 
 /**
  * Runs the same corpus and expectations the iOS and Web SDKs are tested against, so
@@ -58,15 +59,62 @@ class ConformanceTest {
                 val pages = expected.optJSONArray("pages") ?: return@use
                 for (i in 0 until pages.length()) {
                     val expectedPage = pages.getJSONObject(i)
-                    val size = document.page(i).size()
+                    val page = document.page(i)
+                    val size = page.size()
                     assertEquals("$name page $i width",
                         expectedPage.getDouble("width"), size.width.toDouble(), 0.01)
                     assertEquals("$name page $i height",
                         expectedPage.getDouble("height"), size.height.toDouble(), 0.01)
+
+                    if (expectedPage.has("charCount")) {
+                        assertEquals("$name page $i character count",
+                            expectedPage.getInt("charCount"), page.text.characterCount())
+                    }
+                    val expectedHash = expectedPage.optString("textSha256", "")
+                    if (expectedHash.isNotEmpty()) {
+                        val text = page.text.string()
+                        assertEquals(
+                            "$name page $i text differs from the reference engine; " +
+                                "got ${text.take(60)}",
+                            expectedHash, textHash(text)
+                        )
+                        val anchors = expectedPage.optJSONArray("textContains")
+                        for (a in 0 until (anchors?.length() ?: 0)) {
+                            val anchor = anchors!!.getString(a)
+                            assertTrue("$name page $i missing expected text $anchor",
+                                collapsed(text).contains(anchor))
+                        }
+                    }
                 }
             }
         }
     }
+
+    /** Must match conformance/generate.mjs exactly — see the note there on portability. */
+    private val stripped = setOf(
+        0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x20, 0xa0, 0x2028, 0x2029, 0x202f, 0x3000
+    )
+
+    private fun normalize(text: String): String {
+        val out = StringBuilder(text.length)
+        var i = 0
+        while (i < text.length) {
+            val cp = text.codePointAt(i)
+            if (cp !in stripped) out.appendCodePoint(cp)
+            i += Character.charCount(cp)
+        }
+        return out.toString()
+    }
+
+    private fun textHash(text: String): String =
+        MessageDigest.getInstance("SHA-256")
+            .digest(normalize(text).toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it) }
+
+    /** Whitespace collapsed to single spaces, for the human-readable anchor only. */
+    private fun collapsed(text: String): String =
+        text.map { if (it.isWhitespace()) ' ' else it }
+            .joinToString("").trim().replace(Regex(" +"), " ")
 
     private fun assertOpenError(name: String, error: PdfError, expected: String) {
         val matches = when (error) {

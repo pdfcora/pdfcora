@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadPdfium } from '../tools/host/pdfium-host.mjs';
@@ -17,6 +18,33 @@ function popplerPageCount(path) {
   } catch {
     return null;   // encrypted or damaged files legitimately defeat pdfinfo
   }
+}
+
+/**
+ * Whitespace stripped before hashing, by explicit codepoint.
+ *
+ * `\\s` is NOT portable: U+00A0 matches it in JavaScript but not in Java's
+ * Character.isWhitespace, and ICU's definition differs again. Comparing hashes across
+ * Swift, Kotlin, and TypeScript needs one set all three can reproduce exactly.
+ */
+const STRIPPED = new Set([
+  0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x20, 0xa0, 0x2028, 0x2029, 0x202f, 0x3000,
+]);
+
+/**
+ * PDFium emits layout-driven spacing that carries no meaning and varies with how each
+ * binding trims the trailing terminator. The glyphs and their order are the contract.
+ */
+function normalizeText(text) {
+  let out = '';
+  for (const ch of text) {
+    if (!STRIPPED.has(ch.codePointAt(0))) out += ch;
+  }
+  return out;
+}
+
+function textHash(text) {
+  return createHash('sha256').update(normalizeText(text), 'utf8').digest('hex');
 }
 
 const corpus = JSON.parse(readFileSync(join(HERE, 'corpus.json'), 'utf8'));
@@ -40,7 +68,20 @@ for (const { name, category } of corpus.files) {
   const pages = [];
   for (let i = 0; i < pageCount; i++) {
     const { width, height } = doc.pageSize(i);
-    pages.push({ width: Number(width.toFixed(2)), height: Number(height.toFixed(2)) });
+    const text = doc.text(i);
+    const page = {
+      width: Number(width.toFixed(2)),
+      height: Number(height.toFixed(2)),
+      charCount: doc.charCount(i),
+    };
+    const normalized = normalizeText(text);
+    if (normalized) {
+      page.textSha256 = textHash(text);
+      // A short, human-readable anchor so a failure says what was expected.
+      // Human-readable anchor so a failure message says what was expected.
+      page.textContains = [text.replace(/\s+/g, ' ').trim().slice(0, 24)];
+    }
+    pages.push(page);
   }
 
   const metadata = {};

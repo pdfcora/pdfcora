@@ -1,6 +1,6 @@
 {
   "engine": "chromium/7243",
-  "generated": "2026-09-12T17:21:13.826Z",
+  "generated": "2026-09-12T18:33:20.507Z",
   "documents": {
     "hello_world.pdf": {
       "category": "basic",
@@ -9,7 +9,12 @@
       "pages": [
         {
           "width": 200,
-          "height": 200
+          "height": 200,
+          "charCount": 30,
+          "textSha256": "05585aaecde6fc23b66a8e14c0f00b785d8cc400843671e617944d38fb282840",
+          "textContains": [
+            "Hello, world! Goodbye, w"
+          ]
         }
       ]
     },
@@ -20,7 +25,8 @@
       "pages": [
         {
           "width": 200,
-          "height": 300
+          "height": 300,
+          "charCount": 0
         }
       ]
     },
@@ -31,7 +37,8 @@
       "pages": [
         {
           "width": 200,
-          "height": 300
+          "height": 300,
+          "charCount": 0
         }
       ]
     },
@@ -42,7 +49,12 @@
       "pages": [
         {
           "width": 300,
-          "height": 600
+          "height": 600,
+          "charCount": 9,
+          "textSha256": "de95525d9f884a923f1f5f2a290e218d73ea566da90fc3f925f4d557cef4941b",
+          "textContains": [
+            "Test Form"
+          ]
         }
       ]
     },
@@ -53,7 +65,12 @@
       "pages": [
         {
           "width": 300,
-          "height": 600
+          "height": 600,
+          "charCount": 9,
+          "textSha256": "de95525d9f884a923f1f5f2a290e218d73ea566da90fc3f925f4d557cef4941b",
+          "textContains": [
+            "Test Form"
+          ]
         }
       ]
     },
@@ -64,7 +81,12 @@
       "pages": [
         {
           "width": 300,
-          "height": 300
+          "height": 300,
+          "charCount": 9,
+          "textSha256": "de95525d9f884a923f1f5f2a290e218d73ea566da90fc3f925f4d557cef4941b",
+          "textContains": [
+            "Test Form"
+          ]
         }
       ]
     },
@@ -75,7 +97,12 @@
       "pages": [
         {
           "width": 300,
-          "height": 300
+          "height": 300,
+          "charCount": 48,
+          "textSha256": "3cdd389b6a57efc75a9d0ab85a743d4f443edc322a8a086f08722f78061f9599",
+          "textContains": [
+            "This form contains check"
+          ]
         }
       ]
     },
@@ -91,7 +118,12 @@
       "pages": [
         {
           "width": 612,
-          "height": 792
+          "height": 792,
+          "charCount": 31,
+          "textSha256": "760198eeb8a3480f3c087a2781901072468907d779beb7053e2104aa389c5e7b",
+          "textContains": [
+            "This is a highlight anno"
+          ]
         }
       ],
       "metadata": {
@@ -105,11 +137,17 @@
       "pages": [
         {
           "width": 612,
-          "height": 792
+          "height": 792,
+          "charCount": 60,
+          "textSha256": "eb595163a5254a1e8ff4c4f143a2f4ecfaf9a064b1ad7bd15830be1bd7b58f9b",
+          "textContains": [
+            "External Link Internal L"
+          ]
         },
         {
           "width": 612,
-          "height": 792
+          "height": 792,
+          "charCount": 0
         }
       ]
     },
@@ -120,7 +158,12 @@
       "pages": [
         {
           "width": 595,
-          "height": 842
+          "height": 842,
+          "charCount": 1073,
+          "textSha256": "63c4b02d08aece5afc72c626f5428819cc5068cf7951b231cb9031bea42d8c5c",
+          "textContains": [
+            "Adobe Acrobat PDF Files "
+          ]
         }
       ],
       "metadata": {
@@ -137,7 +180,12 @@
       "pages": [
         {
           "width": 612,
-          "height": 792
+          "height": 792,
+          "charCount": 4,
+          "textSha256": "f0e4c2f76c58916ec258f246851bea091d14d4247a2fc3e18694461b1816e13b",
+          "textContains": [
+            "asdf"
+          ]
         }
       ],
       "metadata": {
@@ -152,7 +200,12 @@
       "pages": [
         {
           "width": 200,
-          "height": 200
+          "height": 200,
+          "charCount": 20,
+          "textSha256": "1680fdf394a46592ca6b1fbbbf72e474630a5ec42188a6f3c39d3c593048e45e",
+          "textContains": [
+            "aaaaaaaaaa bbbbbbbbb"
+          ]
         }
       ]
     },
@@ -163,7 +216,12 @@
       "pages": [
         {
           "width": 200,
-          "height": 200
+          "height": 200,
+          "charCount": 10,
+          "textSha256": "30f479ad23229c9d6d9bad35d8dc5577fe4cce219a1fd653e6583359c32fa888",
+          "textContains": [
+            "בנימין ןב"
+          ]
         }
       ]
     },
@@ -174,7 +232,8 @@
       "pages": [
         {
           "width": 612,
-          "height": 792
+          "height": 792,
+          "charCount": 0
         }
       ]
     },
@@ -185,11 +244,21 @@
       "pages": [
         {
           "width": 200,
-          "height": 200
+          "height": 200,
+          "charCount": 30,
+          "textSha256": "05585aaecde6fc23b66a8e14c0f00b785d8cc400843671e617944d38fb282840",
+          "textContains": [
+            "Hello, world! Goodbye, w"
+          ]
         },
         {
           "width": 200,
-          "height": 200
+          "height": 200,
+          "charCount": 30,
+          "textSha256": "05585aaecde6fc23b66a8e14c0f00b785d8cc400843671e617944d38fb282840",
+          "textContains": [
+            "Hello, world! Goodbye, w"
+          ]
         }
       ]
     },
@@ -200,7 +269,12 @@
       "pages": [
         {
           "width": 200,
-          "height": 200
+          "height": 200,
+          "charCount": 30,
+          "textSha256": "05585aaecde6fc23b66a8e14c0f00b785d8cc400843671e617944d38fb282840",
+          "textContains": [
+            "Hello, world! Goodbye, w"
+          ]
         }
       ]
     },
@@ -211,7 +285,12 @@
       "pages": [
         {
           "width": 612,
-          "height": 792
+          "height": 792,
+          "charCount": 422,
+          "textSha256": "e3bcb91817cf2d9ea5576d458760f1aad09e31e4015bbadc73822310ab37e86a",
+          "textContains": [
+            "app: beep setInterval se"
+          ]
         }
       ],
       "metadata": {
