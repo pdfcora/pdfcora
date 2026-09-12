@@ -147,13 +147,28 @@ U+00A0 matches it in JavaScript but not in Java's `Character.isWhitespace`.
 - **Unknown kinds.** Every sealed hierarchy carries an `unknown` case, so annotation
   and field types this SDK does not model are surfaced rather than dropped.
 
+## Licensing
+
+PdfiumKit is distributed as a binary that statically links PDFium and six bundled
+third-party libraries. **FreeType is used under the FreeType License (FTL)**, not
+GPLv2, which keeps the whole SDK permissively licensed.
+
+The FTL requires this credit in the documentation of any product using the SDK:
+
+> Portions of this software are copyright © 2024 The FreeType Project
+> (https://freetype.org). All rights reserved.
+
+Full notices for PDFium, FreeType, Little CMS, OpenJPEG, libjpeg-turbo, zlib, AGG,
+and ICU are in [`NOTICE.md`](NOTICE.md), assembled by inspecting the shipped binary
+rather than from build flags alone. That file needs a legal sign-off before the first
+public release.
+
 ## Status
 
-Pre-release. The API is settled enough to build against, and the conformance suite
+Pre-release. The API is settled enough to build against and the conformance suite
 guards behaviour, but nothing is published to SPM, Maven Central, or npm yet.
-Outstanding before open-sourcing: FreeType licensing review (the build sets
-`pdf_bundle_freetype=true`; PDFium is BSD-3-Clause, FreeType dual FTL/GPLv2), and
-publishing the vendor artifacts as checksummed release assets.
+Outstanding before publishing: legal sign-off on `NOTICE.md`, and publishing the
+vendor artifacts as checksummed release assets.
 
 ## Documentation
 
