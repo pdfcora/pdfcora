@@ -3,7 +3,8 @@ import { PdfError } from './errors.js';
 import type { PdfDocument } from './document.js';
 import type {
   PdfAnnotation, PdfAnnotationBase, PdfColor, PdfFormField, PdfFormFieldBase,
-  PdfPoint, PdfRect, PdfRenderOptions, PdfSearchOptions, PdfSize, PdfTextMatch,
+  PdfLink, PdfLinkTarget, PdfPoint, PdfRect, PdfRenderOptions, PdfSearchOptions,
+  PdfSize, PdfTextMatch,
 } from './types.js';
 
 // PDFium annotation subtypes (fpdf_annot.h)
@@ -105,6 +106,17 @@ export class PdfPage {
         m.ccall('FPDFBitmap_Destroy', null, ['number'], [bitmap]);
       }
     });
+  }
+
+  /** Link regions on this page, with their resolved targets. */
+  links(): Promise<PdfLink[]> {
+    return this.document.withPage(this.index, (page, m) =>
+      readLinks(m, this.document.handleForLinks(), page));
+  }
+
+  /** The bounding box of one character, in page space. */
+  characterBox(index: number): Promise<PdfRect> {
+    return this.text.boundingBox(index);
   }
 
   /** All annotations on the page, in document order. */
@@ -305,6 +317,22 @@ export class PdfTextPage {
   characterCount(): Promise<number> {
     return this.withTextPage((textPage, m) =>
       Math.max(0, m.ccall('FPDFText_CountChars', 'number', ['number'], [textPage]) as number));
+  }
+
+  /** The bounding box of one character, in page space. */
+  boundingBox(index: number): Promise<PdfRect> {
+    return this.withTextPage((textPage, m) => {
+      const count = m.ccall('FPDFText_CountChars', 'number', ['number'], [textPage]) as number;
+      if (index < 0 || index >= count) throw PdfError.pageOutOfRange(index, count);
+      return withBuffer(m, 32, (ptr) => {
+        // FPDFText_GetCharBox writes left, right, bottom, top as doubles.
+        m.ccall('FPDFText_GetCharBox', 'number',
+          ['number', 'number', 'number', 'number', 'number', 'number'],
+          [textPage, index, ptr, ptr + 8, ptr + 16, ptr + 24]);
+        const v = new Float64Array(m.HEAPU8.buffer, ptr, 4);
+        return { left: v[0], right: v[1], bottom: v[2], top: v[3] };
+      });
+    });
   }
 
   /** The page's full text in reading order. */
@@ -579,4 +607,56 @@ function readChoices(m: PdfiumModule, form: number, annot: number) {
     }
   }
   return { options, selectedIndices };
+}
+
+// MARK: - Links
+
+function readLinks(m: PdfiumModule, doc: number, page: number): PdfLink[] {
+  const links: PdfLink[] = [];
+  return withBuffer(m, 4, (posPtr) => {
+    new Int32Array(m.HEAPU8.buffer, posPtr, 1)[0] = 0;
+    return withBuffer(m, 4, (linkPtr) => {
+      while (m.ccall('FPDFLink_Enumerate', 'number',
+        ['number', 'number', 'number'], [page, posPtr, linkPtr])) {
+        const link = new Int32Array(m.HEAPU8.buffer, linkPtr, 1)[0];
+        if (!link) continue;
+
+        const rect = withBuffer(m, 16, (rectPtr) => {
+          if (!m.ccall('FPDFLink_GetAnnotRect', 'number', ['number', 'number'], [link, rectPtr])) {
+            return undefined;
+          }
+          const v = new Float32Array(m.HEAPU8.buffer, rectPtr, 4);
+          return { left: v[0], top: v[1], right: v[2], bottom: v[3] };
+        });
+        if (!rect) continue;
+        links.push({ rect, target: linkTarget(m, doc, link) });
+      }
+      return links;
+    });
+  });
+}
+
+function linkTarget(m: PdfiumModule, doc: number, link: number): PdfLinkTarget {
+  let dest = m.ccall('FPDFLink_GetDest', 'number', ['number', 'number'], [doc, link]) as number;
+  const action = m.ccall('FPDFLink_GetAction', 'number', ['number'], [link]) as number;
+  if (!dest && action) {
+    dest = m.ccall('FPDFAction_GetDest', 'number', ['number', 'number'], [doc, action]) as number;
+  }
+  if (dest) {
+    const index = m.ccall('FPDFDest_GetDestPageIndex', 'number', ['number', 'number'], [doc, dest]) as number;
+    if (index >= 0) return { kind: 'page', pageIndex: index };
+  }
+  if (!action) return { kind: 'unresolved' };
+
+  const size = m.ccall('FPDFAction_GetURIPath', 'number',
+    ['number', 'number', 'number', 'number'], [doc, action, 0, 0]) as number;
+  if (size <= 1) return { kind: 'unresolved' };
+
+  const uri = withBuffer(m, size, (ptr) => {
+    m.ccall('FPDFAction_GetURIPath', 'number',
+      ['number', 'number', 'number', 'number'], [doc, action, ptr, size]);
+    const bytes = m.HEAPU8.subarray(ptr, ptr + size - 1);
+    return String.fromCharCode(...bytes);
+  });
+  return uri ? { kind: 'uri', uri } : { kind: 'unresolved' };
 }

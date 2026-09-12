@@ -81,17 +81,17 @@ Every row is exercised by the shared conformance suite on every platform that cl
 | Text extraction, char count | ✅ | ✅ | ✅ |
 | Text hash-verified vs reference engine | ✅ | ✅ | ✅ |
 | Search with rects | ✅ | ✅ | ✅ |
-| Character bounding boxes | ✅ | — | — |
+| Character bounding boxes | ✅ | ✅ | ✅ |
 | Annotations: read (15 kinds) | ✅ | ✅ | ✅ |
 | Annotations: ink, note, remove | ✅ | ✅ | ✅ |
 | Annotations: highlight/underline/strikeout | ✅ | — | — |
 | Form fields: read (8 kinds) | ✅ | ✅ | ✅ |
 | Form fields: set text, checkbox, option | ✅ | ✅ | ✅ |
 | Outline / bookmarks | ✅ | ✅ | ✅ |
-| Links | ✅ | — | — |
+| Links | ✅ | ✅ | ✅ |
 | Metadata, permissions | ✅ | ✅ | ✅ |
 | Attachments: list | ✅ | ✅ | ✅ |
-| Attachments: extract bytes | ✅ | — | — |
+| Attachments: extract bytes | ✅ | ✅ | ✅ |
 | Save (full / incremental) | ✅ | ✅ | ✅ |
 | Raw PDFium escape hatch | ✅ | — | — |
 
@@ -156,7 +156,11 @@ where an off-by-one on the string terminator would show up. Normalisation strips
 whitespace by explicit codepoint rather than `\s`, because `\s` is not portable —
 U+00A0 matches it in JavaScript but not in Java's `Character.isWhitespace`.
 
-**Test totals:** 28 iOS (simulator) · 25 Android (device) · 24 Web · 12 host.
+**Test totals:** 29 iOS (simulator) · 28 Android (device) · 27 Web · 12 host.
+
+Two iOS test classes are excluded from normal runs — `HangProbeTests` and
+`BlastRadiusTests` — because they deliberately trigger the render hang, which spins
+a core and stops the test process from exiting. Run them with `-only-testing`.
 
 ## Known limits
 

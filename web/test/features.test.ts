@@ -165,6 +165,43 @@ describe('save round-trip', () => {
   });
 });
 
+describe('links and geometry', () => {
+  test('links resolve to URIs and internal pages', async () => {
+    const document = await open('annots_action_handling.pdf');
+    const links = await (await document.page(0)).links();
+    assert.ok(links.length > 0, 'expected links');
+    assert.ok(links.some((l) => l.target.kind === 'uri'), 'expected a URI target');
+    assert.ok(links.some((l) => l.target.kind === 'page'), 'expected an internal page target');
+    await document.close();
+  });
+
+  test('character bounding box is readable', async () => {
+    const document = await open('hello_world.pdf');
+    const box = await (await document.page(0)).characterBox(0);
+    assert.ok(box.right > box.left, `expected positive width: ${JSON.stringify(box)}`);
+    assert.ok(box.top > box.bottom, `expected positive height: ${JSON.stringify(box)}`);
+    await document.close();
+  });
+});
+
+describe('attachments', () => {
+  test('embedded files are listed and extracted', async () => {
+    const document = await open('embedded_attachments.pdf');
+    const list = await document.attachments();
+    assert.deepEqual(list.map((a) => a.name), ['1.txt', 'attached.pdf']);
+
+    const text = await document.attachmentData(0);
+    assert.equal(new TextDecoder().decode(text), 'test');
+
+    // Guards a wasm32 trap: `unsigned long` out-parameters are 32-bit, and reading
+    // them as 64-bit returns absurd sizes rather than failing outright.
+    const nested = await document.attachmentData(1);
+    assert.ok(nested.length > 1000 && nested.length < 100_000, `implausible size ${nested.length}`);
+    assert.equal(new TextDecoder().decode(nested.slice(0, 5)), '%PDF-');
+    await document.close();
+  });
+});
+
 describe('outline', () => {
   test('outline is readable', async () => {
     const document = await open('annots_action_handling.pdf');

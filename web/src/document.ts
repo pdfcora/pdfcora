@@ -156,6 +156,11 @@ export class PdfDocument {
     });
   }
 
+  /** @internal The raw document handle, for calls that need it alongside a page. */
+  handleForLinks(): number {
+    return this.handle;
+  }
+
   /** @internal Loads a page, runs `body`, and always closes it. */
   withPage<T>(pageIndex: number, body: (page: number, m: PdfiumModule) => T): Promise<T> {
     return this.run((h, m) => {
@@ -166,6 +171,35 @@ export class PdfDocument {
       } finally {
         m.ccall('FPDF_ClosePage', null, ['number'], [page]);
       }
+    });
+  }
+
+  /** The bytes of one embedded attachment. */
+  attachmentData(index: number): Promise<Uint8Array> {
+    return this.run((h, m) => {
+      const count = m.ccall('FPDFDoc_GetAttachmentCount', 'number', ['number'], [h]) as number;
+      if (index < 0 || index >= count) throw PdfError.pageOutOfRange(index, count);
+
+      const attachment = m.ccall('FPDFDoc_GetAttachment', 'number', ['number', 'number'], [h, index]) as number;
+      if (!attachment) throw PdfError.corrupt(`attachment ${index} unreadable`);
+
+      // Two-call convention: ask for the size, then fill.
+      //
+      // The out-parameter is `unsigned long`, which is 32-bit under wasm32 — reading it
+      // as 64-bit picks up adjacent heap garbage and yields absurd sizes.
+      const size = withBuffer(m, 4, (sizePtr) => {
+        m.ccall('FPDFAttachment_GetFile', 'number',
+          ['number', 'number', 'number', 'number'], [attachment, 0, 0, sizePtr]);
+        return new Uint32Array(m.HEAPU8.buffer, sizePtr, 1)[0];
+      });
+      if (size === 0) return new Uint8Array(0);
+
+      return withBuffer(m, size, (dataPtr) => withBuffer(m, 4, (writtenPtr) => {
+        m.ccall('FPDFAttachment_GetFile', 'number',
+          ['number', 'number', 'number', 'number'], [attachment, dataPtr, size, writtenPtr]);
+        const written = new Uint32Array(m.HEAPU8.buffer, writtenPtr, 1)[0];
+        return m.HEAPU8.slice(dataPtr, dataPtr + written);
+      }));
     });
   }
 

@@ -67,6 +67,10 @@
       "category": "basic"
     },
     {
+      "name": "embedded_attachments.pdf",
+      "category": "basic"
+    },
+    {
       "name": "bug_455199.pdf",
       "category": "regression"
     },

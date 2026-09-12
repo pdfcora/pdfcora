@@ -187,6 +187,40 @@ class FeatureTest {
     }
 
     @Test
+    fun linksAreResolved() = runTest {
+        open("annots_action_handling.pdf").use { document ->
+            val links = document.page(0).links()
+            assertTrue("expected links", links.isNotEmpty())
+            assertTrue("expected a URI target",
+                links.any { it.target is PdfLink.Target.Uri })
+            assertTrue("expected an internal page target",
+                links.any { it.target is PdfLink.Target.Page })
+        }
+    }
+
+    @Test
+    fun characterBoxIsReadable() = runTest {
+        open("hello_world.pdf").use { document ->
+            val box = document.page(0).text.boundingBox(0)
+            assertTrue("expected a positive-width box: $box", box.right > box.left)
+            assertTrue("expected a positive-height box: $box", box.top > box.bottom)
+        }
+    }
+
+    @Test
+    fun embeddedAttachmentsAreListedAndExtracted() = runTest {
+        open("embedded_attachments.pdf").use { document ->
+            val list = document.attachments()
+            assertEquals(listOf("1.txt", "attached.pdf"), list.map { it.name })
+            assertEquals("test", String(document.attachmentData(0)))
+
+            val nested = document.attachmentData(1)
+            assertTrue("implausible size ${nested.size}", nested.size in 1001..99_999)
+            assertEquals("%PDF-", String(nested.copyOfRange(0, 5)))
+        }
+    }
+
+    @Test
     fun outlineIsReadable() = runTest {
         open("annots_action_handling.pdf").use { document ->
             document.outline()   // may legitimately be empty; the contract is that it succeeds

@@ -23,6 +23,7 @@ const SELECTION = [
   ['hebrew_mirrored.pdf', 'text'],
   ['tagged_actual_text.pdf', 'text'],
   ['hello_world_2_pages_split_streams.pdf', 'basic'],
+  ['embedded_attachments.pdf', 'basic'],
   ['bug_455199.pdf', 'regression'],
   ['bug_707673.pdf', 'regression'],
 ];

@@ -48,11 +48,16 @@ internal object Native {
         handle: Long, pageIndex: Int, annotIndex: Int, optionIndex: Int, selected: Boolean
     ): Boolean
 
+    @JvmStatic external fun links(handle: Long, pageIndex: Int): FloatArray
+    @JvmStatic external fun linkUri(handle: Long, pageIndex: Int, linkIndex: Int): String
+    @JvmStatic external fun charBox(handle: Long, pageIndex: Int, charIndex: Int): DoubleArray
+
     @JvmStatic external fun bookmarkChildCount(handle: Long, path: IntArray): Int
     @JvmStatic external fun bookmarkTitle(handle: Long, path: IntArray): String
     @JvmStatic external fun bookmarkPageIndex(handle: Long, path: IntArray): Int
 
     @JvmStatic external fun attachmentCount(handle: Long): Int
     @JvmStatic external fun attachmentName(handle: Long, index: Int): String
+    @JvmStatic external fun attachmentData(handle: Long, index: Int): ByteArray
     @JvmStatic external fun saveDocument(handle: Long, flags: Int): ByteArray
 }

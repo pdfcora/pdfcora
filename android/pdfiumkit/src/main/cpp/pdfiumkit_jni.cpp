@@ -662,6 +662,94 @@ Java_com_pdfiumkit_Native_setFormOption(JNIEnv*, jclass, jlong handle, jint page
     return ok;
 }
 
+// MARK: - Links
+
+/// Returns flat 5-tuples per link: left, bottom, right, top, targetPage.
+/// targetPage is >= 0 for an internal destination, -1 when the target is a URI or
+/// unresolved; the URI itself is fetched separately by index.
+JNIEXPORT jfloatArray JNICALL
+Java_com_pdfiumkit_Native_links(JNIEnv* env, jclass, jlong handle, jint pageIndex) {
+    auto* d = asDoc(handle);
+    std::vector<jfloat> out;
+    FPDF_PAGE page = loadPage(d, pageIndex);
+    if (page) {
+        int pos = 0;
+        FPDF_LINK link = nullptr;
+        while (FPDFLink_Enumerate(page, &pos, &link)) {
+            if (!link) continue;
+            FS_RECTF rect{};
+            if (!FPDFLink_GetAnnotRect(link, &rect)) continue;
+
+            int targetPage = -1;
+            FPDF_DEST dest = FPDFLink_GetDest(d->doc, link);
+            if (!dest) {
+                FPDF_ACTION action = FPDFLink_GetAction(link);
+                if (action) dest = FPDFAction_GetDest(d->doc, action);
+            }
+            if (dest) targetPage = FPDFDest_GetDestPageIndex(d->doc, dest);
+
+            out.push_back(rect.left);
+            out.push_back(rect.bottom);
+            out.push_back(rect.right);
+            out.push_back(rect.top);
+            out.push_back(static_cast<jfloat>(targetPage));
+        }
+        unloadPage(d, page);
+    }
+    jfloatArray result = env->NewFloatArray(static_cast<jsize>(out.size()));
+    if (!out.empty()) env->SetFloatArrayRegion(result, 0, static_cast<jsize>(out.size()), out.data());
+    return result;
+}
+
+JNIEXPORT jstring JNICALL
+Java_com_pdfiumkit_Native_linkUri(JNIEnv* env, jclass, jlong handle, jint pageIndex, jint linkIndex) {
+    auto* d = asDoc(handle);
+    FPDF_PAGE page = loadPage(d, pageIndex);
+    if (!page) return env->NewStringUTF("");
+
+    jstring result = env->NewStringUTF("");
+    int pos = 0, seen = 0;
+    FPDF_LINK link = nullptr;
+    while (FPDFLink_Enumerate(page, &pos, &link)) {
+        if (!link) continue;
+        FS_RECTF rect{};
+        if (!FPDFLink_GetAnnotRect(link, &rect)) continue;
+        if (seen++ != linkIndex) continue;
+
+        FPDF_ACTION action = FPDFLink_GetAction(link);
+        if (action) {
+            unsigned long n = FPDFAction_GetURIPath(d->doc, action, nullptr, 0);
+            if (n > 1) {
+                std::vector<char> buffer(n);
+                FPDFAction_GetURIPath(d->doc, action, buffer.data(), n);
+                result = env->NewStringUTF(buffer.data());
+            }
+        }
+        break;
+    }
+    unloadPage(d, page);
+    return result;
+}
+
+/// left, right, bottom, top for one character.
+JNIEXPORT jdoubleArray JNICALL
+Java_com_pdfiumkit_Native_charBox(JNIEnv* env, jclass, jlong handle, jint pageIndex, jint charIndex) {
+    auto* d = asDoc(handle);
+    jdouble values[4] = {0, 0, 0, 0};
+    FPDF_PAGE page = loadPage(d, pageIndex);
+    if (page) {
+        FPDF_TEXTPAGE textPage = FPDFText_LoadPage(page);
+        if (textPage) {
+            FPDFText_GetCharBox(textPage, charIndex, &values[0], &values[1], &values[2], &values[3]);
+            FPDFText_ClosePage(textPage);
+        }
+        unloadPage(d, page);
+    }
+    jdoubleArray out = env->NewDoubleArray(4);
+    env->SetDoubleArrayRegion(out, 0, 4, values);
+    return out;
+}
+
 // MARK: - Outline, links, attachments, save
 
 JNIEXPORT jint JNICALL
@@ -749,6 +837,27 @@ Java_com_pdfiumkit_Native_bookmarkPageIndex(JNIEnv* env, jclass, jlong handle, j
     }
     if (!dest) return -1;
     return FPDFDest_GetDestPageIndex(d->doc, dest);
+}
+
+JNIEXPORT jbyteArray JNICALL
+Java_com_pdfiumkit_Native_attachmentData(JNIEnv* env, jclass, jlong handle, jint index) {
+    auto* d = asDoc(handle);
+    if (!d || !d->doc) return env->NewByteArray(0);
+    FPDF_ATTACHMENT attachment = FPDFDoc_GetAttachment(d->doc, index);
+    if (!attachment) return env->NewByteArray(0);
+
+    unsigned long size = 0;
+    FPDFAttachment_GetFile(attachment, nullptr, 0, &size);
+    if (size == 0) return env->NewByteArray(0);
+
+    std::vector<uint8_t> bytes(size);
+    unsigned long written = 0;
+    FPDFAttachment_GetFile(attachment, bytes.data(), size, &written);
+
+    jbyteArray out = env->NewByteArray(static_cast<jsize>(written));
+    env->SetByteArrayRegion(out, 0, static_cast<jsize>(written),
+                            reinterpret_cast<const jbyte*>(bytes.data()));
+    return out;
 }
 
 JNIEXPORT jbyteArray JNICALL

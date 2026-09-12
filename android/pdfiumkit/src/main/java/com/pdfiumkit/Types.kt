@@ -114,3 +114,12 @@ data class PdfOutlineItem(
     val pageIndex: Int?,
     val children: List<PdfOutlineItem>,
 )
+
+/** A link region on a page. */
+data class PdfLink(val rect: PdfRect, val target: Target) {
+    sealed class Target {
+        data class Page(val pageIndex: Int) : Target()
+        data class Uri(val uri: String) : Target()
+        object Unresolved : Target()
+    }
+}

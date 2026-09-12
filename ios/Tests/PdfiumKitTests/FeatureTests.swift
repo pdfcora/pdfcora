@@ -239,6 +239,20 @@ final class FeatureTests: XCTestCase {
         await doc.close()
     }
 
+    func testEmbeddedAttachmentsAreListedAndExtracted() async throws {
+        let doc = try await open("embedded_attachments.pdf")
+        let list = try await doc.attachments
+        XCTAssertEqual(list.map(\.name), ["1.txt", "attached.pdf"])
+
+        let text = try await doc.attachmentData(at: 0)
+        XCTAssertEqual(String(decoding: text, as: UTF8.self), "test")
+
+        let nested = try await doc.attachmentData(at: 1)
+        XCTAssertTrue((1001..<100_000).contains(nested.count), "implausible size \(nested.count)")
+        XCTAssertEqual(String(decoding: nested.prefix(5), as: UTF8.self), "%PDF-")
+        await doc.close()
+    }
+
     func testOutlineIsReadable() async throws {
         let doc = try await open("annots_action_handling.pdf")
         let outline = try await doc.outline

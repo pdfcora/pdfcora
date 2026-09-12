@@ -1,6 +1,6 @@
 {
   "engine": "chromium/7243",
-  "generated": "2026-09-12T18:33:20.507Z",
+  "generated": "2026-09-12T20:30:28.831Z",
   "documents": {
     "hello_world.pdf": {
       "category": "basic",
@@ -261,6 +261,28 @@
           ]
         }
       ]
+    },
+    "embedded_attachments.pdf": {
+      "category": "basic",
+      "opens": true,
+      "pageCount": 1,
+      "pages": [
+        {
+          "width": 612,
+          "height": 792,
+          "charCount": 4,
+          "textSha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+          "textContains": [
+            "test"
+          ]
+        }
+      ],
+      "metadata": {
+        "Title": "1.txt - Notepad",
+        "Author": "User",
+        "Creator": "PScript5.dll Version 5.2.2",
+        "Producer": "Acrobat Distiller 10.0.0 (Windows)"
+      }
     },
     "bug_455199.pdf": {
       "category": "regression",

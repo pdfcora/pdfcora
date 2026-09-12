@@ -112,6 +112,27 @@ suspend fun PdfPage.removeAnnotation(annotationIndex: Int) {
     }
 }
 
+/** Link regions on this page, with their resolved targets. */
+suspend fun PdfPage.links(): List<PdfLink> = document.onDocument { h ->
+    val packed = Native.links(h, index)
+    (packed.indices step 5).mapNotNull { i ->
+        if (i + 4 >= packed.size) return@mapNotNull null
+        val linkIndex = i / 5
+        val targetPage = packed[i + 4].toInt()
+        val target = when {
+            targetPage >= 0 -> PdfLink.Target.Page(targetPage)
+            else -> Native.linkUri(h, index, linkIndex)
+                .takeIf { it.isNotEmpty() }
+                ?.let { PdfLink.Target.Uri(it) }
+                ?: PdfLink.Target.Unresolved
+        }
+        PdfLink(PdfRect(packed[i], packed[i + 1], packed[i + 2], packed[i + 3]), target)
+    }
+}
+
+/** The bounding box of one character, in page space. */
+suspend fun PdfTextPage.boundingBox(charIndex: Int): PdfRect = boxInternal(charIndex)
+
 /** Every interactive form field on this page. */
 suspend fun PdfPage.formFields(): List<PdfFormField> = document.onDocument { h ->
     (0 until Native.annotationCount(h, index)).mapNotNull { annotIndex ->

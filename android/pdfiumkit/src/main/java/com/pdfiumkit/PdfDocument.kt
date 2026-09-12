@@ -109,6 +109,13 @@ class PdfDocument private constructor(
         (0 until Native.attachmentCount(h)).map { PdfAttachment(Native.attachmentName(h, it)) }
     }
 
+    /** The bytes of one embedded attachment. */
+    suspend fun attachmentData(index: Int): ByteArray = onDocument { h ->
+        val count = Native.attachmentCount(h)
+        if (index < 0 || index >= count) throw PdfError.PageOutOfRange(index, count)
+        Native.attachmentData(h, index)
+    }
+
     /** Serialises the document, including any edits made through this SDK. */
     suspend fun toByteArray(mode: PdfSaveMode = PdfSaveMode.FULL): ByteArray = onDocument { h ->
         val bytes = Native.saveDocument(h, mode.flag)
@@ -216,6 +223,13 @@ class PdfTextPage internal constructor(
         if (query.isEmpty()) return emptyList()
         val packed = document.onDocument { Native.search(it, pageIndex, query, options.toFlags()) }
         return decodeMatches(packed)
+    }
+
+    internal suspend fun boxInternal(charIndex: Int): PdfRect = document.onDocument { h ->
+        val v = Native.charBox(h, pageIndex, charIndex)
+        // PDFium returns left, right, bottom, top.
+        PdfRect(left = v[0].toFloat(), bottom = v[2].toFloat(),
+                right = v[1].toFloat(), top = v[3].toFloat())
     }
 
     /** Unpacks the flat (start, length, rectCount) + 4-floats-per-rect encoding from JNI. */
