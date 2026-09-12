@@ -28,3 +28,7 @@ xcuserdata/
 
 # Android native build intermediates
 .cxx/
+
+# Generated large test documents (scale testing)
+conformance/large/
+conformance/robustness-report.json

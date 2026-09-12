@@ -55,7 +55,7 @@ Every row is exercised by the shared conformance suite on every platform that cl
 | Open from bytes / file, password | ✅ | ✅ | ✅ |
 | Page count, size, rotation | ✅ | ✅ | ✅ |
 | Render (scaled or exact pixels) | ✅ | ✅ | ✅ |
-| Cancellable progressive render | ✅ | — | — |
+| Cancellable progressive render | ⚠️ | — | — |
 | Text extraction, char count | ✅ | ✅ | ✅ |
 | Text hash-verified vs reference engine | ✅ | ✅ | ✅ |
 | Search with rects | ✅ | ✅ | ✅ |
@@ -72,6 +72,10 @@ Every row is exercised by the shared conformance suite on every platform that cl
 | Attachments: extract bytes | ✅ | — | — |
 | Save (full / incremental) | ✅ | ✅ | ✅ |
 | Raw PDFium escape hatch | ✅ | — | — |
+
+⚠️ iOS rendering is cancellable *between* progressive steps, which covers a slow
+render. It cannot interrupt a render that hangs *inside* a single PDFium call — see
+Known limits.
 
 Gaps are real and deliberate, not oversights — the object model, threading, error
 model, and conformance harness came first on all three platforms, and the remaining
@@ -131,6 +135,52 @@ whitespace by explicit codepoint rather than `\s`, because `\s` is not portable 
 U+00A0 matches it in JavaScript but not in Java's `Character.isWhitespace`.
 
 **Test totals:** 28 iOS (simulator) · 25 Android (device) · 24 Web · 12 host.
+
+## Known limits
+
+### A malformed page can hang rendering, unkillably
+
+Sweeping all 293 documents in PDFium's test corpus through the full API surface found
+**zero crashes** — but one document, `bug_451265.pdf` (1,230 bytes), makes rendering
+hang indefinitely.
+
+Everything else about that file is fine: open, page count, page size, text extraction,
+annotations, and form fields all complete in ~20 ms. Only `render()` hangs.
+
+It is not merely slow, and it is **not interruptible**. `FPDF_RenderPageBitmap_Start`
+never returns, so the pause callback is never consulted and control never comes back to
+the SDK. No cancellation mechanism on any platform can break out of it, including the
+iOS progressive path.
+
+**What this means for you:** if you render PDFs that users supply, a 1 KB file can wedge
+the thread doing the rendering, permanently. Mitigate by rendering untrusted documents
+somewhere you can abandon: a thread you can leave, a Web Worker you can `terminate()`,
+or a subprocess. A timeout around the `await` is not enough — the work keeps running.
+
+This is PDFium behaviour, not a binding bug; it reproduces with raw `FPDF_*` calls.
+
+### The Web SDK is not yet in a Worker
+
+The design called for the Web executor to be a Worker. It is currently a promise chain
+on the calling thread, so the hang above would freeze the tab. Moving it behind a Worker
+is the fix, and would also make `terminate()` a real mitigation.
+
+### Robustness sweep
+
+```bash
+node conformance/robustness.mjs [corpusDir]   # default: PDFium testing/resources
+```
+
+Full-corpus results, most recent run:
+
+| outcome | count |
+|---|---|
+| completed | 265 |
+| rejected on open, typed | 23 (9 password, 14 corrupt) |
+| typed error during use | 4 |
+| **hang** | **1** |
+| **crash** | **0** |
+| **untyped throw** | **0** |
 
 ## Design notes worth knowing
 

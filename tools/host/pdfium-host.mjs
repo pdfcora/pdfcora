@@ -107,5 +107,7 @@ export async function loadPdfium() {
     };
   }
 
-  return { openDocument, lastError };
+  // `raw` is the Emscripten module itself, for tooling that needs PDFium calls
+  // this harness does not wrap. Not part of any public API.
+  return { openDocument, lastError, raw: M };
 }
