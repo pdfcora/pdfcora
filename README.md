@@ -46,6 +46,27 @@ SHA-256 of every artifact, and the fetch script refuses anything that does not m
 Demos: `ios/Demo` (SwiftUI, generate with `xcodegen`), `android/demo` (Compose),
 `web/demo` (serve the repo root and open `/web/demo/index.html`).
 
+## Installing
+
+Each SDK has been verified by consuming it from a project **outside** this repo, not
+just by running its own tests.
+
+**Web** — `npm install @pdfiumkit/web`. The PDFium `.wasm` ships inside the package, so
+there is nothing else to host. Node resolves it automatically; in a browser pass URLs
+via `configureEngine` or `PdfWorker`.
+
+**iOS** — Swift Package Manager. `Package.swift` uses a *local* binary target for
+development. For a release the xcframework must be hosted, because `vendor/` is not
+committed and a consumer resolving from git would otherwise get no binary:
+
+```bash
+./scripts/package-ios.sh     # writes the zip, its checksum, and the snippet to paste
+```
+
+**Android** — Maven. `gradle :pdfiumkit:publishToMavenLocal` publishes
+`com.pdfiumkit:pdfiumkit:0.1.0`; the AAR is 9.3 MB and carries all four ABIs, of which
+Play delivers one per device.
+
 ## Feature coverage
 
 Every row is exercised by the shared conformance suite on every platform that claims it.

@@ -39,8 +39,8 @@ async function defaultFactory(): Promise<ModuleFactory> {
 
   const here = dirname(fileURLToPath(import.meta.url));
   const require = createRequire(import.meta.url);
-  // dist/src/engine.js -> repo root -> vendor/web
-  const gluePath = join(here, '..', '..', '..', 'vendor', 'web', 'pdfium.js');
+  // dist/engine.js -> package root -> vendor/, which ships inside the package.
+  const gluePath = join(here, '..', 'vendor', 'pdfium.js');
   return require(gluePath) as ModuleFactory;
 }
 

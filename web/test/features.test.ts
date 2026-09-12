@@ -4,10 +4,10 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { PdfDocument, PdfError } from '../src/index.js';
+import { PdfDocument, PdfError } from '../dist/index.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(HERE, '..', '..', '..');
+const ROOT = join(HERE, '..', '..');
 const CORPUS = join(ROOT, 'conformance', 'corpus');
 
 const corpus = (name: string) => new Uint8Array(readFileSync(join(CORPUS, name)));

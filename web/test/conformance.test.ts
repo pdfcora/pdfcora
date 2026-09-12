@@ -5,12 +5,12 @@ import { createHash } from 'node:crypto';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { PdfDocument } from '../src/index.js';
-import { PdfError } from '../src/errors.js';
+import { PdfDocument } from '../dist/index.js';
+import { PdfError } from '../dist/errors.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-// dist/test -> repo root
-const ROOT = join(HERE, '..', '..', '..');
+// dist-test/ -> web/ -> repo root
+const ROOT = join(HERE, '..', '..');
 const CORPUS = join(ROOT, 'conformance', 'corpus');
 
 /** Must match conformance/generate.mjs exactly — see the note there on portability. */

@@ -1,7 +1,11 @@
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
+    id("maven-publish")
 }
+
+group = "com.pdfiumkit"
+version = "0.1.0"
 
 // PDFium artifacts live in the repo-local vendor/ tree, populated by scripts/fetch-vendor.sh.
 val vendorDir = rootProject.projectDir.parentFile.resolve("vendor/android")
@@ -43,6 +47,8 @@ android {
 
     packaging { jniLibs { useLegacyPackaging = false } }
 
+    publishing { singleVariant("release") { withSourcesJar() } }
+
     // The shared conformance corpus and expectations, so instrumented tests assert the
     // same contract as the iOS and Web SDKs.
     sourceSets["androidTest"].assets.srcDirs(
@@ -57,4 +63,25 @@ dependencies {
     androidTestImplementation("androidx.test:runner:1.5.2")
     androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
     androidTestImplementation("org.json:json:20231013")
+}
+
+publishing {
+    publications {
+        register<MavenPublication>("release") {
+            groupId = "com.pdfiumkit"
+            artifactId = "pdfiumkit"
+            version = "0.1.0"
+            afterEvaluate { from(components["release"]) }
+            pom {
+                name.set("PdfiumKit")
+                description.set("PDF SDK for Android, built on PDFium")
+                licenses {
+                    license {
+                        name.set("See NOTICE.md")
+                        url.set("https://github.com/indaos/PdfiumKit/blob/main/NOTICE.md")
+                    }
+                }
+            }
+        }
+    }
 }
