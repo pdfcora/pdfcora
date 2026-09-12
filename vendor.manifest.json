@@ -1,0 +1,58 @@
+{
+  "engine": {
+    "revision": "chromium/7243",
+    "buildFlags": [
+      "pdf_enable_v8=false",
+      "pdf_enable_xfa=false",
+      "pdf_bundle_freetype=true",
+      "pdf_is_complete_lib=true"
+    ]
+  },
+  "generated": "2026-09-12T17:08:29.451Z",
+  "artifacts": {
+    "web/pdfium.js": {
+      "sha256": "0dd7c7f663c38633f876aa0c6537509500068231754a7ca4f90864a6664dd360",
+      "bytes": 198599
+    },
+    "web/pdfium.wasm": {
+      "sha256": "7ed8ca795b917822c2d4d5dab2a63e3c3eaeab113ae2eb0473dcff132b8e496d",
+      "bytes": 3992586
+    },
+    "web/pdfium.esm.js": {
+      "sha256": "faa0d290fb7378df93124bcdda88879c4e28109cd06732358254753536c156e1",
+      "bytes": 198578
+    },
+    "web/pdfium.esm.wasm": {
+      "sha256": "7ed8ca795b917822c2d4d5dab2a63e3c3eaeab113ae2eb0473dcff132b8e496d",
+      "bytes": 3992586
+    },
+    "ios/pdfium.xcframework/ios-arm64/libpdfium.a": {
+      "sha256": "26ca442a92b14bfb143f06b451295abd1b21315794d9df3f324b9bc2eddd59e1",
+      "bytes": 11908048
+    },
+    "ios/pdfium.xcframework/ios-arm64_x86_64-simulator/libpdfium.a": {
+      "sha256": "fa561bcd5247cfbba8b8fcf575f766d98f6f7066f50a67fd3c51cfd05eff98c2",
+      "bytes": 24634344
+    },
+    "ios/pdfium.xcframework/Info.plist": {
+      "sha256": "965dec777fada663dab567526b3cb8f172af095bf6ca52a3b1a72cb84c334c9f",
+      "bytes": 1252
+    },
+    "android/arm64-v8a/libpdfium.a": {
+      "sha256": "2e279a185aa558966fb0a4ea225587b8ff850889a31c4cd24ba5614f078da03a",
+      "bytes": 18555528
+    },
+    "android/armeabi-v7a/libpdfium.a": {
+      "sha256": "1b500546192f08d9782c44b1e01ef93faeb60ce86f41a54e498fc8682835a34c",
+      "bytes": 18135612
+    },
+    "android/x86/libpdfium.a": {
+      "sha256": "871eb946661f8622d0695470ee43beaedc52dc884106c354021c36d3ba926c44",
+      "bytes": 18268366
+    },
+    "android/x86_64/libpdfium.a": {
+      "sha256": "16593daddadafa4522f2bea186baa744e9d211844c788bf40c8d1399a7d23397",
+      "bytes": 18551890
+    }
+  }
+}

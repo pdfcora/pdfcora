@@ -1,0 +1,19 @@
+name: conformance
+on: [push, pull_request]
+jobs:
+  host:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Install poppler for cross-checking
+        run: brew install poppler
+      - name: Fetch vendor artifacts
+        run: ./scripts/fetch-vendor.sh
+        env:
+          PDFIUMKIT_ARTIFACTS: ${{ runner.temp }}/pdfium-artifacts
+      - name: Run host test suite
+        run: npm test
+      - name: Validate conformance expectations
+        run: npm run conformance:validate

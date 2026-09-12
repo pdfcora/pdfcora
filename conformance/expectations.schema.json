@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PdfiumKit conformance expectations",
+  "type": "object",
+  "required": ["engine", "documents"],
+  "properties": {
+    "engine": { "type": "string" },
+    "generated": { "type": "string" },
+    "documents": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["category", "opens"],
+        "properties": {
+          "category": { "enum": ["basic", "form", "encrypted", "annotation", "text", "regression"] },
+          "opens": { "type": "boolean" },
+          "openError": { "enum": ["password", "format", "file", "security", "page", "unknown"] },
+          "pageCount": { "type": "integer", "minimum": 0 },
+          "pages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["width", "height"],
+              "properties": {
+                "width": { "type": "number" },
+                "height": { "type": "number" },
+                "textContains": { "type": "array", "items": { "type": "string" } }
+              }
+            }
+          },
+          "metadata": { "type": "object", "additionalProperties": { "type": "string" } }
+        }
+      }
+    }
+  }
+}

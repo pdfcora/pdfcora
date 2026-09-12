@@ -1,0 +1,223 @@
+{
+  "engine": "chromium/7243",
+  "generated": "2026-09-12T17:21:13.826Z",
+  "documents": {
+    "hello_world.pdf": {
+      "category": "basic",
+      "opens": true,
+      "pageCount": 1,
+      "pages": [
+        {
+          "width": 200,
+          "height": 200
+        }
+      ]
+    },
+    "rectangles.pdf": {
+      "category": "basic",
+      "opens": true,
+      "pageCount": 1,
+      "pages": [
+        {
+          "width": 200,
+          "height": 300
+        }
+      ]
+    },
+    "many_rectangles.pdf": {
+      "category": "basic",
+      "opens": true,
+      "pageCount": 1,
+      "pages": [
+        {
+          "width": 200,
+          "height": 300
+        }
+      ]
+    },
+    "combobox_form.pdf": {
+      "category": "form",
+      "opens": true,
+      "pageCount": 1,
+      "pages": [
+        {
+          "width": 300,
+          "height": 600
+        }
+      ]
+    },
+    "listbox_form.pdf": {
+      "category": "form",
+      "opens": true,
+      "pageCount": 1,
+      "pages": [
+        {
+          "width": 300,
+          "height": 600
+        }
+      ]
+    },
+    "text_form.pdf": {
+      "category": "form",
+      "opens": true,
+      "pageCount": 1,
+      "pages": [
+        {
+          "width": 300,
+          "height": 300
+        }
+      ]
+    },
+    "click_form.pdf": {
+      "category": "form",
+      "opens": true,
+      "pageCount": 1,
+      "pages": [
+        {
+          "width": 300,
+          "height": 300
+        }
+      ]
+    },
+    "encrypted_hello_world_r2.pdf": {
+      "category": "encrypted",
+      "opens": false,
+      "openError": "password"
+    },
+    "annotation_highlight_long_content.pdf": {
+      "category": "annotation",
+      "opens": true,
+      "pageCount": 1,
+      "pages": [
+        {
+          "width": 612,
+          "height": 792
+        }
+      ],
+      "metadata": {
+        "Producer": "Skia/PDF m54"
+      }
+    },
+    "annots_action_handling.pdf": {
+      "category": "annotation",
+      "opens": true,
+      "pageCount": 2,
+      "pages": [
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        }
+      ]
+    },
+    "annotation_stamp_with_ap.pdf": {
+      "category": "annotation",
+      "opens": true,
+      "pageCount": 1,
+      "pages": [
+        {
+          "width": 595,
+          "height": 842
+        }
+      ],
+      "metadata": {
+        "Title": "This is a test PDF file",
+        "Author": "cdaily",
+        "Creator": "Microsoft Word 8.0",
+        "Producer": "Acrobat Distiller 4.0 for Windows"
+      }
+    },
+    "text_font.pdf": {
+      "category": "text",
+      "opens": true,
+      "pageCount": 1,
+      "pages": [
+        {
+          "width": 612,
+          "height": 792
+        }
+      ],
+      "metadata": {
+        "Creator": "Writer",
+        "Producer": "LibreOfficeDev 6.2"
+      }
+    },
+    "find_text_consecutive.pdf": {
+      "category": "text",
+      "opens": true,
+      "pageCount": 1,
+      "pages": [
+        {
+          "width": 200,
+          "height": 200
+        }
+      ]
+    },
+    "hebrew_mirrored.pdf": {
+      "category": "text",
+      "opens": true,
+      "pageCount": 1,
+      "pages": [
+        {
+          "width": 200,
+          "height": 200
+        }
+      ]
+    },
+    "tagged_actual_text.pdf": {
+      "category": "text",
+      "opens": true,
+      "pageCount": 1,
+      "pages": [
+        {
+          "width": 612,
+          "height": 792
+        }
+      ]
+    },
+    "hello_world_2_pages_split_streams.pdf": {
+      "category": "basic",
+      "opens": true,
+      "pageCount": 2,
+      "pages": [
+        {
+          "width": 200,
+          "height": 200
+        },
+        {
+          "width": 200,
+          "height": 200
+        }
+      ]
+    },
+    "bug_455199.pdf": {
+      "category": "regression",
+      "opens": true,
+      "pageCount": 1,
+      "pages": [
+        {
+          "width": 200,
+          "height": 200
+        }
+      ]
+    },
+    "bug_707673.pdf": {
+      "category": "regression",
+      "opens": true,
+      "pageCount": 1,
+      "pages": [
+        {
+          "width": 612,
+          "height": 792
+        }
+      ],
+      "metadata": {
+        "Creator": "LaTeX with hyperref package",
+        "Producer": "pdfTeX-1.40.17"
+      }
+    }
+  }
+}

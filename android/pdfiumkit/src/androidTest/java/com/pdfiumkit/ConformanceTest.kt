@@ -1,0 +1,117 @@
+package com.pdfiumkit
+
+import android.graphics.Color
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import kotlinx.coroutines.test.runTest
+import org.json.JSONObject
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
+import org.junit.Test
+import org.junit.runner.RunWith
+
+/**
+ * Runs the same corpus and expectations the iOS and Web SDKs are tested against, so
+ * "the three SDKs behave identically" is checked rather than assumed.
+ */
+@RunWith(AndroidJUnit4::class)
+class ConformanceTest {
+
+    private val assets get() = InstrumentationRegistry.getInstrumentation().context.assets
+
+    private fun corpus(name: String): ByteArray =
+        assets.open("corpus/$name").use { it.readBytes() }
+
+    private fun expectations(): JSONObject =
+        JSONObject(assets.open("expectations.json").use { it.readBytes().decodeToString() })
+
+    @Test
+    fun engineRevisionMatchesExpectations() {
+        assertEquals(expectations().getString("engine"), PdfDocument.ENGINE_VERSION)
+    }
+
+    @Test
+    fun allCorpusDocumentsMatchExpectations() = runTest {
+        val documents = expectations().getJSONObject("documents")
+        val names = documents.keys().asSequence().toList()
+        assertTrue("expectations.json is empty", names.isNotEmpty())
+
+        for (name in names) {
+            val expected = documents.getJSONObject(name)
+            val bytes = corpus(name)
+
+            if (!expected.getBoolean("opens")) {
+                try {
+                    PdfDocument.open(bytes).close()
+                    fail("$name: expected open to fail with ${expected.optString("openError")}")
+                } catch (e: PdfError) {
+                    assertOpenError(name, e, expected.optString("openError"))
+                }
+                continue
+            }
+
+            PdfDocument.open(bytes).use { document ->
+                assertEquals("$name: page count", expected.getInt("pageCount"), document.pageCount())
+
+                val pages = expected.optJSONArray("pages") ?: return@use
+                for (i in 0 until pages.length()) {
+                    val expectedPage = pages.getJSONObject(i)
+                    val size = document.page(i).size()
+                    assertEquals("$name page $i width",
+                        expectedPage.getDouble("width"), size.width.toDouble(), 0.01)
+                    assertEquals("$name page $i height",
+                        expectedPage.getDouble("height"), size.height.toDouble(), 0.01)
+                }
+            }
+        }
+    }
+
+    private fun assertOpenError(name: String, error: PdfError, expected: String) {
+        val matches = when (error) {
+            is PdfError.PasswordRequired, is PdfError.WrongPassword -> expected == "password"
+            is PdfError.Corrupt -> expected == "format" || expected == "file"
+            is PdfError.UnsupportedSecurity -> expected == "security"
+            else -> false
+        }
+        assertTrue("$name: error $error does not match expected $expected", matches)
+    }
+
+    /**
+     * PDFium writes BGRA; Android's ARGB_8888 is RGBA in memory, and the JNI bridge
+     * swaps the channels. These coordinates come from rendering the same page with the
+     * WASM build, so a swap in the wrong direction turns blue into red and fails here.
+     * Counting alone would not catch it — the page has equal numbers of red and blue.
+     */
+    @Test
+    fun renderedChannelOrderMatchesReferenceEngine() = runTest {
+        PdfDocument.open(corpus("rectangles.pdf")).use { document ->
+            val bitmap = document.page(0).render(pixelWidth = 200, pixelHeight = 300)
+            assertEquals("blue region", Color.BLUE, bitmap.getPixel(99, 50))
+            assertEquals("green region", Color.GREEN, bitmap.getPixel(156, 142))
+            assertEquals("red region", Color.RED, bitmap.getPixel(90, 221))
+        }
+    }
+
+    @Test
+    fun renderedPageIsNotBlank() = runTest {
+        PdfDocument.open(corpus("rectangles.pdf")).use { document ->
+            val bitmap = document.page(0).render(width = 100)
+            val distinct = mutableSetOf<Int>()
+            for (y in 0 until bitmap.height) for (x in 0 until bitmap.width) {
+                distinct += bitmap.getPixel(x, y)
+            }
+            assertTrue("rendered page appears blank", distinct.size > 1)
+        }
+    }
+
+    @Test
+    fun renderHonoursAspectRatio() = runTest {
+        PdfDocument.open(corpus("combobox_form.pdf")).use { document ->
+            val bitmap = document.page(0).render(width = 300)
+            assertEquals(300, bitmap.width)
+            assertEquals(600, bitmap.height)   // page is 300x600 points
+        }
+    }
+}

@@ -1,0 +1,41 @@
+name: PdfiumKitDemo
+options:
+  bundleIdPrefix: com.pdfiumkit
+  deploymentTarget:
+    iOS: "15.0"
+  createIntermediateGroups: true
+packages:
+  PdfiumKit:
+    path: ../..
+targets:
+  PdfiumKitDemo:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+      - path: Resources
+        buildPhase: resources
+    dependencies:
+      - package: PdfiumKit
+        product: PdfiumKit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.pdfiumkit.demo
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_CFBundleDisplayName: PdfiumKit
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SWIFT_VERSION: "5.9"
+  PdfiumKitDemoUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: UITests
+    dependencies:
+      - target: PdfiumKitDemo
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.pdfiumkit.demo.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: "5.9"

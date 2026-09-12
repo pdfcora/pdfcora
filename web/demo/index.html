@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PdfiumKit — Web demo</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>PdfiumKit</h1>
+    <div class="picks">
+      <select id="sample">
+        <option value="hello_world.pdf">Hello World</option>
+        <option value="text_form.pdf">Text Form</option>
+        <option value="combobox_form.pdf">Combo Box Form</option>
+        <option value="annotation_highlight_long_content.pdf">Annotated</option>
+        <option value="many_rectangles.pdf">Many Rectangles</option>
+      </select>
+      <label class="file">
+        Open a file…
+        <input type="file" id="file" accept="application/pdf" hidden />
+      </label>
+      <span id="status"></span>
+    </div>
+  </header>
+
+  <nav id="tabs"></nav>
+
+  <main>
+    <section id="panel"></section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

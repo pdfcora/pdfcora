@@ -1,0 +1,30 @@
+# PDFium artifacts — fetched, never committed. See scripts/fetch-vendor.sh
+vendor/
+
+# Build output
+build/
+.build/
+dist/
+web/dist/
+*.log
+
+# Generated Xcode project — project.yml is the source of truth
+ios/Demo/*.xcodeproj
+
+# Gradle
+.gradle/
+android/.gradle/
+android/build/
+android/*/build/
+local.properties
+
+# Node
+node_modules/
+
+# macOS
+.DS_Store
+xcuserdata/
+*.xcuserstate
+
+# Android native build intermediates
+.cxx/

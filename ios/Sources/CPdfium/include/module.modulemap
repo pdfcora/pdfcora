@@ -1,0 +1,4 @@
+module CPdfium {
+  header "shim.h"
+  export *
+}

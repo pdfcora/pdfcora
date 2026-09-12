@@ -1,0 +1,78 @@
+{
+  "source": "PDFium testing/resources @ chromium/7243",
+  "license": "BSD-3-Clause (see NOTICE.md)",
+  "files": [
+    {
+      "name": "hello_world.pdf",
+      "category": "basic"
+    },
+    {
+      "name": "rectangles.pdf",
+      "category": "basic"
+    },
+    {
+      "name": "many_rectangles.pdf",
+      "category": "basic"
+    },
+    {
+      "name": "combobox_form.pdf",
+      "category": "form"
+    },
+    {
+      "name": "listbox_form.pdf",
+      "category": "form"
+    },
+    {
+      "name": "text_form.pdf",
+      "category": "form"
+    },
+    {
+      "name": "click_form.pdf",
+      "category": "form"
+    },
+    {
+      "name": "encrypted_hello_world_r2.pdf",
+      "category": "encrypted"
+    },
+    {
+      "name": "annotation_highlight_long_content.pdf",
+      "category": "annotation"
+    },
+    {
+      "name": "annots_action_handling.pdf",
+      "category": "annotation"
+    },
+    {
+      "name": "annotation_stamp_with_ap.pdf",
+      "category": "annotation"
+    },
+    {
+      "name": "text_font.pdf",
+      "category": "text"
+    },
+    {
+      "name": "find_text_consecutive.pdf",
+      "category": "text"
+    },
+    {
+      "name": "hebrew_mirrored.pdf",
+      "category": "text"
+    },
+    {
+      "name": "tagged_actual_text.pdf",
+      "category": "text"
+    },
+    {
+      "name": "hello_world_2_pages_split_streams.pdf",
+      "category": "basic"
+    },
+    {
+      "name": "bug_455199.pdf",
+      "category": "regression"
+    },
+    {
+      "name": "bug_707673.pdf",
+      "category": "regression"
+    }
+  ]
+}
