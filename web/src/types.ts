@@ -324,3 +324,30 @@ export interface PdfPageObject {
   readonly text?: string;
   readonly fontSize?: number;
 }
+
+/** What to remove. */
+export type PdfRedactionTarget =
+  | { readonly kind: 'region'; readonly rect: PdfRect; readonly pageIndex: number }
+  | { readonly kind: 'textMatches'; readonly query: string; readonly options?: PdfSearchOptions };
+
+/**
+ * What redaction actually removed.
+ *
+ * Not decoration: redaction is a compliance action, and "what did it remove" is the
+ * question every reviewer asks. Anything the SDK cannot remove is named here rather
+ * than left implied.
+ */
+export interface PdfRedactionReport {
+  readonly pages: readonly number[];
+  /** Removed outright. */
+  readonly textObjects: number;
+  /** Partially covered, so rewritten with the covered characters dropped. */
+  readonly textObjectsSplit: number;
+  /** Images are removed whole, never repainted with a hole. */
+  readonly images: number;
+  readonly paths: number;
+  readonly annotations: number;
+  readonly formFields: readonly string[];
+  readonly metadataKeys: readonly string[];
+  readonly attachments: readonly string[];
+}

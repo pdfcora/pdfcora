@@ -2,11 +2,13 @@ import { ENGINE_VERSION, engine, readUtf16, withBuffer, withUtf16, type PdfiumMo
 import { readSignatures } from './signature.js';
 import { verifySignature } from './cms/verify.js';
 import { signDocument, type PdfSignOptions } from './sign/sign.js';
+import { emptyCounts, redactPage, regionsFor, toReport } from './redact/region.js';
 import { PdfError } from './errors.js';
 import type {
   PdfAttachment, PdfMetadata, PdfOutlineItem, PdfPermissions, PdfSaveMode, PdfSize,
   PdfPageRotation,
   PdfSignature, PdfSignatureValidity, PdfVerifyOptions,
+  PdfRedactionReport, PdfRedactionTarget,
 } from './types.js';
 import { PdfPage } from './page.js';
 
@@ -244,6 +246,41 @@ export class PdfDocument {
    */
   sign(options: PdfSignOptions): Promise<Uint8Array> {
     return signDocument(this.originalBytes, options);
+  }
+
+  /**
+   * Removes content, so that it cannot be recovered.
+   *
+   * The objects a region touches are removed and the page's content stream regenerated.
+   * **Save with `'full'` afterwards**: an incremental save leaves the original content
+   * stream in the file, and the removed content with it.
+   */
+  async redact(targets: readonly PdfRedactionTarget[]): Promise<PdfRedactionReport> {
+    const counts = emptyCounts();
+    const pageCount = await this.pageCount();
+
+    for (const target of targets) {
+      if (target.kind === 'region' && (target.pageIndex < 0 || target.pageIndex >= pageCount)) {
+        throw PdfError.pageOutOfRange(target.pageIndex, pageCount);
+      }
+    }
+
+    for (let pageIndex = 0; pageIndex < pageCount; pageIndex++) {
+      const regions = regionsFor(targets, pageIndex);
+      if (regions.length === 0) continue;
+
+      const changed = await this.withPage(pageIndex, (page, m) => {
+        const textPage = m.ccall('FPDFText_LoadPage', 'number', ['number'], [page]) as number;
+        try {
+          return redactPage(m, page, textPage, regions, counts);
+        } finally {
+          if (textPage) m.ccall('FPDFText_ClosePage', null, ['number'], [textPage]);
+        }
+      });
+      if (changed) counts.pages.push(pageIndex);
+    }
+
+    return toReport(counts);
   }
 
   /** The document outline, or an empty array when there is none. */
