@@ -74,4 +74,15 @@ internal object Native {
     @JvmStatic external fun signatureAscii(handle: Long, index: Int, which: Int): String
     @JvmStatic external fun signatureReason(handle: Long, index: Int): String
     @JvmStatic external fun signatureDocMdp(handle: Long, index: Int): Int
+
+    @JvmStatic external fun pageObjectCount(handle: Long, pageIndex: Int): Int
+    @JvmStatic external fun pageObjectType(handle: Long, pageIndex: Int, index: Int): Int
+    @JvmStatic external fun pageObjectBounds(handle: Long, pageIndex: Int, index: Int): FloatArray
+    @JvmStatic external fun pageObjectText(handle: Long, pageIndex: Int, index: Int): String
+    @JvmStatic external fun pageObjectFontSize(handle: Long, pageIndex: Int, index: Int): Float
+
+    /** Returns [textObjects, split, images, paths, annotations, changed]. */
+    @JvmStatic external fun redactPage(handle: Long, pageIndex: Int, regions: FloatArray): IntArray
+    @JvmStatic external fun redactedFieldNames(handle: Long, pageIndex: Int): Array<String>
+    @JvmStatic external fun scrubAttachments(handle: Long, needles: Array<String>): Array<String>
 }
