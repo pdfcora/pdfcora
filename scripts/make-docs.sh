@@ -1,21 +1,23 @@
 #!/usr/bin/env bash
 # Builds developer documentation for all three platforms into one directory.
 #
-#   ./scripts/make-docs.sh [outdir]          (default: build/docs)
+#   ./scripts/make-docs.sh [outdir]          builds, then serves and opens a browser
+#   ./scripts/make-docs.sh --no-serve        builds only (CI)
 #
 # Each platform gets a quickstart page and a full API reference, generated from the
 # source by that platform's own tool — DocC, Dokka and TypeDoc — so the reference never
 # drifts from the code.
 #
-# Serve the result; do not open it with file://. DocC emits absolute links:
-#   cd build/docs && python3 -m http.server 8080
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-SERVE=0
+# Serving is the default: the iOS reference is a DocC single-page app that fetches its
+# content, so file:// shows a blank page. --no-serve is for CI, which only wants files.
+SERVE=1
 args=()
 for arg in "$@"; do
     case "$arg" in
+        --no-serve) SERVE=0 ;;
         --serve|--open) SERVE=1 ;;
         *) args+=("$arg") ;;
     esac
@@ -88,7 +90,14 @@ page() {  # page <file> <title> <body>
   a.card b { display: block; font-size: 1.05rem; }
   a.card span { opacity: .7; font-size: .9rem; }
   .meta { opacity: .6; font-size: .85rem; }
+  #file-warning { display: none; background: #fff3cd; color: #663c00; padding: .8rem 1rem;
+                  border-radius: 7px; margin-bottom: 1.5rem; font-size: .92rem; }
 </style>
+<div id="file-warning">
+  Opened from the filesystem. The iOS API reference will be blank — it fetches its
+  content and needs a real origin. Run <code>./serve.sh</code> in this directory.
+</div>
+<script>if (location.protocol === 'file:') document.getElementById('file-warning').style.display = 'block';</script>
 $3
 HTML
 }
@@ -205,11 +214,5 @@ if [ "$SERVE" -eq 1 ]; then
     command -v open > /dev/null && open "http://localhost:$PORT/"
     wait
 else
-    echo
-    echo "  The iOS API reference is a single-page app and needs a real origin."
-    echo "  Opening index.html from Finder will not work. Instead:"
-    echo
-    echo "      $OUT/serve.sh"
-    echo "      ./scripts/make-docs.sh --serve    # build and serve in one step"
-    echo
+    echo "serve it:      $OUT/serve.sh"
 fi
