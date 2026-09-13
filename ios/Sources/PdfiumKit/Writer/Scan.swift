@@ -128,12 +128,6 @@ public struct TrailerInfo: Sendable {
     }
 }
 
-/// Latin-1 rather than UTF-8: every byte maps to exactly one character, so string
-/// offsets stay byte offsets and no sequence is rejected as invalid.
-private func latin1<C: Sequence>(_ bytes: C) -> String where C.Element == UInt8 {
-    String(String.UnicodeScalarView(bytes.map { UnicodeScalar($0) }))
-}
-
 private extension String {
     var fullRange: NSRange { NSRange(startIndex..., in: self) }
     func substring(_ range: NSRange) -> String {
