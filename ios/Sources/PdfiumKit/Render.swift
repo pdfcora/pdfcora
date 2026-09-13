@@ -1,7 +1,7 @@
 import Foundation
 import CoreGraphics
 import UIKit
-import CPdfium
+@_implementationOnly import CPdfium
 
 extension PdfPage {
     /// Renders the page at `width` points; height follows the page aspect ratio.

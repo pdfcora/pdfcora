@@ -1,5 +1,5 @@
 import Foundation
-import CPdfium
+@_implementationOnly import CPdfium
 
 /// Typed document metadata. Non-standard keys are reachable via ``subscript(custom:)``.
 public struct PdfMetadata: Equatable, Sendable {

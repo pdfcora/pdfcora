@@ -69,6 +69,13 @@ dependencies {
 }
 
 publishing {
+    repositories {
+        // scripts/package-all.sh points this at the distribution directory, so the AAR
+        // ships with a resolvable POM rather than on its own.
+        providers.gradleProperty("distRepo").orNull?.let { dist ->
+            maven { name = "dist"; url = uri(dist) }
+        }
+    }
     publications {
         register<MavenPublication>("release") {
             groupId = "com.pdfiumkit"

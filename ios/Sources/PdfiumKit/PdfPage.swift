@@ -1,5 +1,5 @@
 import Foundation
-import CPdfium
+@_implementationOnly import CPdfium
 
 /// A page within a document.
 ///

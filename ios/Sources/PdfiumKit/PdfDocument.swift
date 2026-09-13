@@ -1,5 +1,5 @@
 import Foundation
-import CPdfium
+@_implementationOnly import CPdfium
 
 /// Initialises PDFium exactly once per process.
 enum PdfEngine {

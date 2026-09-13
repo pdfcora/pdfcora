@@ -1,5 +1,5 @@
 import Foundation
-import CPdfium
+@_implementationOnly import CPdfium
 
 /// How to write the document out.
 public enum PdfSaveMode: Sendable {

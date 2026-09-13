@@ -1,4 +1,4 @@
-import CPdfium
+@_implementationOnly import CPdfium
 
 /// Errors raised by PdfiumKit. Cases are identical across the iOS, Android, and Web SDKs.
 public enum PdfError: Error, Equatable, Sendable {

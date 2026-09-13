@@ -1,5 +1,5 @@
 import Foundation
-import CPdfium
+@_implementationOnly import CPdfium
 
 /// Fields every form field carries.
 public struct PdfFormFieldBase: Equatable, Sendable {

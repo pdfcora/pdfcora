@@ -1,5 +1,5 @@
 import Foundation
-import CPdfium
+@_implementationOnly import CPdfium
 
 /// A search hit: a character range on the page, with the quads covering it.
 public struct PdfTextMatch: Equatable, Sendable {

@@ -1,5 +1,5 @@
 import Foundation
-import CPdfium
+@_implementationOnly import CPdfium
 
 /// Fields every annotation carries, whatever its type.
 public struct PdfAnnotationBase: Equatable, Sendable {

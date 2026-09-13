@@ -1,5 +1,5 @@
 import Foundation
-import CPdfium
+@_implementationOnly import CPdfium
 
 /// A bookmark in the document outline. The whole tree is read eagerly as values.
 public struct PdfOutlineItem: Equatable, Sendable {
