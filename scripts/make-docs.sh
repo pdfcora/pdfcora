@@ -114,8 +114,9 @@ an error type and a conformance suite.</p>
   <li>Every document owns a serial executor; concurrent use is safe across documents.</li>
   <li>Errors are a closed set with the same cases on all three platforms.</li>
   <li>Coordinates are PDF space (bottom-left origin); <code>PdfViewTransform</code> converts.</li>
-  <li>Signatures are read and verified. Integrity and trust are separate answers, and a
-      signature reports whether it covers the whole file.</li>
+  <li>Signatures are read, verified and created (PAdES, optionally timestamped).
+      Integrity and trust are separate answers, and a signature reports whether it
+      covers the whole file.</li>
 </ul>
 <p class='meta'>Version $VERSION · built $(date -u +%Y-%m-%d) · $(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo untracked).
 Third-party licences: <a href='notice.html'>NOTICE</a>.</p>"
@@ -154,6 +155,15 @@ case .untrusted(let chain, _):  print(\"intact, but not trusted\", chain.count)
 default: break
 }</pre>
 <p class='meta'>Integrity and trust are separate answers, and revocation is not checked.</p>
+<h2>Sign it</h2>
+<pre>let signer = try Pkcs12Signer(pkcs12: p12, password: password)
+let signed = try await document.sign(PdfSignOptions(
+    signer: signer,
+    reason: \"Approved\",
+    timestampUrl: URL(string: \"https://your-tsa.example/tsr\")))   // optional, PAdES B-T</pre>
+<p class='meta'>Signing appends an incremental update, so a signature already on the
+document keeps verifying. The first release signs invisibly: a signature is valid
+without a visible appearance.</p>
 <h2>Errors</h2>
 <pre>do { _ = try await PdfDocument(data: data) }
 catch PdfError.passwordRequired { /* prompt */ }
@@ -186,6 +196,17 @@ val bitmap = page.render(width = 1024, options = PdfRenderOptions(annotations = 
     else -&gt; Unit
 }</pre>
 <p class='meta'>Integrity and trust are separate answers, and revocation is not checked.</p>
+<h2>Sign it</h2>
+<pre>val signed = document.sign(
+    PdfSignOptions(
+        signer = Pkcs12Signer(p12, password),
+        reason = \"Approved\",
+        timestampUrl = \"https://your-tsa.example/tsr\",   // optional, PAdES B-T
+    ),
+)</pre>
+<p class='meta'>Signing appends an incremental update, so a signature already on the
+document keeps verifying. The first release signs invisibly: a signature is valid
+without a visible appearance.</p>
 <h2>Place a control over a form field</h2>
 <pre>val transform = PdfViewTransform.fittingWidth(page.size(), viewportPx)
 page.formFields().forEach { field -> val box = transform.toView(field.base.rect) }</pre>
@@ -220,6 +241,16 @@ if (verdict.kind === 'digestMismatch') {       // the bytes changed after signin
 } else if (verdict.kind === 'valid') {         // both
 }</pre>
 <p class='meta'>Integrity and trust are separate answers, and revocation is not checked.</p>
+<h2>Sign it</h2>
+<p>The browser has no CMS API — WebCrypto provides the primitives but not the
+container — so signing takes an implementation you supply. iOS and Android sign
+natively and need nothing extra.</p>
+<pre>const signed = await doc.sign({
+  signer: { async sign(data) { /* return a detached DER PKCS#7 */ } },
+  reason: 'Approved',
+});</pre>
+<p class='meta'>Signing appends an incremental update, so a signature already on the
+document keeps verifying. The first release signs invisibly.</p>
 <h2>Place a control over a form field</h2>
 <pre>const t = PdfViewTransform.fittingWidth(await page.size(), canvas.clientWidth);
 for (const field of await page.formFields()) { const box = t.toViewRect(field.rect); }</pre>
