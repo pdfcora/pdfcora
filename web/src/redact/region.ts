@@ -11,6 +11,7 @@
 
 import type { PdfiumModule } from './../engine.js';
 import { readPageObjects } from '../pageObjects.js';
+import { splitPartiallyCovered } from './split.js';
 import type { PdfPageObject, PdfRect, PdfRedactionReport, PdfRedactionTarget } from '../types.js';
 
 export interface RedactionCounts {
@@ -56,6 +57,7 @@ export function regionsFor(targets: readonly PdfRedactionTarget[], pageIndex: nu
  */
 export function redactPage(
   m: PdfiumModule,
+  document: number,
   page: number,
   textPage: number,
   regions: readonly PdfRect[],
@@ -63,14 +65,19 @@ export function redactPage(
 ): boolean {
   if (regions.length === 0) return false;
 
+  // Partially covered runs first: they are rewritten rather than removed, and doing it
+  // before the whole-object pass keeps the two from fighting over the same handles.
+  const { split, handled } = splitPartiallyCovered(m, document, page, textPage, regions);
+  counts.textObjectsSplit += split;
+
   const objects = readPageObjects(m, page, textPage);
   const doomed = objects.filter((object) => regions.some((r) => intersects(object.bounds, r)));
-  if (doomed.length === 0) return false;
+  if (doomed.length === 0 && split === 0) return false;
 
   for (const object of [...doomed].sort((a, b) => b.index - a.index)) {
     const handle = m.ccall('FPDFPage_GetObject', 'number',
       ['number', 'number'], [page, object.index]) as number;
-    if (!handle) continue;
+    if (!handle || handled.has(handle)) continue;
 
     const removed = m.ccall('FPDFPage_RemoveObject', 'number',
       ['number', 'number'], [page, handle]) as number;

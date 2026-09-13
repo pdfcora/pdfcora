@@ -3,6 +3,7 @@ import { readSignatures } from './signature.js';
 import { verifySignature } from './cms/verify.js';
 import { signDocument, type PdfSignOptions } from './sign/sign.js';
 import { emptyCounts, redactPage, regionsFor, toReport } from './redact/region.js';
+import { scrubAnnotations, scrubAttachments } from './redact/scrub.js';
 import { PdfError } from './errors.js';
 import type {
   PdfAttachment, PdfMetadata, PdfOutlineItem, PdfPermissions, PdfSaveMode, PdfSize,
@@ -266,18 +267,42 @@ export class PdfDocument {
     }
 
     for (let pageIndex = 0; pageIndex < pageCount; pageIndex++) {
-      const regions = regionsFor(targets, pageIndex);
+      // A search target becomes regions: every match's rects on this page. Resolving it
+      // here rather than in the caller keeps one redaction path instead of two.
+      const regions = [...regionsFor(targets, pageIndex)];
+      for (const target of targets) {
+        if (target.kind !== 'textMatches') continue;
+        const page = await this.page(pageIndex);
+        for (const match of await page.text.search(target.query, target.options)) {
+          regions.push(...match.rects);
+        }
+      }
       if (regions.length === 0) continue;
 
       const changed = await this.withPage(pageIndex, (page, m) => {
         const textPage = m.ccall('FPDFText_LoadPage', 'number', ['number'], [page]) as number;
         try {
-          return redactPage(m, page, textPage, regions, counts);
+          const changedPage = redactPage(m, this.handle, page, textPage, regions, counts);
+          // Annotations sit on the page but outside its content stream, so a comment
+          // over redacted text survives unless it is removed explicitly.
+          scrubAnnotations(m, page, regions, counts);
+          return changedPage;
         } finally {
           if (textPage) m.ccall('FPDFText_ClosePage', null, ['number'], [textPage]);
         }
       });
       if (changed) counts.pages.push(pageIndex);
+    }
+
+    // Anything carrying a redacted string out of the document, whatever it is attached
+    // to. Search targets name the strings; a region target names none.
+    const needles = targets
+      .filter((t) => t.kind === 'textMatches')
+      .map((t) => (t as { query: string }).query)
+      .filter((q) => q.length > 0);
+
+    if (needles.length > 0) {
+      await this.run((handle, m) => scrubAttachments(m, handle, needles, counts));
     }
 
     return toReport(counts);
