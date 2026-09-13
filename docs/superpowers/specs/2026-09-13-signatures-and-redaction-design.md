@@ -72,6 +72,17 @@ Used by signing (§6) and by metadata scrub (§8.5). This is the highest-risk
 component in the design and is built and tested first, on its own, against a corpus
 of documents that use both xref styles.
 
+**Amended 2026-09-13:** writing is not sufficient. Signing must merge `/AcroForm` into
+the Catalog and the widget into a page's `/Annots`, and the metadata scrub must rewrite
+`/Info` — all existing objects that have to be read before they can be rewritten.
+Blind replacement would discard `/Pages`, `/Outlines` and the rest.
+
+A companion `PdfReader` is therefore a prerequisite for phases 4-6, not an optional
+extra. It needs Flate, because 4 of the 20 corpus documents use xref streams and object
+streams, and one (`bug_707673.pdf`) keeps its Catalog inside a compressed object stream.
+Flate is available on every platform without a dependency — Node `zlib`, Apple's
+Compression framework, `java.util.zip.Inflater`. See the phase 4 plan, Tasks 1-2.
+
 ### 4.2 Signatures
 
 Reading is PDFium. Verification and signing are platform crypto composed over
@@ -326,7 +337,11 @@ conformance contract updated. Phase 2 is the first useful release.
 
 ## 13. Open questions
 
-- Which TSA to use in tests. A public one makes CI network-dependent; a stubbed
-  RFC 3161 responder is preferable and is assumed here.
-- Whether a visible signature appearance is required in the first release, or
-  whether invisible signatures suffice until an app asks.
+Both settled on 2026-09-13 when the phase 4 plan was written:
+
+- **TSA in tests:** a stubbed RFC 3161 responder, not a public one. CI must not depend
+  on someone else's uptime, and a stub makes the failure paths testable at all. A real
+  TSA URL stays configurable for production.
+- **Visible appearance:** not in the first release. A signature is valid without one,
+  appearances are pure presentation, and shipping one badly is worse than not shipping
+  one.
