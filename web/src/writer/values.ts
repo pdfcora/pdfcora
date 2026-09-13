@@ -130,3 +130,9 @@ export function serialize(value: PdfValue, options: SerializeOptions = {}): Uint
     ascii('\nendobj\n'),
   ]);
 }
+
+/** The text of a name value, or undefined when `value` is not one. */
+export function asName(value: PdfValue): string | undefined {
+  if (value === null || typeof value !== 'object' || !(NAME in value)) return undefined;
+  return (value as PdfName)[NAME];
+}
