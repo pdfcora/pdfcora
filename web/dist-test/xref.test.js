@@ -11,29 +11,30 @@ const CORPUS = new URL('../../conformance/corpus/', import.meta.url).pathname;
 const read = (file) => new Uint8Array(readFileSync(`${CORPUS}${file}`));
 const inObjectStream = (entry) => 'inObjectStream' in entry;
 describe('inflate', () => {
-    test('round-trips zlib data', () => {
+    test('round-trips zlib data', async () => {
         const original = new TextEncoder().encode('stream contents '.repeat(40));
-        assert.deepEqual([...inflate(new Uint8Array(deflateSync(original)))], [...original]);
+        const out = await inflate(new Uint8Array(deflateSync(original)));
+        assert.deepEqual([...out], [...original]);
     });
     /** Corrupt streams arrive from real files; a native error must not escape. */
-    test('a corrupt stream raises a typed error rather than a native one', () => {
-        assert.throws(() => inflate(new Uint8Array([1, 2, 3, 4])), /inflate|deflate|corrupt/i);
+    test('a corrupt stream raises a typed error rather than a native one', async () => {
+        await assert.rejects(() => inflate(new Uint8Array([1, 2, 3, 4])), /inflate/i);
     });
 });
 describe('locating objects', () => {
-    test('locates every object in a classic xref table', () => {
+    test('locates every object in a classic xref table', async () => {
         // hello_world.pdf's table declares "0 7", so objects 1..6 exist.
-        const xref = buildXref(read('hello_world.pdf'));
+        const xref = await buildXref(read('hello_world.pdf'));
         for (const n of [1, 2, 3, 4, 5, 6])
             assert.ok(xref.has(n), `object ${n}`);
     });
-    test('locates objects behind an xref stream', () => {
-        const xref = buildXref(read('embedded_attachments.pdf'));
+    test('locates objects behind an xref stream', async () => {
+        const xref = await buildXref(read('embedded_attachments.pdf'));
         assert.ok(xref.size > 0);
     });
     /** The one corpus file whose Catalog lives inside a compressed object stream. */
-    test('locates an object that lives inside an object stream', () => {
-        const xref = buildXref(read('bug_707673.pdf'));
+    test('locates an object that lives inside an object stream', async () => {
+        const xref = await buildXref(read('bug_707673.pdf'));
         const compressed = [...xref.values()].filter(inObjectStream);
         assert.ok(compressed.length > 0, 'this file must exercise the object-stream path');
     });
@@ -42,42 +43,42 @@ describe('locating objects', () => {
      * wraps negative for large offsets, so only documents whose startxref sits late in a
      * big file failed. Small ones passed by accident.
      */
-    test('every unencrypted corpus document yields a non-empty map', () => {
+    test('every unencrypted corpus document yields a non-empty map', async () => {
         const files = readdirSync(CORPUS)
             .filter((f) => f.endsWith('.pdf') && !f.startsWith('encrypted_'));
         assert.ok(files.length >= 19, 'the sweep must cover the corpus, not a sample');
         for (const file of files) {
-            assert.ok(buildXref(read(file)).size > 0, file);
+            assert.ok((await buildXref(read(file))).size > 0, file);
         }
     });
     /** An appended update must not hide the objects the original file declared. */
-    test('follows /Prev through a chain of updates', () => {
+    test('follows /Prev through a chain of updates', async () => {
         const base = read('hello_world.pdf');
         const info = scanTrailer(base);
         const updated = appendUpdate(base, new Map([[nextObjectNumber(info), { Type: name('X') }]]));
-        const xref = buildXref(updated);
+        const xref = await buildXref(updated);
         for (const n of [1, 2, 3, 4, 5, 6])
             assert.ok(xref.has(n), `object ${n} after update`);
         assert.ok(xref.has(nextObjectNumber(info)), 'the appended object too');
     });
     /** A later update wins: that is what an incremental update means. */
-    test('a replaced object resolves to the newer offset', () => {
+    test('a replaced object resolves to the newer offset', async () => {
         const base = read('hello_world.pdf');
-        const before = buildXref(base).get(1);
+        const before = (await buildXref(base)).get(1);
         const updated = appendUpdate(base, new Map([[1, { Type: name('Replaced') }]]));
-        const after = buildXref(updated).get(1);
+        const after = (await buildXref(updated)).get(1);
         assert.notDeepEqual(before, after, 'object 1 must resolve to the appended copy');
         assert.ok('offset' in after && after.offset > base.length - 1);
     });
-    test('a corrupt xref is refused, not half-read', () => {
+    test('a corrupt xref is refused, not half-read', async () => {
         const bytes = new Uint8Array(read('embedded_attachments.pdf'));
         bytes[bytes.length - 20] ^= 0xff; // damage near startxref
-        assert.throws(() => buildXref(bytes), /xref|truncated|inflate|startxref/i);
+        await assert.rejects(() => buildXref(bytes), /xref|truncated|inflate|startxref/i);
     });
-    test('a /Prev cycle terminates rather than looping', () => {
+    test('a /Prev cycle terminates rather than looping', async () => {
         // A malformed file can point /Prev at its own section; the walk must stop.
         const bytes = read('hello_world.pdf');
-        const xref = buildXref(bytes);
+        const xref = await buildXref(bytes);
         assert.ok(xref.size > 0, 'the guard must not break the normal case');
     });
 });

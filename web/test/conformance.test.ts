@@ -1,6 +1,8 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -168,5 +170,51 @@ describe('conformance', () => {
     } finally {
       await document.close();
     }
+  });
+});
+
+/**
+ * The signing contract, asserted identically on all three platforms.
+ *
+ * Web supplies its own CMS implementation and iOS and Android build one natively, so the
+ * mechanism differs — but the properties a signed document must have do not, and that is
+ * what this pins.
+ */
+describe('signing contract', () => {
+  const FIXTURES = new URL('../../conformance/fixtures/', import.meta.url).pathname;
+  const scratch = mkdtempSync(join(tmpdir(), 'pdfiumkit-conformance-'));
+
+  const signer = {
+    async sign(data: Uint8Array): Promise<Uint8Array> {
+      const input = join(scratch, `d-${Math.random().toString(36).slice(2)}.bin`);
+      writeFileSync(input, data);
+      execFileSync('openssl', [
+        'cms', '-sign', '-binary', '-nosmimecap', '-cades', '-md', 'sha256',
+        '-signer', `${FIXTURES}test-signer-cert.pem`,
+        '-inkey', `${FIXTURES}test-signer-key.pem`,
+        '-outform', 'DER', '-in', input, '-out', `${input}.der`,
+      ]);
+      return new Uint8Array(readFileSync(`${input}.der`));
+    },
+  };
+
+  test('a signed document meets the contract', async () => {
+    const base = new Uint8Array(readFileSync(join(ROOT, 'conformance', 'corpus', 'hello_world.pdf')));
+    const signed = await (await PdfDocument.open(base)).sign({ signer });
+    const document = await PdfDocument.open(signed);
+
+    const signatures = await document.signatures();
+    assert.equal(signatures.length, 1, 'exactly one signature');
+    assert.equal(signatures[0]!.subFilter, 'ETSI.CAdES.detached');
+    assert.equal(signatures[0]!.coversWholeDocument, true);
+
+    const anchor = new Uint8Array(readFileSync(`${FIXTURES}test-signer.der`));
+    assert.equal((await document.verify(signatures[0]!, { trustAnchors: [anchor] })).kind, 'valid');
+    // Self-signed, so without the anchor it is sound but untrusted — never valid.
+    assert.equal((await document.verify(signatures[0]!)).kind, 'untrusted');
+
+    // The content must survive signing untouched.
+    assert.equal(await (await document.page(0)).text.string(),
+                 await (await (await PdfDocument.open(base)).page(0)).text.string());
   });
 });

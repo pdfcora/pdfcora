@@ -59,6 +59,17 @@ class DocumentStore(
         }
     }
 
+    /** Replaces the open document with bytes produced in-app, such as a signed copy. */
+    suspend fun replace(bytes: ByteArray, newTitle: String) {
+        val opened = PdfDocument.open(bytes)
+        document?.close()
+        document = opened
+        pageCount = opened.pageCount()
+        title = newTitle
+        error = null
+        revision++
+    }
+
     /** Runs an edit, then signals screens to reload. */
     fun edit(block: suspend (PdfDocument) -> Unit) {
         val current = document ?: return

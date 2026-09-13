@@ -93,7 +93,7 @@ describe('verifying a signature', () => {
      * to a fixed reserved size. The DER ends well before the blob does, so anything that
      * indexes from the end of `contents` is indexing into padding.
      */
-    test('contents is the padded placeholder, not just the DER', () => {
+    test('contents is the padded placeholder, not just the DER', async () => {
         const der = readTlv(signature.contents, 0);
         assert.ok(der.end < signature.contents.length, 'the fixture pads its placeholder, so this guards the assumption');
         assert.ok(signature.contents.subarray(der.end).every((b) => b === 0), 'everything after the DER should be padding');

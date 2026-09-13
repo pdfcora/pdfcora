@@ -13,8 +13,13 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pdfiumkit.PdfSignature
+import androidx.compose.ui.platform.LocalContext
 import com.pdfiumkit.cms.PdfSignatureValidity
 import com.pdfiumkit.cms.PdfVerifyOptions
+import com.pdfiumkit.sign.PdfSignOptions
+import com.pdfiumkit.sign.Pkcs12Signer
+import com.pdfiumkit.sign.sign
+import kotlinx.coroutines.launch
 import com.pdfiumkit.signatures
 import com.pdfiumkit.verify
 import java.text.SimpleDateFormat
@@ -34,6 +39,11 @@ fun SignaturesScreen(store: DocumentStore) {
     /** Two independent answers per signature, keyed by index. */
     var verdicts by remember { mutableStateOf<Map<Int, Pair<Boolean, PdfSignatureValidity>>>(emptyMap()) }
     var error by remember { mutableStateOf<String?>(null) }
+    var signing by remember { mutableStateOf(false) }
+    var status by remember { mutableStateOf<String?>(null) }
+
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(store.revision, store.document) {
         val document = store.document ?: return@LaunchedEffect
@@ -64,6 +74,48 @@ fun SignaturesScreen(store: DocumentStore) {
     }
 
     LazyColumn(Modifier.fillMaxSize().padding(16.dp)) {
+        item {
+            Button(
+                onClick = {
+                    val document = store.document ?: return@Button
+                    scope.launch {
+                        signing = true
+                        status = runCatching {
+                            val p12 = context.assets.open("test-signer.p12").use { it.readBytes() }
+                            val signed = document.sign(
+                                PdfSignOptions(
+                                    signer = Pkcs12Signer(p12, "pdfiumkit"),
+                                    reason = "Demo",
+                                ),
+                            )
+                            store.replace(signed, "Signed")
+                            "Signed — ${signed.size / 1024} KB"
+                        }.getOrElse { it.message ?: "signing failed" }
+                        signing = false
+                    }
+                },
+                enabled = !signing && store.document != null,
+                modifier = Modifier.fillMaxWidth().semantics { contentDescription = "sign-now" },
+            ) {
+                Text(if (signing) "Signing…" else "Sign with the test identity")
+            }
+
+            // Named plainly: it is a self-signed identity committed to this repository
+            // and it signs nothing anyone should rely on.
+            Text(
+                "A self-signed test certificate, committed for the demo. Documents signed " +
+                    "with it are cryptographically sound and deliberately untrusted.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 6.dp, bottom = 4.dp),
+            )
+            status?.let {
+                Text(it, style = MaterialTheme.typography.bodySmall,
+                     color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Spacer(Modifier.height(16.dp))
+        }
+
         error?.let { message ->
             item { Text(message, color = MaterialTheme.colorScheme.error) }
         }

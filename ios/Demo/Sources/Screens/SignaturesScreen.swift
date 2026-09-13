@@ -13,6 +13,8 @@ struct SignaturesScreen: View {
     /// Two independent answers per signature, keyed by index.
     @State private var verdicts: [Int: (intact: Bool, trust: PdfSignatureValidity)] = [:]
     @State private var error: String?
+    @State private var signing = false
+    @State private var status: String?
 
     var body: some View {
         List {
@@ -34,6 +36,30 @@ struct SignaturesScreen: View {
                     if let verdict = verdicts[signature.index] {
                         verification(verdict)
                     }
+                }
+            }
+
+            Section {
+                Button {
+                    Task { await signNow() }
+                } label: {
+                    HStack {
+                        Label("Sign with the test identity", systemImage: "signature")
+                        if signing { Spacer(); ProgressView() }
+                    }
+                }
+                .disabled(signing || store.document == nil)
+                .accessibilityIdentifier("sign-now")
+
+                // Named plainly: it is a self-signed identity committed to this
+                // repository and it signs nothing anyone should rely on.
+                Text("A self-signed test certificate, committed for the demo. Documents "
+                     + "signed with it are cryptographically sound and deliberately "
+                     + "untrusted.")
+                    .font(.caption).foregroundColor(.secondary)
+
+                if let status {
+                    Text(status).font(.caption).foregroundColor(.secondary)
                 }
             }
 
@@ -110,6 +136,34 @@ struct SignaturesScreen: View {
         formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
         formatter.timeZone = TimeZone(identifier: "UTC")
         return formatter.string(from: date) + " UTC"
+    }
+
+    /// Signs the open document and reloads, so the new signature appears alongside any
+    /// the document already carried.
+    private func signNow() async {
+        guard let document = store.document else { return }
+        signing = true
+        defer { signing = false }
+
+        do {
+            guard let url = Bundle.main.url(forResource: "test-signer", withExtension: "p12") else {
+                status = "the test identity is missing from the bundle"
+                return
+            }
+            let signer = try Pkcs12Signer(pkcs12: try Data(contentsOf: url), password: "pdfiumkit")
+            let signed = try await document.sign(PdfSignOptions(signer: signer, reason: "Demo"))
+
+            let out = FileManager.default.temporaryDirectory
+                .appendingPathComponent("pdfiumkit-signed.pdf")
+            try signed.write(to: out, options: .atomic)
+            await store.load(url: out, title: "Signed")
+            status = "Signed — \(ByteCountFormatter.string(fromByteCount: Int64(signed.count), countStyle: .file))"
+        } catch let failure as PdfError {
+            status = failure.description
+        } catch {
+            status = error.localizedDescription
+        }
+        await reload()
     }
 
     private func reload() async {

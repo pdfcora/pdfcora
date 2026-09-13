@@ -565,6 +565,22 @@ async function renderInfo() {
 
 async function renderSignatures() {
   const signatures = await state.document.signatures();
+
+  // Web ships no CMS implementation, so signing needs one from the app. There is no
+  // browser API for it, and the demo is not going to pretend otherwise.
+  $panel.append(
+    el('h3', {}, 'Signing'),
+    el('p', { className: 'muted' },
+       'This SDK does not ship a CMS implementation for the browser. WebCrypto provides '
+       + 'the primitives but not the container, so signing takes a CmsSigner you supply '
+       + '— from a library such as PKI.js, or from your own backend. iOS and Android '
+       + 'sign natively and need no such thing.'),
+    el('pre', {},
+       "const signed = await doc.sign({\n"
+       + "  signer: { async sign(data) { /* return DER PKCS#7 */ } },\n"
+       + "  reason: 'Approved',\n"
+       + "});"),
+  );
   if (!signatures.length) {
     $panel.append(el('p', { className: 'muted' }, 'This document carries no signatures.'));
     return;

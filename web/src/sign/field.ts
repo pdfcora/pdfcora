@@ -12,7 +12,7 @@
 
 import { appendUpdate } from '../writer/incremental.js';
 import { scanTrailer, nextObjectNumber } from '../writer/scan.js';
-import { buildXref } from '../writer/xref.js';
+import { buildXref, type XrefMap } from '../writer/xref.js';
 import { readObject, readCatalog, refNumber } from '../writer/read.js';
 import { asName, asRef, entryOf, name, raw, ref, type PdfValue } from '../writer/values.js';
 
@@ -49,23 +49,23 @@ export interface SignatureFieldPlacement {
 /** Every offset is written this wide so patching cannot move a single byte. */
 const OFFSET_WIDTH = 10;
 
-export function addSignatureField(
+export async function addSignatureField(
   base: Uint8Array,
   options: AddSignatureFieldOptions,
-): SignatureFieldPlacement {
+): Promise<SignatureFieldPlacement> {
   // scanTrailer refuses encrypted documents, which is the right answer here too: the
   // strings we are about to write would have to be encrypted with the document key.
   const info = scanTrailer(base);
-  const xref = buildXref(base);
-  const { number: catalogNumber, value: catalog } = readCatalog(base);
+  const xref = await buildXref(base);
+  const { number: catalogNumber, value: catalog } = await readCatalog(base);
 
   const first = nextObjectNumber(info);
   const signatureNumber = first;
   const widgetNumber = first + 1;
   const acroFormNumber = first + 2;
 
-  const pageNumber = findPage(base, xref, catalog, options.pageIndex ?? 0);
-  const page = pageNumber === undefined ? undefined : readObject(base, xref, pageNumber);
+  const pageNumber = await findPage(base, xref, catalog, options.pageIndex ?? 0);
+  const page = pageNumber === undefined ? undefined : await readObject(base, xref, pageNumber);
 
   const objects = new Map<number, PdfValue>();
 
@@ -97,7 +97,7 @@ export function addSignatureField(
 
   // Merge rather than replace: an existing AcroForm carries /DR, /DA and the document's
   // other fields, and dropping them would break every form in the file.
-  const existingAcroForm = acroFormOf(base, xref, catalog);
+  const existingAcroForm = await acroFormOf(base, xref, catalog);
   objects.set(acroFormNumber, {
     ...(existingAcroForm ?? {}),
     Fields: [...(fieldsOf(existingAcroForm) ?? []), ref(widgetNumber)],
@@ -109,7 +109,7 @@ export function addSignatureField(
   if (pageNumber !== undefined && page) {
     objects.set(pageNumber, {
       ...asDictionary(page),
-      Annots: [...(annotsOf(base, xref, page) ?? []), ref(widgetNumber)],
+      Annots: [...(await annotsOf(base, xref, page) ?? []), ref(widgetNumber)],
     });
   }
 
@@ -162,14 +162,14 @@ const asDictionary = (value: PdfValue): Record<string, PdfValue> =>
     : {};
 
 /** `/AcroForm` may be an inline dictionary or a reference; real files use both. */
-function acroFormOf(
+async function acroFormOf(
   bytes: Uint8Array,
-  xref: ReturnType<typeof buildXref>,
+  xref: XrefMap,
   catalog: PdfValue,
-): Record<string, PdfValue> | undefined {
+): Promise<Record<string, PdfValue> | undefined> {
   const number = refNumber(catalog, 'AcroForm');
   if (number !== undefined) {
-    const value = readObject(bytes, xref, number);
+    const value = await readObject(bytes, xref, number);
     return value ? asDictionary(value) : undefined;
   }
   const inline = entryOf(catalog, 'AcroForm');
@@ -182,34 +182,34 @@ function fieldsOf(acroForm: Record<string, PdfValue> | undefined): PdfValue[] | 
 }
 
 /** `/Annots` may likewise be inline or a reference. */
-function annotsOf(
+async function annotsOf(
   bytes: Uint8Array,
-  xref: ReturnType<typeof buildXref>,
+  xref: XrefMap,
   page: PdfValue,
-): PdfValue[] | undefined {
+): Promise<PdfValue[] | undefined> {
   const inline = entryOf(page, 'Annots');
   if (Array.isArray(inline)) return [...inline];
 
   const number = refNumber(page, 'Annots');
   if (number === undefined) return undefined;
-  const value = readObject(bytes, xref, number);
+  const value = await readObject(bytes, xref, number);
   return Array.isArray(value) ? [...value] : undefined;
 }
 
 /** Walks `/Pages` to the requested leaf, descending through intermediate nodes. */
-function findPage(
+async function findPage(
   bytes: Uint8Array,
-  xref: ReturnType<typeof buildXref>,
+  xref: XrefMap,
   catalog: PdfValue,
   wanted: number,
-): number | undefined {
+): Promise<number | undefined> {
   const rootNumber = refNumber(catalog, 'Pages');
   if (rootNumber === undefined) return undefined;
 
   let seen = 0;
-  const visit = (number: number, depth: number): number | undefined => {
+  const visit = async (number: number, depth: number): Promise<number | undefined> => {
     if (depth > 32) return undefined;                 // malformed trees can cycle
-    const node = readObject(bytes, xref, number);
+    const node = await readObject(bytes, xref, number);
     if (!node) return undefined;
 
     if (asName(entryOf(node, 'Type') ?? null) === 'Page') {
@@ -221,7 +221,7 @@ function findPage(
     for (const kid of kids) {
       const kidNumber = asRef(kid)?.[0];
       if (kidNumber === undefined) continue;
-      const found = visit(kidNumber, depth + 1);
+      const found = await visit(kidNumber, depth + 1);
       if (found !== undefined) return found;
     }
     return undefined;

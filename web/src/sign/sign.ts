@@ -60,7 +60,7 @@ export async function signDocument(
   options: PdfSignOptions,
 ): Promise<Uint8Array> {
   const reservedBytes = options.reservedBytes ?? DEFAULT_RESERVED;
-  const placed = addSignatureField(base, {
+  const placed = await addSignatureField(base, {
     reservedBytes,
     reason: options.reason,
     contactInfo: options.contactInfo,

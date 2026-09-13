@@ -18,11 +18,11 @@ const decoder = new TextDecoder('latin1');
 /** How far past an object header to look for its dictionary. */
 const WINDOW = 1 << 20;
 
-export function readObject(
+export async function readObject(
   bytes: Uint8Array,
   xref: XrefMap,
   number: number,
-): PdfValue | undefined {
+): Promise<PdfValue | undefined> {
   const entry = xref.get(number);
   if (!entry) return undefined;
 
@@ -52,12 +52,12 @@ function readAtOffset(bytes: Uint8Array, offset: number, number: number): PdfVal
  * The stream begins with `/N` pairs of "object number, offset", after which `/First`
  * marks where the objects themselves start.
  */
-function readFromObjectStream(
+async function readFromObjectStream(
   bytes: Uint8Array,
   xref: XrefMap,
   streamNumber: number,
   index: number,
-): PdfValue | undefined {
+): Promise<PdfValue | undefined> {
   const entry = xref.get(streamNumber);
   if (!entry || !('offset' in entry)) return undefined;
 
@@ -74,7 +74,7 @@ function readFromObjectStream(
 
   let data: Uint8Array;
   try {
-    data = streamBytes(bytes, entry.offset, window, dictionary);
+    data = await streamBytes(bytes, entry.offset, window, dictionary);
   } catch {
     return undefined;
   }
@@ -92,15 +92,15 @@ function readFromObjectStream(
 }
 
 /** The document Catalog, with the object number so it can be rewritten. */
-export function readCatalog(bytes: Uint8Array): { number: number; value: PdfValue } {
-  const xref = buildXref(bytes);
-  const number = catalogNumber(bytes, xref);
-  const value = readObject(bytes, xref, number);
+export async function readCatalog(bytes: Uint8Array): Promise<{ number: number; value: PdfValue }> {
+  const xref = await buildXref(bytes);
+  const number = await catalogNumber(bytes, xref);
+  const value = await readObject(bytes, xref, number);
   if (!value) throw new Error(`read: catalog object ${number} is unreadable`);
   return { number, value };
 }
 
-function catalogNumber(bytes: Uint8Array, xref: XrefMap): number {
+async function catalogNumber(bytes: Uint8Array, xref: XrefMap): Promise<number> {
   // The trailer's /Root is authoritative, and scanTrailer already resolves it.
   const trailerRoot = rootFromTrailer(bytes);
   if (trailerRoot !== undefined) return trailerRoot;
@@ -108,7 +108,7 @@ function catalogNumber(bytes: Uint8Array, xref: XrefMap): number {
   // Some malformed files have no usable /Root. Finding the object that calls itself a
   // Catalog is a last resort, and better than failing outright.
   for (const number of xref.keys()) {
-    const value = readObject(bytes, xref, number);
+    const value = await readObject(bytes, xref, number);
     if (value && asName(entryOf(value, 'Type') ?? null) === 'Catalog') return number;
   }
   throw new Error('read: no /Root and no object claims to be a Catalog');

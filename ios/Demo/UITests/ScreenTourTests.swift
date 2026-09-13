@@ -122,6 +122,33 @@ final class ScreenTourTests: XCTestCase {
         XCTAssertLessThan(page.frame.width, fitted, "zoom out did not shrink the page")
     }
 
+    /// Signing end to end through the UI: an unsigned document gains a signature, and
+    /// the screen reports it as covering the whole file.
+    func testSigningFromTheDemoProducesASignature() {
+        let app = XCUIApplication()
+        app.launch()
+        XCTAssertTrue(app.staticTexts["Hello World"].waitForExistence(timeout: 10))
+
+        let link = app.descendants(matching: .any).matching(identifier: "demo-Signatures").firstMatch
+        if !link.waitForExistence(timeout: 5) { app.swipeUp() }
+        XCTAssertTrue(link.waitForExistence(timeout: 5))
+        link.tap()
+        XCTAssertTrue(app.navigationBars["Signatures"].waitForExistence(timeout: 10))
+
+        // Hello World carries no signature to begin with.
+        XCTAssertTrue(app.staticTexts["This document carries no signatures."]
+            .waitForExistence(timeout: 5))
+
+        app.descendants(matching: .any).matching(identifier: "sign-now").firstMatch.tap()
+
+        let coverage = app.descendants(matching: .any).matching(identifier: "coverage-whole").firstMatch
+        XCTAssertTrue(coverage.waitForExistence(timeout: 20), "signing should produce a signature")
+        XCTAssertTrue(app.staticTexts["adbe.pkcs7.detached"].exists
+                      || app.staticTexts["ETSI.CAdES.detached"].exists,
+                      "the sub-filter should be shown")
+        save(app, named: "signed-from-demo")
+    }
+
     /// The headline use case: a document with a form is edited on the page itself —
     /// the field is a live control at its own position, not a dialog.
     func testFormFieldsAreEditedInlineOnThePage() {

@@ -2,11 +2,13 @@
  * Flate decompression.
  *
  * Needed because a cross-reference stream and the object streams it points into are both
- * compressed, and one corpus document keeps its Catalog inside one. Node supplies the
- * algorithm; this only wraps it so a native error cannot escape into SDK code.
+ * compressed, and one corpus document keeps its Catalog inside one.
+ *
+ * Uses `DecompressionStream`, which is a web standard present in browsers and in Node.
+ * An earlier version imported `node:zlib`; every Node test passed and the browser bundle
+ * was dead on arrival, because that module does not exist there. Streams are async, which
+ * is why everything that decompresses is async too.
  */
-
-import { inflateSync, inflateRawSync } from 'node:zlib';
 
 export class InflateError extends Error {
   constructor(message: string) {
@@ -15,18 +17,24 @@ export class InflateError extends Error {
   }
 }
 
-export function inflate(bytes: Uint8Array): Uint8Array {
+export async function inflate(bytes: Uint8Array): Promise<Uint8Array> {
+  if (bytes.length === 0) throw new InflateError('empty stream');
+
+  // Try the zlib wrapper first, then raw: some producers omit the two-byte header.
   try {
-    return new Uint8Array(inflateSync(bytes));
-  } catch (first) {
-    // Some producers omit the two-byte zlib header. Trying raw deflate before giving up
-    // costs nothing and reads files that would otherwise be rejected.
+    return await decompress(bytes, 'deflate');
+  } catch {
     try {
-      return new Uint8Array(inflateRawSync(bytes));
-    } catch {
-      throw new InflateError(first instanceof Error ? first.message : String(first));
+      return await decompress(bytes, 'deflate-raw');
+    } catch (error) {
+      throw new InflateError(error instanceof Error ? error.message : String(error));
     }
   }
+}
+
+async function decompress(bytes: Uint8Array, format: CompressionFormat): Promise<Uint8Array> {
+  const stream = new Blob([bytes as BlobPart]).stream().pipeThrough(new DecompressionStream(format));
+  return new Uint8Array(await new Response(stream).arrayBuffer());
 }
 
 /**

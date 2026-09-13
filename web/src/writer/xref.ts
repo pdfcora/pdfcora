@@ -25,7 +25,7 @@ const decoder = new TextDecoder('latin1');
 /** How much of the file to decode when reading a section header or dictionary. */
 const WINDOW = 1 << 20;
 
-export function buildXref(bytes: Uint8Array): XrefMap {
+export async function buildXref(bytes: Uint8Array): Promise<XrefMap> {
   const map: XrefMap = new Map();
   const visited = new Set<number>();
 
@@ -37,7 +37,7 @@ export function buildXref(bytes: Uint8Array): XrefMap {
     visited.add(offset);
 
     // Sections are walked newest first, so an entry already present is the newer one.
-    offset = readSection(bytes, offset, map);
+    offset = await readSection(bytes, offset, map);
   }
 
   if (map.size === 0) throw new Error('xref: no objects were located');
@@ -45,7 +45,7 @@ export function buildXref(bytes: Uint8Array): XrefMap {
 }
 
 /** Returns the `/Prev` offset, or undefined at the end of the chain. */
-function readSection(bytes: Uint8Array, offset: number, map: XrefMap): number | undefined {
+async function readSection(bytes: Uint8Array, offset: number, map: XrefMap): Promise<number | undefined> {
   const window = decoder.decode(bytes.subarray(offset, Math.min(bytes.length, offset + WINDOW)));
 
   // startxref is not always exact; the writer tolerates the same slippage.
@@ -57,7 +57,7 @@ function readSection(bytes: Uint8Array, offset: number, map: XrefMap): number | 
   const text = window.slice(start);
   return /^\s*xref\b/.test(text)
     ? readTable(text, offset + start, map)
-    : readStream(bytes, offset + start, map);
+    : await readStream(bytes, offset + start, map);
 }
 
 function readTable(text: string, base: number, map: XrefMap): number | undefined {
@@ -97,13 +97,13 @@ function readTable(text: string, base: number, map: XrefMap): number | undefined
  * A cross-reference stream: the table itself is an object, Flate-compressed, whose
  * `/W` gives the width of each field and `/Index` the object numbers covered.
  */
-function readStream(bytes: Uint8Array, offset: number, map: XrefMap): number | undefined {
+async function readStream(bytes: Uint8Array, offset: number, map: XrefMap): Promise<number | undefined> {
   const window = decoder.decode(bytes.subarray(offset, Math.min(bytes.length, offset + WINDOW)));
   const dictionaryAt = window.indexOf('<<');
   if (dictionaryAt < 0) throw new Error(`xref: no stream dictionary at ${offset}`);
 
   const dictionary = parseDictionaryAt(window, dictionaryAt);
-  const data = streamBytes(bytes, offset, window, dictionary);
+  const data = await streamBytes(bytes, offset, window, dictionary);
 
   const widths = (dictionary.W as number[] | undefined)?.map(Number);
   if (!widths || widths.length < 3) throw new Error('xref: stream has no /W');
@@ -144,12 +144,12 @@ function readStream(bytes: Uint8Array, offset: number, map: XrefMap): number | u
 }
 
 /** The raw bytes of a stream object, decompressed when `/Filter` says so. */
-export function streamBytes(
+export async function streamBytes(
   bytes: Uint8Array,
   offset: number,
   window: string,
   dictionary: Dictionary,
-): Uint8Array {
+): Promise<Uint8Array> {
   const keyword = window.indexOf('stream');
   if (keyword < 0) throw new Error('xref: object is not a stream');
 
@@ -171,7 +171,7 @@ export function streamBytes(
     throw new Error(`xref: unsupported stream filter ${names.join(',') || 'unknown'}`);
   }
 
-  const inflated = inflate(raw);
+  const inflated = await inflate(raw);
   const params = dictionary.DecodeParms;
   const predictor = numberOf(entryOf(params ?? null, 'Predictor') ?? undefined) ?? 1;
   if (predictor <= 1) return inflated;

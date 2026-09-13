@@ -237,3 +237,45 @@ class SigningTest {
         assertTrue("the host cross-check needs this file", target.exists())
     }
 }
+
+/**
+ * The signing contract, asserted identically on all three platforms.
+ *
+ * Web supplies its own CMS implementation while iOS and Android build one natively, so
+ * the mechanism differs — but the properties a signed document must have do not, and that
+ * is what this pins.
+ */
+@RunWith(AndroidJUnit4::class)
+class SigningContractTest {
+
+    private val context get() = InstrumentationRegistry.getInstrumentation().context
+    private fun asset(path: String) = context.assets.open(path).use { it.readBytes() }
+
+    @Test
+    fun aSignedDocumentMeetsTheContract() = runTest {
+        val base = asset("corpus/hello_world.pdf")
+        val before = PdfDocument.open(base).use { it.page(0).text.string() }
+
+        val signed = PdfDocument.open(base).use {
+            it.sign(PdfSignOptions(signer = Pkcs12Signer(asset("fixtures/test-signer.p12"), "pdfiumkit")))
+        }
+
+        PdfDocument.open(signed).use { document ->
+            val signatures = document.signatures()
+            assertEquals("exactly one signature", 1, signatures.size)
+            assertEquals("ETSI.CAdES.detached", signatures[0].subFilter)
+            assertTrue(signatures[0].coversWholeDocument)
+
+            val anchor = asset("fixtures/test-signer.der")
+            assertTrue(
+                document.verify(signatures[0], PdfVerifyOptions(trustAnchors = listOf(anchor)))
+                    is PdfSignatureValidity.Valid,
+            )
+            // Self-signed, so without the anchor it is sound but untrusted — never valid.
+            assertTrue(document.verify(signatures[0]) is PdfSignatureValidity.Untrusted)
+
+            // The content must survive signing untouched.
+            assertEquals(before, document.page(0).text.string())
+        }
+    }
+}

@@ -244,3 +244,44 @@ final class SigningTests: XCTestCase {
         }
     }
 }
+
+/// The signing contract, asserted identically on all three platforms.
+///
+/// Web supplies its own CMS implementation while iOS and Android build one natively, so
+/// the mechanism differs — but the properties a signed document must have do not, and
+/// that is what this pins.
+final class SigningContractTests: XCTestCase {
+    func testASignedDocumentMeetsTheContract() async throws {
+        let base = try Data(contentsOf: Repo.corpus.appendingPathComponent("hello_world.pdf"))
+        let p12 = try Data(contentsOf: Repo.root
+            .appendingPathComponent("conformance/fixtures/test-signer.p12"))
+        let anchor = try Data(contentsOf: Repo.root
+            .appendingPathComponent("conformance/fixtures/test-signer.der"))
+
+        let original = try await PdfDocument(data: base)
+        let before = try await original.page(0).text.string()
+
+        let signed = try await PdfDocument(data: base).sign(
+            PdfSignOptions(signer: try Pkcs12Signer(pkcs12: p12, password: "pdfiumkit")))
+        let document = try await PdfDocument(data: signed)
+
+        let signatures = try await document.signatures()
+        XCTAssertEqual(signatures.count, 1, "exactly one signature")
+        XCTAssertEqual(signatures[0].subFilter, "ETSI.CAdES.detached")
+        XCTAssertTrue(signatures[0].coversWholeDocument)
+
+        let trusted = await document.verify(
+            signatures[0], options: PdfVerifyOptions(trustAnchors: [anchor]))
+        guard case .valid = trusted else { return XCTFail("expected valid, got \(trusted)") }
+
+        // Self-signed, so without the anchor it is sound but untrusted — never valid.
+        let untrusted = await document.verify(signatures[0])
+        guard case .untrusted = untrusted else {
+            return XCTFail("expected untrusted, got \(untrusted)")
+        }
+
+        // The content must survive signing untouched.
+        let after = try await document.page(0).text.string()
+        XCTAssertEqual(after, before)
+    }
+}
