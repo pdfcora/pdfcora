@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PdfiumKit — PDF SDK for iOS, Android and Web</title>
+  <meta name="description" content="A PDF SDK for iOS, Android and Web, built on PDFium. One object model in Swift, Kotlin and TypeScript — thread-safe by construction, with typed errors instead of native crashes.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script>document.documentElement.classList.add('js')</script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="#top" aria-label="PdfiumKit home">
+        <img src="favicon.svg" alt="" width="26" height="26">
+        <span>PdfiumKit</span>
+      </a>
+      <button class="nav-toggle" aria-expanded="false" aria-controls="site-nav">
+        <span class="sr">Menu</span>
+        <span class="bars" aria-hidden="true"></span>
+      </button>
+      <nav id="site-nav" class="site-nav" aria-label="Primary">
+        <a href="#features">Features</a>
+        <a href="#coverage">Coverage</a>
+        <a href="#tested">Tested</a>
+        <a href="#performance">Performance</a>
+        <a href="#install">Install</a>
+        <a href="#planned">Planned</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- Hero -->
+    <section class="hero" id="top">
+      <div class="wrap hero-grid">
+        <div class="hero-copy">
+          <p class="badge"><span class="dot" aria-hidden="true"></span>0.1.0 · Pre-release</p>
+          <h1>The PDF SDK for iOS, Android&nbsp;and&nbsp;Web.</h1>
+          <p class="lede">Built on PDFium. One object model, expressed idiomatically in Swift, Kotlin and TypeScript — thread-safe by construction, with typed errors instead of native crashes.</p>
+          <div class="cta">
+            <a class="btn btn-primary" href="#features">Explore features</a>
+            <a class="btn btn-ghost" href="#tested">See how it’s tested</a>
+          </div>
+        </div>
+
+        <div class="code-card" data-tabs>
+          <div class="code-head">
+            <div class="tablist" role="tablist" aria-label="Language">
+              <button role="tab" id="t-swift" aria-controls="p-swift" aria-selected="true">Swift</button>
+              <button role="tab" id="t-kotlin" aria-controls="p-kotlin" aria-selected="false" tabindex="-1">Kotlin</button>
+              <button role="tab" id="t-ts" aria-controls="p-ts" aria-selected="false" tabindex="-1">TypeScript</button>
+            </div>
+            <button class="copy" type="button" data-copy aria-label="Copy code">Copy</button>
+          </div>
+          <div role="tabpanel" id="p-swift" aria-labelledby="t-swift" class="panel">
+            <span class="panel-label">Swift</span>
+<pre><code><span class="k">let</span> doc  = <span class="k">try await</span> <span class="t">PdfDocument</span>(url: url)
+<span class="k">let</span> page = <span class="k">try await</span> doc.<span class="f">page</span>(<span class="n">0</span>)
+<span class="k">let</span> img  = <span class="k">try await</span> page.<span class="f">render</span>(width: <span class="n">1200</span>)
+<span class="k">let</span> hits = <span class="k">try await</span> page.text.<span class="f">search</span>(<span class="s">"invoice"</span>)</code></pre>
+          </div>
+          <div role="tabpanel" id="p-kotlin" aria-labelledby="t-kotlin" class="panel">
+            <span class="panel-label">Kotlin</span>
+<pre><code><span class="t">PdfDocument</span>.<span class="f">open</span>(file).<span class="f">use</span> { doc <span class="k">-&gt;</span>
+    <span class="k">val</span> page = doc.<span class="f">page</span>(<span class="n">0</span>)
+    <span class="k">val</span> bmp  = page.<span class="f">render</span>(width = <span class="n">1200</span>)
+    <span class="k">val</span> hits = page.text.<span class="f">search</span>(<span class="s">"invoice"</span>)
+}</code></pre>
+          </div>
+          <div role="tabpanel" id="p-ts" aria-labelledby="t-ts" class="panel">
+            <span class="panel-label">TypeScript</span>
+<pre><code><span class="k">const</span> doc  = <span class="k">await</span> <span class="t">PdfDocument</span>.<span class="f">open</span>(bytes)
+<span class="k">const</span> page = <span class="k">await</span> doc.<span class="f">page</span>(<span class="n">0</span>)
+<span class="k">const</span> img  = <span class="k">await</span> page.<span class="f">render</span>({ width: <span class="n">1200</span> })
+<span class="k">const</span> hits = <span class="k">await</span> page.text.<span class="f">search</span>(<span class="s">'invoice'</span>)</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="wrap">
+        <dl class="stats">
+          <div><dt>Crashes across PDFium’s 293-document test corpus</dt><dd>0</dd></div>
+          <div><dt>PDFium functions exported, on every platform</dt><dd>448<small>/460</small></dd></div>
+          <div><dt>Native SDKs, one shared conformance suite</dt><dd>3</dd></div>
+          <div><dt>WebAssembly engine, brotli-compressed</dt><dd>1.5<small> MB</small></dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="section" id="features" aria-labelledby="features-h">
+      <div class="wrap">
+        <header class="section-head">
+          <p class="eyebrow">Features</p>
+          <h2 id="features-h">Everything you need to open, read and change a PDF.</h2>
+          <p>The same capabilities, the same types and the same error cases on all three platforms.</p>
+        </header>
+
+        <div class="cards">
+          <article class="card">
+            <h3>Rendering</h3>
+            <p>Render any page to a bitmap at a scaled size or exact pixel dimensions, with annotations and form widgets on or off.</p>
+          </article>
+          <article class="card">
+            <h3>Text and search</h3>
+            <p>Extract page text, search with result rectangles, and get bounding boxes for every character.</p>
+          </article>
+          <article class="card">
+            <h3>Annotations</h3>
+            <p>Read 15 annotation kinds. Create ink and notes, and remove annotations. Highlight, underline and strikeout on iOS.</p>
+          </article>
+          <article class="card">
+            <h3>Form fields</h3>
+            <p>Read 8 field kinds and set text, checkbox and option values. Position native controls over field rectangles with <code>PdfViewTransform</code>.</p>
+          </article>
+          <article class="card">
+            <h3>Document structure</h3>
+            <p>Outline and bookmarks, links, metadata, permissions, and attachments — list them and extract their bytes.</p>
+          </article>
+          <article class="card">
+            <h3>Saving</h3>
+            <p>Save in full, or incrementally to preserve the original bytes and any existing signatures.</p>
+          </article>
+          <article class="card">
+            <h3>Password-protected files</h3>
+            <p>Open from bytes or a file, with a password when required — reported as a typed error you can prompt on.</p>
+          </article>
+          <article class="card card-accent">
+            <h3>Recoverable on the Web</h3>
+            <p><code>PdfWorker</code> runs the whole SDK in a Worker behind the same API — so a hung render can be terminated and your page keeps running.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Coverage -->
+    <section class="section section-alt" id="coverage" aria-labelledby="coverage-h">
+      <div class="wrap">
+        <header class="section-head">
+          <p class="eyebrow">Coverage</p>
+          <h2 id="coverage-h">Honest about what’s done.</h2>
+          <p>Every row is exercised by the shared conformance suite on every platform that claims it. The gaps are deliberate and on the list.</p>
+        </header>
+
+        <div class="table-scroll">
+          <table class="coverage">
+            <caption class="sr">Feature coverage by platform</caption>
+            <thead>
+              <tr><th scope="col">Capability</th><th scope="col">iOS</th><th scope="col">Android</th><th scope="col">Web</th></tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row">Open from bytes / file, password</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
+              <tr><th scope="row">Page count, size, rotation</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
+              <tr><th scope="row">Render (scaled or exact pixels)</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
+              <tr><th scope="row">Cancellable progressive render</th><td class="p"><span class="sr">Partial</span></td><td class="n"><span class="sr">Not yet</span></td><td class="n"><span class="sr">Not yet</span></td></tr>
+              <tr><th scope="row">Recoverable from an engine hang</th><td class="n"><span class="sr">Not yet</span></td><td class="n"><span class="sr">Not yet</span></td><td class="y"><span class="sr">Supported, via Worker</span></td></tr>
+              <tr><th scope="row">Text extraction, character count</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
+              <tr><th scope="row">Text hash-verified vs reference engine</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
+              <tr><th scope="row">Search with rects</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
+              <tr><th scope="row">Character bounding boxes</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
+              <tr><th scope="row">Annotations: read (15 kinds)</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
+              <tr><th scope="row">Annotations: ink, note, remove</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
+              <tr><th scope="row">Annotations: highlight / underline / strikeout</th><td class="y"><span class="sr">Supported</span></td><td class="n"><span class="sr">Not yet</span></td><td class="n"><span class="sr">Not yet</span></td></tr>
+              <tr><th scope="row">Form fields: read (8 kinds)</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
+              <tr><th scope="row">Form fields: set text, checkbox, option</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
+              <tr><th scope="row">Outline / bookmarks</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
+              <tr><th scope="row">Links</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
+              <tr><th scope="row">Metadata, permissions</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
+              <tr><th scope="row">Attachments: list</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
+              <tr><th scope="row">Attachments: extract bytes</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
+              <tr><th scope="row">Save (full / incremental)</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
+              <tr><th scope="row">Raw PDFium escape hatch</th><td class="y"><span class="sr">Supported</span></td><td class="n"><span class="sr">Not yet</span></td><td class="n"><span class="sr">Not yet</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <ul class="legend" aria-label="Legend">
+          <li><span class="mark y" aria-hidden="true"></span>Supported</li>
+          <li><span class="mark p" aria-hidden="true"></span>Partial — iOS cancels <em>between</em> progressive steps, not inside a single engine call</li>
+          <li><span class="mark n" aria-hidden="true"></span>Not yet</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Tested -->
+    <section class="section" id="tested" aria-labelledby="tested-h">
+      <div class="wrap">
+        <header class="section-head">
+          <p class="eyebrow">Tested, not promised</p>
+          <h2 id="tested-h">We ran PDFium’s own test corpus through the entire API.</h2>
+          <p>All 293 documents, every call on the public surface. Here is exactly what happened.</p>
+        </header>
+
+        <div class="split">
+          <div>
+            <table class="results">
+              <caption>Robustness sweep, full corpus</caption>
+              <tbody>
+                <tr><th scope="row">Completed</th><td>265</td></tr>
+                <tr><th scope="row">Rejected on open, with a typed error <span class="muted">(9 password, 14 corrupt)</span></th><td>23</td></tr>
+                <tr><th scope="row">Typed error during use</th><td>4</td></tr>
+                <tr class="warn"><th scope="row">Hang</th><td>1</td></tr>
+                <tr class="good"><th scope="row">Crash</th><td>0</td></tr>
+                <tr class="good"><th scope="row">Untyped throw</th><td>0</td></tr>
+              </tbody>
+            </table>
+            <p class="totals"><strong>Test suites:</strong> 29 iOS · 28 Android · 27 Web · 12 host</p>
+          </div>
+
+          <div class="prose">
+            <h3>One contract, three SDKs</h3>
+            <p>A single expectations file defines page counts, geometry and failure modes for 18 corpus documents, and all three SDKs are tested against it. Page counts are cross-checked against poppler, so the suite isn’t grading itself.</p>
+            <p><strong>Rendering</strong> is checked by position: a known RGB test page must place blue, green and red exactly where the reference engine does — which catches channel-order bugs pixel counting can’t.</p>
+            <p><strong>Text</strong> is checked by exact character count plus a SHA-256 of the normalised page text. The three SDKs share an engine but have three independently written UTF-16 decoders; this is where an off-by-one would surface.</p>
+          </div>
+        </div>
+
+        <aside class="callout" aria-labelledby="limit-h">
+          <div class="callout-body">
+            <p class="eyebrow">Known limit</p>
+            <h3 id="limit-h">One 1,230-byte file hangs PDFium’s renderer — so we measured the damage.</h3>
+            <p>Opening it, reading text, annotations and fields all complete in about 20&nbsp;ms. Only rendering hangs, inside a native call that no cancellation can interrupt. It reproduces with raw <code>FPDF_*</code> calls; it is engine behaviour, not a binding bug.</p>
+            <p>Each document runs on its own serial executor, so the hang is <strong>contained</strong>: with 16 simultaneous hangs on iOS and 10 on Android, other documents kept rendering and the rest of the app kept working. On the Web, <code>PdfWorker</code> recovers fully:</p>
+          </div>
+          <div class="code-card code-card-compact">
+            <div class="code-head">
+              <span class="code-title">TypeScript</span>
+              <button class="copy" type="button" data-copy aria-label="Copy code">Copy</button>
+            </div>
+<pre><code><span class="k">const</span> worker = <span class="k">new</span> <span class="t">PdfWorker</span>({ workerUrl, glueUrl, wasmUrl })
+<span class="k">const</span> doc  = <span class="k">await</span> worker.<span class="f">open</span>(bytes)
+<span class="k">const</span> page = <span class="k">await</span> doc.<span class="f">page</span>(<span class="n">0</span>)
+<span class="k">const</span> img  = <span class="k">await</span> page.<span class="f">render</span>({ width: <span class="n">1200</span> }) <span class="c">// same API</span>
+
+worker.<span class="f">terminate</span>() <span class="c">// pending calls reject: 'cancelled'</span></code></pre>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- Performance -->
+    <section class="section section-alt" id="performance" aria-labelledby="perf-h">
+      <div class="wrap">
+        <header class="section-head">
+          <p class="eyebrow">Size and speed</p>
+          <h2 id="perf-h">Measured, with the caveats left in.</h2>
+        </header>
+
+        <div class="split split-wide">
+          <div>
+            <h3 class="table-title">Binary cost</h3>
+            <table class="data">
+              <caption class="sr">Binary size by platform</caption>
+              <thead><tr><th scope="col">Artifact</th><th scope="col" class="num">Size</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">Android <code>.so</code>, arm64, full API</th><td class="num">4.77 MB</td></tr>
+                <tr><th scope="row">Android <code>.so</code>, armeabi-v7a</th><td class="num">3.29 MB</td></tr>
+                <tr><th scope="row">Web <code>pdfium.wasm</code></th><td class="num">3.8 MB → 1.5 MB <span class="muted">brotli</span></td></tr>
+              </tbody>
+            </table>
+            <p class="note">Linking the full API costs only ~0.6 MB on Android and ~0.2 MB on iOS over a minimal core — rendering a single page already pulls in the parser, fonts, codecs and graphics layer.</p>
+          </div>
+
+          <div>
+            <h3 class="table-title">At scale</h3>
+            <div class="table-scroll">
+              <table class="data">
+                <caption class="sr">Timings for large generated documents</caption>
+                <thead>
+                  <tr><th scope="col">Operation</th><th scope="col" class="num">200 pages<br><span class="muted">18.8 MB</span></th><th scope="col" class="num">400 pages<br><span class="muted">2.4 MB</span></th><th scope="col" class="num">300 pages<br><span class="muted">1.2 MB</span></th></tr>
+                </thead>
+                <tbody>
+                  <tr><th scope="row">Open</th><td class="num">26 ms</td><td class="num">&lt;1 ms</td><td class="num">&lt;1 ms</td></tr>
+                  <tr><th scope="row">Thumbnail every page (120px)</th><td class="num">0.3 s</td><td class="num">0.1 s</td><td class="num">0.6 s</td></tr>
+                  <tr><th scope="row">Per page, mean / p95</th><td class="num">1.6 / 2.0 ms</td><td class="num">0.2 / 0.3 ms</td><td class="num">1.9 / 2.0 ms</td></tr>
+                  <tr><th scope="row">Single 1600px render</th><td class="num">14 ms</td><td class="num">8 ms</td><td class="num">18 ms</td></tr>
+                  <tr><th scope="row">Text, all pages</th><td class="num">65 ms</td><td class="num">6 ms</td><td class="num">153 ms</td></tr>
+                  <tr><th scope="row">Save</th><td class="num">181 ms</td><td class="num">11 ms</td><td class="num">2 ms</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="note">WebAssembly on Node — native iOS and Android are faster. <strong>No memory leak:</strong> 40 open–render–close cycles of the 18.8 MB document leave the WASM heap flat at 25.6 MB.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Design -->
+    <section class="section" id="design" aria-labelledby="design-h">
+      <div class="wrap">
+        <header class="section-head">
+          <p class="eyebrow">Design</p>
+          <h2 id="design-h">Hard to misuse, by construction.</h2>
+        </header>
+        <div class="principles">
+          <div>
+            <h3>Thread-safe</h3>
+            <p>Each document owns a serial executor — an <code>actor</code> on iOS, a single-threaded dispatcher on Android, a promise chain on the Web. Calling from the wrong thread can’t corrupt memory; misuse raises <code>PdfError.closed</code>.</p>
+          </div>
+          <div>
+            <h3>Typed errors</h3>
+            <p>Errors are a closed set with the same cases on all three platforms. Malformed input surfaces as an error you can handle — not a native crash.</p>
+          </div>
+          <div>
+            <h3>Explicit coordinates</h3>
+            <p><code>PdfRect</code> is always PDF space. Converting is an explicit call in each direction — <code>toView</code> to draw, <code>toPdf</code> to hit-test. No hidden Y-flip, anywhere.</p>
+          </div>
+          <div>
+            <h3>Nothing silently dropped</h3>
+            <p>Every sealed hierarchy carries an <code>unknown</code> case, so annotation and field types the SDK doesn’t model yet are surfaced rather than lost.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Install -->
+    <section class="section section-alt" id="install" aria-labelledby="install-h">
+      <div class="wrap">
+        <header class="section-head">
+          <p class="eyebrow">Install</p>
+          <h2 id="install-h">Native packages for each platform.</h2>
+          <p>Packages will be published with the first release. Each SDK has already been verified by consuming it from a project outside its own repository.</p>
+        </header>
+
+        <div class="installs">
+          <article class="install">
+            <header>
+              <h3>iOS</h3>
+              <p class="reqs">iOS 15+ · Swift 5.9 · async/await</p>
+            </header>
+            <div class="code-card code-card-compact">
+              <div class="code-head">
+                <span class="code-title">Swift Package Manager</span>
+                <button class="copy" type="button" data-copy aria-label="Copy code">Copy</button>
+              </div>
+<pre><code>.<span class="f">product</span>(name: <span class="s">"PdfiumKit"</span>, package: <span class="s">"PdfiumKit"</span>)</code></pre>
+            </div>
+          </article>
+
+          <article class="install">
+            <header>
+              <h3>Android</h3>
+              <p class="reqs">minSdk 23 · Kotlin coroutines · all four ABIs</p>
+            </header>
+            <div class="code-card code-card-compact">
+              <div class="code-head">
+                <span class="code-title">Gradle</span>
+                <button class="copy" type="button" data-copy aria-label="Copy code">Copy</button>
+              </div>
+<pre><code><span class="f">implementation</span>(<span class="s">"com.pdfiumkit:pdfiumkit:0.1.0"</span>)</code></pre>
+            </div>
+          </article>
+
+          <article class="install">
+            <header>
+              <h3>Web</h3>
+              <p class="reqs">TypeScript · WebAssembly · ESM · Node 18+</p>
+            </header>
+            <div class="code-card code-card-compact">
+              <div class="code-head">
+                <span class="code-title">npm</span>
+                <button class="copy" type="button" data-copy aria-label="Copy code">Copy</button>
+              </div>
+<pre><code>npm install <span class="s">@pdfiumkit/web</span></code></pre>
+            </div>
+            <p class="note">The <code>.wasm</code> ships inside the package — nothing else to host.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Planned -->
+    <section class="section" id="planned" aria-labelledby="planned-h">
+      <div class="wrap">
+        <header class="section-head">
+          <p class="eyebrow">Planned</p>
+          <h2 id="planned-h">Where it’s heading.</h2>
+          <p><strong>None of this is available yet.</strong> It’s the direction of travel, not a commitment to dates.</p>
+        </header>
+        <ul class="roadmap">
+          <li>
+            <h3>Close the coverage gaps</h3>
+            <p>Highlight, underline and strikeout on Android and Web; a raw engine escape hatch beyond iOS.</p>
+          </li>
+          <li>
+            <h3>Accessible viewer</h3>
+            <p>A viewer designed to conform to EN 301 549 and WCAG 2.1 AA — keyboard navigation, screen-reader semantics, reflow.</p>
+          </li>
+          <li>
+            <h3>Accessibility remediation</h3>
+            <p>AI-proposed tags, reading order and alt text, confirmed by a person before anything is written.</p>
+          </li>
+          <li>
+            <h3>Redaction</h3>
+            <p>Detect and remove sensitive content, with suggestions always reviewed before they’re applied.</p>
+          </li>
+          <li>
+            <h3>Digital signatures</h3>
+            <p>Sign documents and verify existing signatures.</p>
+          </li>
+          <li>
+            <h3>Bring your own model</h3>
+            <p>AI features that run locally or against your own endpoint, so documents never leave your infrastructure.</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <div>
+        <a class="brand" href="#top">
+          <img src="favicon.svg" alt="" width="22" height="22">
+          <span>PdfiumKit</span>
+        </a>
+        <p class="muted">0.1.0 · Pre-release</p>
+      </div>
+      <div class="attrib">
+        <p>Built on <a href="https://pdfium.googlesource.com/pdfium/">PDFium</a>, pinned at <code>chromium/7243</code>, licensed under BSD-3-Clause.</p>
+        <p>Portions of this software are copyright © 2024 The FreeType Project (<a href="https://freetype.org">https://freetype.org</a>). All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="site.js" defer></script>
+</body>
+</html>
