@@ -65,4 +65,13 @@ internal object Native {
     @JvmStatic external fun attachmentName(handle: Long, index: Int): String
     @JvmStatic external fun attachmentData(handle: Long, index: Int): ByteArray
     @JvmStatic external fun saveDocument(handle: Long, flags: Int): ByteArray
+
+    @JvmStatic external fun signatureCount(handle: Long): Int
+    @JvmStatic external fun documentByteLength(handle: Long): Long
+    @JvmStatic external fun signatureByteRange(handle: Long, index: Int): IntArray
+    @JvmStatic external fun signatureContents(handle: Long, index: Int): ByteArray
+    /** `which`: 0 = sub-filter, 1 = time. Both are 7-bit ASCII. */
+    @JvmStatic external fun signatureAscii(handle: Long, index: Int, which: Int): String
+    @JvmStatic external fun signatureReason(handle: Long, index: Int): String
+    @JvmStatic external fun signatureDocMdp(handle: Long, index: Int): Int
 }

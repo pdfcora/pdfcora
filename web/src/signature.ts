@@ -21,9 +21,9 @@ export function readSignatures(m: PdfiumModule, doc: number, fileLength: number)
     const byteRange = readByteRange(m, handle);
     signatures.push({
       index,
-      reason: readLatin1(m, handle, 'FPDFSignatureObj_GetReason') || undefined,
-      signingTime: parsePdfDate(readLatin1(m, handle, 'FPDFSignatureObj_GetTime')),
-      subFilter: readLatin1(m, handle, 'FPDFSignatureObj_GetSubFilter') || undefined,
+      reason: readReason(m, handle) || undefined,
+      signingTime: parsePdfDate(readAscii(m, handle, 'FPDFSignatureObj_GetTime')),
+      subFilter: readAscii(m, handle, 'FPDFSignatureObj_GetSubFilter') || undefined,
       byteRange,
       contents: readContents(m, handle),
       docMdpPermission: readDocMdp(m, handle),
@@ -77,17 +77,31 @@ function readContents(m: PdfiumModule, signature: number): Uint8Array {
 }
 
 /**
- * These fields are byte strings, not UTF-16 like the rest of PDFium's string API, so
- * `readUtf16` would mangle them.
+ * `/Reason` is UTF-16LE, unlike the sub-filter and time, which the header documents as
+ * 7-bit ASCII. Reading it as bytes interleaves NULs into the result.
  */
-function readLatin1(m: PdfiumModule, signature: number, fn: string): string {
+function readReason(m: PdfiumModule, signature: number): string {
+  const size = m.ccall('FPDFSignatureObj_GetReason', 'number',
+    ['number', 'number', 'number'], [signature, 0, 0]) as number;
+  if (size <= 2) return '';                      // a lone terminator means absent
+
+  return withBuffer(m, size, (ptr) => {
+    m.ccall('FPDFSignatureObj_GetReason', 'number',
+      ['number', 'number', 'number'], [signature, ptr, size]);
+    const units = new Uint16Array(m.HEAPU8.buffer, ptr, size / 2 - 1);
+    return String.fromCharCode(...units);
+  });
+}
+
+/** The sub-filter and time are 7-bit ASCII byte strings, not PDFium's usual UTF-16. */
+function readAscii(m: PdfiumModule, signature: number, fn: string): string {
   const size = m.ccall(fn, 'number', ['number', 'number', 'number'], [signature, 0, 0]) as number;
   if (size <= 0) return '';
 
   return withBuffer(m, size, (ptr) => {
     m.ccall(fn, 'number', ['number', 'number', 'number'], [signature, ptr, size]);
     const bytes = m.HEAPU8.subarray(ptr, ptr + size);
-    // PDFium includes a trailing NUL in the reported size for these fields.
+    // PDFium counts the trailing NUL in the reported size for these fields.
     const end = bytes[size - 1] === 0 ? size - 1 : size;
     return String.fromCharCode(...bytes.subarray(0, end));
   });

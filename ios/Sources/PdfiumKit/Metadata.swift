@@ -73,6 +73,18 @@ extension PdfDocument {
 
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(identifier: "UTC") ?? .current
-        return calendar.date(from: components)
+        guard var date = calendar.date(from: components) else { return nil }
+
+        // The offset suffix is O HH'mm', where O is Z, + or -. Signature times carry one
+        // and are compared against real instants, so ignoring it shifts the reported day.
+        let suffix = s.dropFirst(digits.count)
+        if let sign = suffix.first, sign == "+" || sign == "-" {
+            let offsetDigits = suffix.dropFirst().filter(\.isNumber)
+            let hours = Int(offsetDigits.prefix(2)) ?? 0
+            let minutes = Int(offsetDigits.dropFirst(2).prefix(2)) ?? 0
+            let seconds = Double(hours * 3600 + minutes * 60)
+            date.addTimeInterval(sign == "+" ? -seconds : seconds)
+        }
+        return date
     }
 }

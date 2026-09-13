@@ -27,7 +27,8 @@ public actor PdfDocument {
     private var formInfo = FPDF_FORMFILLINFO()
 
     /// PDFium reads from this buffer lazily, so it must outlive the document handle.
-    private let backing: Data
+    /// Its length is also what a signature's byte range is measured against.
+    let backing: Data
 
     /// The PDFium revision this SDK was built against.
     public nonisolated static var engineVersion: String { PdfEngine.revision }

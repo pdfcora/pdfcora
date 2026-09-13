@@ -20,6 +20,7 @@
 #include "public/fpdf_formfill.h"
 #include "public/fpdf_save.h"
 #include "public/fpdf_attachment.h"
+#include "public/fpdf_signature.h"
 
 #define LOG_TAG "pdfiumkit"
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
@@ -944,3 +945,106 @@ Java_com_pdfiumkit_Native_saveDocument(JNIEnv* env, jclass, jlong handle, jint f
 }
 
 }  // extern "C"
+
+// MARK: - Signatures
+//
+// Reading only. PDFium exposes no way to create a signature and no crypto at all, so
+// the PKCS#7 blob is handed back untouched for a verifier to check.
+
+extern "C" JNIEXPORT jint JNICALL
+Java_com_pdfiumkit_Native_signatureCount(JNIEnv*, jclass, jlong handle) {
+    auto* d = asDoc(handle);
+    if (!d || !d->doc) return 0;
+    return FPDF_GetSignatureCount(d->doc);
+}
+
+/// Length of the bytes the document was opened from, which a byte range is measured
+/// against to decide whether a signature covers the whole file.
+extern "C" JNIEXPORT jlong JNICALL
+Java_com_pdfiumkit_Native_documentByteLength(JNIEnv*, jclass, jlong handle) {
+    auto* d = asDoc(handle);
+    return d ? static_cast<jlong>(d->bytes.size()) : 0;
+}
+
+namespace {
+FPDF_SIGNATURE signatureAt(Document* d, jint index) {
+    if (!d || !d->doc) return nullptr;
+    return FPDF_GetSignatureObject(d->doc, index);
+}
+}  // namespace
+
+extern "C" JNIEXPORT jintArray JNICALL
+Java_com_pdfiumkit_Native_signatureByteRange(JNIEnv* env, jclass, jlong handle, jint index) {
+    FPDF_SIGNATURE signature = signatureAt(asDoc(handle), index);
+    if (!signature) return env->NewIntArray(0);
+
+    unsigned long count = FPDFSignatureObj_GetByteRange(signature, nullptr, 0);
+    if (count == 0) return env->NewIntArray(0);
+
+    std::vector<int> values(count);
+    FPDFSignatureObj_GetByteRange(signature, values.data(), count);
+
+    jintArray out = env->NewIntArray(static_cast<jsize>(count));
+    env->SetIntArrayRegion(out, 0, static_cast<jsize>(count), values.data());
+    return out;
+}
+
+extern "C" JNIEXPORT jbyteArray JNICALL
+Java_com_pdfiumkit_Native_signatureContents(JNIEnv* env, jclass, jlong handle, jint index) {
+    FPDF_SIGNATURE signature = signatureAt(asDoc(handle), index);
+    if (!signature) return env->NewByteArray(0);
+
+    unsigned long size = FPDFSignatureObj_GetContents(signature, nullptr, 0);
+    if (size == 0) return env->NewByteArray(0);
+
+    std::vector<uint8_t> bytes(size);
+    FPDFSignatureObj_GetContents(signature, bytes.data(), size);
+
+    jbyteArray out = env->NewByteArray(static_cast<jsize>(size));
+    env->SetByteArrayRegion(out, 0, static_cast<jsize>(size),
+                            reinterpret_cast<const jbyte*>(bytes.data()));
+    return out;
+}
+
+/// The sub-filter and time are 7-bit ASCII byte strings, unlike PDFium's usual UTF-16.
+/// `which`: 0 = sub-filter, 1 = time.
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_pdfiumkit_Native_signatureAscii(JNIEnv* env, jclass, jlong handle, jint index, jint which) {
+    FPDF_SIGNATURE signature = signatureAt(asDoc(handle), index);
+    if (!signature) return env->NewStringUTF("");
+
+    auto read = [&](char* buffer, unsigned long length) -> unsigned long {
+        return which == 0 ? FPDFSignatureObj_GetSubFilter(signature, buffer, length)
+                          : FPDFSignatureObj_GetTime(signature, buffer, length);
+    };
+
+    unsigned long size = read(nullptr, 0);
+    if (size == 0) return env->NewStringUTF("");
+
+    std::vector<char> buffer(size + 1, 0);
+    read(buffer.data(), size);
+    buffer[size] = 0;   // PDFium counts the NUL in the size, but do not rely on it
+    return env->NewStringUTF(buffer.data());
+}
+
+/// `/Reason` is UTF-16LE, unlike the sub-filter and time.
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_pdfiumkit_Native_signatureReason(JNIEnv* env, jclass, jlong handle, jint index) {
+    FPDF_SIGNATURE signature = signatureAt(asDoc(handle), index);
+    if (!signature) return env->NewStringUTF("");
+
+    unsigned long size = FPDFSignatureObj_GetReason(signature, nullptr, 0);
+    if (size <= 2) return env->NewStringUTF("");   // a lone terminator means absent
+
+    std::vector<unsigned short> units(size / 2);
+    FPDFSignatureObj_GetReason(signature, units.data(), size);
+    jsize length = static_cast<jsize>(units.size());
+    if (length > 0 && units[length - 1] == 0) length -= 1;
+    return env->NewString(units.data(), length);
+}
+
+extern "C" JNIEXPORT jint JNICALL
+Java_com_pdfiumkit_Native_signatureDocMdp(JNIEnv*, jclass, jlong handle, jint index) {
+    FPDF_SIGNATURE signature = signatureAt(asDoc(handle), index);
+    return signature ? FPDFSignatureObj_GetDocMDPPermission(signature) : 0;
+}
