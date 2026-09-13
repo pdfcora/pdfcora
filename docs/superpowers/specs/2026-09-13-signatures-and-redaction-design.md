@@ -153,13 +153,17 @@ PAdES B-T with an RFC 3161 timestamp; on web the CMS step is pluggable.
 Step 7 is why the placeholder is fixed-size and why the writer must be able to
 patch bytes without re-serialising.
 
-Platform crypto:
+Platform crypto. **Corrected 2026-09-13:** an earlier draft of this table claimed iOS
+would use Security.framework for CMS. It cannot. `CMSDecoder` and `CMSEncoder` ship only
+in the macOS SDK; the iOS SDK has no public CMS API. Android exposes a PKCS#7 cert chain
+through `CertificateFactory` but not the signed attributes. Every platform can perform
+the underlying cryptography; none can parse the container.
 
-| Platform | CMS | Timestamp |
-| --- | --- | --- |
-| iOS | Security.framework | `URLSession` to the TSA |
-| Android | JCA + Bouncy Castle for CMS | `HttpURLConnection` |
-| Web | `CmsSigner` interface supplied by the app | app's fetch |
+| Platform | CMS container | Primitives | Timestamp |
+| --- | --- | --- | --- |
+| iOS | our own reader (§7.1) | CryptoKit / Security | `URLSession` to the TSA |
+| Android | our own reader (§7.1) | JCA | `HttpURLConnection` |
+| Web | app-supplied `CmsSigner` for signing; our own reader for verification | WebCrypto | app's fetch |
 
 The web SDK ships **no** CMS implementation and gains no dependency. It defines:
 
@@ -174,6 +178,18 @@ Apps that only read or redact carry nothing extra. This keeps the zero-dependenc
 promise while leaving signing available.
 
 ## 7. Verification
+
+### 7.1 A minimal CMS reader
+
+Since no platform provides one, verification parses the PKCS#7 itself. Deliberately
+narrow: enough DER to walk a `SignedData` and extract the certificates, the
+`messageDigest` signed attribute, the signature algorithm and the signature value.
+Nothing is re-encoded, no ASN.1 beyond what those fields need, and it never runs on
+data it has not first bounds-checked.
+
+The cryptography itself is not ours — digests and signature verification use each
+platform's primitives. Only the container walk is shared, which is what keeps the three
+SDKs reporting identical verdicts.
 
 ```
 1. Read /ByteRange and /Contents via PDFium.
