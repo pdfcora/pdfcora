@@ -136,3 +136,15 @@ export function asName(value: PdfValue): string | undefined {
   if (value === null || typeof value !== 'object' || !(NAME in value)) return undefined;
   return (value as PdfName)[NAME];
 }
+
+/** The object and generation a reference points at, or undefined when not a reference. */
+export function asRef(value: PdfValue): readonly [number, number] | undefined {
+  if (value === null || typeof value !== 'object' || !(REF in value)) return undefined;
+  return (value as PdfRef)[REF];
+}
+
+/** A dictionary entry, or undefined when `value` is not a dictionary. */
+export function entryOf(value: PdfValue, key: string): PdfValue | undefined {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  return (value as Record<string, PdfValue>)[key];
+}

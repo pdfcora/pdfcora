@@ -9,9 +9,9 @@
  * update. Newer sections win, which is exactly what an incremental update means.
  */
 
-import { inflate } from './inflate.js';
+import { inflate, undoPredictor } from './inflate.js';
 import { parseDictionaryAt, type Dictionary } from './dictionary.js';
-import { asName } from './values.js';
+import { asName, entryOf } from './values.js';
 
 /** Where an object lives: at a file offset, or inside a compressed object stream. */
 export type XrefEntry =
@@ -167,8 +167,22 @@ export function streamBytes(
   const names = filters.map((f) => asName(f as never) ?? '');
 
   if (names.length === 0) return raw;
-  if (names.every((n) => n === 'FlateDecode')) return inflate(raw);
-  throw new Error(`xref: unsupported stream filter ${names.join(',') || 'unknown'}`);
+  if (!names.every((n) => n === 'FlateDecode')) {
+    throw new Error(`xref: unsupported stream filter ${names.join(',') || 'unknown'}`);
+  }
+
+  const inflated = inflate(raw);
+  const params = dictionary.DecodeParms;
+  const predictor = numberOf(entryOf(params ?? null, 'Predictor') ?? undefined) ?? 1;
+  if (predictor <= 1) return inflated;
+
+  return undoPredictor(
+    inflated,
+    predictor,
+    numberOf(entryOf(params ?? null, 'Columns') ?? undefined) ?? 1,
+    numberOf(entryOf(params ?? null, 'Colors') ?? undefined) ?? 1,
+    numberOf(entryOf(params ?? null, 'BitsPerComponent') ?? undefined) ?? 8,
+  );
 }
 
 function findEndstream(bytes: Uint8Array, start: number): number {
