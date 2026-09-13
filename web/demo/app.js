@@ -590,9 +590,31 @@ async function renderSignatures() {
         ['Signed ranges', signature.byteRange.join(', ')],
         ['PKCS#7 size', `${signature.contents.length} bytes`],
       ]),
+    );
+
+    // Two deliberately separate questions. Verifying without anchors answers trust
+    // and, when it fails, hands back the chain; re-verifying with that chain's own
+    // root as an anchor then isolates the cryptography.
+    const plain = await state.document.verify(signature);
+    const trusted = plain.kind === 'valid';
+    const anchored = plain.kind === 'untrusted' && plain.chain.length
+      ? await state.document.verify(signature, { trustAnchors: [plain.chain.at(-1).der] })
+      : plain;
+    const intact = anchored.kind === 'valid';
+
+    $panel.append(
+      el('h4', {}, 'Verification'),
+      el('p', { className: intact ? 'ok' : 'warn' },
+         intact
+           ? 'Integrity: the signed bytes are unchanged.'
+           : `Integrity: FAILED — ${anchored.kind}.`),
+      el('p', { className: trusted ? 'ok' : 'warn' },
+         trusted
+           ? 'Trust: the chain reaches a trusted issuer.'
+           : `Trust: not established — ${plain.kind === 'untrusted' ? plain.reason : plain.kind}.`),
       el('p', { className: 'muted' },
-         'Not verified. This SDK reads signatures; it does not yet check them '
-         + 'cryptographically or validate the certificate chain.'),
+         'Revocation is not checked, so a valid result does not mean the certificate '
+         + 'is still in good standing.'),
     );
   }
 }

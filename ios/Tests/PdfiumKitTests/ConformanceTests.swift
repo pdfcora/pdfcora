@@ -29,6 +29,8 @@ struct Expectations: Decodable {
         let subFilter: String
         let byteRange: [Int]
         let coversWholeDocument: Bool
+        let signatureValid: Bool
+        let certificateTrusted: Bool
     }
     struct Document: Decodable {
         let category: String
@@ -41,6 +43,11 @@ struct Expectations: Decodable {
     }
     let engine: String
     let documents: [String: Document]
+}
+
+private func isValid(_ verdict: PdfSignatureValidity) -> Bool {
+    if case .valid = verdict { return true }
+    return false
 }
 
 final class ConformanceTests: XCTestCase {
@@ -114,6 +121,21 @@ final class ConformanceTests: XCTestCase {
                         XCTAssertEqual(actual[i].coversWholeDocument,
                             expectedSignature.coversWholeDocument,
                             "\(name) signature \(i) coverage")
+
+                        // pdfsig reports integrity and trust separately, and so must we.
+                        // With the signer's own certificate as an anchor the verdict must
+                        // be valid, which can only happen if the signature verifies; with
+                        // no anchors it must be untrusted, never valid.
+                        let cms = try CmsSignedData.parse([UInt8](actual[i].contents))
+                        let root = Data(try XCTUnwrap(cms.certificates.last))
+                        let anchored = await doc.verify(
+                            actual[i], options: PdfVerifyOptions(trustAnchors: [root]))
+                        XCTAssertEqual(isValid(anchored), expectedSignature.signatureValid,
+                            "\(name) signature \(i) cryptographic validity")
+
+                        let unanchored = await doc.verify(actual[i])
+                        XCTAssertEqual(isValid(unanchored), expectedSignature.certificateTrusted,
+                            "\(name) signature \(i) trust without anchors")
                     }
                 }
             }

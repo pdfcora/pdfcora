@@ -35,6 +35,11 @@ function pdfsigSignatures(path) {
       subFilter,
       byteRange: ranges,
       coversWholeDocument: /- Total document signed/.test(block),
+      // pdfsig reports these two separately, and so must we. A signature can be
+      // cryptographically valid while its issuer is unknown; that is the case this
+      // fixture exercises.
+      signatureValid: /- Signature Validation:\s*Signature is Valid/.test(block),
+      certificateTrusted: /- Certificate Validation:\s*Certificate is Trusted/.test(block),
     });
   }
   return signatures;

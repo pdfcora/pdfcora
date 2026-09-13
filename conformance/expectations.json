@@ -1,6 +1,6 @@
 {
   "engine": "chromium/7243",
-  "generated": "2026-09-13T11:18:45.525Z",
+  "generated": "2026-09-13T12:32:09.504Z",
   "documents": {
     "hello_world.pdf": {
       "category": "basic",
@@ -349,7 +349,9 @@
             156392,
             141565
           ],
-          "coversWholeDocument": true
+          "coversWholeDocument": true,
+          "signatureValid": true,
+          "certificateTrusted": false
         }
       ]
     }

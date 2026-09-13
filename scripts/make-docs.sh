@@ -114,7 +114,8 @@ an error type and a conformance suite.</p>
   <li>Every document owns a serial executor; concurrent use is safe across documents.</li>
   <li>Errors are a closed set with the same cases on all three platforms.</li>
   <li>Coordinates are PDF space (bottom-left origin); <code>PdfViewTransform</code> converts.</li>
-  <li>Signatures are read, not verified, and report whether they cover the whole file.</li>
+  <li>Signatures are read and verified. Integrity and trust are separate answers, and a
+      signature reports whether it covers the whole file.</li>
 </ul>
 <p class='meta'>Version $VERSION · built $(date -u +%Y-%m-%d) · $(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo untracked).
 Third-party licences: <a href='notice.html'>NOTICE</a>.</p>"
@@ -145,6 +146,14 @@ for field in try await page.formFields() {
         // Valid, but content was appended after signing and is not protected.
     }
 }</pre>
+<h2>Verify it</h2>
+<pre>switch try await document.verify(signature, options: .init(trustAnchors: roots)) {
+case .valid(let signer, _):     print(\"signed by\", signer.commonName ?? \"?\")
+case .digestMismatch:           print(\"the bytes changed after signing\")
+case .untrusted(let chain, _):  print(\"intact, but not trusted\", chain.count)
+default: break
+}</pre>
+<p class='meta'>Integrity and trust are separate answers, and revocation is not checked.</p>
 <h2>Errors</h2>
 <pre>do { _ = try await PdfDocument(data: data) }
 catch PdfError.passwordRequired { /* prompt */ }
@@ -169,6 +178,14 @@ val bitmap = page.render(width = 1024, options = PdfRenderOptions(annotations = 
         // Valid, but content was appended after signing and is not protected.
     }
 }</pre>
+<h2>Verify it</h2>
+<pre>when (val verdict = document.verify(signature, PdfVerifyOptions(trustAnchors = roots))) {
+    is PdfSignatureValidity.Valid -&gt; println(verdict.signer.commonName)
+    is PdfSignatureValidity.DigestMismatch -&gt; println(\"the bytes changed after signing\")
+    is PdfSignatureValidity.Untrusted -&gt; println(\"intact, but not trusted\")
+    else -&gt; Unit
+}</pre>
+<p class='meta'>Integrity and trust are separate answers, and revocation is not checked.</p>
 <h2>Place a control over a form field</h2>
 <pre>val transform = PdfViewTransform.fittingWidth(page.size(), viewportPx)
 page.formFields().forEach { field -> val box = transform.toView(field.base.rect) }</pre>
@@ -196,6 +213,13 @@ Run it in a worker so the page can recover by terminating it:</p>
     // Valid, but content was appended after signing and is not protected.
   }
 }</pre>
+<h2>Verify it</h2>
+<pre>const verdict = await doc.verify(signature, { trustAnchors: roots });
+if (verdict.kind === 'digestMismatch') {       // the bytes changed after signing
+} else if (verdict.kind === 'untrusted') {     // intact, but the issuer is unknown
+} else if (verdict.kind === 'valid') {         // both
+}</pre>
+<p class='meta'>Integrity and trust are separate answers, and revocation is not checked.</p>
 <h2>Place a control over a form field</h2>
 <pre>const t = PdfViewTransform.fittingWidth(await page.size(), canvas.clientWidth);
 for (const field of await page.formFields()) { const box = t.toViewRect(field.rect); }</pre>

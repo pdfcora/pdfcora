@@ -96,7 +96,9 @@
               "required": [
                 "subFilter",
                 "byteRange",
-                "coversWholeDocument"
+                "coversWholeDocument",
+                "signatureValid",
+                "certificateTrusted"
               ],
               "properties": {
                 "subFilter": {
@@ -110,6 +112,14 @@
                 },
                 "coversWholeDocument": {
                   "type": "boolean"
+                },
+                "signatureValid": {
+                  "type": "boolean",
+                  "description": "pdfsig: the signature verifies cryptographically."
+                },
+                "certificateTrusted": {
+                  "type": "boolean",
+                  "description": "pdfsig: the chain reaches a trusted issuer. Independent of signatureValid."
                 }
               }
             }

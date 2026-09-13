@@ -76,6 +76,16 @@ describe('conformance', () => {
                         assert.equal(actual[i].subFilter, expectedSignature.subFilter, `${name} signature ${i} sub-filter`);
                         assert.deepEqual([...actual[i].byteRange], expectedSignature.byteRange, `${name} signature ${i} byte range`);
                         assert.equal(actual[i].coversWholeDocument, expectedSignature.coversWholeDocument, `${name} signature ${i} coverage`);
+                        // pdfsig reports integrity and trust separately, and so must we. With the
+                        // signer's own certificate as an anchor the verdict must be valid, which
+                        // can only happen if the signature itself verifies; with no anchors it
+                        // must be untrusted, never valid.
+                        const { parseSignedData } = await import('../dist/cms/signedData.js');
+                        const root = parseSignedData(actual[i].contents).certificates.at(-1);
+                        const anchored = await document.verify(actual[i], { trustAnchors: [root] });
+                        assert.equal(anchored.kind === 'valid', expectedSignature.signatureValid, `${name} signature ${i} cryptographic validity`);
+                        const unanchored = await document.verify(actual[i]);
+                        assert.equal(unanchored.kind === 'valid', expectedSignature.certificateTrusted, `${name} signature ${i} trust without anchors`);
                     }
                 }
             }

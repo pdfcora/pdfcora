@@ -2,6 +2,9 @@ package com.pdfiumkit
 
 import android.graphics.Color
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.pdfiumkit.cms.CmsSignedData
+import com.pdfiumkit.cms.PdfSignatureValidity
+import com.pdfiumkit.cms.PdfVerifyOptions
 import androidx.test.platform.app.InstrumentationRegistry
 import kotlinx.coroutines.test.runTest
 import org.json.JSONObject
@@ -71,6 +74,23 @@ class ConformanceTest {
                         assertEquals("$name signature $i coverage",
                             expectedSignature.getBoolean("coversWholeDocument"),
                             actual[i].coversWholeDocument)
+
+                        // pdfsig reports integrity and trust separately, and so must we.
+                        // With the signer's own certificate as an anchor the verdict must
+                        // be valid, which can only happen if the signature verifies; with
+                        // no anchors it must be untrusted, never valid.
+                        val cms = CmsSignedData.parse(actual[i].contents)
+                        val root = cms.certificates.last()
+                        val anchored = document.verify(
+                            actual[i], PdfVerifyOptions(trustAnchors = listOf(root)))
+                        assertEquals("$name signature $i cryptographic validity",
+                            expectedSignature.getBoolean("signatureValid"),
+                            anchored is PdfSignatureValidity.Valid)
+
+                        val unanchored = document.verify(actual[i])
+                        assertEquals("$name signature $i trust without anchors",
+                            expectedSignature.getBoolean("certificateTrusted"),
+                            unanchored is PdfSignatureValidity.Valid)
                     }
                 }
 
