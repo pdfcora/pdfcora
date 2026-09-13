@@ -218,3 +218,29 @@ final class RedactionTests: XCTestCase {
                        "a filled field carries the text out of the document")
     }
 }
+
+/// The redaction contract, asserted identically on all three platforms.
+///
+/// The gate is the saved bytes, not the text layer: a black box over text passes an
+/// extraction check and leaves every word in the file.
+final class RedactionContractTests: XCTestCase {
+    func testRedactedContentIsGoneFromTheTextAndTheBytes() async throws {
+        let base = try Data(contentsOf: Repo.corpus.appendingPathComponent("hello_world.pdf"))
+        let document = try await PdfDocument(data: base)
+
+        let objects = try await document.pageObjects(at: 0)
+        let goodbye = try XCTUnwrap(objects.first { $0.text?.contains("Goodbye") == true })
+        let report = try await document.redact([.region(goodbye.bounds, pageIndex: 0)])
+
+        XCTAssertEqual(report.textObjects, 1)
+        XCTAssertEqual(report.pages, [0])
+
+        let saved = try await document.data(mode: .full)
+        let text = try await PdfDocument(data: saved).page(0).text.string()
+        XCTAssertFalse(text.contains("Goodbye"), "still extractable: \(text)")
+        XCTAssertFalse(
+            String(String.UnicodeScalarView(saved.map { UnicodeScalar($0) })).contains("Goodbye"),
+            "still in the file bytes")
+        XCTAssertTrue(text.contains("Hello"), "unrelated content must survive")
+    }
+}

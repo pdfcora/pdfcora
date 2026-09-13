@@ -114,6 +114,8 @@ an error type and a conformance suite.</p>
   <li>Every document owns a serial executor; concurrent use is safe across documents.</li>
   <li>Errors are a closed set with the same cases on all three platforms.</li>
   <li>Coordinates are PDF space (bottom-left origin); <code>PdfViewTransform</code> converts.</li>
+  <li>Redaction removes content from the file rather than covering it, and reports what
+      it removed.</li>
   <li>Signatures are read, verified and created (PAdES, optionally timestamped).
       Integrity and trust are separate answers, and a signature reports whether it
       covers the whole file.</li>
@@ -155,6 +157,17 @@ case .untrusted(let chain, _):  print(\"intact, but not trusted\", chain.count)
 default: break
 }</pre>
 <p class='meta'>Integrity and trust are separate answers, and revocation is not checked.</p>
+<h2>Redact it</h2>
+<pre>let report = try await document.redact([
+    .region(rect, pageIndex: 0),
+    .textMatches(\"account number\"),
+])
+let clean = try await document.data(mode: .full)   // full, always</pre>
+<p class='meta'>Content is removed and the page's content stream regenerated, so the
+words leave the file — a black box drawn over text would leave every one of them in it.
+<b>Save with full</b>; an incremental save does not write the regenerated stream at all.
+Images overlapping the region are removed whole rather than repainted, and a signed
+document cannot be redacted without breaking its signature.</p>
 <h2>Sign it</h2>
 <pre>let signer = try Pkcs12Signer(pkcs12: p12, password: password)
 let signed = try await document.sign(PdfSignOptions(
@@ -196,6 +209,19 @@ val bitmap = page.render(width = 1024, options = PdfRenderOptions(annotations = 
     else -&gt; Unit
 }</pre>
 <p class='meta'>Integrity and trust are separate answers, and revocation is not checked.</p>
+<h2>Redact it</h2>
+<pre>val report = document.redact(
+    listOf(
+        PdfRedactionTarget.Region(rect, pageIndex = 0),
+        PdfRedactionTarget.TextMatches(\"account number\"),
+    ),
+)
+val clean = document.toByteArray(PdfSaveMode.FULL)   // full, always</pre>
+<p class='meta'>Content is removed and the page's content stream regenerated, so the
+words leave the file — a black box drawn over text would leave every one of them in it.
+<b>Save with full</b>; an incremental save does not write the regenerated stream at all.
+Images overlapping the region are removed whole rather than repainted, and a signed
+document cannot be redacted without breaking its signature.</p>
 <h2>Sign it</h2>
 <pre>val signed = document.sign(
     PdfSignOptions(
@@ -241,6 +267,17 @@ if (verdict.kind === 'digestMismatch') {       // the bytes changed after signin
 } else if (verdict.kind === 'valid') {         // both
 }</pre>
 <p class='meta'>Integrity and trust are separate answers, and revocation is not checked.</p>
+<h2>Redact it</h2>
+<pre>const report = await doc.redact([
+  { kind: 'region', rect, pageIndex: 0 },
+  { kind: 'textMatches', query: 'account number' },
+]);
+const clean = await doc.toBytes('full');   // full, always</pre>
+<p class='meta'>Content is removed and the page's content stream regenerated, so the
+words leave the file — a black box drawn over text would leave every one of them in it.
+<b>Save with full</b>; an incremental save does not write the regenerated stream at all.
+Images overlapping the region are removed whole rather than repainted, and a signed
+document cannot be redacted without breaking its signature.</p>
 <h2>Sign it</h2>
 <p>The browser has no CMS API — WebCrypto provides the primitives but not the
 container — so signing takes an implementation you supply. iOS and Android sign

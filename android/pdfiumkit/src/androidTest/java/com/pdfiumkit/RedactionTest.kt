@@ -261,3 +261,41 @@ class RedactionTest {
         )
     }
 }
+
+/**
+ * The redaction contract, asserted identically on all three platforms.
+ *
+ * The gate is the saved bytes, not the text layer: a black box over text passes an
+ * extraction check and leaves every word in the file.
+ */
+@RunWith(AndroidJUnit4::class)
+class RedactionContractTest {
+
+    private val context get() = InstrumentationRegistry.getInstrumentation().context
+
+    @Test
+    fun redactedContentIsGoneFromTheTextAndTheBytes() = runTest {
+        val base = context.assets.open("corpus/hello_world.pdf").use { it.readBytes() }
+        val saved: ByteArray
+        val report: PdfRedactionReport
+
+        PdfDocument.open(base).use { document ->
+            val goodbye = document.pageObjects(0).first { it.text?.contains("Goodbye") == true }
+            report = document.redact(listOf(PdfRedactionTarget.Region(goodbye.bounds, 0)))
+            saved = document.toByteArray(PdfSaveMode.FULL)
+        }
+
+        assertEquals(1, report.textObjects)
+        assertEquals(listOf(0), report.pages)
+
+        PdfDocument.open(saved).use {
+            val text = it.page(0).text.string()
+            assertFalse("still extractable: $text", text.contains("Goodbye"))
+            assertTrue("unrelated content must survive", text.contains("Hello"))
+        }
+        assertFalse(
+            "still in the file bytes",
+            saved.toString(Charsets.ISO_8859_1).contains("Goodbye"),
+        )
+    }
+}

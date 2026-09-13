@@ -218,3 +218,32 @@ describe('signing contract', () => {
                  await (await (await PdfDocument.open(base)).page(0)).text.string());
   });
 });
+
+/**
+ * The redaction contract, asserted identically on all three platforms.
+ *
+ * The gate is the saved bytes, not the text layer: a black box over text passes an
+ * extraction check and leaves every word in the file.
+ */
+describe('redaction contract', () => {
+  test('redacted content is gone from the text and the bytes', async () => {
+    const base = new Uint8Array(readFileSync(join(ROOT, 'conformance', 'corpus', 'hello_world.pdf')));
+    const document = await PdfDocument.open(base);
+
+    const goodbye = (await (await document.page(0)).objects())
+      .find((o) => o.text?.includes('Goodbye'))!;
+    const report = await document.redact([
+      { kind: 'region', rect: goodbye.bounds, pageIndex: 0 },
+    ]);
+
+    assert.equal(report.textObjects, 1);
+    assert.deepEqual([...report.pages], [0]);
+
+    const saved = await document.toBytes('full');
+    const text = await (await (await PdfDocument.open(saved)).page(0)).text.string();
+    assert.ok(!text.includes('Goodbye'), `still extractable: ${JSON.stringify(text)}`);
+    assert.ok(!new TextDecoder('latin1').decode(saved).includes('Goodbye'),
+      'still in the file bytes');
+    assert.ok(text.includes('Hello'), 'unrelated content must survive');
+  });
+});
