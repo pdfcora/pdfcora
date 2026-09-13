@@ -1,6 +1,6 @@
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, writeFileSync, mkdtempSync, existsSync } from 'node:fs';
+import { copyFileSync, readFileSync, writeFileSync, mkdtempSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
@@ -13,6 +13,7 @@ const CORPUS = new URL('../../conformance/corpus/', import.meta.url).pathname;
 const FIXTURES = new URL('../../conformance/fixtures/', import.meta.url).pathname;
 const read = (file) => new Uint8Array(readFileSync(`${CORPUS}${file}`));
 const scratch = mkdtempSync(join(tmpdir(), 'pdfiumkit-tsa-'));
+const TSA = new URL('../../conformance/fixtures/tsa/', import.meta.url).pathname;
 const ANCHOR = new Uint8Array(readFileSync(`${FIXTURES}test-signer.der`));
 /**
  * A stubbed RFC 3161 responder rather than a public authority: CI must not depend on
@@ -39,6 +40,13 @@ function opensslSigner() {
     };
 }
 before(async () => {
+    // The responder runs out of the scratch directory, not the fixture directory:
+    // `openssl ts -reply` increments its serial file in place, and pointing it at a
+    // tracked fixture leaves the working tree dirty after every test run.
+    for (const file of ['tsa.cnf', 'tsa-resp.cnf', 'tsa-cert.pem', 'tsa-key.pem']) {
+        copyFileSync(`${TSA}${file}`, join(scratch, file));
+    }
+    writeFileSync(join(scratch, 'serial'), '01\n');
     server = createServer((request, reply) => {
         const chunks = [];
         request.on('data', (chunk) => chunks.push(chunk));
@@ -58,7 +66,7 @@ before(async () => {
             const out = `${query}.tsr`;
             try {
                 execFileSync('openssl', ['ts', '-reply', '-queryfile', query,
-                    '-config', `${TSA}tsa-resp.cnf`, '-section', 'tsa_config', '-out', out], { cwd: TSA, stdio: 'ignore' });
+                    '-config', join(scratch, 'tsa-resp.cnf'), '-section', 'tsa_config', '-out', out], { cwd: scratch, stdio: 'ignore' });
             }
             catch {
                 reply.writeHead(500);
@@ -74,7 +82,6 @@ before(async () => {
     url = `http://127.0.0.1:${typeof address === 'object' && address ? address.port : 0}/`;
 });
 after(() => server?.close());
-const TSA = new URL('../../conformance/fixtures/tsa/', import.meta.url).pathname;
 const tsaAvailable = existsSync(`${TSA}tsa-resp.cnf`);
 describe('timestamping', { skip: tsaAvailable ? false : 'the stub TSA is not set up' }, () => {
     test('the request is a well-formed TimeStampReq over the digest', async () => {
