@@ -37,6 +37,7 @@ enum class EditorTool(val label: String, val hint: String) {
     INK("Ink", "Drag to draw"),
     NOTE("Note", "Tap to place a note"),
     HIGHLIGHT("Highlight", "Drag over an area"),
+    REDACT("Redact", "Drag over content to remove it from the file"),
 }
 
 private val ZOOM_STEPS = listOf(0.5f, 0.75f, 1f, 1.25f, 1.5f, 2f, 3f, 4f)
@@ -169,6 +170,18 @@ fun EditorScreen(store: DocumentStore) {
                                                 PdfPoint(r.left, r.bottom), PdfPoint(r.right, r.bottom),
                                             )))
                                             created++; reload()
+                                        }
+                                        is PageAction.Redact -> {
+                                            val document = store.document ?: return@launch
+                                            status = try {
+                                                describe(document.redact(listOf(
+                                                    PdfRedactionTarget.Region(action.rect, pageIndex),
+                                                )))
+                                            } catch (e: PdfError) {
+                                                e.message
+                                            }
+                                            selected = null
+                                            reload()
                                         }
                                     }
                                 }
@@ -420,6 +433,30 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawFieldBorder(das
     )
 }
 
+/**
+ * What a redaction removed.
+ *
+ * Shown rather than a quiet success: redaction is a compliance action, and a drag that
+ * removed nothing looks exactly like one that worked.
+ */
+private fun describe(report: PdfRedactionReport): String {
+    val parts = mutableListOf<String>()
+    fun add(count: Int, noun: String) {
+        if (count > 0) parts += "$count $noun${if (count == 1) "" else "s"}"
+    }
+    add(report.textObjects, "text object")
+    add(report.textObjectsSplit, "run trimmed")
+    add(report.images, "image")
+    add(report.paths, "path")
+    add(report.annotations, "annotation")
+    if (report.formFields.isNotEmpty()) parts += "field ${report.formFields.joinToString(", ")}"
+
+    if (parts.isEmpty()) return "Nothing in that region to redact"
+    // Save must be full: an incremental save leaves the original content stream in the
+    // file, and the removed content with it. toByteArray() defaults to full.
+    return "Redacted ${parts.joinToString(", ")} — save to write it out"
+}
+
 // MARK: - Gestures
 
 private sealed interface PageAction {
@@ -427,6 +464,7 @@ private sealed interface PageAction {
     data class Note(val point: PdfPoint) : PageAction
     data class Ink(val points: List<PdfPoint>) : PageAction
     data class Highlight(val rect: PdfRect) : PageAction
+    data class Redact(val rect: PdfRect) : PageAction
 }
 
 private fun Modifier.pageGestures(
@@ -457,13 +495,17 @@ private fun Modifier.pageGestures(
                     EditorTool.INK -> if (stroke.size > 1) {
                         onAction(PageAction.Ink(stroke.map { transform.toPdf(it.x, it.y) }))
                     }
-                    EditorTool.HIGHLIGHT -> {
+                    EditorTool.HIGHLIGHT, EditorTool.REDACT -> {
                         val rect = RectF(
                             minOf(from.x, last.x), minOf(from.y, last.y),
                             maxOf(from.x, last.x), maxOf(from.y, last.y),
                         )
                         if (rect.width() > 4 && rect.height() > 4) {
-                            onAction(PageAction.Highlight(transform.toPdf(rect)))
+                            val pdf = transform.toPdf(rect)
+                            onAction(
+                                if (tool == EditorTool.REDACT) PageAction.Redact(pdf)
+                                else PageAction.Highlight(pdf),
+                            )
                         }
                     }
                     else -> Unit

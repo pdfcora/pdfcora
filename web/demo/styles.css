@@ -65,3 +65,6 @@ nav button[aria-selected="true"], .row button[aria-selected="true"] {
 
 .warn { background: #fff3cd; color: #663c00; padding: .7rem .9rem; border-radius: 6px; }
 .ok { background: #e6f4ea; color: #14532d; padding: .7rem .9rem; border-radius: 6px; }
+
+/* Redaction reads as removal, not as a highlight. */
+.preview.redacting { background: rgba(29, 29, 31, 0.72); }

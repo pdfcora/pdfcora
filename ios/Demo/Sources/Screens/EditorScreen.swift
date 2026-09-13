@@ -3,7 +3,7 @@ import PdfiumKit
 
 /// What a tap or drag on the page does.
 enum EditorTool: String, CaseIterable, Identifiable {
-    case select, ink, note, highlight
+    case select, ink, note, highlight, redact
 
     var id: String { rawValue }
 
@@ -13,6 +13,7 @@ enum EditorTool: String, CaseIterable, Identifiable {
         case .ink:       "scribble"
         case .note:      "note.text"
         case .highlight: "highlighter"
+        case .redact:    "rectangle.slash"
         }
     }
 
@@ -22,6 +23,7 @@ enum EditorTool: String, CaseIterable, Identifiable {
         case .ink:       "Drag to draw"
         case .note:      "Tap to place a note"
         case .highlight: "Drag over an area"
+        case .redact:    "Drag over content to remove it from the file"
         }
     }
 }
@@ -265,7 +267,7 @@ struct EditorScreen: View {
 
         if let rect = dragRect {
             Rectangle()
-                .fill(Color.yellow.opacity(0.35))
+                .fill(tool == .redact ? Color.black.opacity(0.72) : Color.yellow.opacity(0.35))
                 .frame(width: rect.width, height: rect.height)
                 .offset(x: rect.minX, y: rect.minY)
         }
@@ -306,7 +308,8 @@ struct EditorScreen: View {
             .onChanged { value in
                 switch tool {
                 case .ink:       stroke.append(value.location)
-                case .highlight: dragRect = CGRect(from: value.startLocation, to: value.location)
+                case .highlight, .redact:
+                    dragRect = CGRect(from: value.startLocation, to: value.location)
                 case .select, .note: break
                 }
             }
@@ -346,7 +349,50 @@ struct EditorScreen: View {
                     p3: PdfPoint(x: pdf.left, y: pdf.bottom),
                     p4: PdfPoint(x: pdf.right, y: pdf.bottom))])
             }
+
+        case .redact:
+            guard let rect = dragRect, rect.width > 4, rect.height > 4 else { dragRect = nil; return }
+            let pdf = transform.toPdf(rect)
+            dragRect = nil
+            await redact(pdf)
         }
+    }
+
+    /// Removes everything the dragged region touches.
+    ///
+    /// The report is shown rather than a quiet success: redaction is a compliance
+    /// action, and a drag that removed nothing looks exactly like one that worked.
+    private func redact(_ rect: PdfRect) async {
+        guard let document = store.document else { return }
+        do {
+            let report = try await document.redact([.region(rect, pageIndex: pageIndex)])
+            selectedAnnotation = nil
+            status = Self.describe(report)
+            await reload()
+        } catch let error as PdfError {
+            status = error.description
+        } catch {
+            status = error.localizedDescription
+        }
+    }
+
+    private static func describe(_ report: PdfRedactionReport) -> String {
+        var parts: [String] = []
+        func add(_ count: Int, _ noun: String) {
+            if count > 0 { parts.append("\(count) \(noun)\(count == 1 ? "" : "s")") }
+        }
+        add(report.textObjects, "text object")
+        add(report.textObjectsSplit, "run trimmed")
+        add(report.images, "image")
+        add(report.paths, "path")
+        add(report.annotations, "annotation")
+        if !report.formFields.isEmpty {
+            parts.append("field \(report.formFields.joined(separator: ", "))")
+        }
+        guard !parts.isEmpty else { return "Nothing in that region to redact" }
+        // Save must be full: an incremental save leaves the original content stream in
+        // the file, and the removed content with it. `data()` defaults to full.
+        return "Redacted \(parts.joined(separator: ", ")) — save to write it out"
     }
 
     // MARK: - Mutations

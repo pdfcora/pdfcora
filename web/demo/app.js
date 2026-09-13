@@ -86,6 +86,7 @@ const TOOLS = [
   ['ink', 'Ink', 'Drag to draw'],
   ['note', 'Note', 'Click to place a note'],
   ['highlight', 'Highlight', 'Drag over an area'],
+  ['redact', 'Redact', 'Drag over content to remove it from the file'],
 ];
 
 const ZOOM_STEPS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4];
@@ -273,7 +274,10 @@ function attachDrawing(stage, canvas, t, page, annotations) {
     if (e.target !== canvas) return;       // clicks on controls belong to them
     start = local(e);
     stroke = [start];
-    if (state.tool === 'highlight') { stage.append(preview); }
+    if (state.tool === 'highlight' || state.tool === 'redact') {
+      preview.className = state.tool === 'redact' ? 'preview redacting' : 'preview';
+      stage.append(preview);
+    }
     stage.setPointerCapture(e.pointerId);
   };
 
@@ -281,7 +285,7 @@ function attachDrawing(stage, canvas, t, page, annotations) {
     if (!start) return;
     const p = local(e);
     if (state.tool === 'ink') stroke.push(p);
-    if (state.tool === 'highlight') {
+    if (state.tool === 'highlight' || state.tool === 'redact') {
       Object.assign(preview.style, {
         left: `${Math.min(start.x, p.x)}px`, top: `${Math.min(start.y, p.y)}px`,
         width: `${Math.abs(p.x - start.x)}px`, height: `${Math.abs(p.y - start.y)}px`,
@@ -320,6 +324,15 @@ function attachDrawing(stage, canvas, t, page, annotations) {
       draw();
       return;
     }
+    if (state.tool === 'redact') {
+      const w = Math.abs(end.x - from.x), h = Math.abs(end.y - from.y);
+      if (w < 4 || h < 4) return;
+      const rect = t.toPdfRect({
+        x: Math.min(from.x, end.x), y: Math.min(from.y, end.y), width: w, height: h,
+      });
+      await redactRegion(rect);
+      return;
+    }
     if (state.tool === 'highlight') {
       const w = Math.abs(end.x - from.x), h = Math.abs(end.y - from.y);
       if (w < 4 || h < 4) return;
@@ -332,6 +345,37 @@ function attachDrawing(stage, canvas, t, page, annotations) {
       draw();
     }
   };
+}
+
+
+/**
+ * Removes everything the dragged region touches.
+ *
+ * The report is shown rather than a quiet success: redaction is a compliance action,
+ * and a drag that removed nothing looks exactly like one that worked.
+ */
+async function redactRegion(rect) {
+  const report = await state.document.redact([
+    { kind: 'region', rect, pageIndex: state.pageIndex },
+  ]);
+
+  const removed = [
+    [report.textObjects, 'text object'],
+    [report.textObjectsSplit, 'run trimmed'],
+    [report.images, 'image'],
+    [report.paths, 'path'],
+    [report.annotations, 'annotation'],
+  ].filter(([n]) => n > 0).map(([n, what]) => `${n} ${what}${n === 1 ? '' : 's'}`);
+
+  if (report.formFields.length) removed.push(`field ${report.formFields.join(', ')}`);
+
+  // Save must be full: an incremental save leaves the original content stream, and the
+  // removed content with it. The Save button uses toBytes() without a mode, which is full.
+  setStatus(removed.length
+    ? `Redacted ${removed.join(', ')} — save to write it out`
+    : 'Nothing in that region to redact');
+  state.selected = null;
+  draw();
 }
 
 function draw() {
