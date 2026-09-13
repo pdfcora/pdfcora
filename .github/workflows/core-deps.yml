@@ -1,0 +1,19 @@
+name: core-deps
+on: [push, pull_request]
+jobs:
+  # PKG-2: the core must not gain an AI runtime, however indirectly. The check reads the
+  # resolved graphs, so a transitive pull-in fails the build the same as a declared one.
+  guard:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - uses: actions/setup-java@v4
+        with: { distribution: 'temurin', java-version: '17' }
+      - name: Fetch vendor artifacts
+        run: ./scripts/fetch-vendor.sh
+        env:
+          PDFIUMKIT_ARTIFACTS: ${{ runner.temp }}/pdfium-artifacts
+      - name: The core stays free of AI runtimes
+        run: ./scripts/check-core-deps.sh
