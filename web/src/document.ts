@@ -1,6 +1,7 @@
 import { ENGINE_VERSION, engine, readUtf16, withBuffer, withUtf16, type PdfiumModule } from './engine.js';
 import { readSignatures } from './signature.js';
 import { verifySignature } from './cms/verify.js';
+import { signDocument, type PdfSignOptions } from './sign/sign.js';
 import { PdfError } from './errors.js';
 import type {
   PdfAttachment, PdfMetadata, PdfOutlineItem, PdfPermissions, PdfSaveMode, PdfSize,
@@ -230,6 +231,19 @@ export class PdfDocument {
    */
   verify(signature: PdfSignature, options?: PdfVerifyOptions): Promise<PdfSignatureValidity> {
     return verifySignature(this.originalBytes, signature, options);
+  }
+
+  /**
+   * Signs the document, returning the signed bytes.
+   *
+   * The original bytes are never modified: the signature is appended as an incremental
+   * update, so any signature already present keeps verifying.
+   *
+   * The caller supplies the CMS implementation. WebCrypto has primitives but not CMS,
+   * and bundling a library would burden every consumer including those that only read.
+   */
+  sign(options: PdfSignOptions): Promise<Uint8Array> {
+    return signDocument(this.originalBytes, options);
   }
 
   /** The document outline, or an empty array when there is none. */

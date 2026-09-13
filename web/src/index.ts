@@ -6,4 +6,5 @@ export {
   PdfWorker, PdfWorkerDocument, PdfWorkerPage, PdfWorkerTextPage,
   type PdfWorkerOptions,
 } from './worker/client.js';
+export { type CmsSigner, type PdfSignOptions } from './sign/sign.js';
 export * from './types.js';

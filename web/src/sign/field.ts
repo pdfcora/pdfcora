@@ -24,6 +24,16 @@ export interface AddSignatureFieldOptions {
   readonly fieldName?: string;
   /** The page the invisible widget is attached to. */
   readonly pageIndex?: number;
+  /**
+   * Declared up front because it is written into the signed bytes before the CMS
+   * exists, so it must match what the signer actually produces.
+   *
+   * `ETSI.CAdES.detached` is PAdES and requires CAdES-BES — a CMS carrying the
+   * `signingCertificateV2` signed attribute. A plain PKCS#7 under this sub-filter is
+   * rejected by strict verifiers even though the signature itself is sound; poppler is
+   * one of them. Use `adbe.pkcs7.detached` for a plain PKCS#7 signer.
+   */
+  readonly subFilter?: 'ETSI.CAdES.detached' | 'adbe.pkcs7.detached';
 }
 
 export interface SignatureFieldPlacement {
@@ -62,7 +72,7 @@ export function addSignatureField(
   objects.set(signatureNumber, {
     Type: name('Sig'),
     Filter: name('Adobe.PPKLite'),
-    SubFilter: name('ETSI.CAdES.detached'),
+    SubFilter: name(options.subFilter ?? 'ETSI.CAdES.detached'),
     // Placeholders: fixed width, patched once the real offsets are known.
     ByteRange: raw(new TextEncoder().encode(
       `[${pad(0)} ${pad(0)} ${pad(0)} ${pad(0)}]`)),
