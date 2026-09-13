@@ -304,3 +304,23 @@ export interface PdfVerifyOptions {
   /** The instant to judge validity at. Defaults to now; set it to make tests stable. */
   readonly at?: Date;
 }
+
+/** What a page object is, as PDFium classifies it. */
+export type PdfPageObjectKind = 'text' | 'path' | 'image' | 'shading' | 'form' | 'unknown';
+
+/**
+ * One object a page is drawn from.
+ *
+ * Redaction resolves a region to the objects it touches and removes or rewrites them,
+ * which is what makes the content actually leave the file.
+ */
+export interface PdfPageObject {
+  /** Position in the page's object list, which is how it is addressed for removal. */
+  readonly index: number;
+  readonly kind: PdfPageObjectKind;
+  /** In PDF space, normalised so left <= right and bottom <= top. */
+  readonly bounds: PdfRect;
+  /** Present for text objects only. */
+  readonly text?: string;
+  readonly fontSize?: number;
+}

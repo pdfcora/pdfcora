@@ -1,10 +1,12 @@
 import { readUtf16, withBuffer, withUtf16, type PdfiumModule } from './engine.js';
 import { PdfError } from './errors.js';
+import { readPageObjects } from './pageObjects.js';
 import type { PdfDocument } from './document.js';
 import type {
   PdfAnnotation, PdfAnnotationBase, PdfColor, PdfFormField, PdfFormFieldBase,
   PdfLink, PdfLinkTarget, PdfPoint, PdfQuad, PdfRect, PdfRenderOptions,
   PdfSearchOptions, PdfSize, PdfTextMatch,
+  PdfPageObject,
 } from './types.js';
 
 // PDFium annotation subtypes (fpdf_annot.h)
@@ -45,6 +47,23 @@ export class PdfPage {
   }
 
   /** Text extraction and search for this page. */
+  /**
+   * The objects this page is drawn from, in drawing order.
+   *
+   * A text page is loaded alongside, because an object's text can only be read through
+   * one — the object itself holds glyph codes, not characters.
+   */
+  objects(): Promise<PdfPageObject[]> {
+    return this.document.withPage(this.index, (page, m) => {
+      const textPage = m.ccall('FPDFText_LoadPage', 'number', ['number'], [page]) as number;
+      try {
+        return readPageObjects(m, page, textPage);
+      } finally {
+        if (textPage) m.ccall('FPDFText_ClosePage', null, ['number'], [textPage]);
+      }
+    });
+  }
+
   get text(): PdfTextPage {
     return new PdfTextPage(this.document, this.index);
   }
