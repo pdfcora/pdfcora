@@ -120,6 +120,17 @@ an error type and a conformance suite.</p>
       Integrity and trust are separate answers, and a signature reports whether it
       covers the whole file.</li>
 </ul>
+<h2>AI, separately</h2>
+<p><code>pdfiumkit-ai</code> is an optional package. The core has no AI dependency and
+never gains one &mdash; a CI check fails the build if it does. Today the package ships no
+feature: it provides the availability model, the custom-provider interface and the
+proposal/apply API that later features are built on.</p>
+<p>Three things worth knowing before you design around it. A feature reports availability
+<em>per feature</em> and re-checks on every call, because the user can turn the platform's
+AI off mid-session. Availability alone does not mean a model can be prompted &mdash; a
+device can report available with a prompt budget of zero &mdash; so the two are read
+together. And anything that would change a document returns <em>proposals</em>; nothing is
+written until your app applies the ones the user accepted.</p>
 <p class='meta'>Version $VERSION · built $(date -u +%Y-%m-%d) · $(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo untracked).
 Third-party licences: <a href='notice.html'>NOTICE</a>.</p>"
 

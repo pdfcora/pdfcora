@@ -10,13 +10,21 @@ cd "$(dirname "$0")/.."
 DESTINATION="${PDFIUMKIT_DESTINATION:-platform=iOS Simulator,name=iPhone 17 Pro,OS=27.0}"
 LEAKY=(PdfiumKitTests/BlastRadiusTests PdfiumKitTests/HangProbeTests)
 
-skip=()
+# The package scheme, not the product scheme: once the package gained a second library
+# product, the per-product schemes stopped carrying a test action at all.
+SCHEME=PdfiumKit-Package
+
+skip=(-only-testing:PdfiumKitTests)
 for suite in "${LEAKY[@]}"; do skip+=("-skip-testing:$suite"); done
-xcodebuild test -scheme PdfiumKit -destination "$DESTINATION" "${skip[@]}" "$@"
+xcodebuild test -scheme "$SCHEME" -destination "$DESTINATION" "${skip[@]}" "$@"
 
 only=()
 for suite in "${LEAKY[@]}"; do only+=("-only-testing:$suite"); done
-xcodebuild test -scheme PdfiumKit -destination "$DESTINATION" "${only[@]}" "$@"
+xcodebuild test -scheme "$SCHEME" -destination "$DESTINATION" "${only[@]}" "$@"
+
+# The AI package's own suite.
+xcodebuild test -scheme "$SCHEME" -destination "$DESTINATION" \
+    -only-testing:PdfiumKitAITests "$@"
 
 # The signing cross-check. An iOS test cannot spawn a process, so the suite writes a
 # signed document here and the gate runs on the host. Our own verifier agreeing with our

@@ -1,4 +1,5 @@
 import { PdfDocument, PdfError, PdfViewTransform, rectContains, configureEngine } from '../dist/index.js';
+import { PdfiumAI } from '../../web-ai/dist/index.js';
 
 // The browser supplies the Emscripten factory; Node's default loader does not apply here.
 configureEngine({
@@ -19,7 +20,7 @@ configureEngine({
 
 const state = {
   document: null, pageCount: 0, pageIndex: 0, tab: 'editor',
-  tool: 'select', zoom: null, selected: null, createdCount: 0,
+  tool: 'select', zoom: null, selected: null, createdCount: 0, aiEndpoint: null,
 };
 
 const TABS = [
@@ -35,6 +36,7 @@ const TABS = [
   ['info', 'Document Info', renderInfo],
   ['pageops', 'Page Operations', renderPageOps],
   ['export', 'Export', renderExport],
+  ['ai', 'AI', renderAI],
 ];
 
 const $panel = document.getElementById('panel');
@@ -388,6 +390,76 @@ function draw() {
   entry[2]().catch((error) => {
     $panel.append(el('p', { className: 'error' }, String(error?.message ?? error)));
   });
+}
+
+// MARK: - AI
+
+/**
+ * What a user sees when a feature cannot run, which on most devices today is what they
+ * will see. The stub feature exists precisely so this path can be exercised before any
+ * real feature does.
+ */
+async function renderAI() {
+  const provider = state.aiEndpoint
+    ? { async generate(request) {
+          const response = await fetch(state.aiEndpoint, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ prompt: request.prompt }),
+          });
+          if (!response.ok) throw new Error(`provider returned ${response.status}`);
+          return { text: (await response.json()).text ?? '' };
+        } }
+    : undefined;
+
+  const ai = new PdfiumAI(state.document, { provider });
+  const availability = await ai.stub.availability();
+
+  $panel.append(
+    el('h3', {}, 'Availability'),
+    el('p', { className: availability.kind === 'available' ? 'ok' : 'warn' },
+       availability.kind === 'available'
+         ? 'available'
+         : `${availability.kind}${availability.reason ? ` — ${availability.reason}` : ''}`),
+    el('p', { className: 'muted' },
+       'The web has no general on-device model, so without a provider this is the honest '
+       + 'answer rather than a failure. Availability is re-checked on every call: the user '
+       + 'can turn the platform\'s AI off mid-session.'));
+
+  const endpoint = el('input', {
+    type: 'text', value: state.aiEndpoint ?? '',
+    placeholder: 'https://your-server/generate',
+  });
+  endpoint.style.minWidth = '320px';
+
+  $panel.append(
+    el('h3', {}, 'Custom provider'),
+    el('p', { className: 'muted' },
+       'The SDK ships no model and no cloud account. A provider is yours to supply, and '
+       + 'document content reaches it only because you configured it.'),
+    el('div', { className: 'row' },
+       endpoint,
+       button('Use', () => { state.aiEndpoint = endpoint.value.trim() || null; draw(); }),
+       button('Clear', () => { state.aiEndpoint = null; draw(); }, !state.aiEndpoint)));
+
+  // AVL-4: the host asks for the download. Nothing here starts one on its own.
+  $panel.append(
+    el('div', { className: 'row' },
+       button('Prepare', async () => {
+         const after = await ai.stub.prepare((f) => setStatus(`preparing… ${Math.round(f * 100)}%`));
+         setStatus(`prepare finished — ${after.kind}`);
+       }),
+       button('Run stub feature', async () => {
+         const outcome = await ai.stub.run();
+         setStatus('value' in outcome
+           ? `answered "${outcome.value}" via ${outcome.source}`
+           : `unavailable — ${outcome.reason}`,
+           !('value' in outcome));
+       })));
+
+  $panel.append(el('p', { className: 'muted' },
+    'Phase 0 ships no AI feature. The stub above does nothing except report whether it '
+    + 'could, which is what makes this screen testable.'));
 }
 
 // MARK: - Helpers

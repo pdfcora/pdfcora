@@ -12,6 +12,9 @@ gradle :pdfiumkit:connectedDebugAndroidTest --console=plain \
   -Pandroid.testInstrumentationRunnerArguments.annotation=com.pdfiumkit.LeaksNativeThreads \
   -Pandroid.testInstrumentationRunnerArguments.notAnnotation= "$@"
 
+# The AI module's unit tests. No device needed — nothing in Phase 0 touches the engine.
+gradle :pdfiumkit-ai:testDebugUnitTest --console=plain "$@"
+
 # The signing cross-check. An instrumented test cannot run pdfsig — the device has no
 # poppler — so the suite writes a signed document and the gate runs here. Our own
 # verifier agreeing with our own signer would prove nothing.

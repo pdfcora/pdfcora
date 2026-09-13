@@ -29,6 +29,7 @@ enum class Demo(val title: String, val detail: String) {
     INFO("Document Info", "Metadata, permissions, attachments"),
     PAGE_OPS("Page Operations", "Rotate pages"),
     EXPORT("Export", "Save edits and share"),
+    AI("AI", "On-device availability and providers"),
 }
 
 class MainActivity : ComponentActivity() {
@@ -77,6 +78,7 @@ private fun App() {
                 Demo.INFO -> InfoScreen(store)
                 Demo.PAGE_OPS -> PageOpsScreen(store)
                 Demo.EXPORT -> ExportScreen(store)
+                Demo.AI -> AIScreen(store)
             }
         }
     }
