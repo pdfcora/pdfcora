@@ -70,13 +70,29 @@ function highestObjectNumber(bytes: Uint8Array, size: number): number {
   let highest = size - 1;
   const header = /(?:^|[\s>])(\d+)\s+(\d+)\s+obj\b/g;
   for (let m = header.exec(text); m; m = header.exec(text)) {
-    highest = Math.max(highest, Number(m[1]));
+    const n = plausible(m[1]!);
+    if (n !== undefined) highest = Math.max(highest, n);
   }
   const subsection = /\bxref\s*\n\s*(\d+)\s+(\d+)/g;
   for (let m = subsection.exec(text); m; m = subsection.exec(text)) {
-    highest = Math.max(highest, Number(m[1]) + Number(m[2]) - 1);
+    const first = plausible(m[1]!);
+    const count = plausible(m[2]!);
+    if (first !== undefined && count !== undefined) highest = Math.max(highest, first + count - 1);
   }
   return highest;
+}
+
+/**
+ * The scan runs over the whole file, binary stream data included, so it finds byte
+ * sequences that merely look like object headers. The spec caps object numbers at
+ * 8,388,607; anything above that is a false match, not a document with ten million
+ * objects.
+ */
+const MAX_OBJECT_NUMBER = 8_388_607;
+
+function plausible(digits: string): number | undefined {
+  const value = Number(digits);
+  return Number.isInteger(value) && value >= 0 && value <= MAX_OBJECT_NUMBER ? value : undefined;
 }
 
 const STYLE = '__style';
