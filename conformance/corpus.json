@@ -77,6 +77,12 @@
     {
       "name": "bug_707673.pdf",
       "category": "regression"
+    },
+    {
+      "name": "signed_unh_iol.pdf",
+      "category": "signature",
+      "source": "https://www.iol.unh.edu/sites/default/files/certifydoc/UNH-IOL_Signature_Test_Doc_2026.pdf",
+      "note": "Published by UNH-IOL as a digital-signature test document."
     }
   ]
 }

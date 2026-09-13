@@ -243,3 +243,27 @@ export type PdfFormField =
   | ({ readonly kind: 'comboBox' | 'listBox'; readonly value: string; readonly options: readonly string[]; readonly selectedIndices: readonly number[] } & PdfFormFieldBase)
   | ({ readonly kind: 'pushButton' | 'signature' } & PdfFormFieldBase)
   | ({ readonly kind: 'unknown'; readonly typeCode: number } & PdfFormFieldBase);
+
+// MARK: - Signatures
+
+/** A signature already present in a document. Reading only; nothing here is verified. */
+export interface PdfSignature {
+  readonly index: number;
+  readonly reason?: string;
+  /** The time the signer claimed. Not trusted, and not a timestamp authority's. */
+  readonly signingTime?: Date;
+  /** e.g. `adbe.pkcs7.detached`, `ETSI.CAdES.detached`. */
+  readonly subFilter?: string;
+  /** Pairs of offset and length covering the signed spans of the file. */
+  readonly byteRange: readonly number[];
+  /** The raw PKCS#7 blob, for a verifier to check. */
+  readonly contents: Uint8Array;
+  readonly docMdpPermission?: number;
+  /**
+   * Whether the signed ranges reach the end of the file.
+   *
+   * A signature can be cryptographically valid and still cover only part of the
+   * document; anything appended afterwards is unprotected.
+   */
+  readonly coversWholeDocument: boolean;
+}
