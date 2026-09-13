@@ -17,6 +17,10 @@ provider or to `unavailable`.
 **Spec:** `docs/superpowers/specs/2026-09-13-pdfiumkit-ai-requirements.md` §§3–7
 (PKG, AVL, PRV, HIL, DOC)
 
+**Status:** complete. Web 15 tests, iOS 18, Android 8; the dependency guard verified by
+being broken four ways. See "What executing this taught us" at the end for the three
+things the plan got wrong.
+
 ## What was verified before writing this
 
 Every mechanism below was checked against the installed toolchain, not assumed.
@@ -62,7 +66,7 @@ One vocabulary for "can this run", superset of what each platform reports.
 - Produces: `PdfAiAvailability`, `PdfAiUnavailableReason`, `unavailable()`,
   `isUsable(a: PdfAiAvailability): boolean`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 import { test, describe } from 'node:test';
@@ -84,12 +88,12 @@ describe('availability', () => {
 });
 ```
 
-- [ ] **Step 2: Run it and watch it fail**
+- [x] **Step 2: Run it and watch it fail**
 
 Run: `cd web-ai && npm test`
 Expected: FAIL, cannot find module `../dist/availability.js`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```ts
 /**
@@ -129,12 +133,12 @@ export function isUsable(a: PdfAiAvailability): boolean {
 }
 ```
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `cd web-ai && npm test`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add web-ai/src/availability.ts web-ai/test/availability.test.ts
@@ -157,7 +161,7 @@ provider, then the feature's non-AI fallback, then unavailable.
 - Produces: `PdfAiProvider`, `PdfAiRequest`, `PdfAiResponse`, `PdfAiSource`,
   `PdfAiResult<T>`, `resolve<T>(routes): Promise<PdfAiResult<T> | PdfAiAvailability>`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 test('routes are tried in order and the winner is named', async () => {
@@ -192,12 +196,12 @@ test('a route that throws does not stop the next one', async () => {
 });
 ```
 
-- [ ] **Step 2: Run it and watch it fail**
+- [x] **Step 2: Run it and watch it fail**
 
 Run: `cd web-ai && npm test`
 Expected: FAIL, `resolve` is not exported
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```ts
 import { type PdfAiAvailability, unavailable } from './availability.js';
@@ -261,12 +265,12 @@ export async function resolve<T>(routes: {
 }
 ```
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `cd web-ai && npm test`
 Expected: PASS, 3 tests
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add web-ai/src/provider.ts web-ai/test/provider.test.ts
@@ -288,7 +292,7 @@ host accepts some of them.
 - Consumes: `PdfAiSource` (Task 2)
 - Produces: `PdfProposal<T>`, `PdfProposalSet<T>`, `applyProposals()`, `PdfUndoToken`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 test('nothing is written until apply is called', async () => {
@@ -310,12 +314,12 @@ test('an id that is not in the set is refused, not silently ignored', async () =
 });
 ```
 
-- [ ] **Step 2: Run it and watch it fail**
+- [x] **Step 2: Run it and watch it fail**
 
 Run: `cd web-ai && npm test`
 Expected: FAIL, `proposalSet` is not exported
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```ts
 import type { PdfAiSource } from './provider.js';
@@ -363,12 +367,12 @@ export async function applyProposals<T>(
 }
 ```
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `cd web-ai && npm test`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add web-ai/src/proposal.ts web-ai/test/proposal.test.ts
@@ -395,7 +399,7 @@ what makes the Phase 0 exit criterion testable before any real feature exists.
 - Consumes: Tasks 1–3, and `PdfDocument` from `@pdfiumkit/web`
 - Produces: `PdfiumAI`, `PdfiumAI.stub.availability()`, `PdfiumAI.stub.run()`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 test('with no provider configured the stub is unavailable, with a reason', async () => {
@@ -413,12 +417,12 @@ test('with a provider configured the stub becomes available and says so', async 
 });
 ```
 
-- [ ] **Step 2: Run it and watch it fail**
+- [x] **Step 2: Run it and watch it fail**
 
 Run: `cd web-ai && npm test`
 Expected: FAIL, cannot find `PdfiumAI`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `package.json` — note the peer dependency, so the AI package never pulls a second copy
 of the core:
@@ -496,7 +500,7 @@ export class PdfiumAI {
 }
 ```
 
-- [ ] **Step 4: Write the failing test for AVL-4**
+- [x] **Step 4: Write the failing test for AVL-4**
 
 ```ts
 test('nothing downloads unless the host asks', async () => {
@@ -512,17 +516,17 @@ test('nothing downloads unless the host asks', async () => {
 });
 ```
 
-- [ ] **Step 5: Run the tests**
+- [x] **Step 5: Run the tests**
 
 Run: `cd web-ai && npm test`
 Expected: PASS
 
-- [ ] **Step 6: Check the package pulls in nothing**
+- [x] **Step 6: Check the package pulls in nothing**
 
 Run: `cd web-ai && npm ls --omit=dev --omit=peer`
 Expected: no dependencies listed
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add web-ai/
@@ -546,7 +550,7 @@ mapping in Task 1 gets exercised.
 - Consumes: `PdfDocument` from `PdfiumKit` (public API only)
 - Produces: the Swift equivalents of Tasks 1–4
 
-- [ ] **Step 1: Add the product without touching the core's**
+- [x] **Step 1: Add the product without touching the core's**
 
 ```swift
 // Package.swift — the core product is untouched; this is additive.
@@ -563,7 +567,7 @@ targets: [
 ]
 ```
 
-- [ ] **Step 2: Write the failing test for the Apple mapping**
+- [x] **Step 2: Write the failing test for the Apple mapping**
 
 ```swift
 func testAppleStatesMapOntoOurs() {
@@ -588,7 +592,7 @@ func testAnOsWithoutTheFrameworkIsUnsupportedNotACrash() async {
 }
 ```
 
-- [ ] **Step 3: Implement the mapping, weak-linked**
+- [x] **Step 3: Implement the mapping, weak-linked**
 
 ```swift
 #if canImport(FoundationModels)
@@ -631,19 +635,19 @@ enum AppleModel {
 }
 ```
 
-- [ ] **Step 4: Verify PKG-3 — the floor did not move**
+- [x] **Step 4: Verify PKG-3 — the floor did not move**
 
 Run: `swift build -Xswiftc -target -Xswiftc arm64-apple-ios15.0-simulator`
 Expected: builds. `Package.swift` still declares `.iOS(.v15)`, and `FoundationModels` is
 reached only behind `#available(iOS 26.0, *)` with `#if canImport`. An app on iOS 15 that
 links `PdfiumKitAI` must still launch.
 
-- [ ] **Step 5: Run the tests**
+- [x] **Step 5: Run the tests**
 
 Run: `xcodebuild test -scheme PdfiumKitAI -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=27.0'`
 Expected: PASS
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add Package.swift ios/Sources/PdfiumKitAI ios/Tests/PdfiumKitAITests
@@ -663,7 +667,7 @@ need them; adding the dependency now would only risk PKG-2.
 - Modify: `android/settings.gradle.kts` — include the module
 - Test: `android/pdfiumkit-ai/src/test/java/com/pdfiumkit/ai/AvailabilityTest.kt`
 
-- [ ] **Step 1: Add the module with `api` on the core only**
+- [x] **Step 1: Add the module with `api` on the core only**
 
 ```kotlin
 dependencies {
@@ -676,7 +680,7 @@ dependencies {
 android { defaultConfig { minSdk = 23 } }
 ```
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 ```kotlin
 @Test
@@ -689,7 +693,7 @@ fun `with no provider the stub is unavailable with a reason`() = runTest {
 }
 ```
 
-- [ ] **Step 3: Implement the Kotlin equivalents of Tasks 1–4**
+- [x] **Step 3: Implement the Kotlin equivalents of Tasks 1–4**
 
 Mirror the TypeScript exactly: a sealed `PdfAiAvailability`, a `PdfAiProvider` fun
 interface, `resolve()` with the same ordering and the same swallow-and-continue
@@ -697,12 +701,12 @@ behaviour, and `applyProposals()` with the same unknown-id refusal. The tests po
 one-for-one; if a Kotlin test needs different assertions than its TypeScript twin, the
 implementations have diverged and one of them is wrong.
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `cd android && gradle :pdfiumkit-ai:testDebugUnitTest`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add android/pdfiumkit-ai android/settings.gradle.kts
@@ -723,13 +727,13 @@ The requirement that the core stays clean, enforced rather than reviewed.
 - Produces: exit 0 when the core's three graphs are clean, non-zero with the offending
   line otherwise
 
-- [ ] **Step 1: Write the check so it fails on a planted dependency first**
+- [x] **Step 1: Write the check so it fails on a planted dependency first**
 
 Temporarily add `implementation("com.google.mlkit:genai-summarization:1.0.0-beta1")` to
 `android/pdfiumkit/build.gradle.kts`, run the script, confirm it exits non-zero and names
 the line. **A guard that has never failed is not known to work.** Then revert.
 
-- [ ] **Step 2: Implement**
+- [x] **Step 2: Implement**
 
 ```bash
 #!/usr/bin/env bash
@@ -772,12 +776,12 @@ fi
 exit "$fail"
 ```
 
-- [ ] **Step 3: Run it**
+- [x] **Step 3: Run it**
 
 Run: `./scripts/check-core-deps.sh`
 Expected: `core dependency graph is clean, versions aligned`
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add scripts/check-core-deps.sh .github/workflows/
@@ -795,24 +799,24 @@ which, on most devices today, is what they will see.
 - Modify: `web/demo/app.js`, `ios/Demo/Sources/Screens/`, `android/demo/src/main/java/com/pdfiumkit/demo/`
 - Modify: `scripts/make-docs.sh` — an AI section in each quickstart
 
-- [ ] **Step 1: Add an "AI" tab to each demo**
+- [x] **Step 1: Add an "AI" tab to each demo**
 
 It shows the stub feature's availability verbatim, including the reason, and a field for
 pasting a provider endpoint so the available path can be seen too. No AI feature is
 called; there is none yet.
 
-- [ ] **Step 2: Document per DOC-3**
+- [x] **Step 2: Document per DOC-3**
 
 For the stub, and as the template every later feature fills in: device and OS
 requirements, supported languages, known limits, and what the user sees when it is not
 available.
 
-- [ ] **Step 3: Verify the exit criterion on each platform**
+- [x] **Step 3: Verify the exit criterion on each platform**
 
 Run each demo on a device with no on-device model. Expected: the not-available screen
 with a reason, no crash, no thrown error.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git commit -am "Show the not-available path in all three demos"
@@ -852,3 +856,37 @@ git commit -am "Show the not-available path in all three demos"
   which is the same discipline the DER fuzz gate and the redaction erasure assertion got,
   after both were found to pass with the check deleted.
 - No task prompts a model. The first one that does belongs to Phase 1.
+
+
+---
+
+## What executing this taught us
+
+Three things the plan asserted that the machine disagreed with. All three are now pinned
+by tests rather than by prose.
+
+**`contextSize` does not return 4096.** The plan read that number out of
+`FoundationModels.swiftinterface` and treated it as the answer. It is the body of the
+`@backDeployed(before: iOS 26.4)` shim — the value used on OSes *without* the real
+implementation. An iOS 27 simulator returns `0`, while simultaneously reporting the model
+as `.available`. Availability is therefore not a proxy for usability, and
+`contextTokens()` now reports a non-positive budget as no budget at all.
+
+**The platform's answers move between calls.** A test that read availability and the
+budget microseconds apart got a pair that contradicted itself — available, with no budget,
+yet reported as promptable. The fix is `AppleModel.read()`, which samples both together
+and returns a `Reading` that decisions are made from. This is what AVL-3 was really asking
+for: sample per operation, then decide from the sample, rather than re-querying mid-
+decision.
+
+**Adding a second library product broke the core's test script.** Once `Package.swift`
+declared two library products, the per-product schemes stopped carrying a test action, and
+`scripts/test-ios.sh` failed with "Scheme PdfiumKit is not currently configured for the
+test action". The core suite was not running. The script now drives `PdfiumKit-Package`
+and selects targets explicitly. Worth noting because nothing about adding an optional
+package suggests it would touch the core's gate.
+
+Two smaller ones: Kotlin block comments nest, so a `/*` inside KDoc (from a glob in a file
+path) opens a comment that the closing `*/` then closes instead of the outer one. And
+`LabeledContent` is iOS 16+, which the demo caught immediately — the iOS 15 floor PKG-3
+promises is real and enforced by the demo building against it.

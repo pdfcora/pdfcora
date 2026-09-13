@@ -1,5 +1,4 @@
 import { PdfDocument, PdfError, PdfViewTransform, rectContains, configureEngine } from '../dist/index.js';
-import { PdfiumAI } from '../../web-ai/dist/index.js';
 
 // The browser supplies the Emscripten factory; Node's default loader does not apply here.
 configureEngine({
@@ -400,6 +399,18 @@ function draw() {
  * real feature does.
  */
 async function renderAI() {
+  // Imported here rather than at the top: pdfiumkit-ai is an optional package with its
+  // own build, and a static import would take the whole demo down when it is absent
+  // rather than just this tab.
+  let PdfiumAI;
+  try {
+    ({ PdfiumAI } = await import('../../web-ai/dist/index.js'));
+  } catch {
+    $panel.append(el('p', { className: 'warn' },
+      'pdfiumkit-ai is not built. Run `npm install && npm run build` in web-ai/.'));
+    return;
+  }
+
   const provider = state.aiEndpoint
     ? { async generate(request) {
           const response = await fetch(state.aiEndpoint, {
