@@ -1,10 +1,11 @@
 import { ENGINE_VERSION, engine, readUtf16, withBuffer, withUtf16, type PdfiumModule } from './engine.js';
 import { readSignatures } from './signature.js';
+import { verifySignature } from './cms/verify.js';
 import { PdfError } from './errors.js';
 import type {
   PdfAttachment, PdfMetadata, PdfOutlineItem, PdfPermissions, PdfSaveMode, PdfSize,
   PdfPageRotation,
-  PdfSignature,
+  PdfSignature, PdfSignatureValidity, PdfVerifyOptions,
 } from './types.js';
 import { PdfPage } from './page.js';
 
@@ -27,15 +28,20 @@ export class PdfDocument {
   /** Serialises work; also what makes `await`ed calls ordered and non-overlapping. */
   private queue: Promise<unknown> = Promise.resolve();
 
-  /** Length of the bytes the document was opened from, which a signature's byte
-   *  range is measured against. */
-  private readonly byteLength: number;
+  /**
+   * The bytes the document was opened from. A signature's byte range is measured
+   * against them, and verification re-hashes them; PDFium's own copy is not
+   * byte-identical once edits have been made.
+   */
+  private readonly originalBytes: Uint8Array;
 
-  private constructor(m: PdfiumModule, handle: number, bufferPtr: number, byteLength: number) {
+  private get byteLength(): number { return this.originalBytes.length; }
+
+  private constructor(m: PdfiumModule, handle: number, bufferPtr: number, bytes: Uint8Array) {
     this.m = m;
     this.handle = handle;
     this.bufferPtr = bufferPtr;
-    this.byteLength = byteLength;
+    this.originalBytes = bytes;
   }
 
   static async open(bytes: Uint8Array, password?: string): Promise<PdfDocument> {
@@ -53,7 +59,7 @@ export class PdfDocument {
       m._free(ptr);
       throw PdfError.fromEngine(lastError, password !== undefined);
     }
-    return new PdfDocument(m, handle, ptr, bytes.length);
+    return new PdfDocument(m, handle, ptr, bytes);
   }
 
   /** @internal Runs `body` with the document handle, serialised and closed-checked. */
@@ -213,6 +219,17 @@ export class PdfDocument {
   /** Signatures already present in the document. Reading only; nothing is verified. */
   signatures(): Promise<PdfSignature[]> {
     return this.run((h, m) => readSignatures(m, h, this.byteLength));
+  }
+
+  /**
+   * Verifies a signature this document carries.
+   *
+   * Reports integrity and trust separately: a signature whose bytes are intact but
+   * whose issuer is unknown comes back `untrusted`, never `valid`. Revocation is not
+   * checked.
+   */
+  verify(signature: PdfSignature, options?: PdfVerifyOptions): Promise<PdfSignatureValidity> {
+    return verifySignature(this.originalBytes, signature, options);
   }
 
   /** The document outline, or an empty array when there is none. */

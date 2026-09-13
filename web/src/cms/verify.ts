@@ -5,8 +5,10 @@
  * proves the bytes have not changed, and says nothing about who signed them.
  */
 
-import type { PdfSignature } from '../types.js';
+import type { PdfSignature, PdfSignatureValidity, PdfVerifyOptions } from '../types.js';
 import { parseSignedData } from './signedData.js';
+import { parseCertificate, buildChain, sameBytes, isSelfIssued, type PdfCertificate } from './certificate.js';
+import { DerError } from './der.js';
 
 /** Digest algorithms by OID, as they appear in a CMS `digestAlgorithm`. */
 const DIGEST_BY_OID: Record<string, DigestName> = {
@@ -97,3 +99,142 @@ export function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean {
   for (let i = 0; i < a.length; i++) difference |= a[i]! ^ b[i]!;
   return difference === 0;
 }
+
+
+/** Signature algorithms by OID, mapped to what WebCrypto needs to import and verify. */
+const SIGNATURE_BY_OID: Record<string, { name: string; hash: DigestName }> = {
+  '1.2.840.113549.1.1.11': { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+  '1.2.840.113549.1.1.12': { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-384' },
+  '1.2.840.113549.1.1.13': { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-512' },
+  '1.2.840.113549.1.1.5':  { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-1' },
+  // rsaEncryption appears as the signatureAlgorithm when the digest is carried
+  // separately in digestAlgorithm, which is common in PDF signers.
+  '1.2.840.113549.1.1.1':  { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+  '1.2.840.10045.4.3.2':   { name: 'ECDSA', hash: 'SHA-256' },
+  '1.2.840.10045.4.3.3':   { name: 'ECDSA', hash: 'SHA-384' },
+  '1.2.840.10045.4.3.4':   { name: 'ECDSA', hash: 'SHA-512' },
+};
+
+/**
+ * Verifies a signature and judges its chain.
+ *
+ * Integrity and trust are answered separately and never merged: a signature whose bytes
+ * are intact but whose issuer is unknown is `untrusted`, and one over changed bytes is
+ * `digestMismatch` no matter how trusted the signer is.
+ *
+ * Revocation is **not** checked. A `valid` verdict means the bytes are unchanged and the
+ * chain reaches a supplied anchor — not that the certificate is still in good standing.
+ */
+export async function verifySignature(
+  bytes: Uint8Array,
+  signature: PdfSignature,
+  options: PdfVerifyOptions = {},
+): Promise<PdfSignatureValidity> {
+  let cms;
+  try {
+    cms = parseSignedData(signature.contents);
+  } catch (error) {
+    return { kind: 'malformed', reason: describe(error) };
+  }
+
+  if (signature.subFilter && !SUPPORTED_SUBFILTERS.has(signature.subFilter)) {
+    return { kind: 'unsupported', subFilter: signature.subFilter };
+  }
+
+  let certificates: PdfCertificate[];
+  let signer: PdfCertificate | undefined;
+  try {
+    certificates = cms.certificates.map((der) => parseCertificate(der));
+    signer = certificates.find((c) => c.serialNumber === cms.signerSerial) ?? certificates[0];
+  } catch (error) {
+    return { kind: 'malformed', reason: describe(error) };
+  }
+  if (!signer) return { kind: 'malformed', reason: 'no signer certificate' };
+
+  // Integrity first, so tampering is never reported as a trust problem.
+  try {
+    if (!await checkDigest(bytes, signature)) return { kind: 'digestMismatch' };
+    if (!await checkSignature(cms, signer)) return { kind: 'digestMismatch' };
+  } catch (error) {
+    return { kind: 'malformed', reason: describe(error) };
+  }
+
+  const now = options.at ?? new Date();
+  if (now < signer.notBefore || now > signer.notAfter) {
+    return { kind: 'expired', at: signer.notAfter };
+  }
+
+  const chain = buildChain(signer, certificates);
+  const anchors = (options.trustAnchors ?? []).map((der) => {
+    try { return parseCertificate(der); } catch { return undefined; }
+  }).filter((c): c is PdfCertificate => c !== undefined);
+
+  const trusted = chain.some((link) =>
+    anchors.some((anchor) => sameBytes(anchor.der, link.der)));
+
+  if (!trusted) {
+    const root = chain[chain.length - 1]!;
+    return {
+      kind: 'untrusted',
+      chain,
+      reason: anchors.length === 0
+        ? 'no trust anchors were supplied'
+        : isSelfIssued(root)
+          ? 'the chain ends at a self-issued certificate that is not an anchor'
+          : 'the issuer is unknown',
+    };
+  }
+
+  return { kind: 'valid', signer };
+}
+
+const SUPPORTED_SUBFILTERS = new Set([
+  'adbe.pkcs7.detached', 'ETSI.CAdES.detached', 'adbe.pkcs7.sha1',
+]);
+
+/**
+ * Verifies the signature over the signed attributes.
+ *
+ * The signature covers the SET encoding of the attributes, which `parseSignedData`
+ * already re-tagged. When there are no signed attributes the signature covers the
+ * content directly, which a detached PDF signature never has — so that case is refused
+ * rather than guessed at.
+ */
+async function checkSignature(
+  cms: ReturnType<typeof parseSignedData>,
+  signer: PdfCertificate,
+): Promise<boolean> {
+  if (!cms.signedAttrs) throw new DerError('signature has no signed attributes');
+
+  const algorithm = SIGNATURE_BY_OID[cms.signatureAlgorithm];
+  if (!algorithm) throw new DerError(`unsupported signature algorithm ${cms.signatureAlgorithm}`);
+
+  // The digestAlgorithm field is authoritative when present; the signature OID may be
+  // the generic rsaEncryption.
+  const hash = digestNameForOid(cms.digestAlgorithm) ?? algorithm.hash;
+
+  // Copied rather than passed as a subarray: WebCrypto's BufferSource will not accept
+  // a view whose backing buffer is typed as possibly shared.
+  const key = await crypto.subtle.importKey(
+    'spki',
+    new Uint8Array(signer.publicKeyInfo),
+    algorithm.name === 'ECDSA'
+      ? { name: 'ECDSA', namedCurve: curveFor(hash) }
+      : { name: 'RSASSA-PKCS1-v1_5', hash },
+    false,
+    ['verify'],
+  );
+
+  return crypto.subtle.verify(
+    algorithm.name === 'ECDSA' ? { name: 'ECDSA', hash } : 'RSASSA-PKCS1-v1_5',
+    key,
+    new Uint8Array(cms.signature),
+    new Uint8Array(cms.signedAttrs),
+  );
+}
+
+const curveFor = (hash: DigestName) =>
+  hash === 'SHA-384' ? 'P-384' : hash === 'SHA-512' ? 'P-521' : 'P-256';
+
+const describe = (error: unknown) =>
+  error instanceof Error ? error.message : String(error);

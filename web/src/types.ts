@@ -267,3 +267,40 @@ export interface PdfSignature {
    */
   readonly coversWholeDocument: boolean;
 }
+
+/** A certificate from a signature's chain. */
+export interface PdfCertificateInfo {
+  readonly commonName?: string;
+  readonly serialNumber: bigint;
+  readonly notBefore: Date;
+  readonly notAfter: Date;
+  /** The certificate as DER, for callers that want to inspect it further. */
+  readonly der: Uint8Array;
+}
+
+/**
+ * The outcome of verifying a signature.
+ *
+ * Integrity and trust are deliberately separate outcomes. `valid` means the bytes have
+ * not changed **and** the chain reaches a supplied anchor; a signature that is
+ * cryptographically intact but whose issuer is unknown is `untrusted`, not `valid`.
+ *
+ * Revocation (CRL/OCSP) is not checked, so `valid` does not mean the certificate is
+ * still in good standing.
+ */
+export type PdfSignatureValidity =
+  | { readonly kind: 'valid'; readonly signer: PdfCertificateInfo; readonly timestamp?: Date }
+  /** The signed bytes changed after signing. */
+  | { readonly kind: 'digestMismatch' }
+  /** Cryptographically intact, but the chain does not reach a trusted anchor. */
+  | { readonly kind: 'untrusted'; readonly chain: readonly PdfCertificateInfo[]; readonly reason: string }
+  | { readonly kind: 'expired'; readonly at: Date }
+  | { readonly kind: 'malformed'; readonly reason: string }
+  | { readonly kind: 'unsupported'; readonly subFilter: string };
+
+export interface PdfVerifyOptions {
+  /** DER-encoded certificates to trust. With none supplied, nothing is trusted. */
+  readonly trustAnchors?: readonly Uint8Array[];
+  /** The instant to judge validity at. Defaults to now; set it to make tests stable. */
+  readonly at?: Date;
+}
