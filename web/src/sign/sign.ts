@@ -12,6 +12,8 @@
 
 import { addSignatureField } from './field.js';
 import { digestOverRanges } from '../cms/verify.js';
+import { timestamp } from './timestamp.js';
+import { parseSignedData } from '../cms/signedData.js';
 
 /**
  * Produces a detached CMS SignedData over `data`.
@@ -41,6 +43,14 @@ export interface PdfSignOptions {
    * sound. Pass `adbe.pkcs7.detached` for a plain PKCS#7 signer.
    */
   readonly subFilter?: 'ETSI.CAdES.detached' | 'adbe.pkcs7.detached';
+  /**
+   * An RFC 3161 authority to timestamp the signature with, raising it from PAdES B-B to
+   * B-T. Absent by default: it needs a network call, and a signature without a timestamp
+   * is still valid — it just stops verifying once the certificate expires.
+   */
+  readonly timestampUrl?: string;
+  /** Injected in tests; defaults to the platform's fetch. */
+  readonly fetch?: typeof fetch;
 }
 
 const DEFAULT_RESERVED = 8192;
@@ -63,8 +73,15 @@ export async function signDocument(
   // byte range names, and exactly what a verifier will re-assemble.
   const signedContent = concatRanges(placed.bytes, placed.byteRange);
 
-  const cms = await options.signer.sign(signedContent, 'SHA-256');
+  let cms = await options.signer.sign(signedContent, 'SHA-256');
   if (cms.length === 0) throw new Error('sign: the signer returned nothing');
+
+  if (options.timestampUrl) {
+    // Any failure here throws, so a document is never returned with a timestamp that
+    // was requested and silently not applied.
+    const signatureValue = parseSignedData(cms).signature;
+    cms = await timestamp(cms, signatureValue, options.timestampUrl, options.fetch);
+  }
 
   if (cms.length > reservedBytes) {
     // Truncating would produce a file that opens and fails to verify, with no clue why.

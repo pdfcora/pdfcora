@@ -29,3 +29,18 @@ openssl x509 -in test-signer-cert.pem -outform DER -out test-signer.der
 Being self-signed, it exercises the same valid-but-untrusted case as the UNH-IOL fixture:
 a document signed with it verifies cryptographically and is untrusted until
 `test-signer.der` is supplied as an anchor.
+
+## tsa/
+
+A stubbed RFC 3161 timestamp authority, used only by the signing tests. `openssl ts`
+signs genuine tokens with it, so the tests exercise real timestamping rather than a
+canned reply — and, unlike a public authority, it makes the refusal paths testable and
+keeps CI off the network.
+
+```
+openssl req -x509 -newkey rsa:2048 -keyout tsa/tsa-key.pem -out tsa/tsa-cert.pem \
+  -days 3650 -nodes -config tsa/tsa.cnf
+```
+
+The certificate carries the `timeStamping` extended key usage, without which `openssl ts`
+refuses to act as an authority.
