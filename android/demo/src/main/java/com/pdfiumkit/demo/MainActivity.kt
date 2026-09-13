@@ -17,6 +17,7 @@ import com.pdfiumkit.PdfDocument
 
 /** Every screen the demo offers; each is a self-contained example of one API area. */
 enum class Demo(val title: String, val detail: String) {
+    EDITOR("Editor", "Fill forms and annotate on the page"),
     VIEWER("Viewer", "Render pages, pan and zoom"),
     SEARCH("Search", "Find text and highlight hits"),
     OUTLINE("Outline", "Bookmarks and destinations"),
@@ -63,6 +64,7 @@ private fun App() {
         Box(Modifier.padding(padding)) {
             when (val screen = current) {
                 null -> HomeScreen(store) { current = it }
+                Demo.EDITOR -> EditorScreen(store)
                 Demo.VIEWER -> ViewerScreen(store)
                 Demo.SEARCH -> SearchScreen(store)
                 Demo.OUTLINE -> OutlineScreen(store)

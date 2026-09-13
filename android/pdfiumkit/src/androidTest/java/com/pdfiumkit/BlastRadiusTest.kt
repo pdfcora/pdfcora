@@ -20,6 +20,7 @@ import org.junit.runner.RunWith
  * The hung coroutines are never reclaimed; they end with the test process.
  */
 @RunWith(AndroidJUnit4::class)
+@LeaksNativeThreads
 class BlastRadiusTest {
     private fun asset(name: String) =
         InstrumentationRegistry.getInstrumentation().context.assets.open(name).use { it.readBytes() }

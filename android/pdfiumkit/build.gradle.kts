@@ -18,6 +18,9 @@ android {
         minSdk = 23
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64") }
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Tests that leak spinning native threads poison every test after them in the
+        // same process. scripts/test-android.sh runs them separately.
+        testInstrumentationRunnerArguments["notAnnotation"] = "com.pdfiumkit.LeaksNativeThreads"
         externalNativeBuild {
             cmake {
                 arguments += listOf(

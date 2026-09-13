@@ -8,6 +8,7 @@
 #include <android/bitmap.h>
 #include <android/log.h>
 #include <cstring>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -30,6 +31,13 @@ struct Document {
     FPDF_FORMHANDLE form = nullptr;
     FPDF_FORMFILLINFO formInfo{};
     std::vector<uint8_t> bytes;   // PDFium reads lazily, so the buffer must outlive the doc
+
+    /// Loaded pages, kept alive for the document's lifetime.
+    ///
+    /// Not just an optimisation: FORM_OnBeforeClosePage tears down the form-fill page
+    /// view, which discards live field state. Reloading the page per call therefore
+    /// loses a value that was typed but whose appearance has not been regenerated.
+    std::map<jint, FPDF_PAGE> pages;
 };
 
 Document* asDoc(jlong handle) { return reinterpret_cast<Document*>(handle); }
@@ -56,17 +64,26 @@ jstring utf16String(JNIEnv* env, Fn fn) {
 
 FPDF_PAGE loadPage(Document* d, jint index) {
     if (!d || !d->doc) return nullptr;
+    auto it = d->pages.find(index);
+    if (it != d->pages.end()) return it->second;
+
     FPDF_PAGE page = FPDF_LoadPage(d->doc, index);
-    if (page && d->form) {
-        FORM_OnAfterLoadPage(page, d->form);
-    }
+    if (!page) return nullptr;
+    if (d->form) FORM_OnAfterLoadPage(page, d->form);
+    d->pages[index] = page;
     return page;
 }
 
-void unloadPage(Document* d, FPDF_PAGE page) {
-    if (!page) return;
-    if (d && d->form) FORM_OnBeforeClosePage(page, d->form);
-    FPDF_ClosePage(page);
+/// Pages now live until the document closes, so per-call unloading is a no-op.
+void unloadPage(Document*, FPDF_PAGE) {}
+
+void releaseAllPages(Document* d) {
+    if (!d) return;
+    for (auto& [index, page] : d->pages) {
+        if (d->form) FORM_OnBeforeClosePage(page, d->form);
+        FPDF_ClosePage(page);
+    }
+    d->pages.clear();
 }
 
 struct SaveCollector {
@@ -125,6 +142,7 @@ JNIEXPORT void JNICALL
 Java_com_pdfiumkit_Native_closeDocument(JNIEnv*, jclass, jlong handle) {
     auto* d = asDoc(handle);
     if (!d) return;
+    releaseAllPages(d);
     if (d->form) FPDFDOC_ExitFormFillEnvironment(d->form);
     if (d->doc) FPDF_CloseDocument(d->doc);
     delete d;
@@ -174,7 +192,8 @@ Java_com_pdfiumkit_Native_setPageRotation(JNIEnv*, jclass, jlong handle, jint in
 
 JNIEXPORT jboolean JNICALL
 Java_com_pdfiumkit_Native_renderPage(JNIEnv* env, jclass, jlong handle, jint index,
-                                     jobject bitmap, jint flags, jint background) {
+                                     jobject bitmap, jint flags, jint background,
+                                     jboolean drawForms) {
     auto* d = asDoc(handle);
     FPDF_PAGE page = loadPage(d, index);
     if (!page) return JNI_FALSE;
@@ -211,7 +230,9 @@ Java_com_pdfiumkit_Native_renderPage(JNIEnv* env, jclass, jlong handle, jint ind
                         static_cast<int>(info.height), static_cast<FPDF_DWORD>(background));
     FPDF_RenderPageBitmap(target, page, 0, 0, static_cast<int>(info.width),
                           static_cast<int>(info.height), 0, flags);
-    if (d->form) {
+    // Only the form-fill layer paints live field values; callers building an inline
+    // form editor need to omit it so a native control can own the field.
+    if (drawForms && d->form) {
         FPDF_FFLDraw(d->form, target, page, 0, 0, static_cast<int>(info.width),
                      static_cast<int>(info.height), 0, flags);
     }
@@ -450,6 +471,45 @@ Java_com_pdfiumkit_Native_addInk(JNIEnv* env, jclass, jlong handle, jint pageInd
     }
     FPDFAnnot_SetColor(annot, FPDFANNOT_COLORTYPE_Color, r, g, b, a);
     FPDFAnnot_SetBorder(annot, 0, 0, width);
+    FPDFPage_CloseAnnot(annot);
+    FPDFPage_GenerateContent(page);
+
+    int count = FPDFPage_GetAnnotCount(page);
+    unloadPage(d, page);
+    return count - 1;
+}
+
+/// quads is a flat run of 8 floats per quad: x1,y1,x2,y2,x3,y3,x4,y4.
+JNIEXPORT jint JNICALL
+Java_com_pdfiumkit_Native_addMarkup(JNIEnv* env, jclass, jlong handle, jint pageIndex,
+                                    jint subtype, jfloatArray quads,
+                                    jint r, jint g, jint b, jint a) {
+    auto* d = asDoc(handle);
+    FPDF_PAGE page = loadPage(d, pageIndex);
+    if (!page) return -1;
+
+    FPDF_ANNOTATION annot = FPDFPage_CreateAnnot(page, static_cast<FPDF_ANNOTATION_SUBTYPE>(subtype));
+    if (!annot) { unloadPage(d, page); return -1; }
+
+    jsize n = env->GetArrayLength(quads);
+    std::vector<jfloat> flat(static_cast<size_t>(n));
+    env->GetFloatArrayRegion(quads, 0, n, flat.data());
+
+    float minX = 1e9f, minY = 1e9f, maxX = -1e9f, maxY = -1e9f;
+    for (jsize i = 0; i + 7 < n; i += 8) {
+        FS_QUADPOINTSF q{flat[i], flat[i+1], flat[i+2], flat[i+3],
+                         flat[i+4], flat[i+5], flat[i+6], flat[i+7]};
+        FPDFAnnot_AppendAttachmentPoints(annot, &q);
+        for (int k = 0; k < 8; k += 2) {
+            minX = std::min(minX, flat[i+k]);   maxX = std::max(maxX, flat[i+k]);
+            minY = std::min(minY, flat[i+k+1]); maxY = std::max(maxY, flat[i+k+1]);
+        }
+    }
+    if (n >= 8) {
+        FS_RECTF rect{minX, maxY, maxX, minY};
+        FPDFAnnot_SetRect(annot, &rect);
+    }
+    FPDFAnnot_SetColor(annot, FPDFANNOT_COLORTYPE_Color, r, g, b, a);
     FPDFPage_CloseAnnot(annot);
     FPDFPage_GenerateContent(page);
 

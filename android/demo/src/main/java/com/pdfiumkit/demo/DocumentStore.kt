@@ -21,6 +21,8 @@ class DocumentStore(
         val SAMPLES = listOf(
             Sample("Hello World", "sample.pdf"),
             Sample("Text Form", "form.pdf"),
+            Sample("Checkboxes", "checkboxes.pdf"),
+            Sample("Dropdowns", "dropdowns.pdf"),
             Sample("Annotated", "annotated.pdf"),
         )
     }

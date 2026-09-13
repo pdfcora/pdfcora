@@ -3,8 +3,8 @@ import { PdfError } from './errors.js';
 import type { PdfDocument } from './document.js';
 import type {
   PdfAnnotation, PdfAnnotationBase, PdfColor, PdfFormField, PdfFormFieldBase,
-  PdfLink, PdfLinkTarget, PdfPoint, PdfRect, PdfRenderOptions, PdfSearchOptions,
-  PdfSize, PdfTextMatch,
+  PdfLink, PdfLinkTarget, PdfPoint, PdfQuad, PdfRect, PdfRenderOptions,
+  PdfSearchOptions, PdfSize, PdfTextMatch,
 } from './types.js';
 
 // PDFium annotation subtypes (fpdf_annot.h)
@@ -177,6 +177,50 @@ export class PdfPage {
         }
         setColor(m, annot, color);
         m.ccall('FPDFAnnot_SetBorder', 'number', ['number', 'number', 'number', 'number'], [annot, 0, 0, lineWidth]);
+      } finally {
+        m.ccall('FPDFPage_CloseAnnot', null, ['number'], [annot]);
+      }
+      m.ccall('FPDFPage_GenerateContent', 'number', ['number'], [page]);
+      return (m.ccall('FPDFPage_GetAnnotCount', 'number', ['number'], [page]) as number) - 1;
+    });
+  }
+
+  /** Adds a highlight covering `quads`. Resolves to the new annotation's index. */
+  addHighlight(quads: readonly PdfQuad[], color: PdfColor = { red: 255, green: 255, blue: 0, alpha: 128 }): Promise<number> {
+    return this.addMarkup(SUBTYPE.highlight, quads, color);
+  }
+
+  addUnderline(quads: readonly PdfQuad[], color: PdfColor = { red: 0, green: 0, blue: 255 }): Promise<number> {
+    return this.addMarkup(SUBTYPE.underline, quads, color);
+  }
+
+  addStrikeout(quads: readonly PdfQuad[], color: PdfColor = { red: 255, green: 0, blue: 0 }): Promise<number> {
+    return this.addMarkup(SUBTYPE.strikeout, quads, color);
+  }
+
+  private addMarkup(subtype: number, quads: readonly PdfQuad[], color: PdfColor): Promise<number> {
+    return this.document.withPage(this.index, (page, m) => {
+      const annot = m.ccall('FPDFPage_CreateAnnot', 'number', ['number', 'number'], [page, subtype]) as number;
+      if (!annot) throw PdfError.invalidOperation('markup annotation could not be created');
+
+      try {
+        for (const q of quads) {
+          withBuffer(m, 32, (ptr) => {
+            new Float32Array(m.HEAPU8.buffer, ptr, 8).set([
+              q.p1.x, q.p1.y, q.p2.x, q.p2.y, q.p3.x, q.p3.y, q.p4.x, q.p4.y,
+            ]);
+            m.ccall('FPDFAnnot_AppendAttachmentPoints', 'number', ['number', 'number'], [annot, ptr]);
+          });
+        }
+        const xs = quads.flatMap((q) => [q.p1.x, q.p2.x, q.p3.x, q.p4.x]);
+        const ys = quads.flatMap((q) => [q.p1.y, q.p2.y, q.p3.y, q.p4.y]);
+        if (xs.length) {
+          setRect(m, annot, {
+            left: Math.min(...xs), right: Math.max(...xs),
+            bottom: Math.min(...ys), top: Math.max(...ys),
+          });
+        }
+        setColor(m, annot, color);
       } finally {
         m.ccall('FPDFPage_CloseAnnot', null, ['number'], [annot]);
       }

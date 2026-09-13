@@ -123,3 +123,61 @@ data class PdfLink(val rect: PdfRect, val target: Target) {
         object Unresolved : Target()
     }
 }
+
+/**
+ * Converts between PDF page space (bottom-left origin) and view space (top-left).
+ *
+ * Anything interactive needs both directions: PDF to view to place an overlay, view to
+ * PDF to work out what a tap landed on. Doing the Y-flip by hand at each call site is
+ * where this goes wrong, so it lives here.
+ */
+data class PdfViewTransform(
+    val pageSize: PdfSize,
+    /** View pixels per PDF point. */
+    val scale: Float,
+) {
+    companion object {
+        /** Derives the scale needed to fit the page into [width] view pixels. */
+        fun fittingWidth(pageSize: PdfSize, width: Float): PdfViewTransform {
+            // A degenerate page would otherwise give a non-finite scale, which silently
+            // poisons every later coordinate.
+            val scale = if (pageSize.width > 0f) width / pageSize.width else 1f
+            return PdfViewTransform(pageSize, scale)
+        }
+    }
+
+    val viewWidth: Float get() = pageSize.width * scale
+    val viewHeight: Float get() = pageSize.height * scale
+
+    fun toView(point: PdfPoint): android.graphics.PointF =
+        android.graphics.PointF(point.x * scale, (pageSize.height - point.y) * scale)
+
+    fun toView(rect: PdfRect): android.graphics.RectF {
+        val left = minOf(rect.left, rect.right) * scale
+        val top = (pageSize.height - maxOf(rect.bottom, rect.top)) * scale
+        return android.graphics.RectF(
+            left, top,
+            left + kotlin.math.abs(rect.right - rect.left) * scale,
+            top + kotlin.math.abs(rect.top - rect.bottom) * scale,
+        )
+    }
+
+    fun toPdf(x: Float, y: Float): PdfPoint =
+        PdfPoint(x / scale, pageSize.height - y / scale)
+
+    fun toPdf(rect: android.graphics.RectF): PdfRect {
+        val topLeft = toPdf(rect.left, rect.top)
+        val bottomRight = toPdf(rect.right, rect.bottom)
+        return PdfRect(topLeft.x, bottomRight.y, bottomRight.x, topLeft.y)
+    }
+}
+
+/**
+ * Whether [point] falls inside this rect, edges included.
+ *
+ * Edge order is normalised first: PDFium returns rects with `left > right` or
+ * `bottom > top` often enough that assuming otherwise misses real hits.
+ */
+fun PdfRect.contains(point: PdfPoint): Boolean =
+    point.x >= minOf(left, right) && point.x <= maxOf(left, right) &&
+        point.y >= minOf(bottom, top) && point.y <= maxOf(bottom, top)

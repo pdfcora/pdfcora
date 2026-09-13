@@ -18,7 +18,8 @@ internal object Native {
     @JvmStatic external fun pageRotation(handle: Long, index: Int): Int
     @JvmStatic external fun setPageRotation(handle: Long, index: Int, rotation: Int)
     @JvmStatic external fun renderPage(
-        handle: Long, index: Int, bitmap: android.graphics.Bitmap, flags: Int, background: Int
+        handle: Long, index: Int, bitmap: android.graphics.Bitmap, flags: Int, background: Int,
+        drawForms: Boolean
     ): Boolean
     @JvmStatic external fun pageText(handle: Long, index: Int): String
     @JvmStatic external fun charCount(handle: Long, index: Int): Int
@@ -31,6 +32,10 @@ internal object Native {
     @JvmStatic external fun inkStroke(handle: Long, pageIndex: Int, annotIndex: Int, strokeIndex: Int): FloatArray
     @JvmStatic external fun addInk(
         handle: Long, pageIndex: Int, points: FloatArray, r: Int, g: Int, b: Int, a: Int, width: Float
+    ): Int
+    @JvmStatic external fun addMarkup(
+        handle: Long, pageIndex: Int, subtype: Int, quads: FloatArray,
+        r: Int, g: Int, b: Int, a: Int
     ): Int
     @JvmStatic external fun addNote(
         handle: Long, pageIndex: Int, left: Float, bottom: Float, right: Float, top: Float,

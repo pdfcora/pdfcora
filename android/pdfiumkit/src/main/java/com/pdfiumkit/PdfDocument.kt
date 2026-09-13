@@ -21,8 +21,8 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 class PdfDocument private constructor(
     private var handle: Long,
+    private val executor: java.util.concurrent.ExecutorService,
     private val dispatcher: CoroutineDispatcher,
-    private val shutdown: () -> Unit,
 ) : Closeable {
 
     private val closed = AtomicBoolean(false)
@@ -42,7 +42,7 @@ class PdfDocument private constructor(
                 executor.shutdown()
                 throw error
             }
-            return PdfDocument(handle, dispatcher) { executor.shutdown() }
+            return PdfDocument(handle, executor, dispatcher)
         }
 
         suspend fun open(file: File, password: String? = null): PdfDocument =
@@ -137,12 +137,11 @@ class PdfDocument private constructor(
         if (!closed.compareAndSet(false, true)) return
         val current = handle
         handle = 0
-        // Free on the owning thread, then retire it.
-        Executors.newSingleThreadExecutor().apply {
-            execute { if (current != 0L) Native.closeDocument(current) }
-            shutdown()
-        }
-        shutdown()
+        // Must free on this document's own thread. PDFium is not thread-safe, and
+        // closing from anywhere else races every other document's in-flight work —
+        // which corrupts global engine state rather than failing loudly.
+        if (current != 0L) executor.execute { Native.closeDocument(current) }
+        executor.shutdown()
     }
 }
 
@@ -197,7 +196,8 @@ class PdfPage internal constructor(
         val bitmap = Bitmap.createBitmap(
             pixelWidth.coerceAtLeast(1), pixelHeight.coerceAtLeast(1), Bitmap.Config.ARGB_8888
         )
-        val ok = Native.renderPage(h, index, bitmap, options.toFlags(), background.toColorInt())
+        val ok = Native.renderPage(h, index, bitmap, options.toFlags(), background.toColorInt(),
+            options.forms)
         if (!ok) {
             bitmap.recycle()
             throw PdfError.Corrupt("rendering page $index failed")

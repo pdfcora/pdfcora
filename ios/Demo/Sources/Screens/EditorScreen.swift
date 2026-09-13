@@ -42,6 +42,10 @@ struct EditorScreen: View {
     @State private var fields: [PdfFormField] = []
     @State private var annotations: [PdfAnnotation] = []
 
+    /// nil means fit-to-width; otherwise a scale in view points per PDF point.
+    @State private var zoom: Double?
+    @State private var viewportWidth: Double = 1000
+
     @State private var tool: EditorTool = .select
     @State private var stroke: [CGPoint] = []
     @State private var dragRect: CGRect?
@@ -58,6 +62,13 @@ struct EditorScreen: View {
     @FocusState private var noteFocused: Bool
     @State private var status: String?
 
+    private var fitScale: Double {
+        guard let pageSize else { return 1 }
+        return PdfViewTransform(page: pageSize, fittingWidth: viewportWidth).scale
+    }
+
+    private var scale: Double { zoom ?? fitScale }
+
     var body: some View {
         VStack(spacing: 0) {
             toolbar
@@ -67,6 +78,7 @@ struct EditorScreen: View {
         .navigationTitle("Editor")
         .navigationBarTitleDisplayMode(.inline)
         .task(id: pageIndex) { await reload() }
+        .task(id: scale) { await reload() }
     }
 
     // MARK: - Toolbar
@@ -100,6 +112,15 @@ struct EditorScreen: View {
 
             Spacer()
 
+            Button { stepZoom(-1) } label: { Image(systemName: "minus.magnifyingglass") }
+                .accessibilityIdentifier("zoom-out")
+            Button { zoom = nil } label: { Text("Fit").font(.caption) }
+                .accessibilityIdentifier("zoom-fit")
+            Button { stepZoom(1) } label: { Image(systemName: "plus.magnifyingglass") }
+                .accessibilityIdentifier("zoom-in")
+
+            Divider().frame(height: 24)
+
             Button { Task { await save() } } label: { Image(systemName: "square.and.arrow.down") }
                 .accessibilityIdentifier("editor-save")
         }
@@ -112,10 +133,9 @@ struct EditorScreen: View {
 
     private var canvas: some View {
         GeometryReader { geometry in
-            ScrollView {
+            ScrollView([.horizontal, .vertical]) {
                 if let image, let pageSize {
-                    let transform = PdfViewTransform(page: pageSize,
-                                                     fittingWidth: Double(geometry.size.width - 24))
+                    let transform = PdfViewTransform(page: pageSize, scale: scale)
                     ZStack(alignment: .topLeading) {
                         Image(uiImage: image)
                             .resizable()
@@ -133,8 +153,19 @@ struct EditorScreen: View {
                     ProgressView().frame(maxWidth: .infinity).padding(40)
                 }
             }
+            .onAppear { viewportWidth = Double(geometry.size.width - 24) }
+            .onChange(of: geometry.size.width) { viewportWidth = Double($0 - 24) }
         }
     }
+
+    /// Steps through the zoom ladder relative to fit, so "1x" always means fit-to-width.
+    private func stepZoom(_ direction: Int) {
+        let levels = Self.zoomSteps.map { $0 * fitScale }
+        let current = levels.firstIndex { abs($0 - scale) < 0.001 } ?? 2
+        zoom = levels[min(max(current + direction, 0), levels.count - 1)]
+    }
+
+    private static let zoomSteps: [Double] = [0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4]
 
     /// Live controls sitting exactly where the fields are.
     @ViewBuilder
@@ -405,8 +436,10 @@ struct EditorScreen: View {
         pageSize = try? await page.size
         fields = (try? await page.formFields()) ?? []
         annotations = (try? await page.annotations()) ?? []
-        // No .forms: the live controls above draw the values instead.
-        image = try? await page.render(width: 1400, options: [.annotations])
+        // No .forms: the live controls above draw the values instead. Rendering at the
+        // zoomed size keeps text sharp; upscaling one fixed bitmap would not.
+        let width = Int(((pageSize?.width ?? 1) * scale).rounded())
+        image = try? await page.render(width: min(max(width, 64), 4000), options: [.annotations])
     }
 
     // MARK: - Footer

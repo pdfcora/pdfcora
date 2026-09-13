@@ -90,6 +90,32 @@ suspend fun PdfPage.addInk(
     result
 }
 
+/** Adds a highlight covering [quads]. Returns the new annotation's index. */
+suspend fun PdfPage.addHighlight(quads: List<PdfQuad>, color: PdfColor = PdfColor.YELLOW): Int =
+    addMarkup(SUBTYPE_HIGHLIGHT, quads, color)
+
+suspend fun PdfPage.addUnderline(quads: List<PdfQuad>, color: PdfColor = PdfColor(0, 0, 255)): Int =
+    addMarkup(SUBTYPE_UNDERLINE, quads, color)
+
+suspend fun PdfPage.addStrikeout(quads: List<PdfQuad>, color: PdfColor = PdfColor(255, 0, 0)): Int =
+    addMarkup(SUBTYPE_STRIKEOUT, quads, color)
+
+private suspend fun PdfPage.addMarkup(subtype: Int, quads: List<PdfQuad>, color: PdfColor): Int =
+    document.onDocument { h ->
+        val flat = FloatArray(quads.size * 8)
+        quads.forEachIndexed { i, q ->
+            val o = i * 8
+            flat[o] = q.p1.x; flat[o + 1] = q.p1.y
+            flat[o + 2] = q.p2.x; flat[o + 3] = q.p2.y
+            flat[o + 4] = q.p3.x; flat[o + 5] = q.p3.y
+            flat[o + 6] = q.p4.x; flat[o + 7] = q.p4.y
+        }
+        val result = Native.addMarkup(h, index, subtype, flat,
+            color.red, color.green, color.blue, color.alpha)
+        if (result < 0) throw PdfError.InvalidOperation("markup annotation could not be created")
+        result
+    }
+
 /** Adds a sticky note. Returns the new annotation's index. */
 suspend fun PdfPage.addNote(
     rect: PdfRect,

@@ -1,4 +1,4 @@
-import { PdfDocument, PdfError, configureEngine, toViewRect } from '../dist/src/index.js';
+import { PdfDocument, PdfError, PdfViewTransform, rectContains, configureEngine } from '../dist/index.js';
 
 // The browser supplies the Emscripten factory; Node's default loader does not apply here.
 configureEngine({
@@ -17,9 +17,13 @@ configureEngine({
   locateFile: (path) => (path.endsWith('.wasm') ? '../../vendor/web/pdfium.wasm' : path),
 });
 
-const state = { document: null, pageCount: 0, pageIndex: 0, tab: 'viewer' };
+const state = {
+  document: null, pageCount: 0, pageIndex: 0, tab: 'editor',
+  tool: 'select', zoom: null, selected: null, createdCount: 0,
+};
 
 const TABS = [
+  ['editor', 'Editor', renderEditor],
   ['viewer', 'Viewer', renderViewer],
   ['search', 'Search', renderSearch],
   ['outline', 'Outline', renderOutline],
@@ -72,6 +76,261 @@ async function loadSample(name) {
     return;
   }
   await load(new Uint8Array(await response.arrayBuffer()), name);
+}
+
+// MARK: - Editor
+
+const TOOLS = [
+  ['select', 'Select', 'Edit fields on the page'],
+  ['ink', 'Ink', 'Drag to draw'],
+  ['note', 'Note', 'Click to place a note'],
+  ['highlight', 'Highlight', 'Drag over an area'],
+];
+
+const ZOOM_STEPS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4];
+
+/**
+ * Viewer, form filling, and annotation on one surface.
+ *
+ * The page is rendered WITHOUT the forms flag, so PDFium draws each widget frame but
+ * not its value, leaving the rect free for a live control placed with PdfViewTransform.
+ */
+async function renderEditor() {
+  const page = await state.document.page(state.pageIndex);
+  const size = await page.size();
+  const [fields, annotations] = await Promise.all([page.formFields(), page.annotations()]);
+
+  // Zoom is a scale multiplier on top of fit-to-width.
+  const available = Math.max(240, ($panel.clientWidth || 800) - 24);
+  const fit = PdfViewTransform.fittingWidth(size, available);
+  const scale = state.zoom == null ? fit.scale : state.zoom;
+  const t = new PdfViewTransform(size, scale);
+
+  // Re-render at the zoomed resolution rather than scaling the bitmap up.
+  const image = await page.render({
+    width: Math.round(t.viewSize.width),
+    annotations: true,
+    forms: false,
+  });
+
+  const canvas = el('canvas', { width: image.width, height: image.height });
+  canvas.getContext('2d').putImageData(new ImageData(image.data, image.width, image.height), 0, 0);
+
+  const stage = el('div', { className: 'stage' }, canvas);
+  stage.style.width = `${t.viewSize.width}px`;
+  stage.style.height = `${t.viewSize.height}px`;
+
+  for (const field of fields) stage.append(fieldControl(field, t, page));
+  if (state.selected != null) {
+    const hit = annotations.find((a) => a.index === state.selected);
+    if (hit) {
+      const box = t.toViewRect(hit.rect);
+      const marker = el('div', { className: 'sel' });
+      Object.assign(marker.style, {
+        left: `${box.x}px`, top: `${box.y}px`,
+        width: `${Math.max(box.width, 8)}px`, height: `${Math.max(box.height, 8)}px`,
+      });
+      stage.append(marker);
+    }
+  }
+
+  attachDrawing(stage, canvas, t, page, annotations);
+
+  $panel.append(editorToolbar(page, annotations, scale, fit.scale),
+                el('div', { className: 'stagewrap' }, stage),
+                el('p', { className: 'muted' },
+                   `${TOOLS.find(([k]) => k === state.tool)[2]} · ${fields.length} field(s) · ` +
+                   `${annotations.length} annotation(s) · ${Math.round(scale / fit.scale * 100)}%`));
+}
+
+function editorToolbar(page, annotations, scale, fitScale) {
+  const bar = el('div', { className: 'row' });
+  for (const [key, label] of TOOLS) {
+    const b = button(label, () => { state.tool = key; state.selected = null; draw(); });
+    b.setAttribute('aria-selected', String(state.tool === key));
+    b.id = `tool-${key}`;
+    bar.append(b);
+  }
+  bar.append(el('span', { className: 'sep' }, ' '));
+
+  const undo = button('Undo', async () => {
+    if (!annotations.length) return;
+    await page.removeAnnotation(annotations.length - 1);
+    state.createdCount = Math.max(0, state.createdCount - 1);
+    draw();
+  }, state.createdCount === 0);
+  undo.id = 'editor-undo';
+
+  const del = button('Delete', async () => {
+    await page.removeAnnotation(state.selected);
+    state.selected = null;
+    draw();
+  }, state.selected == null);
+
+  // Zoom: step through fixed levels, re-rendering each time.
+  const zoomOut = button('−', () => { stepZoom(-1, scale, fitScale); });
+  zoomOut.id = 'zoom-out';
+  const zoomIn = button('+', () => { stepZoom(1, scale, fitScale); });
+  zoomIn.id = 'zoom-in';
+  const zoomFit = button('Fit', () => { state.zoom = null; draw(); });
+  zoomFit.id = 'zoom-fit';
+
+  const save = button('Save', async () => {
+    const bytes = await state.document.toBytes();
+    const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+    const link = el('a', { href: url, download: 'pdfiumkit-edited.pdf', textContent: 'Download' });
+    setStatus('Exported ' + (bytes.length / 1024).toFixed(0) + ' KB');
+    bar.append(link);
+  });
+  save.id = 'editor-save';
+
+  bar.append(undo, del, el('span', { className: 'sep' }, ' '), zoomOut, zoomFit, zoomIn, save);
+  return bar;
+}
+
+function stepZoom(direction, current, fitScale) {
+  const levels = ZOOM_STEPS.map((z) => z * fitScale);
+  const i = levels.findIndex((l) => Math.abs(l - current) < 1e-6);
+  const from = i >= 0 ? i : levels.findIndex((l) => l > current);
+  const next = Math.min(levels.length - 1, Math.max(0, (from < 0 ? 2 : from) + direction));
+  state.zoom = levels[next];
+  draw();
+}
+
+/** A live control positioned on the field's own rectangle. */
+function fieldControl(field, t, page) {
+  const box = t.toViewRect(field.rect);
+  const fontSize = Math.max(9, Math.min(18, box.height * 0.62));
+  let control;
+
+  switch (field.kind) {
+    case 'text': {
+      control = el('input', { type: 'text', value: field.value, className: 'fld' });
+      control.style.fontSize = `${fontSize}px`;
+      // Commit on blur or Enter, so the page re-renders once rather than per keystroke.
+      const commit = async () => {
+        if (control.value === field.value) return;
+        await page.setText(control.value, field.annotationIndex);
+        draw();
+      };
+      control.onblur = commit;
+      control.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); control.blur(); } };
+      break;
+    }
+    case 'checkBox':
+    case 'radioButton': {
+      // The widget draws its own box but never its check, so supply only the mark.
+      control = el('button', { className: 'chk', textContent: field.isChecked ? '✓' : '' });
+      control.style.fontSize = `${fontSize}px`;
+      control.onclick = async () => {
+        await page.setChecked(!field.isChecked, field.annotationIndex);
+        draw();
+      };
+      break;
+    }
+    case 'comboBox':
+    case 'listBox': {
+      control = el('select', { className: 'fld' });
+      field.options.forEach((option, i) => {
+        control.append(el('option', {
+          value: String(i), textContent: option || '(blank)',
+          selected: field.selectedIndices.includes(i),
+        }));
+      });
+      control.style.fontSize = `${fontSize}px`;
+      control.onchange = async () => {
+        await page.setOption(Number(control.value), true, field.annotationIndex);
+        draw();
+      };
+      break;
+    }
+    default:
+      control = el('div', { className: 'fld inert' });
+  }
+
+  control.id = `field-${field.annotationIndex}`;
+  control.classList.add('overlay');
+  Object.assign(control.style, {
+    left: `${box.x}px`, top: `${box.y}px`,
+    width: `${box.width}px`, height: `${box.height}px`,
+  });
+  return control;
+}
+
+/** Pointer handling for the drawing tools and selection. */
+function attachDrawing(stage, canvas, t, page, annotations) {
+  let start = null;
+  let stroke = [];
+  const preview = el('div', { className: 'preview' });
+
+  const local = (e) => {
+    const r = canvas.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  };
+
+  stage.onpointerdown = (e) => {
+    if (e.target !== canvas) return;       // clicks on controls belong to them
+    start = local(e);
+    stroke = [start];
+    if (state.tool === 'highlight') { stage.append(preview); }
+    stage.setPointerCapture(e.pointerId);
+  };
+
+  stage.onpointermove = (e) => {
+    if (!start) return;
+    const p = local(e);
+    if (state.tool === 'ink') stroke.push(p);
+    if (state.tool === 'highlight') {
+      Object.assign(preview.style, {
+        left: `${Math.min(start.x, p.x)}px`, top: `${Math.min(start.y, p.y)}px`,
+        width: `${Math.abs(p.x - start.x)}px`, height: `${Math.abs(p.y - start.y)}px`,
+      });
+    }
+  };
+
+  stage.onpointerup = async (e) => {
+    if (!start) return;
+    const end = local(e);
+    const from = start;
+    start = null;
+    preview.remove();
+
+    if (state.tool === 'select') {
+      const point = t.toPdf(end);
+      const hit = [...annotations].reverse().find((a) => rectContains(a.rect, point));
+      state.selected = hit ? hit.index : null;
+      draw();
+      return;
+    }
+    if (state.tool === 'note') {
+      const text = prompt('Note contents');
+      if (!text) return;
+      const p = t.toPdf(end);
+      await page.addNote({ left: p.x, bottom: p.y - 24, right: p.x + 24, top: p.y }, text);
+      state.createdCount++;
+      draw();
+      return;
+    }
+    if (state.tool === 'ink') {
+      const points = stroke.map((q) => t.toPdf(q));
+      if (points.length < 2) return;
+      await page.addInk(points, { red: 0, green: 90, blue: 220 });
+      state.createdCount++;
+      draw();
+      return;
+    }
+    if (state.tool === 'highlight') {
+      const w = Math.abs(end.x - from.x), h = Math.abs(end.y - from.y);
+      if (w < 4 || h < 4) return;
+      const r = t.toPdfRect({ x: Math.min(from.x, end.x), y: Math.min(from.y, end.y), width: w, height: h });
+      await page.addHighlight([{
+        p1: { x: r.left, y: r.top }, p2: { x: r.right, y: r.top },
+        p3: { x: r.left, y: r.bottom }, p4: { x: r.right, y: r.bottom },
+      }]);
+      state.createdCount++;
+      draw();
+    }
+  };
 }
 
 function draw() {

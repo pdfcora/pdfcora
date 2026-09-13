@@ -220,6 +220,41 @@ class FeatureTest {
         }
     }
 
+    /**
+     * The `forms` option was declared and ignored once: the JNI called FPDF_FFLDraw
+     * unconditionally, so a caller could not omit the value layer. Matches iOS and Web,
+     * where `.forms` paints the value and its absence does not.
+     */
+    @Test
+    fun formsFlagControlsWhetherTheValueIsPainted() = runTest {
+        open("text_form.pdf").use { document ->
+            val page = document.page(0)
+            val field = page.formFields().filterIsInstance<PdfFormField.Text>().first()
+            page.setText("WIDGETVALUE", fieldAt = field.base.annotationIndex)
+
+            val size = page.size()
+            suspend fun inkInField(forms: Boolean): Int {
+                val bmp = page.render(width = 600, options = PdfRenderOptions(forms = forms))
+                val s = 600f / size.width
+                val r = field.base.rect
+                var n = 0
+                for (y in ((size.height - r.top) * s).toInt() until ((size.height - r.bottom) * s).toInt())
+                    for (x in (r.left * s).toInt() until (r.right * s).toInt()) {
+                        if (y in 0 until bmp.height && x in 0 until bmp.width) {
+                            val c = bmp.getPixel(x, y)
+                            if (android.graphics.Color.red(c) < 200 ||
+                                android.graphics.Color.green(c) < 200 ||
+                                android.graphics.Color.blue(c) < 200) n++
+                        }
+                    }
+                return n
+            }
+
+            assertTrue("forms = true should paint the value", inkInField(true) > 0)
+            assertEquals("forms = false must not paint the value", 0, inkInField(false))
+        }
+    }
+
     @Test
     fun outlineIsReadable() = runTest {
         open("annots_action_handling.pdf").use { document ->

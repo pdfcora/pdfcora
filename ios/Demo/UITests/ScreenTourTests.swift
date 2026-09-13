@@ -65,6 +65,34 @@ final class ScreenTourTests: XCTestCase {
                       "undo should be enabled after creating an annotation")
     }
 
+    /// Zoom re-renders the page at the new size, so the bitmap itself grows — the
+    /// controls layered on it stay aligned only if both move together.
+    func testEditorZoomChangesThePageSize() {
+        let app = XCUIApplication()
+        app.launch()
+        XCTAssertTrue(app.staticTexts["Hello World"].waitForExistence(timeout: 10))
+
+        app.descendants(matching: .any).matching(identifier: "demo-Editor").firstMatch.tap()
+        XCTAssertTrue(app.navigationBars["Editor"].waitForExistence(timeout: 10))
+
+        let page = app.images.firstMatch
+        XCTAssertTrue(page.waitForExistence(timeout: 5), "page did not render")
+        let fitted = page.frame.width
+
+        app.descendants(matching: .any).matching(identifier: "zoom-in").firstMatch.tap()
+        Thread.sleep(forTimeInterval: 1.5)
+        XCTAssertGreaterThan(page.frame.width, fitted, "zoom in did not enlarge the page")
+
+        app.descendants(matching: .any).matching(identifier: "zoom-fit").firstMatch.tap()
+        Thread.sleep(forTimeInterval: 1.5)
+        XCTAssertEqual(page.frame.width, fitted, accuracy: 2, "fit did not restore the page width")
+
+        app.descendants(matching: .any).matching(identifier: "zoom-out").firstMatch.tap()
+        Thread.sleep(forTimeInterval: 1.5)
+        save(app, named: "editor-zoomed-out")
+        XCTAssertLessThan(page.frame.width, fitted, "zoom out did not shrink the page")
+    }
+
     /// The headline use case: a document with a form is edited on the page itself —
     /// the field is a live control at its own position, not a dialog.
     func testFormFieldsAreEditedInlineOnThePage() {

@@ -34,6 +34,78 @@ export function toViewRect(rect: PdfRect, pageHeight: number, scale = 1): ViewRe
   };
 }
 
+/**
+ * Converts between PDF page space (bottom-left origin) and view space (top-left).
+ *
+ * Anything interactive needs both directions: PDF to view to place an overlay, view to
+ * PDF to work out what a click landed on. Doing the Y-flip by hand at each call site is
+ * where this goes wrong, so it lives here.
+ *
+ * ```ts
+ * const t = PdfViewTransform.fittingWidth(await page.size(), canvas.clientWidth)
+ * const box = t.toViewRect(field.rect)          // position a control
+ * const hit = t.toPdf({ x: event.offsetX, y: event.offsetY })
+ * ```
+ */
+export class PdfViewTransform {
+  constructor(
+    readonly pageSize: PdfSize,
+    /** View pixels per PDF point. */
+    readonly scale: number,
+  ) {}
+
+  /** Derives the scale needed to fit the page into `width` view pixels. */
+  static fittingWidth(pageSize: PdfSize, width: number): PdfViewTransform {
+    // A degenerate page would otherwise give an infinite scale, which silently
+    // poisons every later coordinate.
+    return new PdfViewTransform(pageSize, pageSize.width > 0 ? width / pageSize.width : 1);
+  }
+
+  get viewSize(): { width: number; height: number } {
+    return { width: this.pageSize.width * this.scale, height: this.pageSize.height * this.scale };
+  }
+
+  toView(point: PdfPoint): { x: number; y: number } {
+    return { x: point.x * this.scale, y: (this.pageSize.height - point.y) * this.scale };
+  }
+
+  toViewRect(rect: PdfRect): ViewRect {
+    const topLeft = this.toView({
+      x: Math.min(rect.left, rect.right),
+      y: Math.max(rect.bottom, rect.top),
+    });
+    return {
+      x: topLeft.x,
+      y: topLeft.y,
+      width: Math.abs(rect.right - rect.left) * this.scale,
+      height: Math.abs(rect.top - rect.bottom) * this.scale,
+    };
+  }
+
+  toPdf(point: { x: number; y: number }): PdfPoint {
+    return { x: point.x / this.scale, y: this.pageSize.height - point.y / this.scale };
+  }
+
+  toPdfRect(rect: ViewRect): PdfRect {
+    const topLeft = this.toPdf({ x: rect.x, y: rect.y });
+    const bottomRight = this.toPdf({ x: rect.x + rect.width, y: rect.y + rect.height });
+    return { left: topLeft.x, bottom: bottomRight.y, right: bottomRight.x, top: topLeft.y };
+  }
+}
+
+/**
+ * Whether `point` falls inside `rect`, edges included.
+ *
+ * Edge order is normalised first: PDFium returns rects with `left > right` or
+ * `bottom > top` often enough that assuming otherwise misses real hits.
+ */
+export function rectContains(rect: PdfRect, point: PdfPoint): boolean {
+  return point.x >= Math.min(rect.left, rect.right)
+    && point.x <= Math.max(rect.left, rect.right)
+    && point.y >= Math.min(rect.bottom, rect.top)
+    && point.y <= Math.max(rect.bottom, rect.top);
+}
+
 export interface PdfQuad {
   readonly p1: PdfPoint;
   readonly p2: PdfPoint;
