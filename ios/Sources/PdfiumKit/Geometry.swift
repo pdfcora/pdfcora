@@ -83,3 +83,69 @@ public struct PdfColor: Equatable, Sendable {
     public static let black = PdfColor(red: 0, green: 0, blue: 0)
     public static let yellow = PdfColor(red: 255, green: 255, blue: 0, alpha: 128)
 }
+
+/// Converts between PDF page space (bottom-left origin) and view space (top-left).
+///
+/// Anything interactive needs both directions: PDF to view to draw an overlay, view to
+/// PDF to work out what a tap landed on. Doing the Y-flip by hand at each call site is
+/// where this goes wrong, so it lives here.
+///
+/// ```swift
+/// let transform = PdfViewTransform(page: try await page.size, fittingWidth: canvasWidth)
+/// let box = transform.toView(annotation.rect)          // draw it
+/// let tapped = transform.toPdf(gesture.location)       // hit-test it
+/// ```
+public struct PdfViewTransform: Equatable, Sendable {
+    public let pageSize: PdfSize
+    /// View points per PDF point.
+    public let scale: Double
+
+    public init(page pageSize: PdfSize, scale: Double) {
+        self.pageSize = pageSize
+        self.scale = scale
+    }
+
+    /// Derives the scale needed to fit the page into `width` view points.
+    public init(page pageSize: PdfSize, fittingWidth width: Double) {
+        // A degenerate page would otherwise produce an infinite or NaN scale, which
+        // silently poisons every later coordinate.
+        self.init(page: pageSize, scale: pageSize.width > 0 ? width / pageSize.width : 1)
+    }
+
+    /// Size of the whole page in view points.
+    public var viewSize: CGSize {
+        CGSize(width: pageSize.width * scale, height: pageSize.height * scale)
+    }
+
+    public func toView(_ point: PdfPoint) -> CGPoint {
+        CGPoint(x: point.x * scale, y: (pageSize.height - point.y) * scale)
+    }
+
+    public func toView(_ rect: PdfRect) -> CGRect {
+        let topLeft = toView(PdfPoint(x: min(rect.left, rect.right), y: max(rect.bottom, rect.top)))
+        return CGRect(x: topLeft.x, y: topLeft.y,
+                      width: abs(rect.right - rect.left) * scale,
+                      height: abs(rect.top - rect.bottom) * scale)
+    }
+
+    public func toPdf(_ point: CGPoint) -> PdfPoint {
+        PdfPoint(x: Double(point.x) / scale, y: pageSize.height - Double(point.y) / scale)
+    }
+
+    public func toPdf(_ rect: CGRect) -> PdfRect {
+        let topLeft = toPdf(CGPoint(x: rect.minX, y: rect.minY))
+        let bottomRight = toPdf(CGPoint(x: rect.maxX, y: rect.maxY))
+        return PdfRect(left: topLeft.x, bottom: bottomRight.y, right: bottomRight.x, top: topLeft.y)
+    }
+}
+
+extension PdfRect {
+    /// Whether `point` falls inside, edges included.
+    ///
+    /// Edge order is normalised first: PDFium returns rects with `left > right` or
+    /// `bottom > top` often enough that assuming otherwise misses real hits.
+    public func contains(_ point: PdfPoint) -> Bool {
+        point.x >= min(left, right) && point.x <= max(left, right)
+            && point.y >= min(bottom, top) && point.y <= max(bottom, top)
+    }
+}

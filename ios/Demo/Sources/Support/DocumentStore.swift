@@ -14,6 +14,8 @@ final class DocumentStore: ObservableObject {
     static let samples = [
         Sample(title: "Hello World", resource: "sample"),
         Sample(title: "Text Form", resource: "form"),
+        Sample(title: "Checkboxes", resource: "checkboxes"),
+        Sample(title: "Dropdowns", resource: "dropdowns"),
         Sample(title: "Annotated", resource: "annotated"),
     ]
 

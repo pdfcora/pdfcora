@@ -46,6 +46,11 @@ SHA-256 of every artifact, and the fetch script refuses anything that does not m
 Demos: `ios/Demo` (SwiftUI, generate with `xcodegen`), `android/demo` (Compose),
 `web/demo` (serve the repo root and open `/web/demo/index.html`).
 
+The iOS demo has an **Editor** screen — open a file and it lands there — where form
+fields and annotations are edited directly on the rendered page: tap a field to fill
+it, drag to draw ink, tap to place a note, drag to highlight an area. Android and Web
+still have the per-API screens only.
+
 ## Installing
 
 Each SDK has been verified by consuming it from a project **outside** this repo, not
@@ -285,8 +290,10 @@ Full-corpus results, most recent run:
 - **Threading.** Each document owns a serial executor — an `actor` on iOS, a
   single-threaded dispatcher on Android, a promise chain on Web. You cannot corrupt
   memory by calling from the wrong thread; misuse raises `PdfError.closed` instead.
-- **Coordinates.** `PdfRect` is always PDF space (bottom-left origin). Conversion to
-  view space is an explicit call. There is no implicit Y-flip anywhere.
+- **Coordinates.** `PdfRect` is always PDF space (bottom-left origin). Conversion is an
+  explicit call in both directions — `PdfViewTransform.toView` to draw an overlay,
+  `.toPdf` to work out what a tap hit — plus `PdfRect.contains` for hit-testing. There
+  is no implicit Y-flip anywhere.
 - **Saving.** `full` is the default. `incremental` preserves the original bytes and
   existing signatures, but — verified against `chromium/7243` — does **not** persist
   annotations created in the same session.

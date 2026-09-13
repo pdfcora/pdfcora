@@ -3,6 +3,7 @@ import UniformTypeIdentifiers
 
 /// Every screen the demo offers. Each one is a self-contained example of one API area.
 enum Demo: String, CaseIterable, Identifiable {
+    case editor = "Editor"
     case viewer = "Viewer"
     case search = "Search"
     case outline = "Outline"
@@ -18,6 +19,7 @@ enum Demo: String, CaseIterable, Identifiable {
 
     var icon: String {
         switch self {
+        case .editor: "pencil.and.outline"
         case .viewer: "doc.richtext"
         case .search: "magnifyingglass"
         case .outline: "list.bullet.indent"
@@ -33,6 +35,7 @@ enum Demo: String, CaseIterable, Identifiable {
 
     var detail: String {
         switch self {
+        case .editor: "Fill forms and annotate"
         case .viewer: "Render pages, pan and zoom"
         case .search: "Find text and highlight hits"
         case .outline: "Bookmarks and destinations"
@@ -50,6 +53,7 @@ enum Demo: String, CaseIterable, Identifiable {
 struct RootView: View {
     @EnvironmentObject private var store: DocumentStore
     @State private var showingPicker = false
+    @State private var openInEditor = false
 
     var body: some View {
         NavigationView {
@@ -67,6 +71,7 @@ struct RootView: View {
                                 }
                             }
                         }
+                        .accessibilityIdentifier("sample-\(sample.title)")
                     }
                     Button("Open a file…") { showingPicker = true }
                 }
@@ -98,9 +103,18 @@ struct RootView: View {
             .task { if store.document == nil { await store.load(DocumentStore.samples[0]) } }
             .fileImporter(isPresented: $showingPicker, allowedContentTypes: [.pdf]) { result in
                 if case .success(let url) = result {
-                    Task { await store.load(url: url, title: url.lastPathComponent) }
+                    // An opened file goes straight to the editor: that is where a form
+                    // can actually be filled in.
+                    Task {
+                        await store.load(url: url, title: url.lastPathComponent)
+                        if store.document != nil { openInEditor = true }
+                    }
                 }
             }
+            .background(
+                NavigationLink(isActive: $openInEditor) { EditorScreen() } label: { EmptyView() }
+                    .hidden()
+            )
         }
         .navigationViewStyle(.stack)
     }
@@ -108,6 +122,7 @@ struct RootView: View {
     @ViewBuilder
     private func screen(for demo: Demo) -> some View {
         switch demo {
+        case .editor:      EditorScreen()
         case .viewer:      ViewerScreen()
         case .search:      SearchScreen()
         case .outline:     OutlineScreen()
