@@ -10,6 +10,36 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const ENGINE = 'chromium/7243';
 const META_KEYS = ['Title', 'Author', 'Subject', 'Creator', 'Producer'];
 
+/**
+ * Signature expectations come from `pdfsig`, not from PDFium.
+ *
+ * The point of the contract is to catch a bug in our own reader, which a value read
+ * back from the same engine cannot do. Returns null when pdfsig is unavailable, so the
+ * generator still runs; the field is then simply absent.
+ */
+function pdfsigSignatures(path) {
+  let out;
+  try {
+    out = execFileSync('pdfsig', [path], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+  } catch {
+    return null;
+  }
+
+  const signatures = [];
+  for (const block of out.split(/^Signature #\d+:$/m).slice(1)) {
+    const subFilter = /- Signature Type:\s*(\S+)/.exec(block)?.[1];
+    // pdfsig prints spans as [start - end]; a PDF /ByteRange is offset/length pairs.
+    const ranges = [...block.matchAll(/\[(\d+)\s*-\s*(\d+)\]/g)]
+      .flatMap(([, start, end]) => [Number(start), Number(end) - Number(start)]);
+    signatures.push({
+      subFilter,
+      byteRange: ranges,
+      coversWholeDocument: /- Total document signed/.test(block),
+    });
+  }
+  return signatures;
+}
+
 function popplerPageCount(path) {
   try {
     const out = execFileSync('pdfinfo', [path], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
@@ -92,6 +122,9 @@ for (const { name, category } of corpus.files) {
 
   documents[name] = { category, opens: true, pageCount, pages };
   if (Object.keys(metadata).length) documents[name].metadata = metadata;
+
+  const signatures = pdfsigSignatures(path);
+  if (signatures && signatures.length) documents[name].signatures = signatures;
 
   const cross = popplerPageCount(path);
   if (cross !== null && cross !== pageCount) {

@@ -1,6 +1,6 @@
 {
   "engine": "chromium/7243",
-  "generated": "2026-09-12T20:30:28.831Z",
+  "generated": "2026-09-13T11:18:45.525Z",
   "documents": {
     "hello_world.pdf": {
       "category": "basic",
@@ -319,6 +319,39 @@
         "Creator": "LaTeX with hyperref package",
         "Producer": "pdfTeX-1.40.17"
       }
+    },
+    "signed_unh_iol.pdf": {
+      "category": "signature",
+      "opens": true,
+      "pageCount": 1,
+      "pages": [
+        {
+          "width": 612,
+          "height": 792,
+          "charCount": 869,
+          "textSha256": "baf5052c45e8a530dbe42b841e33d41223382428c7c3894b6d8c1d7f19356c14",
+          "textContains": [
+            "University of New Hampsh"
+          ]
+        }
+      ],
+      "metadata": {
+        "Author": "pjs",
+        "Creator": "Microsoft® Word for Microsoft 365",
+        "Producer": "Microsoft® Word for Microsoft 365"
+      },
+      "signatures": [
+        {
+          "subFilter": "adbe.pkcs7.detached",
+          "byteRange": [
+            0,
+            151484,
+            156392,
+            141565
+          ],
+          "coversWholeDocument": true
+        }
+      ]
     }
   }
 }

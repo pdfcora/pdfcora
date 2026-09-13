@@ -17,6 +17,7 @@ final class DocumentStore: ObservableObject {
         Sample(title: "Checkboxes", resource: "checkboxes"),
         Sample(title: "Dropdowns", resource: "dropdowns"),
         Sample(title: "Annotated", resource: "annotated"),
+        Sample(title: "Signed", resource: "signed"),
     ]
 
     @Published private(set) var document: PdfDocument?

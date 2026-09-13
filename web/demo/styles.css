@@ -62,3 +62,6 @@ input[type="text"] { font: inherit; padding: 6px 10px; border: 1px solid var(--l
 nav button[aria-selected="true"], .row button[aria-selected="true"] {
   border-color: var(--accent); color: var(--accent);
 }
+
+.warn { background: #fff3cd; color: #663c00; padding: .7rem .9rem; border-radius: 6px; }
+.ok { background: #e6f4ea; color: #14532d; padding: .7rem .9rem; border-radius: 6px; }

@@ -25,6 +25,7 @@ enum class Demo(val title: String, val detail: String) {
     ANNOTATIONS("Annotations", "Read, draw ink, add notes"),
     FORMS("Forms", "Fill fields, toggle checkboxes"),
     TEXT("Text", "Extract and copy page text"),
+    SIGNATURES("Signatures", "Read signatures and their coverage"),
     INFO("Document Info", "Metadata, permissions, attachments"),
     PAGE_OPS("Page Operations", "Rotate pages"),
     EXPORT("Export", "Save edits and share"),
@@ -72,6 +73,7 @@ private fun App() {
                 Demo.ANNOTATIONS -> AnnotationsScreen(store)
                 Demo.FORMS -> FormsScreen(store)
                 Demo.TEXT -> TextScreen(store)
+                Demo.SIGNATURES -> SignaturesScreen(store)
                 Demo.INFO -> InfoScreen(store)
                 Demo.PAGE_OPS -> PageOpsScreen(store)
                 Demo.EXPORT -> ExportScreen(store)

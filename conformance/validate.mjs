@@ -3,7 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const CATEGORIES = ['basic', 'form', 'encrypted', 'annotation', 'text', 'regression'];
+const CATEGORIES = ['basic', 'form', 'encrypted', 'annotation', 'text', 'regression', 'signature'];
 const OPEN_ERRORS = ['password', 'format', 'file', 'security', 'page', 'unknown'];
 
 export function validateExpectations(expectations, corpus) {

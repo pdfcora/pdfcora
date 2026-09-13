@@ -11,6 +11,7 @@ enum Demo: String, CaseIterable, Identifiable {
     case annotations = "Annotations"
     case forms = "Forms"
     case text = "Text"
+    case signatures = "Signatures"
     case info = "Document Info"
     case pageOps = "Page Operations"
     case export = "Export"
@@ -27,6 +28,7 @@ enum Demo: String, CaseIterable, Identifiable {
         case .annotations: "pencil.tip.crop.circle"
         case .forms: "checkmark.square"
         case .text: "text.quote"
+        case .signatures: "signature"
         case .info: "info.circle"
         case .pageOps: "rotate.right"
         case .export: "square.and.arrow.up"
@@ -43,6 +45,7 @@ enum Demo: String, CaseIterable, Identifiable {
         case .annotations: "Read, draw ink, add notes"
         case .forms: "Fill fields, toggle checkboxes"
         case .text: "Extract and copy page text"
+        case .signatures: "Read signatures and their coverage"
         case .info: "Metadata, permissions, attachments"
         case .pageOps: "Rotate pages"
         case .export: "Save edits and share"
@@ -130,6 +133,7 @@ struct RootView: View {
         case .annotations: AnnotationsScreen()
         case .forms:       FormsScreen()
         case .text:        TextScreen()
+        case .signatures:  SignaturesScreen()
         case .info:        InfoScreen()
         case .pageOps:     PageOpsScreen()
         case .export:      ExportScreen()

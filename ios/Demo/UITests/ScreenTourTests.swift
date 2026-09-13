@@ -14,7 +14,7 @@ final class ScreenTourTests: XCTestCase {
         save(app, named: "00-root")
 
         for screen in ["Editor", "Viewer", "Search", "Outline", "Thumbnails", "Annotations",
-                       "Forms", "Text", "Document Info", "Page Operations", "Export"] {
+                       "Forms", "Text", "Signatures", "Document Info", "Page Operations", "Export"] {
             let link = app.descendants(matching: .any).matching(identifier: "demo-\(screen)").firstMatch
             if !link.waitForExistence(timeout: 5) {
                 app.swipeUp()
@@ -63,6 +63,35 @@ final class ScreenTourTests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Editor"].exists, "editor died after drawing")
         XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "editor-undo").firstMatch.isEnabled,
                       "undo should be enabled after creating an annotation")
+    }
+
+    /// The coverage banner is the point of this screen: a signature can be intact and
+    /// still protect only part of the file.
+    func testSignaturesScreenReportsCoverage() {
+        let app = XCUIApplication()
+        app.launch()
+        XCTAssertTrue(app.staticTexts["Hello World"].waitForExistence(timeout: 10))
+
+        app.descendants(matching: .any).matching(identifier: "sample-Signed").firstMatch.tap()
+        XCTAssertTrue(app.staticTexts.containing(
+            NSPredicate(format: "label CONTAINS 'Signed'")).firstMatch.waitForExistence(timeout: 5))
+
+        // Signatures sits below the fold on a phone.
+        let link = app.descendants(matching: .any).matching(identifier: "demo-Signatures").firstMatch
+        if !link.waitForExistence(timeout: 5) {
+            app.swipeUp()
+            _ = link.waitForExistence(timeout: 5)
+        }
+        XCTAssertTrue(link.exists, "could not reach the Signatures screen")
+        link.tap()
+        XCTAssertTrue(app.navigationBars["Signatures"].waitForExistence(timeout: 10))
+
+        let whole = app.descendants(matching: .any).matching(identifier: "coverage-whole").firstMatch
+        XCTAssertTrue(whole.waitForExistence(timeout: 5), "signed sample should report full coverage")
+
+        XCTAssertTrue(app.staticTexts["adbe.pkcs7.detached"].waitForExistence(timeout: 5),
+                      "the sub-filter should be shown")
+        save(app, named: "signatures")
     }
 
     /// Zoom re-renders the page at the new size, so the bitmap itself grows — the

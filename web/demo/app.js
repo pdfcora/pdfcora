@@ -31,6 +31,7 @@ const TABS = [
   ['annotations', 'Annotations', renderAnnotations],
   ['forms', 'Forms', renderForms],
   ['text', 'Text', renderText],
+  ['signatures', 'Signatures', renderSignatures],
   ['info', 'Document Info', renderInfo],
   ['pageops', 'Page Operations', renderPageOps],
   ['export', 'Export', renderExport],
@@ -560,6 +561,40 @@ async function renderInfo() {
       ? table(attachments.map((a) => [a.name, '']))
       : el('p', { className: 'muted' }, 'None'),
   );
+}
+
+async function renderSignatures() {
+  const signatures = await state.document.signatures();
+  if (!signatures.length) {
+    $panel.append(el('p', { className: 'muted' }, 'This document carries no signatures.'));
+    return;
+  }
+
+  for (const signature of signatures) {
+    // A signature can be cryptographically intact and still cover only part of the
+    // file. Showing "signed" without this distinction is how amended documents pass
+    // review, so the warning is loud and sits above the details.
+    const partial = !signature.coversWholeDocument;
+    $panel.append(
+      el('h3', {}, `Signature ${signature.index + 1}`),
+      el('p', { className: partial ? 'warn' : 'ok' },
+         partial
+           ? 'Covers only part of the file — content was added after signing and is NOT protected.'
+           : 'Covers the whole file.'),
+      table([
+        ['Type', signature.subFilter ?? '—'],
+        ['Reason', signature.reason ?? '—'],
+        ['Claimed signing time', signature.signingTime
+          ? signature.signingTime.toISOString().replace('T', ' ').slice(0, 19) + ' UTC'
+          : '—'],
+        ['Signed ranges', signature.byteRange.join(', ')],
+        ['PKCS#7 size', `${signature.contents.length} bytes`],
+      ]),
+      el('p', { className: 'muted' },
+         'Not verified. This SDK reads signatures; it does not yet check them '
+         + 'cryptographically or validate the certificate chain.'),
+    );
+  }
 }
 
 async function renderPageOps() {

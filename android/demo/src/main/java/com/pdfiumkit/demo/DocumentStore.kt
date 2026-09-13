@@ -24,6 +24,7 @@ class DocumentStore(
             Sample("Checkboxes", "checkboxes.pdf"),
             Sample("Dropdowns", "dropdowns.pdf"),
             Sample("Annotated", "annotated.pdf"),
+            Sample("Signed", "signed.pdf"),
         )
     }
 
