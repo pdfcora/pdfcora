@@ -85,8 +85,15 @@ struct EditorScreen: View {
 
     // MARK: - Toolbar
 
+    /// One row, and it must stay one row.
+    ///
+    /// Every item here has a fixed width, so the bar overflows rather than wrapping, and
+    /// SwiftUI clips whatever does not fit — silently. A fifth tool was enough to push
+    /// the zoom and save buttons off the edge on a 402pt screen, which the UI tour caught
+    /// as "zoom in did not enlarge the page": the button was there, just not on screen.
+    /// Hence the tight spacing and the absence of dividers.
     private var toolbar: some View {
-        HStack {
+        HStack(spacing: 3) {
             ForEach(EditorTool.allCases) { item in
                 Button {
                     tool = item
@@ -94,14 +101,12 @@ struct EditorScreen: View {
                     focusedField = nil
                 } label: {
                     Image(systemName: item.icon)
-                        .frame(width: 38, height: 32)
+                        .frame(width: 32, height: 30)
                         .background(tool == item ? Color.accentColor.opacity(0.18) : .clear)
                         .clipShape(RoundedRectangle(cornerRadius: 7))
                 }
                 .accessibilityIdentifier("tool-\(item.rawValue)")
             }
-
-            Divider().frame(height: 24)
 
             Button { Task { await undo() } } label: { Image(systemName: "arrow.uturn.backward") }
                 .disabled(createdCount == 0)
@@ -116,17 +121,15 @@ struct EditorScreen: View {
 
             Button { stepZoom(-1) } label: { Image(systemName: "minus.magnifyingglass") }
                 .accessibilityIdentifier("zoom-out")
-            Button { zoom = nil } label: { Text("Fit").font(.caption) }
+            Button { zoom = nil } label: { Text("Fit").font(.caption2) }
                 .accessibilityIdentifier("zoom-fit")
             Button { stepZoom(1) } label: { Image(systemName: "plus.magnifyingglass") }
                 .accessibilityIdentifier("zoom-in")
 
-            Divider().frame(height: 24)
-
             Button { Task { await save() } } label: { Image(systemName: "square.and.arrow.down") }
                 .accessibilityIdentifier("editor-save")
         }
-        .padding(.horizontal, 12)
+        .padding(.horizontal, 8)
         .padding(.vertical, 8)
         .background(.bar)
     }

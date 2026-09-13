@@ -44,9 +44,10 @@ final class ScreenTourTests: XCTestCase {
         app.descendants(matching: .any).matching(identifier: "demo-Editor").firstMatch.tap()
         XCTAssertTrue(app.navigationBars["Editor"].waitForExistence(timeout: 10))
 
-        for tool in ["select", "ink", "note", "highlight"] {
+        for tool in ["select", "ink", "note", "highlight", "redact"] {
             let button = app.descendants(matching: .any).matching(identifier: "tool-\(tool)").firstMatch
             XCTAssertTrue(button.waitForExistence(timeout: 5), "missing tool \(tool)")
+            XCTAssertTrue(button.isHittable, "tool \(tool) is off screen — the toolbar overflowed")
         }
         XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "editor-save").firstMatch.exists)
 
@@ -107,6 +108,12 @@ final class ScreenTourTests: XCTestCase {
         let page = app.images.firstMatch
         XCTAssertTrue(page.waitForExistence(timeout: 5), "page did not render")
         let fitted = page.frame.width
+
+        for control in ["zoom-out", "zoom-fit", "zoom-in", "editor-save"] {
+            let button = app.descendants(matching: .any).matching(identifier: control).firstMatch
+            XCTAssertTrue(button.exists && button.isHittable,
+                          "\(control) is not reachable — the toolbar overflowed")
+        }
 
         app.descendants(matching: .any).matching(identifier: "zoom-in").firstMatch.tap()
         Thread.sleep(forTimeInterval: 1.5)

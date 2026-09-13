@@ -79,6 +79,13 @@ committed and a consumer resolving from git would otherwise get no binary:
 `com.pdfiumkit:pdfiumkit:0.1.0`; the AAR is 9.3 MB and carries all four ABIs, of which
 Play delivers one per device.
 
+**AI, separately and optionally** — `pdfiumkit-ai` (npm), `PdfiumKitAI` (SPM product),
+`com.pdfiumkit:pdfiumkit-ai` (Maven). The core has no AI dependency and never gains one:
+`scripts/check-core-deps.sh` reads the resolved graph on all three platforms and fails
+the build if it does. Today the package ships **no feature** — only the availability
+model, the custom-provider interface and the proposal/apply API that later features build
+on. Adding it does not raise your minimum OS.
+
 ## Feature coverage
 
 Every row is exercised by the shared conformance suite on every platform that claims it.
