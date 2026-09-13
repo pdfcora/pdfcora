@@ -1,7 +1,7 @@
 # pdfiumkit-ai — Product Requirements
 
 Date: 2026-09-13
-Status: Draft 0.2, pending review
+Status: Draft 0.3, pending review
 Extends: `2026-09-12-pdfiumkit-sdk-design.md`, `2026-09-13-signatures-and-redaction-design.md`
 Source: requirements draft 0.1, published as an artifact and filed here unchanged except
 for the corrections in §0.
@@ -48,7 +48,21 @@ close to hand.
 kinds". It reads 8 and writes 5; `pushButton`, `signature` and `unknown` carry no
 fillable value. FORM-6 now targets the 5 that can be filled.
 
-Open questions 3 through 7 remain open and are unchanged.
+**Apple's on-device model does not accept images.** Draft 0.1 opened §11 with "Apple's
+on-device model now accepts images" and marked alt text on iOS/macOS as on-device pending
+an OS check. Checked against the shipping interface
+(`FoundationModels.framework/.../arm64e-apple-ios.swiftinterface`, iOS 26.4 SDK, Xcode
+26.4): the word *image* does not occur anywhere in it, and the only conformances to
+`PromptRepresentable` are `String`, `Prompt`, `Array` and `ConvertibleToGeneratedContent`.
+The model is text-only. **Alt text on Apple platforms falls back to the custom provider,
+exactly as on Web**, until Apple ships image input. This answers open question 5.
+
+**ANS-1's context window is confirmed, and readable at runtime.**
+`SystemLanguageModel.contextSize` is a public property that returns `4096`, back-deployed
+before iOS 26.4. Read it rather than hardcoding the number, so the budget follows the OS.
+The VERIFY on ANS-1 is resolved.
+
+Open questions 3, 4, 6 and 7 remain open and are unchanged.
 
 ## 1. Scope and assumptions
 
@@ -93,7 +107,7 @@ configured.
 | Grounded answers | On-device | Custom provider · experimental on-device | Custom provider |
 | Smart form filling | On-device · synonym list | Synonym list · experimental on-device | Synonym list · custom provider |
 | Summaries | On-device | On-device (beta) | Chrome desktop · custom provider |
-| Alt text | On-device **VERIFY OS** | On-device (beta) **VERIFY** | Custom provider |
+| Alt text | Custom provider *(model is text-only)* | On-device (beta) **VERIFY** | Custom provider |
 | Redaction suggestions | Patterns · on-device | Patterns · experimental on-device | Patterns · custom provider |
 | Semantic diff | Later | Later | Later |
 
@@ -207,7 +221,7 @@ character range, never from coordinates the model returned.
 
 | ID | Level | Requirement |
 |---|---|---|
-| ANS-1 | MUST | Index each page's text layer with character positions. Retrieval runs on the device without a model (keyword ranking such as BM25) and picks passages that fit the model's prompt budget. On Apple's on-device model that is a 4,096-token context window as of iOS 26. **VERIFY.** |
+| ANS-1 | MUST | Index each page's text layer with character positions. Retrieval runs on the device without a model (keyword ranking such as BM25) and picks passages that fit the model's prompt budget. Take the budget from the platform — on Apple, `SystemLanguageModel.contextSize`, which returns 4096 today — rather than hardcoding a number. |
 | ANS-2 | MUST | Ask the model to answer only from the supplied passages and to return structured output: the answer, a passage ID, and the supporting sentence quoted word for word. Use guided generation on Apple and a response schema elsewhere. |
 | ANS-3 | MUST | Check each quote against the source text, tolerating differences in whitespace and hyphenation. Map it to a character range, then to highlight rectangles. Citations that cannot be verified are dropped, and the result is marked `grounded = false`. |
 | ANS-4 | MUST | If retrieval finds no relevant passage, return `notFound` without calling the model. |
@@ -280,9 +294,13 @@ desktop Chrome only.
 
 ## 11. Alt text and accessibility remediation — ALT · REM
 
-Apple's on-device model now accepts images. Alt text feeds the accessibility roadmap,
-with a person confirming every description. Remediation takes the same approach to tags
-and reading order.
+Alt text feeds the accessibility roadmap, with a person confirming every description.
+Remediation takes the same approach to tags and reading order.
+
+**No Apple on-device route exists.** `FoundationModels` is text-only as of iOS 26.4 (§0),
+so alt text on Apple platforms needs the custom provider, like Web. Only Android has an
+on-device image-description model, and it is in beta. This makes alt text the one feature
+whose flagship platform is *not* Apple — worth knowing before Phase 3 is scheduled.
 
 | ID | Level | Requirement |
 |---|---|---|
@@ -303,8 +321,8 @@ work fall out of this, and neither is speculative:
    to find figures that lack alt text. None of them is wrapped in the SDK today.
 2. A **write** path in `PdfWriter` for structure-tree entries.
 
-Platform routes: on-device model with image input on iOS/macOS (**VERIFY MIN OS**); ML
-Kit GenAI Image Description on Android (**VERIFY LANGUAGES**); custom provider on Web.
+Platform routes: custom provider on iOS/macOS and Web; ML Kit GenAI Image Description on
+Android (**VERIFY LANGUAGES**).
 
 ## 12. Redaction suggestions — RED
 
@@ -402,7 +420,9 @@ ML Kit's Prompt API reaches beta.
    "Nachname" example suggests at least English and German.
 4. Should we ship ready-made custom provider adapters (e.g. for a server-side model), or
    only the interface?
-5. Which minimum iOS and macOS versions support image input in Apple's on-device model?
+5. ~~Which minimum iOS and macOS versions support image input in Apple's on-device
+   model?~~ **Answered in §0: none. The model is text-only as of iOS 26.4.** Re-open if a
+   later OS adds it.
 6. On Android, should prompt-based features ship now behind the experimental opt-in, or
    wait for ML Kit's Prompt API to reach beta?
 7. Is the accessible viewer track owned by this program or by the core team?
