@@ -23,7 +23,15 @@ class PdfDocument private constructor(
     private var handle: Long,
     private val executor: java.util.concurrent.ExecutorService,
     private val dispatcher: CoroutineDispatcher,
+    /**
+     * The bytes the document was opened from. A signature's byte range is measured
+     * against them and verification re-hashes them; PDFium's own copy is not
+     * byte-identical once edits have been made.
+     */
+    private val backing: ByteArray,
 ) : Closeable {
+
+    internal fun originalBytes(): ByteArray = backing
 
     private val closed = AtomicBoolean(false)
 
@@ -42,7 +50,7 @@ class PdfDocument private constructor(
                 executor.shutdown()
                 throw error
             }
-            return PdfDocument(handle, executor, dispatcher)
+            return PdfDocument(handle, executor, dispatcher, bytes)
         }
 
         suspend fun open(file: File, password: String? = null): PdfDocument =

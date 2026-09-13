@@ -1,5 +1,8 @@
 package com.pdfiumkit
 
+import com.pdfiumkit.cms.CmsVerifier
+import com.pdfiumkit.cms.PdfSignatureValidity
+import com.pdfiumkit.cms.PdfVerifyOptions
 import java.util.Calendar
 import java.util.Date
 import java.util.TimeZone
@@ -38,6 +41,18 @@ data class PdfSignature(
 
     override fun hashCode(): Int = index * 31 + contents.contentHashCode()
 }
+
+/**
+ * Verifies a signature this document carries.
+ *
+ * Reports integrity and trust separately: a signature whose bytes are intact but whose
+ * issuer is unknown comes back [PdfSignatureValidity.Untrusted], never valid. Revocation
+ * is not checked.
+ */
+suspend fun PdfDocument.verify(
+    signature: PdfSignature,
+    options: PdfVerifyOptions = PdfVerifyOptions(),
+): PdfSignatureValidity = CmsVerifier.verify(originalBytes(), signature, options)
 
 /**
  * Signatures already present in the document. Reading only; nothing is verified.
