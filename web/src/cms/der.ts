@@ -12,6 +12,8 @@
 export interface Tlv {
   /** Identifier octet, e.g. 0x30 SEQUENCE, 0x31 SET, 0xa0 [0] constructed. */
   readonly tag: number;
+  /** Offset of the identifier octet, so the whole encoding can be taken verbatim. */
+  readonly start: number;
   readonly length: number;
   readonly contentStart: number;
   readonly contentEnd: number;
@@ -64,7 +66,7 @@ export function readTlv(bytes: Uint8Array, offset: number): Tlv {
   if (contentEnd > bytes.length) {
     throw new DerError(`truncated: value of ${length} bytes runs past the buffer`);
   }
-  return { tag, length, contentStart, contentEnd, end: contentEnd };
+  return { tag, start: offset, length, contentStart, contentEnd, end: contentEnd };
 }
 
 /** The immediate children of a constructed value; empty for a primitive one. */
@@ -135,6 +137,6 @@ export function contentOf(bytes: Uint8Array, tlv: Tlv): Uint8Array {
 }
 
 /** The whole triple including tag and length, which is what signatures cover. */
-export function encodingOf(bytes: Uint8Array, tlv: Tlv, from: number): Uint8Array {
-  return bytes.subarray(from, tlv.end);
+export function encodingOf(bytes: Uint8Array, tlv: Tlv): Uint8Array {
+  return bytes.subarray(tlv.start, tlv.end);
 }
