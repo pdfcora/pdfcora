@@ -6,6 +6,8 @@ let package = Package(
     platforms: [.iOS(.v15)],
     products: [
         .library(name: "PdfiumKit", targets: ["PdfiumKit"]),
+        // Optional, and additive: the core product above is untouched (PKG-1).
+        .library(name: "PdfiumKitAI", targets: ["PdfiumKitAI"]),
     ],
     targets: [
         .binaryTarget(name: "pdfium", path: "vendor/ios/pdfium.xcframework"),
@@ -17,5 +19,7 @@ let package = Package(
         ),
         .target(name: "PdfiumKit", dependencies: ["CPdfium"], path: "ios/Sources/PdfiumKit"),
         .testTarget(name: "PdfiumKitTests", dependencies: ["PdfiumKit"], path: "ios/Tests/PdfiumKitTests"),
+        .target(name: "PdfiumKitAI", dependencies: ["PdfiumKit"], path: "ios/Sources/PdfiumKitAI"),
+        .testTarget(name: "PdfiumKitAITests", dependencies: ["PdfiumKitAI"], path: "ios/Tests/PdfiumKitAITests"),
     ]
 )
