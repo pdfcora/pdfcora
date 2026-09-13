@@ -18,7 +18,7 @@ enum EditorTool: String, CaseIterable, Identifiable {
 
     var hint: String {
         switch self {
-        case .select:    "Tap a field or annotation"
+        case .select:    "Edit fields on the page"
         case .ink:       "Drag to draw"
         case .note:      "Tap to place a note"
         case .highlight: "Drag over an area"
@@ -28,9 +28,11 @@ enum EditorTool: String, CaseIterable, Identifiable {
 
 /// Viewer, form filling, and annotation on one surface.
 ///
-/// Hit-testing is the whole trick: every tap is converted to PDF space with
-/// `PdfViewTransform`, then matched against the rects the SDK reports for form fields
-/// and annotations.
+/// The page is rendered **without** the `.forms` flag, so PDFium draws each widget's
+/// border and background but not its value. That leaves every field's rectangle free
+/// for a live SwiftUI control positioned on it — so the page behaves like a form
+/// rather than a picture of one. `PdfViewTransform` does the placement and the
+/// hit-testing.
 struct EditorScreen: View {
     @EnvironmentObject private var store: DocumentStore
 
@@ -45,11 +47,15 @@ struct EditorScreen: View {
     @State private var dragRect: CGRect?
     @State private var createdCount = 0
 
-    @State private var editingField: PdfFormField?
-    @State private var fieldDraft = ""
+    /// Live text per field, keyed by annotation index, so typing does not re-render
+    /// the page on every keystroke.
+    @State private var drafts: [Int: String] = [:]
+    @FocusState private var focusedField: Int?
+
     @State private var selectedAnnotation: Int?
-    @State private var notePoint: PdfPoint?
+    @State private var pendingNote: PdfPoint?
     @State private var noteDraft = ""
+    @FocusState private var noteFocused: Bool
     @State private var status: String?
 
     var body: some View {
@@ -61,17 +67,6 @@ struct EditorScreen: View {
         .navigationTitle("Editor")
         .navigationBarTitleDisplayMode(.inline)
         .task(id: pageIndex) { await reload() }
-        .sheet(item: $editingField) { field in
-            TextFieldSheet(name: field.base.name ?? "Field", text: $fieldDraft) {
-                Task { await commitField(field) }
-            }
-        }
-        .alert("Note", isPresented: Binding(get: { notePoint != nil },
-                                            set: { if !$0 { notePoint = nil } })) {
-            TextField("Contents", text: $noteDraft)
-            Button("Add") { Task { await commitNote() } }
-            Button("Cancel", role: .cancel) { notePoint = nil }
-        }
     }
 
     // MARK: - Toolbar
@@ -82,6 +77,7 @@ struct EditorScreen: View {
                 Button {
                     tool = item
                     selectedAnnotation = nil
+                    focusedField = nil
                 } label: {
                     Image(systemName: item.icon)
                         .frame(width: 38, height: 32)
@@ -124,12 +120,14 @@ struct EditorScreen: View {
                         Image(uiImage: image)
                             .resizable()
                             .frame(width: transform.viewSize.width, height: transform.viewSize.height)
+                            .contentShape(Rectangle())
+                            .gesture(dragGesture(transform))
 
-                        overlay(transform)
+                        annotationLayer(transform)
+                        formLayer(transform)
+                        pendingNoteEditor(transform)
                     }
                     .frame(width: transform.viewSize.width, height: transform.viewSize.height)
-                    .contentShape(Rectangle())
-                    .gesture(dragGesture(transform))
                     .padding(12)
                 } else {
                     ProgressView().frame(maxWidth: .infinity).padding(40)
@@ -138,18 +136,88 @@ struct EditorScreen: View {
         }
     }
 
-    /// Field outlines, annotation selection, and the in-progress gesture.
+    /// Live controls sitting exactly where the fields are.
     @ViewBuilder
-    private func overlay(_ transform: PdfViewTransform) -> some View {
-        ForEach(Array(fields.enumerated()), id: \.offset) { _, field in
-            Rectangle()
-                .stroke(Color.accentColor.opacity(0.55), lineWidth: 1)
-                .frame(width: transform.toView(field.base.rect).width,
-                       height: transform.toView(field.base.rect).height)
-                .offset(x: transform.toView(field.base.rect).minX,
-                        y: transform.toView(field.base.rect).minY)
+    private func formLayer(_ transform: PdfViewTransform) -> some View {
+        ForEach(fields) { field in
+            let box = transform.toView(field.base.rect)
+            fieldControl(field, height: box.height)
+                .frame(width: box.width, height: box.height, alignment: .leading)
+                .offset(x: box.minX, y: box.minY)
         }
+    }
 
+    /// Each field kind gets the control that suits it, rendered in place.
+    @ViewBuilder
+    private func fieldControl(_ field: PdfFormField, height: CGFloat) -> some View {
+        let index = field.base.annotationIndex
+        // Fit the text to the field box, within readable bounds.
+        let fontSize = max(9, min(17, height * 0.62))
+
+        switch field {
+        case .text(let f):
+            TextField("", text: Binding(
+                get: { drafts[index] ?? f.value },
+                set: { drafts[index] = $0 }
+            ))
+            .font(.system(size: fontSize))
+            .textFieldStyle(.plain)
+            .padding(.horizontal, 3)
+            .focused($focusedField, equals: index)
+            .submitLabel(.done)
+            .onSubmit { Task { await commitText(index) } }
+            .onChange(of: focusedField) { focus in
+                // Commit when focus moves away, so the page re-renders once.
+                if focus != index, drafts[index] != nil { Task { await commitText(index) } }
+            }
+            .background(Color.white.opacity(0.001))   // keeps the whole box tappable
+            .border(Color.accentColor.opacity(0.6))
+            .accessibilityIdentifier("field-\(index)")
+
+        case .checkBox(let f), .radioButton(let f):
+            // The widget already draws its own box; without `.forms` it just never
+            // draws the check. So supply only the mark, not another frame.
+            Button {
+                Task { await setChecked(!f.isChecked, on: field) }
+            } label: {
+                Image(systemName: "checkmark")
+                    .font(.system(size: fontSize, weight: .bold))
+                    .foregroundColor(.accentColor)
+                    .opacity(f.isChecked ? 1 : 0)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                    .contentShape(Rectangle())
+            }
+            .accessibilityIdentifier("field-\(index)")
+
+        case .comboBox(let f), .listBox(let f):
+            Menu {
+                ForEach(Array(f.options.enumerated()), id: \.offset) { i, option in
+                    Button(option.isEmpty ? "(blank)" : option) {
+                        Task { await setOption(i, on: field) }
+                    }
+                }
+            } label: {
+                HStack(spacing: 2) {
+                    Text(f.value.isEmpty ? "—" : f.value)
+                        .font(.system(size: fontSize))
+                        .lineLimit(1)
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.down").font(.system(size: fontSize * 0.7))
+                }
+                .padding(.horizontal, 3)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                .border(Color.accentColor.opacity(0.6))
+            }
+            .accessibilityIdentifier("field-\(index)")
+
+        case .pushButton, .signature, .unknown:
+            Rectangle().stroke(Color.secondary.opacity(0.4), style: StrokeStyle(dash: [3, 3]))
+        }
+    }
+
+    /// Selection box and the in-progress gesture.
+    @ViewBuilder
+    private func annotationLayer(_ transform: PdfViewTransform) -> some View {
         if let selected = selectedAnnotation,
            let annotation = annotations.first(where: { $0.base.index == selected }) {
             let box = transform.toView(annotation.base.rect)
@@ -160,10 +228,8 @@ struct EditorScreen: View {
         }
 
         if stroke.count > 1 {
-            Path { path in
-                path.addLines(stroke)
-            }
-            .stroke(Color.blue, style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
+            Path { $0.addLines(stroke) }
+                .stroke(Color.blue, style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
         }
 
         if let rect = dragRect {
@@ -173,6 +239,36 @@ struct EditorScreen: View {
                 .offset(x: rect.minX, y: rect.minY)
         }
     }
+
+    /// A note is typed where it will live, not in a dialog.
+    @ViewBuilder
+    private func pendingNoteEditor(_ transform: PdfViewTransform) -> some View {
+        if let point = pendingNote {
+            let origin = transform.toView(point)
+            HStack(spacing: 4) {
+                TextField("Note", text: $noteDraft)
+                    .font(.system(size: 13))
+                    .textFieldStyle(.plain)
+                    .focused($noteFocused)
+                    .submitLabel(.done)
+                    .onSubmit { Task { await commitNote() } }
+                Button {
+                    Task { await commitNote() }
+                } label: {
+                    Image(systemName: "checkmark.circle.fill")
+                }
+            }
+            .padding(5)
+            .frame(width: 190)
+            .background(Color.yellow.opacity(0.9))
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .shadow(radius: 2)
+            .offset(x: origin.x, y: origin.y)
+            .onAppear { noteFocused = true }
+        }
+    }
+
+    // MARK: - Gestures
 
     private func dragGesture(_ transform: PdfViewTransform) -> some Gesture {
         DragGesture(minimumDistance: 0)
@@ -191,10 +287,15 @@ struct EditorScreen: View {
     private func finish(gesture: DragGesture.Value, transform: PdfViewTransform) async {
         switch tool {
         case .select:
-            handleSelect(at: transform.toPdf(gesture.location))
+            // Field controls handle their own taps; this only hits bare page or annotations.
+            focusedField = nil
+            let point = transform.toPdf(gesture.location)
+            selectedAnnotation = annotations.last(where: { $0.base.rect.contains(point) })?.base.index
+
         case .note:
-            notePoint = transform.toPdf(gesture.location)
+            pendingNote = transform.toPdf(gesture.location)
             noteDraft = ""
+
         case .ink:
             let points = stroke.map { transform.toPdf($0) }
             stroke = []
@@ -202,6 +303,7 @@ struct EditorScreen: View {
             await create { page in
                 try await page.addInk(strokes: [points], color: PdfColor(red: 0, green: 90, blue: 220))
             }
+
         case .highlight:
             guard let rect = dragRect, rect.width > 4, rect.height > 4 else { dragRect = nil; return }
             let pdf = transform.toPdf(rect)
@@ -213,32 +315,6 @@ struct EditorScreen: View {
                     p3: PdfPoint(x: pdf.left, y: pdf.bottom),
                     p4: PdfPoint(x: pdf.right, y: pdf.bottom))])
             }
-        }
-    }
-
-    /// Topmost form field wins; otherwise the topmost annotation.
-    private func handleSelect(at point: PdfPoint) {
-        if let field = fields.last(where: { $0.base.rect.contains(point) }) {
-            selectedAnnotation = nil
-            activate(field)
-            return
-        }
-        selectedAnnotation = annotations.last(where: { $0.base.rect.contains(point) })?.base.index
-    }
-
-    /// Each field kind gets the interaction that suits it.
-    private func activate(_ field: PdfFormField) {
-        switch field {
-        case .text(let f):
-            fieldDraft = f.value
-            editingField = field
-        case .checkBox(let f), .radioButton(let f):
-            Task { await setChecked(!f.isChecked, on: field) }
-        case .comboBox(let f), .listBox(let f):
-            let next = ((f.selectedIndices.first ?? -1) + 1) % max(f.options.count, 1)
-            Task { await setOption(next, on: field) }
-        case .pushButton, .signature, .unknown:
-            status = "This field type is not editable"
         }
     }
 
@@ -257,10 +333,11 @@ struct EditorScreen: View {
         }
     }
 
-    private func commitField(_ field: PdfFormField) async {
-        guard let page = try? await store.document?.page(pageIndex) else { return }
-        try? await page.setText(fieldDraft, forFieldAt: field.base.annotationIndex)
-        editingField = nil
+    private func commitText(_ index: Int) async {
+        guard let value = drafts[index],
+              let page = try? await store.document?.page(pageIndex) else { return }
+        drafts[index] = nil
+        try? await page.setText(value, forFieldAt: index)
         await reload()
     }
 
@@ -277,10 +354,12 @@ struct EditorScreen: View {
     }
 
     private func commitNote() async {
-        guard let point = notePoint else { return }
-        notePoint = nil
-        let rect = PdfRect(left: point.x, bottom: point.y - 24, right: point.x + 24, top: point.y)
+        guard let point = pendingNote else { return }
+        pendingNote = nil
+        noteFocused = false
         let text = noteDraft
+        guard !text.isEmpty else { return }
+        let rect = PdfRect(left: point.x, bottom: point.y - 24, right: point.x + 24, top: point.y)
         await create { page in try await page.addNote(rect: rect, contents: text) }
     }
 
@@ -326,19 +405,16 @@ struct EditorScreen: View {
         pageSize = try? await page.size
         fields = (try? await page.formFields()) ?? []
         annotations = (try? await page.annotations()) ?? []
-        image = try? await page.render(width: 1400, options: [.annotations, .forms])
+        // No .forms: the live controls above draw the values instead.
+        image = try? await page.render(width: 1400, options: [.annotations])
     }
 
     // MARK: - Footer
 
     private var footer: some View {
         VStack(spacing: 4) {
-            if let status {
-                Text(status).font(.caption).foregroundColor(.secondary)
-            } else {
-                Text("\(tool.hint) · \(fields.count) field\(fields.count == 1 ? "" : "s") · \(annotations.count) annotation\(annotations.count == 1 ? "" : "s")")
-                    .font(.caption).foregroundColor(.secondary)
-            }
+            Text(status ?? "\(tool.hint) · \(fields.count) field\(fields.count == 1 ? "" : "s") · \(annotations.count) annotation\(annotations.count == 1 ? "" : "s")")
+                .font(.caption).foregroundColor(.secondary)
             HStack {
                 Button { pageIndex -= 1 } label: { Image(systemName: "chevron.left") }
                     .disabled(pageIndex == 0)
@@ -351,33 +427,6 @@ struct EditorScreen: View {
         }
         .padding()
         .background(.bar)
-    }
-}
-
-// MARK: - Support
-
-private struct TextFieldSheet: View {
-    let name: String
-    @Binding var text: String
-    let onCommit: () -> Void
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationView {
-            Form {
-                TextField(name, text: $text)
-            }
-            .navigationTitle(name)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { onCommit(); dismiss() }
-                }
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-            }
-        }
     }
 }
 

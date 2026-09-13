@@ -184,6 +184,40 @@ describe('links and geometry', () => {
   });
 });
 
+describe('render flags', () => {
+  /**
+   * The `forms` option was accepted and silently ignored once: FPDF_FFLDraw was never
+   * called, so filled field values never appeared in a web render. Matches the iOS
+   * behaviour, where `.forms` paints the value and `.annotations` alone does not.
+   */
+  test('forms flag paints the field value and its absence does not', async () => {
+    const document = await open('text_form.pdf');
+    const page = await document.page(0);
+    const field = (await page.formFields()).find((f) => f.kind === 'text');
+    assert.ok(field);
+    await page.setText('WIDGETVALUE', field.annotationIndex);
+
+    const size = await page.size();
+    const inkInField = async (forms: boolean) => {
+      const image = await page.render({ width: 300, forms });
+      const s = 300 / size.width;
+      const r = field.rect;
+      let count = 0;
+      for (let y = Math.floor((size.height - r.top) * s); y < Math.ceil((size.height - r.bottom) * s); y++) {
+        for (let x = Math.floor(r.left * s); x < Math.ceil(r.right * s); x++) {
+          const i = (y * image.width + x) * 4;
+          if (image.data[i] < 200 || image.data[i + 1] < 200 || image.data[i + 2] < 200) count++;
+        }
+      }
+      return count;
+    };
+
+    assert.ok((await inkInField(true)) > 0, 'forms: true should paint the value');
+    assert.equal(await inkInField(false), 0, 'forms: false must not paint the value');
+    await document.close();
+  });
+});
+
 describe('attachments', () => {
   test('embedded files are listed and extracted', async () => {
     const document = await open('embedded_attachments.pdf');

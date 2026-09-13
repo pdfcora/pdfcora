@@ -65,9 +65,9 @@ final class ScreenTourTests: XCTestCase {
                       "undo should be enabled after creating an annotation")
     }
 
-    /// The headline use case: open a document that has a form, tap a field on the page,
-    /// type into it, and see the value land in the PDF.
-    func testTappingAFormFieldOnThePageEditsIt() {
+    /// The headline use case: a document with a form is edited on the page itself —
+    /// the field is a live control at its own position, not a dialog.
+    func testFormFieldsAreEditedInlineOnThePage() {
         let app = XCUIApplication()
         app.launch()
         XCTAssertTrue(app.staticTexts["Hello World"].waitForExistence(timeout: 10))
@@ -79,28 +79,61 @@ final class ScreenTourTests: XCTestCase {
         app.descendants(matching: .any).matching(identifier: "demo-Editor").firstMatch.tap()
         XCTAssertTrue(app.navigationBars["Editor"].waitForExistence(timeout: 10))
 
-        // The footer reports what the SDK found on the page.
-        let footer = app.staticTexts.containing(NSPredicate(format: "label CONTAINS 'field'")).firstMatch
-        XCTAssertTrue(footer.waitForExistence(timeout: 5), "footer never reported field count")
-        XCTAssertFalse(footer.label.contains("0 fields"), "expected a form field, got: \(footer.label)")
+        // The field control exists on the page without any dialog being opened.
+        let field = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "identifier BEGINSWITH 'field-'")).firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 5), "no inline field control on the page")
+        XCTAssertEqual(app.sheets.count, 0, "editing should not open a sheet")
 
-        // Tap the field where it sits on the rendered page.
-        let canvas = app.images.firstMatch
-        XCTAssertTrue(canvas.waitForExistence(timeout: 5))
-        canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.50, dy: 0.62)).tap()
+        // It must sit inside the rendered page, not in a bar.
+        let page = app.images.firstMatch
+        XCTAssertTrue(page.waitForExistence(timeout: 5))
+        XCTAssertTrue(page.frame.contains(field.frame.origin),
+                      "field control is not positioned over the page")
 
-        let textField = app.textFields.firstMatch
-        guard textField.waitForExistence(timeout: 5) else {
-            save(app, named: "form-tap-missed")
-            return XCTFail("tapping the field did not open an editor; footer was: \(footer.label)")
-        }
-        textField.tap()
-        textField.typeText("Filled by tap")
-        app.buttons["Done"].tap()
+        field.tap()
+        field.typeText("Typed inline")
+        app.typeText("\n")          // submit commits and re-renders
 
         Thread.sleep(forTimeInterval: 1.5)
-        save(app, named: "editor-form-filled")
+        save(app, named: "editor-inline-form")
         XCTAssertTrue(app.navigationBars["Editor"].exists)
+    }
+
+    /// Checkboxes and dropdowns get their own in-place controls, one per field.
+    func testCheckboxesAndDropdownsAreInlineToo() {
+        let app = XCUIApplication()
+        app.launch()
+        XCTAssertTrue(app.staticTexts["Hello World"].waitForExistence(timeout: 10))
+
+        func openEditor(on sample: String) -> Int {
+            app.descendants(matching: .any).matching(identifier: "sample-\(sample)").firstMatch.tap()
+            _ = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", sample))
+                .firstMatch.waitForExistence(timeout: 5)
+            app.descendants(matching: .any).matching(identifier: "demo-Editor").firstMatch.tap()
+            XCTAssertTrue(app.navigationBars["Editor"].waitForExistence(timeout: 10))
+            Thread.sleep(forTimeInterval: 1.2)
+            return app.descendants(matching: .any)
+                .matching(NSPredicate(format: "identifier BEGINSWITH 'field-'")).count
+        }
+
+        // click_form.pdf: 2 checkboxes + 6 radio buttons.
+        let toggles = openEditor(on: "Checkboxes")
+        XCTAssertGreaterThanOrEqual(toggles, 8, "expected a control per toggle, got \(toggles)")
+        let firstToggle = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "identifier BEGINSWITH 'field-'")).firstMatch
+        firstToggle.tap()
+        Thread.sleep(forTimeInterval: 1.2)
+        save(app, named: "editor-inline-checkboxes")
+        XCTAssertTrue(app.navigationBars["Editor"].exists, "toggling a checkbox broke the editor")
+
+        app.navigationBars["Editor"].buttons.firstMatch.tap()
+        _ = app.navigationBars["PdfiumKit"].waitForExistence(timeout: 5)
+
+        // combobox_form.pdf: 3 dropdowns.
+        let dropdowns = openEditor(on: "Dropdowns")
+        XCTAssertGreaterThanOrEqual(dropdowns, 3, "expected a control per dropdown, got \(dropdowns)")
+        save(app, named: "editor-inline-dropdowns")
     }
 
     private func save(_ app: XCUIApplication, named name: String) {

@@ -46,10 +46,15 @@ SHA-256 of every artifact, and the fetch script refuses anything that does not m
 Demos: `ios/Demo` (SwiftUI, generate with `xcodegen`), `android/demo` (Compose),
 `web/demo` (serve the repo root and open `/web/demo/index.html`).
 
-The iOS demo has an **Editor** screen — open a file and it lands there — where form
-fields and annotations are edited directly on the rendered page: tap a field to fill
-it, drag to draw ink, tap to place a note, drag to highlight an area. Android and Web
-still have the per-API screens only.
+The iOS demo has an **Editor** screen — open a file and it lands there — where the
+page behaves like a form rather than a picture of one. Every field is a live control
+sitting on its own rectangle: type straight into text fields, tap checkboxes and radio
+buttons, pick from dropdowns. No dialogs. Annotation tools sit alongside: drag to draw
+ink, tap to place a note, drag to highlight an area.
+
+It works by rendering the page **without** the `forms` flag — PDFium then draws each
+widget's frame but not its value — and positioning native controls over the field
+rects with `PdfViewTransform`. Android and Web still have the per-API screens only.
 
 ## Installing
 

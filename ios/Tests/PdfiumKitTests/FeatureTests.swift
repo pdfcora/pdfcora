@@ -376,3 +376,50 @@ extension PdfFormField {
         }
     }
 }
+
+/// Documents which render flag actually paints a form field's value.
+///
+/// It matters for anything building an inline form editor: with `.forms` the engine
+/// paints the value, so a native control on top would double-draw. Without it the
+/// widget's static appearance is drawn but the value is not, leaving the field free
+/// for a live control.
+final class FormRenderFlagTests: XCTestCase {
+    private func ink(_ image: UIImage, inside rect: PdfRect, page: PdfSize) -> Int {
+        guard let cg = image.cgImage,
+              let data = cg.dataProvider?.data as Data? else { return -1 }
+        let scale = Double(cg.width) / page.width
+        let x0 = Int(rect.left * scale), x1 = Int(rect.right * scale)
+        let y0 = Int((page.height - rect.top) * scale), y1 = Int((page.height - rect.bottom) * scale)
+
+        var count = 0
+        for y in max(0, y0)..<min(cg.height, y1) {
+            for x in max(0, x0)..<min(cg.width, x1) {
+                let i = (y * cg.bytesPerRow) + x * 4
+                guard i + 2 < data.count else { continue }
+                if data[i] < 200 || data[i + 1] < 200 || data[i + 2] < 200 { count += 1 }
+            }
+        }
+        return count
+    }
+
+    func testFormsFlagPaintsTheFieldValueAndAnnotationsAloneDoesNot() async throws {
+        let url = Repo.corpus.appendingPathComponent("text_form.pdf")
+        let doc = try await PdfDocument(data: try Data(contentsOf: url))
+        let page = try await doc.page(0)
+        let size = try await page.size
+
+        let allFields = try await page.formFields()
+        let field = try XCTUnwrap(allFields.first { if case .text = $0 { return true }; return false })
+        try await page.setText("WIDGETVALUE", forFieldAt: field.base.annotationIndex)
+
+        let withForms = try await page.render(width: 600, options: [.annotations, .forms])
+        let withoutForms = try await page.render(width: 600, options: [.annotations])
+
+        let painted = ink(withForms, inside: field.base.rect, page: size)
+        let bare = ink(withoutForms, inside: field.base.rect, page: size)
+
+        XCTAssertGreaterThan(painted, 0, "the .forms flag should paint the field value")
+        XCTAssertEqual(bare, 0, "without .forms the value must not be painted, leaving room for a live control")
+        await doc.close()
+    }
+}

@@ -73,13 +73,21 @@ export class PdfPage {
     if (options.annotations !== false) flags |= 0x01;   // FPDF_ANNOT
     if (options.grayscale) flags |= 0x08;               // FPDF_GRAYSCALE
 
-    return this.document.withPage(this.index, (page, m) => {
+    // Needs the document handle as well as the page, because painting form field
+    // values goes through the form-fill environment rather than the page itself.
+    return this.document.run((doc, m) => {
+      const page = m.ccall('FPDF_LoadPage', 'number', ['number', 'number'], [doc, this.index]) as number;
+      if (!page) throw PdfError.corrupt(`page ${this.index} failed to load`);
+
       const bitmap = m.ccall(
         'FPDFBitmap_CreateEx', 'number',
         ['number', 'number', 'number', 'number', 'number'],
         [width, height, 4 /* BGRA */, 0, width * 4],
       ) as number;
-      if (!bitmap) throw PdfError.engine(-1);
+      if (!bitmap) {
+        m.ccall('FPDF_ClosePage', null, ['number'], [page]);
+        throw PdfError.engine(-1);
+      }
 
       try {
         m.ccall('FPDFBitmap_FillRect', null,
@@ -88,6 +96,14 @@ export class PdfPage {
         m.ccall('FPDF_RenderPageBitmap', null,
           ['number', 'number', 'number', 'number', 'number', 'number', 'number', 'number'],
           [bitmap, page, 0, 0, width, height, 0, flags]);
+
+        if (options.forms !== false) {
+          const form = formHandle(m, doc);
+          m.ccall('FORM_OnAfterLoadPage', null, ['number', 'number'], [page, form]);
+          m.ccall('FPDF_FFLDraw', null,
+            ['number', 'number', 'number', 'number', 'number', 'number', 'number', 'number', 'number'],
+            [form, bitmap, page, 0, 0, width, height, 0, flags]);
+        }
 
         const buffer = m.ccall('FPDFBitmap_GetBuffer', 'number', ['number'], [bitmap]) as number;
         if (!buffer) throw PdfError.engine(-1);
@@ -104,6 +120,7 @@ export class PdfPage {
         return { width, height, data };
       } finally {
         m.ccall('FPDFBitmap_Destroy', null, ['number'], [bitmap]);
+        m.ccall('FPDF_ClosePage', null, ['number'], [page]);
       }
     });
   }
