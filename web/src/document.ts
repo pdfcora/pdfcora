@@ -40,6 +40,32 @@ export class PdfDocument {
   private readonly originalBytes: Uint8Array;
 
   private get byteLength(): number { return this.originalBytes.length; }
+  private cachedFingerprint?: string;
+
+  /**
+   * A stable identifier for the bytes this document was opened from.
+   *
+   * Two documents opened from identical bytes share it; any difference changes it. Used
+   * to refuse replaying an edit against the wrong document — annotation and field
+   * indices are positions in specific bytes, so a removal replayed elsewhere removes the
+   * wrong thing, silently.
+   *
+   * FNV-1a rather than a cryptographic digest: this answers "are these the same bytes",
+   * not "has someone tampered with them", and it needs no crypto API on any platform.
+   * The length is appended, since a hash collision alone should not be enough.
+   */
+  get fingerprint(): string {
+    if (this.cachedFingerprint === undefined) {
+      let hash = 0x811c9dc5;
+      for (const byte of this.originalBytes) {
+        hash ^= byte;
+        // The FNV prime, 16777619, by shift-and-add to stay in 32 bits.
+        hash = (hash + ((hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24))) >>> 0;
+      }
+      this.cachedFingerprint = `${hash.toString(16).padStart(8, '0')}-${this.originalBytes.length}`;
+    }
+    return this.cachedFingerprint;
+  }
 
   private constructor(m: PdfiumModule, handle: number, bufferPtr: number, bytes: Uint8Array) {
     this.m = m;

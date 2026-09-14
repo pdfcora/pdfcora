@@ -14,6 +14,15 @@ export interface PdfViewerOptions {
   readonly sessionId?: string;
   /** Viewport changes are coalesced over this window. Edits will not be. */
   readonly throttleMs?: number;
+  /**
+   * A follower may look wherever it likes but may not change the document.
+   *
+   * Concurrent editing is deliberately out of scope: two people editing one annotation
+   * is a distributed-systems problem, and last-writer-wins silently discards work.
+   */
+  readonly role?: 'presenter' | 'follower';
+  /** When set, only this session's edits are applied. Others are ignored. */
+  readonly presenterId?: string;
 }
 
 type Listener = (event: PdfViewEvent) => void;
@@ -42,6 +51,8 @@ export class PdfViewer {
     private current: PdfViewState,
     private readonly sessionId: string,
     private readonly throttleMs: number,
+    private readonly role: 'presenter' | 'follower',
+    private readonly presenterId: string | undefined,
   ) {}
 
   static async open(
@@ -63,8 +74,14 @@ export class PdfViewer {
       },
       options.sessionId ?? `s${Math.random().toString(36).slice(2, 10)}`,
       options.throttleMs ?? 50,
+      options.role ?? 'presenter',
+      options.presenterId,
     );
   }
+
+  /** The bytes this viewer's document was opened from. An edit is refused unless the
+   *  sender's matches. */
+  get documentFingerprint(): string { return this.document.fingerprint; }
 
   get state(): PdfViewState { return this.current; }
   get selection(): PdfSelection | null { return this.currentSelection; }
@@ -162,12 +179,16 @@ export class PdfViewer {
 
   // MARK: - Editing
   //
+  // A follower refuses to edit locally. It may still scroll and zoom: following is not
+  // the same as being frozen, and reading a different part of the page is normal.
+  //
   // Every method delegates to the existing page API and then emits. Two code paths
   // producing annotations would drift, and the bug would only surface through one of
   // them — `viewer-delegation.test.ts` asserts byte identity to stop that.
 
   async addNote(rect: PdfRect, contents: string,
                 color: PdfColor = { red: 255, green: 255, blue: 0, alpha: 128 }): Promise<number> {
+    this.requirePresenter();
     const index = await (await this.document.page(this.current.pageIndex))
       .addNote(rect, contents, color);
     this.emitEdit({ kind: 'noteAdded', page: this.current.pageIndex, rect, contents, color });
@@ -177,6 +198,7 @@ export class PdfViewer {
   async addInk(stroke: readonly PdfPoint[],
                color: PdfColor = { red: 0, green: 0, blue: 0 },
                lineWidth = 2): Promise<number> {
+    this.requirePresenter();
     const index = await (await this.document.page(this.current.pageIndex))
       .addInk(stroke, color, lineWidth);
     this.emitEdit({ kind: 'inkAdded', page: this.current.pageIndex, stroke, color, lineWidth });
@@ -185,6 +207,7 @@ export class PdfViewer {
 
   async addHighlight(quads: readonly PdfQuad[],
                      color: PdfColor = { red: 255, green: 255, blue: 0, alpha: 128 }): Promise<number> {
+    this.requirePresenter();
     const index = await (await this.document.page(this.current.pageIndex))
       .addHighlight(quads, color);
     this.emitEdit({ kind: 'highlightAdded', page: this.current.pageIndex, quads, color });
@@ -192,21 +215,25 @@ export class PdfViewer {
   }
 
   async removeAnnotation(index: number): Promise<void> {
+    this.requirePresenter();
     await (await this.document.page(this.current.pageIndex)).removeAnnotation(index);
     this.emitEdit({ kind: 'annotationRemoved', page: this.current.pageIndex, index });
   }
 
   async setFieldText(value: string, annotationIndex: number): Promise<void> {
+    this.requirePresenter();
     await (await this.document.page(this.current.pageIndex)).setText(value, annotationIndex);
     this.emitEdit({ kind: 'fieldTextSet', page: this.current.pageIndex, annotationIndex, value });
   }
 
   async setFieldChecked(checked: boolean, annotationIndex: number): Promise<void> {
+    this.requirePresenter();
     await (await this.document.page(this.current.pageIndex)).setChecked(checked, annotationIndex);
     this.emitEdit({ kind: 'fieldCheckedSet', page: this.current.pageIndex, annotationIndex, checked });
   }
 
   async setFieldOption(option: number, selected: boolean, annotationIndex: number): Promise<void> {
+    this.requirePresenter();
     await (await this.document.page(this.current.pageIndex))
       .setOption(option, selected, annotationIndex);
     this.emitEdit({ kind: 'fieldOptionSet', page: this.current.pageIndex, annotationIndex, option, selected });
@@ -219,6 +246,7 @@ export class PdfViewer {
    * stream in the file, and the removed content with it.
    */
   async redact(targets: readonly PdfRedactionTarget[]): Promise<PdfRedactionReport> {
+    this.requirePresenter();
     const report = await this.document.redact(targets);
     this.emitEdit({ kind: 'redacted', targets });
     return report;
@@ -233,9 +261,30 @@ export class PdfViewer {
    * ignores anything at or below the highest sequence already seen from that session,
    * so late delivery cannot rewind the view.
    */
-  apply(event: PdfViewEvent): void {
+  async apply(event: PdfViewEvent): Promise<void> {
     const highest = this.seen.get(event.sessionId);
     if (highest !== undefined && event.sequence <= highest) return;
+
+    if (event.change.kind === 'edit') {
+      // Only edits depend on the bytes. Two people looking at *different* documents can
+      // still be told where the other is looking, and refusing that would be over-strict.
+      if (event.documentFingerprint !== undefined
+          && event.documentFingerprint !== this.documentFingerprint) {
+        throw new Error(
+          `edit is for a different document (${event.documentFingerprint} vs ${this.documentFingerprint})`);
+      }
+      // An edit from someone who is not the presenter is ignored rather than refused:
+      // in a broadcast transport everyone hears everyone, and throwing would turn a
+      // third participant's stray edit into an error on every peer.
+      if (this.presenterId !== undefined && event.sessionId !== this.presenterId) {
+        return;
+      }
+
+      this.seen.set(event.sessionId, event.sequence);
+      await this.applyEdit(event.change.edit);
+      return;
+    }
+
     this.seen.set(event.sessionId, event.sequence);
 
     switch (event.change.kind) {
@@ -301,8 +350,29 @@ export class PdfViewer {
    * A viewport change may be dropped in favour of a later one — only the latest matters.
    * An annotation added is not superseded by the next, and dropping it loses data.
    */
+  private requirePresenter(): void {
+    if (this.role === 'follower') {
+      throw new Error('this viewer is a follower and cannot edit the document');
+    }
+  }
+
   private emitEdit(edit: PdfEdit): void {
     this.emit({ kind: 'edit', edit });
+  }
+
+  /** Replays a peer's edit by making the same call. Emits nothing. */
+  private async applyEdit(edit: PdfEdit): Promise<void> {
+    const page = await this.document.page(edit.kind === 'redacted' ? this.current.pageIndex : edit.page);
+    switch (edit.kind) {
+      case 'noteAdded': await page.addNote(edit.rect, edit.contents, edit.color); break;
+      case 'inkAdded': await page.addInk(edit.stroke, edit.color, edit.lineWidth); break;
+      case 'highlightAdded': await page.addHighlight(edit.quads, edit.color); break;
+      case 'annotationRemoved': await page.removeAnnotation(edit.index); break;
+      case 'fieldTextSet': await page.setText(edit.value, edit.annotationIndex); break;
+      case 'fieldCheckedSet': await page.setChecked(edit.checked, edit.annotationIndex); break;
+      case 'fieldOptionSet': await page.setOption(edit.option, edit.selected, edit.annotationIndex); break;
+      case 'redacted': await this.document.redact(edit.targets); break;
+    }
   }
 
   private emit(change: PdfViewChange): void {
@@ -310,6 +380,8 @@ export class PdfViewer {
       sequence: ++this.sequence,
       sessionId: this.sessionId,
       origin: 'local',
+      // Carried on edits only: it is what lets a peer refuse one meant for other bytes.
+      ...(change.kind === 'edit' ? { documentFingerprint: this.documentFingerprint } : {}),
       change,
     };
     for (const listener of this.listeners) listener(event);

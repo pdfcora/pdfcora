@@ -42,7 +42,7 @@ describe('the headless viewer', () => {
     const seen: PdfViewEvent[] = [];
     viewer.on((e) => seen.push(e));
 
-    viewer.apply(remote(1, {
+    await viewer.apply(remote(1, {
       change: { kind: 'viewport', state: { ...viewer.state, zoom: { scale: 2, mode: 'free' } } },
     }));
     viewer.flush();
@@ -53,8 +53,8 @@ describe('the headless viewer', () => {
 
   test('an out-of-order event does not rewind the view', async () => {
     const viewer = await PdfViewer.open(doc, PHONE, { throttleMs: 0 });
-    viewer.apply(remote(5, { change: { kind: 'viewport', state: { ...viewer.state, zoom: { scale: 2, mode: 'free' } } } }));
-    viewer.apply(remote(3, { change: { kind: 'viewport', state: { ...viewer.state, zoom: { scale: 4, mode: 'free' } } } }));
+    await viewer.apply(remote(5, { change: { kind: 'viewport', state: { ...viewer.state, zoom: { scale: 2, mode: 'free' } } } }));
+    await viewer.apply(remote(3, { change: { kind: 'viewport', state: { ...viewer.state, zoom: { scale: 4, mode: 'free' } } } }));
     assert.equal(viewer.state.zoom.scale, 2, 'sequence 3 arrived late and must be ignored');
   });
 
@@ -65,7 +65,7 @@ describe('the headless viewer', () => {
 
     phone.zoomTo(SCROLLABLE);
     phone.scrollTo({ x: 120, y: 90 });
-    wide.apply(remote(1, { change: { kind: 'viewport', state: phone.state } }));
+    await wide.apply(remote(1, { change: { kind: 'viewport', state: phone.state } }));
 
     const centre = wide.transform().centerForScrollOffset(wide.scrollOffset(), WIDE);
     assert.ok(Math.abs(centre.x - 120) < 1, `centre x ${centre.x}`);
@@ -77,7 +77,7 @@ describe('the headless viewer', () => {
     const wide = await PdfViewer.open(doc, { width: 900, height: 700 }, { throttleMs: 0 });
 
     narrow.fitWidth();
-    wide.apply(remote(1, { change: { kind: 'viewport', state: narrow.state } }));
+    await wide.apply(remote(1, { change: { kind: 'viewport', state: narrow.state } }));
 
     assert.equal(wide.state.zoom.mode, 'fitWidth');
     assert.ok(wide.state.zoom.scale > narrow.state.zoom.scale,
@@ -86,7 +86,7 @@ describe('the headless viewer', () => {
 
   test('a free zoom is adopted verbatim', async () => {
     const wide = await PdfViewer.open(doc, WIDE, { throttleMs: 0 });
-    wide.apply(remote(1, {
+    await wide.apply(remote(1, {
       change: { kind: 'viewport', state: { ...wide.state, zoom: { scale: 2.4, mode: 'free' } } },
     }));
     assert.equal(wide.state.zoom.scale, 2.4);
