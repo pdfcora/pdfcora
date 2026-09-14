@@ -117,7 +117,7 @@ export class PdfPage {
           [bitmap, page, 0, 0, width, height, 0, flags]);
 
         if (options.forms !== false) {
-          const form = formHandle(m, doc);
+          const form = this.document.formHandle();
           m.ccall('FORM_OnAfterLoadPage', null, ['number', 'number'], [page, form]);
           m.ccall('FPDF_FFLDraw', null,
             ['number', 'number', 'number', 'number', 'number', 'number', 'number', 'number', 'number'],
@@ -282,7 +282,7 @@ export class PdfPage {
   /** Every interactive form field on this page. */
   formFields(): Promise<PdfFormField[]> {
     return this.document.run((h, m) => {
-      const form = formHandle(m, h);
+      const form = this.document.formHandle();
       const page = m.ccall('FPDF_LoadPage', 'number', ['number', 'number'], [h, this.index]) as number;
       if (!page) throw PdfError.corrupt(`page ${this.index} failed to load`);
 
@@ -364,7 +364,7 @@ export class PdfPage {
     body: (m: PdfiumModule, form: number, page: number, annot: number) => void,
   ): Promise<void> {
     return this.document.run((h, m) => {
-      const form = formHandle(m, h);
+      const form = this.document.formHandle();
       const page = m.ccall('FPDF_LoadPage', 'number', ['number', 'number'], [h, this.index]) as number;
       if (!page) throw PdfError.corrupt(`page ${this.index} failed to load`);
 
@@ -486,27 +486,6 @@ export class PdfTextPage {
 
 // MARK: - Internals
 
-/** One form-fill environment per document, created lazily and cached on the module. */
-const formHandles = new WeakMap<object, Map<number, number>>();
-
-function formHandle(m: PdfiumModule, doc: number): number {
-  let perModule = formHandles.get(m);
-  if (!perModule) {
-    perModule = new Map();
-    formHandles.set(m, perModule);
-  }
-  const existing = perModule.get(doc);
-  if (existing) return existing;
-
-  // FPDF_FORMFILLINFO: version first, remaining callbacks left null.
-  const info = m._malloc(512);
-  m.HEAPU8.fill(0, info, info + 512);
-  new Int32Array(m.HEAPU8.buffer, info, 1)[0] = 2;
-
-  const handle = m.ccall('FPDFDOC_InitFormFillEnvironment', 'number', ['number', 'number'], [doc, info]) as number;
-  perModule.set(doc, handle);
-  return handle;
-}
 
 function setRect(m: PdfiumModule, annot: number, rect: PdfRect): void {
   withBuffer(m, 16, (ptr) => {

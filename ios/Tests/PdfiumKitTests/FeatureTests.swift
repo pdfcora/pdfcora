@@ -229,6 +229,31 @@ final class FeatureTests: XCTestCase {
         await reopened.close()
     }
 
+    /// The web build once lost every edit here: form state outlived close() and was
+    /// inherited by the next document to reuse the handle.
+    func testFormValueSurvivesSaveWhenEarlierFormDocumentsWereClosed() async throws {
+        for cycle in 0..<10 {
+            let earlier = try await open(cycle % 2 == 0 ? "click_form.pdf" : "combobox_form.pdf")
+            _ = try await earlier.page(0).formFields()
+            await earlier.close()
+
+            let doc = try await open("text_form.pdf")
+            let page = try await doc.page(0)
+            let fields = try await page.formFields()
+            let target = try XCTUnwrap(fields.first { if case .text = $0 { return true }; return false })
+            try await page.setText("value \(cycle)", forFieldAt: target.base.annotationIndex)
+            let saved = try await doc.data(mode: .full)
+
+            let reopened = try await PdfDocument(data: saved)
+            let after = try await reopened.page(0).formFields()
+            await reopened.close()
+            await doc.close()
+            guard let updated = after.first(where: { $0.base.annotationIndex == target.base.annotationIndex }),
+                  case .text(let field) = updated else { return XCTFail("field missing in cycle \(cycle)") }
+            XCTAssertEqual(field.value, "value \(cycle)", "cycle \(cycle)")
+        }
+    }
+
     // MARK: - Metadata, outline, links
 
     func testMetadataReadsWithoutThrowing() async throws {

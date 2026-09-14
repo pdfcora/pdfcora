@@ -134,6 +134,28 @@ describe('save round-trip', () => {
         assert.equal(field.value, 'Persisted');
         await reopened.close();
     });
+    // A closed document's handle is reused by the next one opened. Form state keyed on
+    // that handle and left behind by close() silently swallowed every later edit.
+    test('form value survives save when earlier form documents were closed', async () => {
+        for (let i = 0; i < 10; i++) {
+            const earlier = await open(i % 2 ? 'combobox_form.pdf' : 'click_form.pdf');
+            await (await earlier.page(0)).formFields();
+            await earlier.close();
+            const document = await open('text_form.pdf');
+            const page = await document.page(0);
+            const target = (await page.formFields()).find((f) => f.kind === 'text');
+            assert.ok(target);
+            await page.setText(`value ${i}`, target.annotationIndex);
+            const saved = await document.toBytes();
+            const reopened = await PdfDocument.open(saved);
+            const field = (await (await reopened.page(0)).formFields())
+                .find((f) => f.annotationIndex === target.annotationIndex);
+            await reopened.close();
+            await document.close();
+            assert.ok(field?.kind === 'text');
+            assert.equal(field.value, `value ${i}`, `cycle ${i}`);
+        }
+    });
 });
 describe('links and geometry', () => {
     test('links resolve to URIs and internal pages', async () => {

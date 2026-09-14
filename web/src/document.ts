@@ -27,6 +27,8 @@ export class PdfDocument {
   /** @internal */ readonly m: PdfiumModule;
   private handle: number;
   private bufferPtr: number;
+  private form = 0;
+  private formInfo = 0;
   private closedFlag = false;
 
   /** Serialises work; also what makes `await`ed calls ordered and non-overlapping. */
@@ -202,6 +204,26 @@ export class PdfDocument {
   /** @internal The raw document handle, for calls that need it alongside a page. */
   handleForLinks(): number {
     return this.handle;
+  }
+
+  /**
+   * @internal The form-fill environment, created on first use and released by close().
+   *
+   * Owned here rather than cached by handle: a closed document's handle is reused by the
+   * next one opened, which then inherited a form environment bound to freed memory and
+   * silently lost every field edit.
+   */
+  formHandle(): number {
+    if (!this.form) {
+      // FPDF_FORMFILLINFO: version first, remaining callbacks left null. PDFium keeps
+      // the pointer until the environment exits.
+      this.formInfo = this.m._malloc(512);
+      this.m.HEAPU8.fill(0, this.formInfo, this.formInfo + 512);
+      new Int32Array(this.m.HEAPU8.buffer, this.formInfo, 1)[0] = 2;
+      this.form = this.m.ccall('FPDFDOC_InitFormFillEnvironment', 'number',
+        ['number', 'number'], [this.handle, this.formInfo]) as number;
+    }
+    return this.form;
   }
 
   /** @internal Loads a page, runs `body`, and always closes it. */
@@ -383,6 +405,10 @@ export class PdfDocument {
     await this.queue.catch(() => undefined);
     if (this.closedFlag) return;
     this.closedFlag = true;
+    if (this.form) this.m.ccall('FPDFDOC_ExitFormFillEnvironment', null, ['number'], [this.form]);
+    if (this.formInfo) this.m._free(this.formInfo);
+    this.form = 0;
+    this.formInfo = 0;
     this.m.ccall('FPDF_CloseDocument', null, ['number'], [this.handle]);
     this.m._free(this.bufferPtr);
     this.handle = 0;
