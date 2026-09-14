@@ -48,6 +48,9 @@ public enum PdfViewCodec {
             "sessionId": event.sessionId,
             "origin": event.origin.rawValue,
         ]
+        if let fingerprint = event.documentFingerprint {
+            root["documentFingerprint"] = fingerprint
+        }
         switch event.change {
         case .viewport(let state):
             root["change"] = ["kind": "viewport", "state": object(from: state)]
@@ -55,6 +58,8 @@ public enum PdfViewCodec {
             root["change"] = ["kind": "selection", "selection": selection.map(object(from:)) as Any]
         case .tool(let tool):
             root["change"] = ["kind": "tool", "tool": tool.rawValue]
+        case .edit(let edit):
+            root["change"] = ["kind": "edit", "edit": object(from: edit)]
         }
         return root
     }
@@ -67,6 +72,117 @@ public enum PdfViewCodec {
             "rotation": degrees(state.rotation),
             "layout": state.layout.rawValue,
         ]
+    }
+
+    private static func object(from edit: PdfEdit) -> [String: Any] {
+        func rect(_ r: PdfRect) -> [String: Any] {
+            ["left": r.left, "bottom": r.bottom, "right": r.right, "top": r.top]
+        }
+        func colour(_ c: PdfColor) -> [String: Any] {
+            ["red": Int(c.red), "green": Int(c.green), "blue": Int(c.blue), "alpha": Int(c.alpha)]
+        }
+        func point(_ p: PdfPoint) -> [String: Any] { ["x": p.x, "y": p.y] }
+
+        switch edit {
+        case .noteAdded(let page, let r, let contents, let c):
+            return ["kind": "noteAdded", "page": page, "rect": rect(r),
+                    "contents": contents, "color": colour(c)]
+        case .inkAdded(let page, let stroke, let c, let lineWidth):
+            return ["kind": "inkAdded", "page": page, "stroke": stroke.map(point),
+                    "color": colour(c), "lineWidth": lineWidth]
+        case .highlightAdded(let page, let quads, let c):
+            return ["kind": "highlightAdded", "page": page, "color": colour(c),
+                    "quads": quads.map { ["p1": point($0.p1), "p2": point($0.p2),
+                                          "p3": point($0.p3), "p4": point($0.p4)] }]
+        case .annotationRemoved(let page, let index):
+            return ["kind": "annotationRemoved", "page": page, "index": index]
+        case .fieldTextSet(let page, let annotationIndex, let value):
+            return ["kind": "fieldTextSet", "page": page,
+                    "annotationIndex": annotationIndex, "value": value]
+        case .fieldCheckedSet(let page, let annotationIndex, let checked):
+            return ["kind": "fieldCheckedSet", "page": page,
+                    "annotationIndex": annotationIndex, "checked": checked]
+        case .fieldOptionSet(let page, let annotationIndex, let option, let selected):
+            return ["kind": "fieldOptionSet", "page": page, "annotationIndex": annotationIndex,
+                    "option": option, "selected": selected]
+        case .redacted(let targets):
+            return ["kind": "redacted", "targets": targets.map { target -> [String: Any] in
+                switch target {
+                case .region(let r, let pageIndex):
+                    return ["kind": "region", "pageIndex": pageIndex, "rect": rect(r)]
+                case .textMatches(let query, _):
+                    return ["kind": "textMatches", "query": query]
+                }
+            }]
+        }
+    }
+
+    static func edit(from raw: [String: Any]) throws -> PdfEdit {
+        func number(_ any: Any?) throws -> Double {
+            guard let n = (any as? NSNumber)?.doubleValue else { throw CodecError.malformed("number") }
+            return n
+        }
+        func rect(_ any: Any?) throws -> PdfRect {
+            guard let r = any as? [String: Any] else { throw CodecError.malformed("rect") }
+            return PdfRect(left: try number(r["left"]), bottom: try number(r["bottom"]),
+                           right: try number(r["right"]), top: try number(r["top"]))
+        }
+        func colour(_ any: Any?) throws -> PdfColor {
+            guard let c = any as? [String: Any] else { throw CodecError.malformed("color") }
+            return PdfColor(red: UInt8(try number(c["red"])), green: UInt8(try number(c["green"])),
+                            blue: UInt8(try number(c["blue"])),
+                            alpha: UInt8(try number(c["alpha"] ?? 255)))
+        }
+        func point(_ any: Any) throws -> PdfPoint {
+            guard let p = any as? [String: Any] else { throw CodecError.malformed("point") }
+            return PdfPoint(x: try number(p["x"]), y: try number(p["y"]))
+        }
+
+        guard let kind = raw["kind"] as? String else { throw CodecError.malformed("edit kind") }
+        let page = raw["page"] as? Int ?? 0
+
+        switch kind {
+        case "noteAdded":
+            return .noteAdded(page: page, rect: try rect(raw["rect"]),
+                              contents: raw["contents"] as? String ?? "",
+                              color: try colour(raw["color"]))
+        case "inkAdded":
+            let stroke = try (raw["stroke"] as? [Any] ?? []).map(point)
+            return .inkAdded(page: page, stroke: stroke, color: try colour(raw["color"]),
+                             lineWidth: try number(raw["lineWidth"]))
+        case "highlightAdded":
+            let quads = try (raw["quads"] as? [[String: Any]] ?? []).map { q in
+                PdfQuad(p1: try point(q["p1"] as Any), p2: try point(q["p2"] as Any),
+                        p3: try point(q["p3"] as Any), p4: try point(q["p4"] as Any))
+            }
+            return .highlightAdded(page: page, quads: quads, color: try colour(raw["color"]))
+        case "annotationRemoved":
+            return .annotationRemoved(page: page, index: raw["index"] as? Int ?? 0)
+        case "fieldTextSet":
+            return .fieldTextSet(page: page, annotationIndex: raw["annotationIndex"] as? Int ?? 0,
+                                 value: raw["value"] as? String ?? "")
+        case "fieldCheckedSet":
+            return .fieldCheckedSet(page: page, annotationIndex: raw["annotationIndex"] as? Int ?? 0,
+                                    checked: raw["checked"] as? Bool ?? false)
+        case "fieldOptionSet":
+            return .fieldOptionSet(page: page, annotationIndex: raw["annotationIndex"] as? Int ?? 0,
+                                   option: raw["option"] as? Int ?? 0,
+                                   selected: raw["selected"] as? Bool ?? false)
+        case "redacted":
+            let targets = try (raw["targets"] as? [[String: Any]] ?? []).map { t -> PdfRedactionTarget in
+                switch t["kind"] as? String {
+                case "region":
+                    return .region(try rect(t["rect"]), pageIndex: t["pageIndex"] as? Int ?? 0)
+                case "textMatches":
+                    return .textMatches(t["query"] as? String ?? "")
+                default:
+                    throw CodecError.malformed("unknown redaction target")
+                }
+            }
+            return .redacted(targets: targets)
+        default:
+            throw CodecError.malformed("unknown edit kind \(kind)")
+        }
     }
 
     private static func object(from selection: PdfSelection) -> [String: Any] {
@@ -106,6 +222,13 @@ public enum PdfViewCodec {
             }
             return PdfViewEvent(sequence: sequence, sessionId: sessionId, origin: origin,
                                 change: .tool(tool))
+        case "edit":
+            guard let editRaw = change["edit"] as? [String: Any] else {
+                throw CodecError.malformed("edit without a body")
+            }
+            return PdfViewEvent(sequence: sequence, sessionId: sessionId, origin: origin,
+                                change: .edit(try edit(from: editRaw)),
+                                documentFingerprint: raw["documentFingerprint"] as? String)
         default:
             throw CodecError.malformed("unknown change kind \(kind)")
         }

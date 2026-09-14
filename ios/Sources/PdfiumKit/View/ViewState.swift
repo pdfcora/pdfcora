@@ -38,11 +38,31 @@ public struct PdfViewState: Equatable, Sendable {
     }
 }
 
+/// A change to the document, carrying the arguments of the call that made it.
+///
+/// An event saying only "annotation 3 was added" cannot be reproduced by a peer — it
+/// does not say what to add — so each case mirrors the parameters of the API it came
+/// from.
+///
+/// `inkAdded` carries one stroke, not many: this SDK's `addInk` takes several on Apple
+/// platforms and one on the others, so a multi-stroke edit has no faithful
+/// cross-platform meaning.
+public enum PdfEdit: Equatable, Sendable {
+    case noteAdded(page: Int, rect: PdfRect, contents: String, color: PdfColor)
+    case inkAdded(page: Int, stroke: [PdfPoint], color: PdfColor, lineWidth: Double)
+    case highlightAdded(page: Int, quads: [PdfQuad], color: PdfColor)
+    case annotationRemoved(page: Int, index: Int)
+    case fieldTextSet(page: Int, annotationIndex: Int, value: String)
+    case fieldCheckedSet(page: Int, annotationIndex: Int, checked: Bool)
+    case fieldOptionSet(page: Int, annotationIndex: Int, option: Int, selected: Bool)
+    case redacted(targets: [PdfRedactionTarget])
+}
+
 public enum PdfViewChange: Equatable, Sendable {
     case viewport(PdfViewState)
     case selection(PdfSelection?)
     case tool(PdfTool)
-    // An `edit` change arrives with the editing phase, in its own plan.
+    case edit(PdfEdit)
 }
 
 public enum PdfViewEventOrigin: String, Equatable, Sendable, Codable {
@@ -52,14 +72,19 @@ public enum PdfViewEventOrigin: String, Equatable, Sendable, Codable {
 public struct PdfViewEvent: Equatable, Sendable {
     /// Per sender. A peer ignores anything at or below the highest it has seen.
     public let sequence: Int
+    /// Set on edit events: a hash of the bytes the sender opened. A peer refuses an edit
+    /// whose fingerprint does not match its own, since indices are positions in bytes.
+    public let documentFingerprint: String?
     public let sessionId: String
     /// Applying a remote event must emit nothing, or two viewers echo each other.
     public let origin: PdfViewEventOrigin
     public let change: PdfViewChange
 
     public init(sequence: Int, sessionId: String,
-                origin: PdfViewEventOrigin, change: PdfViewChange) {
+                origin: PdfViewEventOrigin, change: PdfViewChange,
+                documentFingerprint: String? = nil) {
         self.sequence = sequence
+        self.documentFingerprint = documentFingerprint
         self.sessionId = sessionId
         self.origin = origin
         self.change = change

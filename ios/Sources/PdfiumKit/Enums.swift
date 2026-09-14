@@ -70,7 +70,7 @@ public struct PdfPermissions: OptionSet, Sendable {
 }
 
 /// Options for text search.
-public struct PdfSearchOptions: OptionSet, Sendable {
+public struct PdfSearchOptions: OptionSet, Equatable, Sendable {
     public let rawValue: Int
     public init(rawValue: Int) { self.rawValue = rawValue }
 

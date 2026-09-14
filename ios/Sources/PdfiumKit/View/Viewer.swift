@@ -3,17 +3,31 @@ import UIKit
 
 public struct PdfViewerOptions: Sendable {
     public let sessionId: String
+    /// A follower may look wherever it likes but may not change the document.
+    ///
+    /// Concurrent editing is deliberately out of scope: two people editing one
+    /// annotation is a distributed-systems problem, and last-writer-wins silently
+    /// discards work.
+    public let role: PdfViewerRole
+    /// When set, only this session's edits are applied. Others are ignored.
+    public let presenterId: String?
     /// Viewport changes are coalesced over this window, in seconds. Edits will not be.
     ///
     /// Seconds rather than `Duration`, which is iOS 16+ and this package supports 15.
     public let coalesceInterval: TimeInterval
 
     public init(sessionId: String = UUID().uuidString,
-                coalesceInterval: TimeInterval = 0.05) {
+                coalesceInterval: TimeInterval = 0.05,
+                role: PdfViewerRole = .presenter,
+                presenterId: String? = nil) {
         self.sessionId = sessionId
         self.coalesceInterval = coalesceInterval
+        self.role = role
+        self.presenterId = presenterId
     }
 }
+
+public enum PdfViewerRole: Sendable { case presenter, follower }
 
 /// Where a viewer is looking, and what changes it.
 ///
@@ -31,6 +45,8 @@ public actor PdfViewer {
 
     private let document: PdfDocument
     private let sessionId: String
+    private let role: PdfViewerRole
+    private let presenterId: String?
     private let coalesceInterval: TimeInterval
     private var viewport: CGSize
     private var pageSize: PdfSize
@@ -48,6 +64,8 @@ public actor PdfViewer {
         self.document = document
         self.viewport = viewport
         self.sessionId = options.sessionId
+        self.role = options.role
+        self.presenterId = options.presenterId
         self.coalesceInterval = options.coalesceInterval
         self.pageCount = await document.pageCount
         self.pageSize = try await document.page(0).size
@@ -153,6 +171,143 @@ public actor PdfViewer {
         emit(.tool(tool))
     }
 
+    // MARK: - Editing
+    //
+    // Every method delegates to the existing page API and then emits. Two code paths
+    // producing annotations would drift, and the bug would surface through only one of
+    // them — ViewerTests asserts byte identity to stop that.
+    //
+    // A follower refuses to edit locally. It may still scroll and zoom: following is not
+    // the same as being frozen.
+
+    /// The bytes this viewer's document was opened from. An edit is refused unless the
+    /// sender's matches.
+    public var documentFingerprint: String { get async { await document.fingerprint } }
+
+    @discardableResult
+    public func addNote(rect: PdfRect, contents: String,
+                        color: PdfColor = .yellow) async throws -> Int {
+        try requirePresenter()
+        let index = try await document.page(state.pageIndex)
+            .addNote(rect: rect, contents: contents, color: color)
+        await emitEdit(.noteAdded(page: state.pageIndex, rect: rect, contents: contents, color: color))
+        return index
+    }
+
+    @discardableResult
+    public func addInk(_ stroke: [PdfPoint], color: PdfColor = .black,
+                       lineWidth: Double = 2) async throws -> Int {
+        try requirePresenter()
+        let index = try await document.page(state.pageIndex)
+            .addInk(strokes: [stroke], color: color, lineWidth: lineWidth)
+        await emitEdit(.inkAdded(page: state.pageIndex, stroke: stroke,
+                                 color: color, lineWidth: lineWidth))
+        return index
+    }
+
+    @discardableResult
+    public func addHighlight(_ quads: [PdfQuad], color: PdfColor = .yellow) async throws -> Int {
+        try requirePresenter()
+        let index = try await document.page(state.pageIndex).addHighlight(quads: quads, color: color)
+        await emitEdit(.highlightAdded(page: state.pageIndex, quads: quads, color: color))
+        return index
+    }
+
+    public func removeAnnotation(at index: Int) async throws {
+        try requirePresenter()
+        try await document.page(state.pageIndex).removeAnnotation(at: index)
+        await emitEdit(.annotationRemoved(page: state.pageIndex, index: index))
+    }
+
+    public func setFieldText(_ value: String, at annotationIndex: Int) async throws {
+        try requirePresenter()
+        try await document.page(state.pageIndex).setText(value, forFieldAt: annotationIndex)
+        await emitEdit(.fieldTextSet(page: state.pageIndex, annotationIndex: annotationIndex, value: value))
+    }
+
+    public func setFieldChecked(_ checked: Bool, at annotationIndex: Int) async throws {
+        try requirePresenter()
+        try await document.page(state.pageIndex).setChecked(checked, forFieldAt: annotationIndex)
+        await emitEdit(.fieldCheckedSet(page: state.pageIndex, annotationIndex: annotationIndex, checked: checked))
+    }
+
+    public func setFieldOption(_ option: Int, selected: Bool, at annotationIndex: Int) async throws {
+        try requirePresenter()
+        try await document.page(state.pageIndex)
+            .setOption(option, selected: selected, forFieldAt: annotationIndex)
+        await emitEdit(.fieldOptionSet(page: state.pageIndex, annotationIndex: annotationIndex,
+                                       option: option, selected: selected))
+    }
+
+    /// Removes content so it cannot be recovered.
+    ///
+    /// **Save with ``PdfSaveMode/full`` afterwards** — an incremental save leaves the
+    /// original content stream in the file, and the removed content with it.
+    @discardableResult
+    public func redact(_ targets: [PdfRedactionTarget]) async throws -> PdfRedactionReport {
+        try requirePresenter()
+        let report = try await document.redact(targets)
+        await emitEdit(.redacted(targets: targets))
+        return report
+    }
+
+    private func requirePresenter() throws {
+        if role == .follower { throw PdfError.readOnlyFollower }
+    }
+
+    private func emitEdit(_ edit: PdfEdit) async {
+        // Edits bypass the viewport throttle. A viewport change may be dropped in favour
+        // of a later one; an annotation added is not superseded by the next.
+        let fingerprint = await document.fingerprint
+        sequence += 1
+        let event = PdfViewEvent(sequence: sequence, sessionId: sessionId,
+                                 origin: .local, change: .edit(edit),
+                                 documentFingerprint: fingerprint)
+        for listener in listeners.values { listener(event) }
+    }
+
+    /// Replays a peer's edit by making the same call. Emits nothing.
+    private func applyEdit(_ edit: PdfEdit) async throws {
+        switch edit {
+        case .noteAdded(let page, let rect, let contents, let color):
+            _ = try await document.page(page).addNote(rect: rect, contents: contents, color: color)
+        case .inkAdded(let page, let stroke, let color, let lineWidth):
+            _ = try await document.page(page).addInk(strokes: [stroke], color: color, lineWidth: lineWidth)
+        case .highlightAdded(let page, let quads, let color):
+            _ = try await document.page(page).addHighlight(quads: quads, color: color)
+        case .annotationRemoved(let page, let index):
+            try await document.page(page).removeAnnotation(at: index)
+        case .fieldTextSet(let page, let annotationIndex, let value):
+            try await document.page(page).setText(value, forFieldAt: annotationIndex)
+        case .fieldCheckedSet(let page, let annotationIndex, let checked):
+            try await document.page(page).setChecked(checked, forFieldAt: annotationIndex)
+        case .fieldOptionSet(let page, let annotationIndex, let option, let selected):
+            try await document.page(page).setOption(option, selected: selected, forFieldAt: annotationIndex)
+        case .redacted(let targets):
+            _ = try await document.redact(targets)
+        }
+    }
+
+    /// Applies a peer's edit, refusing one meant for other bytes.
+    public func applyEditEvent(_ event: PdfViewEvent) async throws {
+        guard case .edit(let edit) = event.change else { return }
+        if let highest = seen[event.sessionId], event.sequence <= highest { return }
+
+        // Only edits depend on the bytes. Viewport events are exempt: two people reading
+        // different documents can still be told where the other is looking.
+        let mine = await document.fingerprint
+        if let theirs = event.documentFingerprint, theirs != mine {
+            throw PdfError.documentMismatch(expected: mine, received: theirs)
+        }
+        // A stray edit is ignored rather than thrown: in a broadcast transport everyone
+        // hears everyone, and throwing would make a third participant's edit an error
+        // on every peer.
+        if let presenterId, event.sessionId != presenterId { return }
+
+        seen[event.sessionId] = event.sequence
+        try await applyEdit(edit)
+    }
+
     // MARK: - Sync
 
     /// Applies a peer's event.
@@ -174,6 +329,9 @@ public actor PdfViewer {
             selection = incoming
         case .tool(let incoming):
             tool = incoming
+        case .edit:
+            // Replayed in `apply(_:)`'s async path; see the editing extension.
+            break
         }
     }
 

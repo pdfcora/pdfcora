@@ -29,6 +29,29 @@ public actor PdfDocument {
     /// PDFium reads from this buffer lazily, so it must outlive the document handle.
     /// Its length is also what a signature's byte range is measured against.
     let backing: Data
+    private var cachedFingerprint: String?
+
+    /// A stable identifier for the bytes this document was opened from.
+    ///
+    /// Two documents opened from identical bytes share it; any difference changes it.
+    /// Used to refuse replaying an edit against the wrong document — annotation and
+    /// field indices are positions in specific bytes, so a removal replayed elsewhere
+    /// removes the wrong thing, silently.
+    ///
+    /// FNV-1a rather than a cryptographic digest: this answers "are these the same
+    /// bytes", not "has someone tampered with them", and needs no crypto framework. The
+    /// length is appended, since a hash collision alone should not be enough.
+    public var fingerprint: String {
+        if let cachedFingerprint { return cachedFingerprint }
+        var hash: UInt32 = 0x811c_9dc5
+        for byte in backing {
+            hash ^= UInt32(byte)
+            hash = hash &* 16_777_619
+        }
+        let value = String(format: "%08x-%d", hash, backing.count)
+        cachedFingerprint = value
+        return value
+    }
 
     /// The PDFium revision this SDK was built against.
     public nonisolated static var engineVersion: String { PdfEngine.revision }

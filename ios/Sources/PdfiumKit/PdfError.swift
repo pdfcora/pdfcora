@@ -14,6 +14,14 @@ public enum PdfError: Error, Equatable, Sendable {
     /// An FPDF_GetLastError value with no more specific mapping.
     case engine(code: Int)
 
+    /// This viewer is following someone else's session and may not edit.
+    case readOnlyFollower
+
+    /// An edit arrived for a document with different bytes. Annotation and field
+    /// indices are positions in specific bytes, so applying it would change the
+    /// wrong thing.
+    case documentMismatch(expected: String, received: String)
+
     /// Maps the engine's last error, using `password` to disambiguate the two password cases.
     static func fromEngine(passwordSupplied: Bool) -> PdfError {
         switch FPDF_GetLastError() {
@@ -39,6 +47,10 @@ extension PdfError: CustomStringConvertible {
         case .saveFailed(let reason): return "saving failed: \(reason)"
         case .invalidOperation(let reason): return "invalid operation: \(reason)"
         case .engine(let code):       return "PDFium error \(code)"
+        case .readOnlyFollower:
+            return "this viewer is following another session and cannot edit the document"
+        case .documentMismatch(let expected, let received):
+            return "edit is for a different document (expected \(expected), received \(received))"
         }
     }
 }

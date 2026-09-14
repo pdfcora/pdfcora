@@ -22,7 +22,7 @@ public struct PdfPageObject: Sendable, Equatable {
 }
 
 /// What to remove.
-public enum PdfRedactionTarget: Sendable {
+public enum PdfRedactionTarget: Equatable, Sendable {
     case region(PdfRect, pageIndex: Int)
     case textMatches(String, options: PdfSearchOptions = .none)
 }
