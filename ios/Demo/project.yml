@@ -20,6 +20,8 @@ targets:
         product: PdfiumKit
       - package: PdfiumKit
         product: PdfiumKitAI
+      - package: PdfiumKit
+        product: PdfiumKitUI
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.pdfiumkit.demo

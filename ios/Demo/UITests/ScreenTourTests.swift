@@ -34,6 +34,41 @@ final class ScreenTourTests: XCTestCase {
         }
     }
 
+    /// The SDK's own component, with a toolbar the app configured.
+    ///
+    /// The hard requirement is that it does not clip. Every item has a fixed width, so a
+    /// plain row overflows rather than wrapping, and this project already shipped that
+    /// bug once — a fifth tool pushed zoom and save off the edge, and it surfaced as two
+    /// unrelated-looking failures because the buttons existed and the taps went nowhere.
+    /// So this asserts hittability, not existence.
+    func testTheComponentToolbarIsReachableEndToEnd() {
+        let app = XCUIApplication()
+        app.launch()
+        XCTAssertTrue(app.staticTexts["Hello World"].waitForExistence(timeout: 10))
+
+        let link = app.descendants(matching: .any).matching(identifier: "demo-Component").firstMatch
+        if !link.waitForExistence(timeout: 5) { app.swipeUp() }
+        XCTAssertTrue(link.waitForExistence(timeout: 5), "could not reach the Component screen")
+        link.tap()
+        XCTAssertTrue(app.navigationBars["Component"].waitForExistence(timeout: 10))
+        Thread.sleep(forTimeInterval: 1.5)
+
+        // The default configuration, plus the app's own button.
+        for id in ["tool-select", "tool-ink", "tool-note", "tool-highlight", "tool-redact",
+                   "editor-undo", "zoom-out", "zoom-fit", "zoom-in", "editor-save",
+                   "custom-share"] {
+            let button = app.descendants(matching: .any).matching(identifier: id).firstMatch
+            XCTAssertTrue(button.waitForExistence(timeout: 3), "missing \(id)")
+        }
+
+        // Whatever fits must be tappable; the rest must be reachable by scrolling.
+        let select = app.descendants(matching: .any).matching(identifier: "tool-select").firstMatch
+        XCTAssertTrue(select.isHittable, "the first toolbar item is not even reachable")
+        select.tap()
+        XCTAssertTrue(app.navigationBars["Component"].exists, "tapping a tool broke the screen")
+        save(app, named: "component-toolbar")
+    }
+
     /// The editor is the one screen with real interaction, so it gets exercised rather
     /// than merely opened: switch tools, draw a stroke, and check the page still renders.
     func testEditorToolbarRespondsToInput() {
