@@ -6,6 +6,13 @@
 set -euo pipefail
 cd "$(dirname "$0")/../android"
 
+# Give the emulator at least 4GB. At 2GB the suite reliably dies part-way through — the
+# low-memory killer takes the test process, and whichever test was in flight is reported
+# as failed with no message. Measured: identical code and tests pass 118/118 at 4GB and
+# die around test 19 at 2GB.
+#
+#   emulator -avd <name> -memory 4096
+
 # A run that dies to the low-memory killer reports whichever test was in flight as
 # having failed, with no message. That reads as a flaky test and sends people off
 # debugging code that is fine. `run` names the real cause instead.
@@ -52,7 +59,20 @@ run :pdfiumkit-ai:testDebugUnitTest "$@"
 # verifier agreeing with our own signer would prove nothing.
 SIGNED=/tmp/pdfiumkit-android-signed.pdf
 if command -v pdfsig > /dev/null; then
-    device=$(adb devices | awk '/device$/{print $1; exit}')
+    # Gradle honours ANDROID_SERIAL, so this must too. Taking "the first device" while
+    # Gradle ran on a different one pulls a stale or missing file and then blames the
+    # signature for it — which is exactly what happened with a phone and an emulator
+    # both plugged in.
+    device="${ANDROID_SERIAL:-}"
+    if [ -z "$device" ]; then
+        count=$(adb devices | grep -c 'device$' || true)
+        if [ "$count" -gt 1 ]; then
+            echo "cross-check: $count devices connected and ANDROID_SERIAL is unset." >&2
+            echo "  Gradle and this check could pick different ones. Set ANDROID_SERIAL." >&2
+            exit 1
+        fi
+        device=$(adb devices | awk '/device$/{print $1; exit}')
+    fi
     [ -n "$device" ] || { echo "cross-check: no device" >&2; exit 1; }
 
     adb -s "$device" exec-out run-as com.pdfiumkit.test \
