@@ -56,17 +56,27 @@ public struct PdfZoom: Equatable, Sendable {
     public let mode: Mode
 
     public static let steps: [Double] = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4]
+
+    /// 1:1 based — 100% is one PDF point per view point, as Acrobat and Preview mean it.
     public var percentage: Int { Int((scale * 100).rounded()) }
+    /// Fit based — 100% is whatever fills the window, as most mobile viewers mean it.
+    public func percentage(ofFit fitScale: Double) -> Int
 
     public static func fitting(width: Double, page: PdfSize) -> PdfZoom
     public static func fitting(size: CGSize, page: PdfSize) -> PdfZoom
 }
 ```
 
-**100% means 1:1** — one PDF point to one view point — not fit-to-width. *(Assumption,
-§11.1.)* The demos currently display `scale / fitScale * 100`, so a wide window reads
-"100%" while showing the page at 1.6×. Acrobat and every other viewer mean 1:1, and the
-demos will change to match, with fit-to-width labelled "Fit".
+**What "100%" means is the app's choice, not the SDK's**, so both helpers exist. The
+percentage is a label printed in a toolbar; nothing in rendering or sync reads it — those
+use `scale` and `mode`. On US Letter (612 × 792) the two conventions diverge sharply:
+fit-to-width reads 64% on a ~390pt phone and 196% on a ~1200px desktop under 1:1, and
+100% on both under fit-based.
+
+1:1 makes the number mean physical size but shows "64%" for a phone's normal view;
+fit-based always reads a clean 100% but makes "200%" a different magnification on every
+device. **The demos will use the fit-based helper**, since a viewer's default view reading
+100% is what users expect.
 
 Three consumers need three different things from zoom, which is why it is a type rather
 than a `Double`:
@@ -110,17 +120,19 @@ much of a neighbour happens to be visible.
 
 ```swift
 public enum PdfSelection: Equatable, Sendable, Codable {
-    /// Character indices into the page's text layer, as `PdfTextPage` numbers them.
-    case text(page: Int, range: Range<Int>)
+    /// A dragged rectangle, in PDF coordinates on that page.
+    case region(page: Int, rect: PdfRect)
     case annotation(page: Int, index: Int)
 }
 ```
 
-*(Assumption, §11.2: selection is in scope, in this minimal form.)* The SDK has no
-selection model today. This is deliberately a range of character indices rather than a
-rich selection object: `FPDFText_GetCharBox` already gives per-character boxes — the
-redaction splitter uses them — so the rectangles to highlight are derivable, and nothing
-new is needed in the engine layer.
+**Areas, not text.** A selection is a rectangle the user dragged — the same gesture the
+highlight and redact tools already use — and it syncs as one, which is what makes "the
+presenter is pointing at this" work.
+
+Text selection is deliberately *not* here. It would need a character-range model the SDK
+does not have, and a region is what a viewer's user actually drags. Should text selection
+be wanted later it is additive: another case, no change to anything above.
 
 ### 4.4 Events
 
@@ -209,7 +221,7 @@ public actor PdfViewer {
     public func scrollOffset() -> CGPoint            // where the app should scroll to
 
     // Selection and tools
-    public func selectText(page: Int, range: Range<Int>)
+    public func selectRegion(page: Int, rect: PdfRect)
     public func selectAnnotation(page: Int, index: Int)
     public func clearSelection()
     public func setTool(_ tool: PdfTool)
@@ -303,11 +315,14 @@ oversight. Co-editing would be its own spec.
 | An actor-per-viewer plus an actor-per-document deadlocks | The viewer never holds its own executor while awaiting the document's; verified by a concurrency test hammering both |
 | Scope grows into a UI framework | Non-goal §3, restated: no view types on any platform |
 
-## 11. Assumptions to confirm
+## 11. Resolved
 
-1. **100% means 1:1**, not fit-to-width (§4.1). Changes what the demos display.
-2. **Selection is in scope**, as character ranges (§4.3). Dropping it removes
-   `PdfSelection`, two viewer methods and one event case; nothing else changes.
+1. **The percentage label is the app's choice** (§4.1). The SDK offers both helpers and
+   depends on neither; the demos use the fit-based one. This was raised as a decision to
+   be made and turned out not to be one — sync reads `scale` and `mode`, never the label.
+2. **Selection is areas, not text** (§4.3): a dragged rectangle, the same gesture the
+   highlight and redact tools use. Text selection would need a character-range model the
+   SDK does not have, and is additive if wanted later.
 
 ## 12. Phasing
 
@@ -316,7 +331,8 @@ oversight. Co-editing would be its own spec.
    take-from-one/apply-to-another possible by hand.
 2. **The viewer, viewing only.** Scroll, zoom, page, rotation, layout, render, events,
    coalescing.
-3. **Selection, tools and editing.** The delegating edit methods and their events.
+3. **Selection, tools and editing.** Region and annotation selection, the delegating
+   edit methods, and their events.
 4. **Sync.** Encoding, `apply`, fingerprint, ordering, presenter rule, the cross-platform
    conformance contract.
 5. **Demos.** All three adopt it; the diff should be negative.
