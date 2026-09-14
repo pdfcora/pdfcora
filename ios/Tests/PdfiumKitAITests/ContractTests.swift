@@ -2,18 +2,11 @@ import XCTest
 import PdfiumKit
 @testable import PdfiumKitAI
 
-/// The same assertions as `web-ai/test/{provider,proposal,stub}.test.ts`.
+/// The same assertions as `web-ai/test/{provider,proposal}.test.ts`.
 ///
 /// If a Swift test here needs different assertions than its TypeScript twin, the two
 /// implementations have diverged and one of them is wrong.
 final class ContractTests: XCTestCase {
-
-    private struct EchoProvider: PdfAiProvider {
-        let reply: String
-        func generate(_ request: PdfAiRequest) async throws -> PdfAiResponse {
-            PdfAiResponse(text: reply)
-        }
-    }
 
     private struct BrokenProvider: PdfAiProvider {
         struct Boom: Error {}
@@ -118,34 +111,13 @@ final class ContractTests: XCTestCase {
         XCTAssertEqual(seen, ["a", "b"])
     }
 
-    // MARK: - The stub feature
-
-    func testAFeatureCallNeverThrowsForUnavailability() async throws {
-        // AVL-5: unavailability is a value, not an exception.
-        let ai = PdfiumAI(document: try await document())
-        let outcome = await ai.stub.run()
-        if case .answered = outcome {
-            // Only reachable on a machine with an eligible on-device model, which the
-            // stub does not actually call. Either way it must not have thrown.
-        }
-    }
-
-    func testAProviderMakesTheStubAvailableAndNamesTheSource() async throws {
-        let ai = PdfiumAI(document: try await document(),
-                          options: .init(provider: EchoProvider(reply: "ok")))
-        XCTAssertEqual(ai.stub.availability(), .available)
-
-        guard case .answered(let result) = await ai.stub.run() else {
-            return XCTFail("expected an answer")
-        }
-        XCTAssertEqual(result.value, "ok")
-        XCTAssertEqual(result.source, .customProvider)
-    }
+    // MARK: - Features
 
     func testABrokenProviderDegradesRatherThanThrowing() async throws {
-        let ai = PdfiumAI(document: try await document(),
-                          options: .init(provider: BrokenProvider()))
-        guard case .unavailable(let state) = await ai.stub.run() else {
+        var options = PdfiumAIOptions(provider: BrokenProvider())
+        options.allowsOnDevice = false
+        let ai = PdfiumAI(document: try await document(), options: options)
+        guard case .unavailable(let state) = await ai.summaries.summarize() else {
             return XCTFail("expected unavailable")
         }
         XCTAssertEqual(state, .unavailable(.noProvider))
@@ -155,11 +127,11 @@ final class ContractTests: XCTestCase {
         let ai = PdfiumAI(document: try await document())
         let progress = Recorder()
 
-        _ = ai.stub.availability()
+        _ = ai.summaries.availability()
         var seen = await progress.calls
         XCTAssertEqual(seen, [], "checking availability must never start a download (AVL-4)")
 
-        _ = await ai.stub.prepare { _ in Task { await progress.add("tick") } }
+        _ = await ai.summaries.prepare { _ in Task { await progress.add("tick") } }
         try await Task.sleep(nanoseconds: 10_000_000)
         seen = await progress.calls
         XCTAssertFalse(seen.isEmpty, "prepare must report progress, even trivially")
@@ -168,7 +140,7 @@ final class ContractTests: XCTestCase {
 
 /// The corpus path. `PdfiumKitTests` has its own copy; test targets cannot see each
 /// other's types, so this is duplicated rather than shared.
-private enum Repo {
+enum Repo {
     static let root = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent()   // PdfiumKitAITests
         .deletingLastPathComponent()   // Tests
@@ -176,10 +148,11 @@ private enum Repo {
         .deletingLastPathComponent()   // repo root
 
     static var corpus: URL { root.appendingPathComponent("conformance/corpus") }
+    static var fixtures: URL { root.appendingPathComponent("conformance/fixtures") }
 }
 
 /// Ordered call recording across concurrency domains.
-private actor Recorder {
+actor Recorder {
     private(set) var calls: [String] = []
     func add(_ call: String) { calls.append(call) }
 }

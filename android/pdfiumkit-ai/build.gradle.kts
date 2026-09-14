@@ -23,9 +23,19 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions { jvmTarget = "17" }
+    kotlinOptions {
+        jvmTarget = "17"
+        // ML Kit GenAI ships Kotlin 2.1 metadata and this project builds with 1.9. The
+        // classes that trip the check are ML Kit internals this module never references.
+        freeCompilerArgs += "-Xskip-metadata-version-check"
+    }
 
     publishing { singleVariant("release") { withSourcesJar() } }
+
+    // The contract answers are tested on, shared with the iOS and Web suites.
+    sourceSets["androidTest"].assets.srcDirs(
+        rootProject.projectDir.parentFile.resolve("conformance/fixtures")
+    )
 }
 
 dependencies {
@@ -33,9 +43,16 @@ dependencies {
     api(project(":pdfiumkit"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
-    // No ML Kit, no Play services, no AICore. Those arrive with the feature that needs
-    // them, in a later phase — adding one now would only risk PKG-2 for no benefit.
+    // On-device summaries. Needs API 26 while this module promises 23, so the manifest
+    // overrides its floor and every call is guarded (PKG-3). Allowed here, never in the
+    // core: scripts/check-core-deps.sh checks the core's resolved graph.
+    implementation("com.google.mlkit:genai-summarization:1.0.0-beta1")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
+    testImplementation("org.json:json:20231013")
+
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test:runner:1.5.2")
+    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
 }

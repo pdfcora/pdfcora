@@ -71,6 +71,62 @@ public enum AppleModel {
     public static var acceptsImages: Bool { false }
 }
 
+extension AppleModel {
+    /// Asks the on-device model for a grounded answer with guided generation (ANS-2).
+    /// Nil when the model cannot be prompted on this OS.
+    static func groundedReply(to prompt: String) async throws -> PdfGroundedReply? {
+        #if canImport(FoundationModels)
+        if #available(iOS 26.0, macOS 26.0, *) {
+            let reply = try await LanguageModelSession().respond(to: prompt, generating: AppleGroundedReply.self).content
+            return PdfGroundedReply(answer: reply.answer,
+                                    citations: reply.citations.map { .init(passage: $0.passage, quote: $0.quote) })
+        }
+        #endif
+        return nil
+    }
+
+    /// Plain text from the on-device model. Nil when it cannot be prompted on this OS.
+    static func respond(to prompt: String) async throws -> String? {
+        #if canImport(FoundationModels)
+        if #available(iOS 26.0, macOS 26.0, *) {
+            return try await LanguageModelSession().respond(to: prompt).content
+        }
+        #endif
+        return nil
+    }
+
+    /// Whether the model supports a BCP 47 language. Nil when there is no model to ask.
+    static func supports(language: String) -> Bool? {
+        #if canImport(FoundationModels)
+        if #available(iOS 26.0, macOS 26.0, *) {
+            let code = Locale.Language(identifier: language).languageCode
+            return SystemLanguageModel.default.supportedLanguages.contains { $0.languageCode == code }
+        }
+        #endif
+        return nil
+    }
+}
+
+#if canImport(FoundationModels)
+@available(iOS 26.0, macOS 26.0, *)
+@Generable
+struct AppleGroundedReply {
+    @Guide(description: "The answer, from the passages only. Empty if they do not answer the question.")
+    var answer: String
+    @Guide(description: "Sentences supporting the answer, each quoted word for word from one passage.", .maximumCount(3))
+    var citations: [AppleCitation]
+}
+
+@available(iOS 26.0, macOS 26.0, *)
+@Generable
+struct AppleCitation {
+    @Guide(description: "The id of the passage the quote comes from, such as p1-0.")
+    var passage: String
+    @Guide(description: "One sentence copied word for word from that passage.")
+    var quote: String
+}
+#endif
+
 #if canImport(FoundationModels)
 @available(iOS 26.0, macOS 26.0, *)
 extension PdfAiAvailability {

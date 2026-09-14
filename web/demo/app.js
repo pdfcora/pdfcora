@@ -425,18 +425,19 @@ async function renderAI() {
     : undefined;
 
   const ai = new PdfiumAI(state.document, { provider });
-  const availability = await ai.stub.availability();
+  const describe = (a) => a.kind === 'available'
+    ? 'available' : `${a.kind}${a.reason ? ` — ${a.reason}` : ''}`;
+  const answers = await ai.answers.availability();
+  const summaries = await ai.summaries.availability();
 
   $panel.append(
     el('h3', {}, 'Availability'),
-    el('p', { className: availability.kind === 'available' ? 'ok' : 'warn' },
-       availability.kind === 'available'
-         ? 'available'
-         : `${availability.kind}${availability.reason ? ` — ${availability.reason}` : ''}`),
+    el('p', { className: answers.kind === 'available' ? 'ok' : 'warn' }, `Answers: ${describe(answers)}`),
+    el('p', { className: summaries.kind === 'available' ? 'ok' : 'warn' }, `Summaries: ${describe(summaries)}`),
     el('p', { className: 'muted' },
-       'The web has no general on-device model, so without a provider this is the honest '
-       + 'answer rather than a failure. Availability is re-checked on every call: the user '
-       + 'can turn the platform\'s AI off mid-session.'));
+       'The web has no on-device prompt API a page can use, so answers need a provider. '
+       + 'Summaries run on-device in desktop Chrome. Availability is re-checked on every '
+       + 'call: the user can turn the platform\'s AI off mid-session.'));
 
   const endpoint = el('input', {
     type: 'text', value: state.aiEndpoint ?? '',
@@ -454,24 +455,38 @@ async function renderAI() {
        button('Use', () => { state.aiEndpoint = endpoint.value.trim() || null; draw(); }),
        button('Clear', () => { state.aiEndpoint = null; draw(); }, !state.aiEndpoint)));
 
+  const question = el('input', { type: 'text', placeholder: "What's the notice period?" });
+  question.style.minWidth = '320px';
+  const output = el('div', {});
+
   // AVL-4: the host asks for the download. Nothing here starts one on its own.
   $panel.append(
+    el('h3', {}, 'Try it'),
     el('div', { className: 'row' },
-       button('Prepare', async () => {
-         const after = await ai.stub.prepare((f) => setStatus(`preparing… ${Math.round(f * 100)}%`));
+       question,
+       button('Ask', async () => {
+         const outcome = await ai.answers.ask(question.value || question.placeholder);
+         output.replaceChildren();
+         if (!('value' in outcome)) return setStatus(`unavailable — ${outcome.reason}`, true);
+         const answer = outcome.value;
+         if (answer.kind === 'notFound') return setStatus('not found in the document');
+         output.append(el('p', {}, `${answer.text} (${outcome.source}${answer.grounded ? '' : ', not grounded'})`),
+           ...answer.citations.map((c) => el('p', { className: 'muted' }, `page ${c.pageIndex + 1}: “${c.quote}”`)));
+         setStatus(`answered via ${outcome.source}`);
+       })),
+    el('div', { className: 'row' },
+       button('Prepare summariser', async () => {
+         const after = await ai.summaries.prepare((f) => setStatus(`preparing… ${Math.round(f * 100)}%`));
          setStatus(`prepare finished — ${after.kind}`);
        }),
-       button('Run stub feature', async () => {
-         const outcome = await ai.stub.run();
-         setStatus('value' in outcome
-           ? `answered "${outcome.value}" via ${outcome.source}`
-           : `unavailable — ${outcome.reason}`,
-           !('value' in outcome));
-       })));
-
-  $panel.append(el('p', { className: 'muted' },
-    'Phase 0 ships no AI feature. The stub above does nothing except report whether it '
-    + 'could, which is what makes this screen testable.'));
+       button('Summarise', async () => {
+         const outcome = await ai.summaries.summarize({ style: 'keyPoints' });
+         output.replaceChildren();
+         if (!('value' in outcome)) return setStatus(`unavailable — ${outcome.reason}`, true);
+         output.append(el('pre', {}, outcome.value.text));
+         setStatus(`summarised via ${outcome.source}`);
+       })),
+    output);
 }
 
 // MARK: - Component

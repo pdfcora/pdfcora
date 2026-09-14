@@ -2,16 +2,14 @@ import SwiftUI
 import PdfiumKit
 import PdfiumKitAI
 
-/// What a user sees when a feature cannot run — which on most devices today is what they
-/// will see.
-///
-/// The stub feature exists precisely so this path can be exercised before any real
-/// feature does.
+/// Grounded answers and summaries, and what a user sees when they cannot run — which on
+/// many devices today is what they will see.
 struct AIScreen: View {
     @EnvironmentObject private var store: DocumentStore
 
     @State private var endpoint = ""
     @State private var reading = AppleModel.read()
+    @State private var question = ""
     @State private var status: String?
 
     /// A provider is the integrator's to supply. Document content reaches it only
@@ -70,39 +68,48 @@ struct AIScreen: View {
                     .font(.caption).foregroundColor(.secondary)
             }
 
-            Section("Stub feature") {
-                Button("Prepare") {
-                    Task {
-                        // AVL-4: the host asks. Nothing here starts a download on its own.
-                        guard let ai else { return }
-                        let after = await ai.stub.prepare { fraction in
-                            Task { @MainActor in status = "preparing… \(Int(fraction * 100))%" }
-                        }
-                        status = "prepare finished — \(describe(after))"
-                    }
-                }
-                .accessibilityIdentifier("ai-prepare")
+            Section("Try it") {
+                TextField("What's the notice period?", text: $question)
+                    .accessibilityIdentifier("ai-question")
 
-                Button("Run") {
+                Button("Ask") {
                     Task {
                         guard let ai else { return }
-                        switch await ai.stub.run() {
+                        switch await ai.answers.ask(question.isEmpty ? "What's the notice period?" : question) {
                         case .answered(let result):
-                            status = "answered \"\(result.value)\" via \(result.source)"
+                            switch result.value {
+                            case .answered(let text, let citations, let grounded, _):
+                                let cited = citations.map { "page \($0.pageIndex + 1): “\($0.quote)”" }
+                                status = ([text + (grounded ? "" : " (not grounded)")] + cited
+                                          + ["via \(result.source)"]).joined(separator: "\n")
+                            case .notFound:
+                                status = "not found in the document"
+                            }
                         case .unavailable(let state):
                             status = "unavailable — \(describe(state))"
                         }
                     }
                 }
-                .accessibilityIdentifier("ai-run")
+                .accessibilityIdentifier("ai-ask")
+
+                Button("Summarise") {
+                    Task {
+                        guard let ai else { return }
+                        // AVL-4: the host asks. Nothing here starts a download on its own.
+                        _ = await ai.summaries.prepare()
+                        switch await ai.summaries.summarize(style: .keyPoints) {
+                        case .answered(let result):
+                            status = result.value.text + "\nvia \(result.source)"
+                        case .unavailable(let state):
+                            status = "unavailable — \(describe(state))"
+                        }
+                    }
+                }
+                .accessibilityIdentifier("ai-summarise")
 
                 if let status {
                     Text(status).font(.footnote).foregroundColor(.secondary)
                 }
-
-                Text("Phase 0 ships no AI feature. The stub does nothing except report "
-                     + "whether it could, which is what makes this screen testable.")
-                    .font(.caption).foregroundColor(.secondary)
             }
         }
         .navigationTitle("AI")

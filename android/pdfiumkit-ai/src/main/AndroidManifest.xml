@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- ML Kit GenAI needs API 26; this module keeps the core's 23 and checks the version
+         before every call. -->
+    <uses-sdk tools:overrideLibrary="com.google.mlkit.genai.summarization, com.google.mlkit.genai.common" />
+</manifest>
