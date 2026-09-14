@@ -1,7 +1,7 @@
 # PdfiumKit — Viewer and Cross-Platform Sync Design
 
 Date: 2026-09-14
-Status: Draft, pending review
+Status: Draft 0.2, pending review
 Extends: `2026-09-12-pdfiumkit-sdk-design.md`
 
 ## 1. Purpose
@@ -16,8 +16,9 @@ Success criteria:
   with a different screen size, shows the same content in the middle of the window.
 - Every operation that changes the viewer emits exactly one event; applying a received
   event emits none.
-- The three demo editors get **shorter** by adopting it. If they get longer, the
-  abstraction is wrong.
+- The three demo editors get **much shorter** by adopting it. They are 475, 481 and
+  ~200 lines today; if they do not collapse to a fraction of that, the component is not
+  pulling its weight.
 
 ## 2. What exists today
 
@@ -34,8 +35,9 @@ gap this fills.
 
 ## 3. Non-goals
 
-- **No UI.** The SDK ships no `UIView`, `@Composable` or custom element. The app draws;
-  the viewer tells it what to draw and where.
+- **No UI *in the core*.** The headless `PdfViewer` ships no view type. A separate UI
+  layer (§10) sits on top of it and does ship view types — the two are layered, not
+  alternatives, and an app can use either.
 - **No networking.** The viewer emits serialisable events; moving them is the app's
   business, as with `CmsSigner` and the AI provider.
 - **No concurrent editing.** See §8: v1 is presenter-only.
@@ -305,7 +307,106 @@ oversight. Co-editing would be its own spec.
 | Viewport events coalesce, edits do not | Emit 100 scrolls and 3 annotations in a burst; assert ≤ a few viewport events and exactly 3 edit events |
 | The abstraction earns its place | The three demo editors are shorter after adopting it |
 
-## 10. Risks
+## 10. The UI layer
+
+A real, drop-in viewer per platform, built **on** the headless viewer rather than
+instead of it:
+
+```
+PdfViewerView (SwiftUI) · PdfViewer@Composable · <pdf-viewer>   ← owns scroll, gestures, toolbar
+        drives
+PdfViewer (headless, §5)                                        ← state, events, sync
+        delegates to
+PdfDocument / PdfPage                                           ← unchanged
+```
+
+The headless layer stays public: sync (§4.4, §8) lives there, two UI viewers sync by
+their cores exchanging events, and an app wanting full control can skip the UI entirely.
+
+### 10.1 Toolbar
+
+```swift
+public struct PdfToolbarItem: Sendable {
+    // Built-in, and identical on all three platforms.
+    public static func tool(_ tool: PdfTool) -> PdfToolbarItem
+    public static let undo: PdfToolbarItem
+    public static let deleteSelection: PdfToolbarItem
+    public static let zoomOut: PdfToolbarItem
+    public static let zoomIn: PdfToolbarItem
+    public static let fitWidth: PdfToolbarItem
+    public static let pageBack: PdfToolbarItem
+    public static let pageForward: PdfToolbarItem
+    public static let save: PdfToolbarItem
+    public static let spacer: PdfToolbarItem
+    public static let divider: PdfToolbarItem
+
+    /// App-defined. Content is **platform-native on purpose** — see below.
+    public static func custom(id: String, label: String,
+                              systemImage: String,
+                              action: @Sendable @escaping () -> Void) -> PdfToolbarItem
+}
+
+public struct PdfToolbarConfiguration: Sendable {
+    public var items: [PdfToolbarItem]
+    public static let `default`: PdfToolbarConfiguration
+}
+```
+
+**Custom items are declared per platform, deliberately.** An icon is an SF Symbol name, a
+vector drawable resource and an SVG on the three platforms. A cross-platform icon type
+would be a lowest common denominator that satisfies none of them and leaks on first
+contact, so built-ins stay portable and custom items are typed natively.
+
+### 10.2 The toolbar must not silently clip
+
+**Hard requirement, from a bug this project already shipped.** The demo editor's toolbar
+was a single fixed-width row; adding a fifth tool pushed the zoom and save buttons off
+the edge, and SwiftUI clipped them without a word. It surfaced as two unrelated-looking
+UI test failures — "zoom in did not enlarge the page", and a form screen reporting zero
+fields — because the buttons existed and the taps went nowhere.
+
+A configurable toolbar makes this *more* likely, not less: apps will add items. So:
+
+- The toolbar overflows into a scroll or an overflow menu. It never clips.
+- Every item remains reachable at the narrowest supported width with the largest
+  supported dynamic type.
+- The UI tests assert **hittability**, not existence. An element that exists but cannot
+  be tapped is the failure mode this is guarding against.
+
+### 10.3 Appearance
+
+```swift
+public struct PdfViewerTheme: Sendable, Equatable {
+    public var accent: PdfColor
+    public var background: PdfColor
+    public var pageBackground: PdfColor
+    public var pageShadow: PdfColor
+    public var toolbarBackground: PdfColor
+    public var toolbarForeground: PdfColor
+    public var selectionStroke: PdfColor
+    public var redactionFill: PdfColor
+    public var cornerRadius: Double
+    public var iconSize: Double
+    public var toolbarHeight: Double
+
+    public static let light: PdfViewerTheme
+    public static let dark: PdfViewerTheme
+}
+```
+
+Tokens are the tested path and mean the same thing everywhere. Each platform also accepts
+its own styling — a `ViewModifier`, a `Modifier`, CSS custom properties — and **the escape
+hatch is explicitly outside the conformance contract**: once it is used, cross-platform
+parity is the app's to maintain. Said plainly here so it is a known trade rather than a
+surprise.
+
+### 10.4 What the UI layer does not do
+
+- No document picker, no thumbnail sidebar, no search bar. Those are app screens; the
+  component is the page and its toolbar.
+- No layout opinions beyond the page area and one toolbar — no split views, no panels.
+
+## 11. Risks
 
 | Risk | Mitigation |
 | --- | --- |
@@ -313,9 +414,12 @@ oversight. Co-editing would be its own spec.
 | Aspect-ratio differences make "the same view" impossible | Explicitly only the centre point and zoom mode are synced; documented as a limit, not a bug |
 | Edit replay corrupts a peer that opened different bytes | `documentFingerprint` checked on every applied event |
 | An actor-per-viewer plus an actor-per-document deadlocks | The viewer never holds its own executor while awaiting the document's; verified by a concurrency test hammering both |
-| Scope grows into a UI framework | Non-goal §3, restated: no view types on any platform |
+| The UI layer's toolbar clips items as apps add them | §10.2: overflow into a scroll or menu, and UI tests assert hittability rather than existence. This already happened once in the demos |
+| The per-platform styling escape hatch quietly breaks parity | §10.3: it is outside the conformance contract and documented as the app's responsibility |
+| Three UI implementations drift in behaviour | The component is thin — it drives the headless viewer and owns no state of its own, so behaviour lives in one tested place |
+| The UI layer ages badly as platform conventions shift | It stays optional. The headless viewer is the stable contract; the component can be rewritten without touching it |
 
-## 11. Resolved
+## 12. Resolved
 
 1. **The percentage label is the app's choice** (§4.1). The SDK offers both helpers and
    depends on neither; the demos use the fit-based one. This was raised as a decision to
@@ -324,7 +428,7 @@ oversight. Co-editing would be its own spec.
    highlight and redact tools use. Text selection would need a character-range model the
    SDK does not have, and is additive if wanted later.
 
-## 12. Phasing
+## 13. Phasing
 
 1. **State and transform.** `PdfZoom`, `PdfViewState`, the two `PdfViewTransform`
    functions, the round-trip property test. No viewer yet — this alone makes
@@ -335,4 +439,7 @@ oversight. Co-editing would be its own spec.
    edit methods, and their events.
 4. **Sync.** Encoding, `apply`, fingerprint, ordering, presenter rule, the cross-platform
    conformance contract.
-5. **Demos.** All three adopt it; the diff should be negative.
+5. **The UI layer.** One component per platform, the toolbar configuration and the
+   theme, overflow handling, and hittability tests.
+6. **Demos.** All three adopt the UI component; the diff should be sharply negative, and
+   that is how the component justifies itself.
