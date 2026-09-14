@@ -2,10 +2,12 @@ package com.pdfiumkit
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -186,6 +188,32 @@ class FeatureTest {
         }
     }
 
+    /**
+     * The web build once lost every edit here: form state outlived close() and was
+     * inherited by the next document to reuse the handle.
+     */
+    @Test
+    fun formValueSurvivesSaveWhenEarlierFormDocumentsWereClosed() = runTest {
+        repeat(10) { cycle ->
+            open(if (cycle % 2 == 0) "click_form.pdf" else "combobox_form.pdf").use {
+                it.page(0).formFields()
+            }
+
+            open("text_form.pdf").use { document ->
+                val page = document.page(0)
+                val index = page.formFields().filterIsInstance<PdfFormField.Text>().first().base.annotationIndex
+                page.setText("value $cycle", fieldAt = index)
+
+                PdfDocument.open(document.toByteArray()).use { reopened ->
+                    val field = reopened.page(0).formFields()
+                        .filterIsInstance<PdfFormField.Text>()
+                        .first { it.base.annotationIndex == index }
+                    assertEquals("cycle $cycle", "value $cycle", field.value)
+                }
+            }
+        }
+    }
+
     @Test
     fun linksAreResolved() = runTest {
         open("annots_action_handling.pdf").use { document ->
@@ -311,6 +339,31 @@ class FeatureTest {
         } catch (e: PdfError) {
             assertTrue("got $e", e is PdfError.WrongPassword)
         }
+    }
+
+    /**
+     * PDFium's last error is one global. Reading it in a separate hop from the failed
+     * load let another document's failure overwrite it in between.
+     */
+    @Test
+    fun concurrentFailedOpensEachReportTheirOwnError() = runTest {
+        val encrypted = corpus("encrypted_hello_world_r2.pdf")
+        val garbage = "not a pdf at all".toByteArray()
+        val errors = withContext(Dispatchers.Default) {
+            (0 until 200).map { i ->
+                async {
+                    val expectPassword = i % 2 == 0
+                    try {
+                        PdfDocument.open(if (expectPassword) encrypted else garbage).close()
+                        "opened"
+                    } catch (e: PdfError) {
+                        val right = if (expectPassword) e is PdfError.PasswordRequired else e is PdfError.Corrupt
+                        if (right) null else "$i: $e"
+                    }
+                }
+            }.awaitAll().filterNotNull()
+        }
+        assertTrue("mismatched errors: ${errors.take(5)}", errors.isEmpty())
     }
 
     // MARK: - Concurrency

@@ -85,9 +85,12 @@ class PdfDocument private constructor(
 
         suspend fun open(bytes: ByteArray, password: String? = null): PdfDocument {
             val dispatcher = engineDispatcher
-            val handle = withContext(dispatcher) { Native.openDocument(bytes, password) }
-            if (handle == 0L) {
-                throw withContext(dispatcher) { PdfError.fromEngine(password != null) }
+            // The error is read in the same hop as the load: PDFium's last error is one
+            // global, and another document's failure could overwrite it between hops.
+            val handle = withContext(dispatcher) {
+                Native.openDocument(bytes, password).also {
+                    if (it == 0L) throw PdfError.fromEngine(password != null)
+                }
             }
             return PdfDocument(handle, engineExecutor, dispatcher, bytes)
         }
