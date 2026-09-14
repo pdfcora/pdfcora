@@ -12,22 +12,7 @@ final class CrossDocumentStressTests: XCTestCase {
     private let files = ["hello_world.pdf", "text_form.pdf", "rectangles.pdf",
                          "many_rectangles.pdf", "text_font.pdf", "find_text_consecutive.pdf"]
 
-    /// Skipped: **iOS is improved but not fixed.**
-    ///
-    /// Two off-executor races are closed — an actor's `init` and its `deinit` both call
-    /// PDFium on the caller's thread, not the actor's executor — and that took the
-    /// failure from "every run" to "one test in a full suite". It is not gone. The
-    /// crash now moves between tests, which means at least one more PDFium call still
-    /// escapes the engine thread.
-    ///
-    /// Android is fixed and proven; this is the same bug class, unfinished here. Do not
-    /// treat a green iOS gate as evidence that concurrent documents are safe on Apple
-    /// platforms until this test runs.
     func testManyDocumentsWorkingAtOnceDoNotCorruptTheEngine() async throws {
-        throw XCTSkip("iOS still has an unfixed PDFium race; see the note above")
-    }
-
-    func disabled_testManyDocumentsWorkingAtOnceDoNotCorruptTheEngine() async throws {
         for _ in 0..<12 {
             try await withThrowingTaskGroup(of: Void.self) { group in
                 for name in files {
@@ -46,11 +31,43 @@ final class CrossDocumentStressTests: XCTestCase {
         }
     }
 
-    func testOpeningAndClosingWhileOthersWorkDoesNotCorruptTheEngine() async throws {
-        throw XCTSkip("iOS still has an unfixed PDFium race; see the note above")
+    /// A dropped document's handles are freed on the engine thread *after* the actor's
+    /// own memory is gone, so nothing PDFium still points into may live in the actor.
+    /// Holding the engine while freed memory is overwritten makes that deterministic.
+    func testFreeingADroppedDocumentDoesNotReadItsReleasedMemory() async throws {
+        let data = try Data(contentsOf: Repo.corpus.appendingPathComponent("text_form.pdf"))
+        var documents: [PdfDocument] = []
+        for _ in 0..<20 {
+            let document = try await PdfDocument(data: data)
+            _ = try await document.page(0).formFields()
+            documents.append(document)
+        }
+
+        let documentWords = malloc_size(Unmanaged.passUnretained(documents[0]).toOpaque()) / 8
+        let gate = DispatchSemaphore(value: 0)
+        EngineExecutor.shared.runAsync { gate.wait() }
+        documents.removeAll()
+
+        // Swift objects in the actor's size class, full of pointers into non-executable
+        // memory: raw byte allocations land in a different malloc bucket and never reuse
+        // the freed slot. The `- 4` absorbs ManagedBuffer's header.
+        let target = UnsafeMutableRawPointer.allocate(byteCount: 64, alignment: 8)
+        defer { target.deallocate() }
+        var scribble: [ManagedBuffer<Void, UnsafeRawPointer>] = []
+        for _ in 0..<2000 {
+            let buffer = ManagedBuffer<Void, UnsafeRawPointer>.create(minimumCapacity: documentWords - 4) { _ in }
+            let capacity = buffer.capacity
+            buffer.withUnsafeMutablePointerToElements {
+                $0.initialize(repeating: UnsafeRawPointer(target), count: capacity)
+            }
+            scribble.append(buffer)
+        }
+
+        gate.signal()
+        EngineExecutor.shared.run {}
     }
 
-    func disabled_testOpeningAndClosingWhileOthersWorkDoesNotCorruptTheEngine() async throws {
+    func testOpeningAndClosingWhileOthersWorkDoesNotCorruptTheEngine() async throws {
         try await withThrowingTaskGroup(of: Void.self) { group in
             for _ in 0..<4 {
                 group.addTask {

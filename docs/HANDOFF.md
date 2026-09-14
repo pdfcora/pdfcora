@@ -9,7 +9,8 @@ The SDK is feature-complete for its stated scope on iOS, Android and Web: render
 search, forms, annotations, digital signatures (read/verify/sign), redaction, and a
 viewer with cross-platform sync and an optional UI component.
 
-**One known defect is still open: a PDFium threading race on iOS.** See §3.
+No known defects are open. §3 records the iOS PDFium crash that was, because the lesson
+generalises.
 
 ## 1. What exists
 
@@ -23,7 +24,7 @@ viewer with cross-platform sync and an optional UI component.
 | UI layer: component, configurable toolbar, theme | Done, three platforms, adopted by all demos |
 | `pdfiumkit-ai` | **Phase 0 only** — scaffolding, no AI feature |
 
-Test counts at the time of writing: web 244, iOS 149 (+2 skipped), Android 127
+Test counts at the time of writing: web 244, iOS 152, Android 127
 instrumented + 16 JVM unit.
 
 ## 2. Running things
@@ -47,29 +48,29 @@ emulator -avd Pixel_9 -memory 4096
 so does the gate now. They used to disagree, and the signing cross-check pulled the
 signed document off the wrong device and blamed the signature.
 
-## 3. Open: the iOS PDFium race
+## 3. Fixed: the iOS PDFium crash
 
-**`PdfDocument` is an actor, so each document gets its own executor and two documents
-call PDFium concurrently. PDFium's global state is not thread-safe.** Android had the
-same defect and is fixed; the web is single-threaded and unaffected.
+**It was a use-after-free, not a race.** `PdfDocument.deinit` queues the PDFium frees onto
+the engine thread, and the actor's memory is released before that job runs. The
+`FPDF_FORMFILLINFO` was stored inline in the actor, and PDFium's form environment
+destructor calls `info->Release` through it. Freed memory reused by another allocation
+turned that into a jump to garbage — `SIGBUS` in `FPDFDOC_ExitFormFillEnvironment`, on the
+engine queue, which is why it looked like a thread race and moved between tests.
 
-What is done on iOS:
+The form info now lives on the heap and the deinit job frees it after the handles; the job
+also holds the document bytes, which PDFium requires to outlive the handle.
 
-- All documents share one `EngineExecutor`, so actor isolation serialises the engine
-  rather than one document.
-- An actor's `init` and `deinit` run on the *caller's* thread, not the actor's executor.
-  Both now hop to the engine thread.
+Serialisation was still needed and stays: all documents share one `EngineExecutor`, and
+`init`/`deinit` hop to it. The rest of the audit found no PDFium call off that thread —
+`init`'s error path (`FPDF_GetLastError`, a plain global) was checked and already runs on
+it.
 
-That took the failure from every run to one test in a full suite. **It is not gone.** The
-crash moves between tests, which means at least one more PDFium call escapes the engine
-thread.
-
-`ios/Tests/PdfiumKitTests/CrossDocumentStressTests.swift` reproduces it and is **skipped**
-so the gate stays truthful. Unskip it to work on this.
-
-Suggested next step: audit every PDFium call site for isolation in one pass, rather than
-chasing crashes one at a time. Candidates are anything `nonisolated`, anything in an
-initialiser or deinitialiser, and anything reached from a `struct` that holds a handle.
+`CrossDocumentStressTests` runs again. Its
+`testFreeingADroppedDocumentDoesNotReadItsReleasedMemory` reproduces the crash every time
+by holding the engine, dropping documents, and filling the freed slots. Two things it
+needed, both learned the hard way: `MallocScribble` and raw byte buffers do not reach the
+slot, because the allocator buckets them separately from Swift objects; and the filler must
+be in the actor's exact size class.
 
 ## 4. Open: decisions for a person, not bugs
 
@@ -93,6 +94,8 @@ Android's prompt API is alpha and the web has nothing outside desktop Chrome.
 
 ## 5. Things that will waste your time if you do not know them
 
+- **Anything PDFium keeps a pointer to must not be stored inline in an actor** whose
+  `deinit` defers the frees. The actor's memory is gone before the deferred job runs.
 - **iOS PDF saves are not byte-deterministic.** PDFium regenerates the trailer `/ID` on
   every save on Apple platforms; the web build does not. Comparisons blank that field.
 - **A round-trip test cannot catch a symmetric error.** Dividing the viewport by three in

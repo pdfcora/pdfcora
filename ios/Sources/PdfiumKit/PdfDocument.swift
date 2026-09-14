@@ -30,7 +30,13 @@ public actor PdfDocument {
     private(set) var handle: FPDF_DOCUMENT?
     private var formHandle: FPDF_FORMHANDLE?
     private var pageCache: [Int: FPDF_PAGE] = [:]
-    private var formInfo = FPDF_FORMFILLINFO()
+    /// On the heap, not stored inline: PDFium dereferences this for the life of the form
+    /// handle, and `deinit` closes that handle after the actor's own memory is freed.
+    private let formInfo: UnsafeMutablePointer<FPDF_FORMFILLINFO> = {
+        let info = UnsafeMutablePointer<FPDF_FORMFILLINFO>.allocate(capacity: 1)
+        info.initialize(to: FPDF_FORMFILLINFO())
+        return info
+    }()
 
     /// PDFium reads from this buffer lazily, so it must outlive the document handle.
     /// Its length is also what a signature's byte range is measured against.
@@ -83,13 +89,9 @@ public actor PdfDocument {
         guard let opened else { throw PdfError.fromEngine(passwordSupplied: password != nil) }
         self.handle = opened
 
-        // `formInfo` must be the stored property, never a local: PDFium keeps the
-        // pointer it is given and dereferences it for the life of the form handle, so a
-        // local would dangle the moment init returned — which shows up much later as a
-        // bus error somewhere unrelated.
-        formInfo.version = 2
+        formInfo.pointee.version = 2
         self.formHandle = EngineExecutor.shared.run {
-            let form = FPDFDOC_InitFormFillEnvironment(opened, &formInfo)
+            let form = FPDFDOC_InitFormFillEnvironment(opened, formInfo)
             if let form {
                 FORM_DoDocumentJSAction(form)
                 FORM_DoDocumentOpenAction(form)
@@ -106,14 +108,19 @@ public actor PdfDocument {
         // An actor's deinit runs on whatever thread drops the last reference, not on the
         // actor's executor — so freeing here directly would race every other document's
         // in-flight work, which is the same bug CrossDocumentStressTests exists for.
-        // The handles are captured by value; `self` is gone by the time this runs.
+        // `self` is gone by the time this runs, so everything PDFium still points into —
+        // the form info and the bytes — is captured and released only after the handles.
         let pages = Array(pageCache.values)
         let form = formHandle
         let document = handle
+        let info = formInfo
+        let bytes = backing
         EngineExecutor.shared.runAsync {
             for page in pages { FPDF_ClosePage(page) }
             if let form { FPDFDOC_ExitFormFillEnvironment(form) }
             if let document { FPDF_CloseDocument(document) }
+            info.deallocate()
+            withExtendedLifetime(bytes) {}
         }
     }
 
