@@ -91,6 +91,42 @@ export class PdfViewTransform {
     const bottomRight = this.toPdf({ x: rect.x + rect.width, y: rect.y + rect.height });
     return { left: topLeft.x, bottom: bottomRight.y, right: bottomRight.x, top: topLeft.y };
   }
+
+  /**
+   * The PDF point currently at the centre of the viewport.
+   *
+   * This is the transferable form of a scroll position: an offset is in this viewer's
+   * own pixels, relative to its own content size, and means nothing on another screen.
+   */
+  centerForScrollOffset(
+    offset: { x: number; y: number },
+    viewport: { width: number; height: number },
+  ): PdfPoint {
+    return this.toPdf({
+      x: offset.x + viewport.width / 2,
+      y: offset.y + viewport.height / 2,
+    });
+  }
+
+  /**
+   * Where to scroll so `center` sits in the middle of the viewport.
+   *
+   * Clamped to the scrollable range, so a centre near a page edge gives a valid offset
+   * on a differently shaped screen rather than one outside the content. A viewport
+   * larger than the page scrolls to zero and the app centres it.
+   */
+  scrollOffsetCentering(
+    center: PdfPoint,
+    viewport: { width: number; height: number },
+  ): { x: number; y: number } {
+    const view = this.toView(center);
+    const content = this.viewSize;
+    const clamp = (value: number, max: number) => Math.max(0, Math.min(value, Math.max(0, max)));
+    return {
+      x: clamp(view.x - viewport.width / 2, content.width - viewport.width),
+      y: clamp(view.y - viewport.height / 2, content.height - viewport.height),
+    };
+  }
 }
 
 /**
