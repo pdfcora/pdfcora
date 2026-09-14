@@ -8,3 +8,12 @@ export {
 } from './worker/client.js';
 export { type CmsSigner, type PdfSignOptions } from './sign/sign.js';
 export * from './types.js';
+
+// The UI layer. Optional: the headless PdfViewer stays usable alone.
+export { PdfViewerElement, type PdfViewerElementOptions } from './ui/viewerElement.js';
+export { defaultToolbar, viewingToolbar, toolbarItems,
+         type PdfToolbarConfiguration, type PdfToolbarItem } from './ui/toolbar.js';
+export { lightTheme, darkTheme, type PdfViewerTheme } from './ui/theme.js';
+export { PdfViewer, type PdfViewerOptions } from './view/viewer.js';
+export * from './view/state.js';
+export * from './view/zoom.js';

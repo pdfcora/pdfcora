@@ -30,6 +30,7 @@ enum class Demo(val title: String, val detail: String) {
     PAGE_OPS("Page Operations", "Rotate pages"),
     EXPORT("Export", "Save edits and share"),
     AI("AI", "On-device availability and providers"),
+    COMPONENT("Component", "The SDK's own viewer, toolbar and theme"),
 }
 
 class MainActivity : ComponentActivity() {
@@ -79,6 +80,7 @@ private fun App() {
                 Demo.PAGE_OPS -> PageOpsScreen(store)
                 Demo.EXPORT -> ExportScreen(store)
                 Demo.AI -> AIScreen(store)
+                Demo.COMPONENT -> ComponentScreen(store)
             }
         }
     }

@@ -8,4 +8,5 @@ dependencyResolutionManagement {
 rootProject.name = "pdfiumkit-android"
 include(":pdfiumkit")
 include(":pdfiumkit-ai")
+include(":pdfiumkit-ui")
 include(":demo")

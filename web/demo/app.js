@@ -36,6 +36,7 @@ const TABS = [
   ['pageops', 'Page Operations', renderPageOps],
   ['export', 'Export', renderExport],
   ['ai', 'AI', renderAI],
+  ['component', 'Component', renderComponent],
 ];
 
 const $panel = document.getElementById('panel');
@@ -471,6 +472,41 @@ async function renderAI() {
   $panel.append(el('p', { className: 'muted' },
     'Phase 0 ships no AI feature. The stub above does nothing except report whether it '
     + 'could, which is what makes this screen testable.'));
+}
+
+// MARK: - Component
+
+/**
+ * The same editor as the Editor tab, built from the SDK's own component instead of by
+ * hand — which is the point of the component existing.
+ *
+ * The Editor tab stays alongside it deliberately: it is the worked example of driving
+ * the headless viewer yourself, and it proves the two layers are really separable.
+ */
+async function renderComponent() {
+  const { PdfViewerElement, defaultToolbar, toolbarItems, lightTheme } =
+    await import('../dist/index.js');
+
+  const host = el('div', { className: 'stagewrap' });
+  host.style.height = '70vh';
+  $panel.append(
+    el('p', { className: 'muted' },
+       'PdfViewerElement with an app-supplied toolbar item. The component drives the '
+       + 'headless PdfViewer; this page supplies no gesture or scroll handling of its own.'),
+    host);
+
+  // A custom toolbar item, to show an app can add its own. Content is platform-native
+  // on purpose: here that means text or inline SVG.
+  const toolbar = {
+    items: [...defaultToolbar.items,
+            toolbarItems.custom('custom-share', 'Share', '↗', () => setStatus('app-defined action'))],
+  };
+
+  await PdfViewerElement.mount(host, state.document, {
+    toolbar,
+    theme: lightTheme,
+    onSave: (bytes) => setStatus(`Saved ${(bytes.length / 1024).toFixed(0)} KB`),
+  });
 }
 
 // MARK: - Helpers
