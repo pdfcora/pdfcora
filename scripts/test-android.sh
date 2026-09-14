@@ -6,14 +6,42 @@
 set -euo pipefail
 cd "$(dirname "$0")/../android"
 
-gradle :pdfiumkit:connectedDebugAndroidTest --console=plain "$@"
+# A run that dies to the low-memory killer reports whichever test was in flight as
+# having failed, with no message. That reads as a flaky test and sends people off
+# debugging code that is fine. `run` names the real cause instead.
+run() {
+    local log
+    log=$(mktemp)
+    if gradle "$@" --console=plain 2>&1 | tee "$log"; then
+        rm -f "$log"
+        return 0
+    fi
 
-gradle :pdfiumkit:connectedDebugAndroidTest --console=plain \
+    if grep -q "Process crashed" "$log"; then
+        echo >&2
+        echo "The instrumentation process died — the test named above was merely the one" >&2
+        echo "running at the time, and its failure is an artefact. Cause:" >&2
+        if adb logcat -b all -d 2>/dev/null | grep -m3 "lowmemorykiller.*com.pdfiumkit"; then
+            echo >&2
+            echo "The device ran out of memory. Give the emulator more RAM, or close things" >&2
+            echo "on the host — an emulator swapping against a loaded host triggers this." >&2
+        else
+            echo "  no lowmemorykiller entry; check for a native crash:" >&2
+            echo "  adb logcat -b crash -d   and   adb shell ls -lt /data/tombstones" >&2
+        fi
+    fi
+    rm -f "$log"
+    return 1
+}
+
+run :pdfiumkit:connectedDebugAndroidTest "$@"
+
+run :pdfiumkit:connectedDebugAndroidTest \
   -Pandroid.testInstrumentationRunnerArguments.annotation=com.pdfiumkit.LeaksNativeThreads \
   -Pandroid.testInstrumentationRunnerArguments.notAnnotation= "$@"
 
 # The AI module's unit tests. No device needed — nothing in Phase 0 touches the engine.
-gradle :pdfiumkit-ai:testDebugUnitTest --console=plain "$@"
+run :pdfiumkit-ai:testDebugUnitTest "$@"
 
 # The signing cross-check. An instrumented test cannot run pdfsig — the device has no
 # poppler — so the suite writes a signed document and the gate runs here. Our own

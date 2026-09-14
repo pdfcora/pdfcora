@@ -71,7 +71,15 @@ FPDF_PAGE loadPage(Document* d, jint index) {
     if (it != d->pages.end()) return it->second;
 
     FPDF_PAGE page = FPDF_LoadPage(d->doc, index);
-    if (!page) return nullptr;
+    if (!page) {
+        // Callers report a failed load as an empty result — zero annotations, zero
+        // rotation — which is indistinguishable from a page that really is empty. Say
+        // so in the log, so that case is not silent when it happens.
+        LOGE("FPDF_LoadPage failed for page %d (error %lu)",
+             static_cast<int>(index),
+             static_cast<unsigned long>(FPDF_GetLastError()));
+        return nullptr;
+    }
     if (d->form) FORM_OnAfterLoadPage(page, d->form);
     d->pages[index] = page;
     return page;
