@@ -137,6 +137,29 @@ public struct PdfViewTransform: Equatable, Sendable {
         let bottomRight = toPdf(CGPoint(x: rect.maxX, y: rect.maxY))
         return PdfRect(left: topLeft.x, bottom: bottomRight.y, right: bottomRight.x, top: topLeft.y)
     }
+
+    /// The PDF point currently at the centre of the viewport.
+    ///
+    /// This is the transferable form of a scroll position: an offset is in this viewer's
+    /// own points, relative to its own content size, and means nothing on another screen.
+    public func center(forScrollOffset offset: CGPoint, in viewport: CGSize) -> PdfPoint {
+        toPdf(CGPoint(x: offset.x + viewport.width / 2, y: offset.y + viewport.height / 2))
+    }
+
+    /// Where to scroll so `center` sits in the middle of the viewport.
+    ///
+    /// Clamped to the scrollable range, so a centre near a page edge gives a valid offset
+    /// on a differently shaped screen rather than one outside the content. A viewport
+    /// larger than the page scrolls to zero and the app centres it.
+    public func scrollOffset(centering center: PdfPoint, in viewport: CGSize) -> CGPoint {
+        let view = toView(center)
+        let content = viewSize
+        func clamp(_ value: CGFloat, _ maximum: CGFloat) -> CGFloat {
+            max(0, min(value, max(0, maximum)))
+        }
+        return CGPoint(x: clamp(view.x - viewport.width / 2, content.width - viewport.width),
+                       y: clamp(view.y - viewport.height / 2, content.height - viewport.height))
+    }
 }
 
 extension PdfRect {

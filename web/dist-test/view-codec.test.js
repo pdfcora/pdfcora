@@ -57,6 +57,20 @@ describe('the view event wire format', () => {
             }
         }
     });
+    test('the wire carries rotation in degrees', () => {
+        // iOS and Android hold rotation as PDFium's quarter-turn index 0-3, the web as
+        // degrees. The wire picks degrees, so a platform writing the index would send 1
+        // where this expects 90. Nothing caught that until this case existed, because every
+        // other case uses rotation 0, which is identical under both conventions.
+        const rotated = FIXTURE.cases.find((c) => c.expectRotationDegrees);
+        assert.ok(rotated, 'the fixture must exercise a non-zero rotation');
+        const decoded = decodeEvent(JSON.stringify(rotated.wire));
+        assert.equal(decoded.change.kind, 'viewport');
+        if (decoded.change.kind !== 'viewport')
+            return;
+        assert.equal(decoded.change.state.rotation, rotated.expectRotationDegrees);
+        assert.equal(decoded.change.state.layout, rotated.expectLayout);
+    });
     test('the fixture contains a case that clamps to the far end, not just to zero', () => {
         // A clamp test where every expected offset is zero proves very little.
         const nonZero = FIXTURE.cases.some((c) => c.receivers.some((r) => r.expectScrollOffset.x > 0 && r.expectScrollOffset.y > 0));

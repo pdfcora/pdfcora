@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "note": "Shared by all three platforms. Expected offsets were computed by independent arithmetic, not by running the SDK, so this checks the implementation rather than copying it. Scale is Float on Android and Double elsewhere, so compare to single precision (1e-4), never exactly.",
+  "note": "Shared by all three platforms. Expected offsets were computed by independent arithmetic, not by running the SDK, so this checks the implementation rather than copying it. Scale is Float on Android and Double elsewhere, so compare to single precision (1e-4), never exactly. Rotation travels as DEGREES (0/90/180/270). iOS and Android hold it as PDFium's quarter-turn index 0-3, so they convert at the codec boundary; a platform that writes the index instead fails the rotation case below.",
   "cases": [
     {
       "name": "a free zoom is adopted verbatim by every receiver",
@@ -210,6 +210,61 @@
           "expectScrollOffset": {
             "x": 636,
             "y": 1576
+          }
+        }
+      ]
+    },
+    {
+      "name": "rotation travels as degrees, not as a quarter-turn index",
+      "page": {
+        "width": 612,
+        "height": 792
+      },
+      "wire": {
+        "v": 1,
+        "sequence": 5,
+        "sessionId": "presenter",
+        "origin": "local",
+        "change": {
+          "kind": "viewport",
+          "state": {
+            "pageIndex": 0,
+            "center": {
+              "x": 306,
+              "y": 396
+            },
+            "zoom": {
+              "scale": 2,
+              "mode": "free"
+            },
+            "rotation": 90,
+            "layout": "continuous"
+          }
+        }
+      },
+      "expectRotationDegrees": 90,
+      "expectLayout": "continuous",
+      "receivers": [
+        {
+          "viewport": {
+            "width": 390,
+            "height": 700
+          },
+          "expectScale": 2,
+          "expectScrollOffset": {
+            "x": 417.0,
+            "y": 442.0
+          }
+        },
+        {
+          "viewport": {
+            "width": 1200,
+            "height": 800
+          },
+          "expectScale": 2,
+          "expectScrollOffset": {
+            "x": 12.0,
+            "y": 392.0
           }
         }
       ]
