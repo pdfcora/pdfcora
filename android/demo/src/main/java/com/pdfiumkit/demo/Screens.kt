@@ -215,7 +215,7 @@ fun AnnotationsScreen(store: DocumentStore) {
                             val t = it / 20f
                             PdfPoint(40f + t * 120f, 90f + kotlin.math.sin(t * Math.PI * 2).toFloat() * 25f)
                         }
-                        document.page(0).addInk(stroke, PdfColor(0, 90, 220))
+                        document.page(0).addInk(listOf(stroke), PdfColor(0, 90, 220))
                     }
                 }) { Text("Add ink") }
                 TextButton(onClick = {

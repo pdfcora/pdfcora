@@ -313,7 +313,7 @@
       }
     },
     {
-      "name": "ink carries one stroke, because the platforms disagree about many",
+      "name": "ink carries every stroke, so one annotation replays as one annotation",
       "wire": {
         "v": 1,
         "sequence": 2,
@@ -325,19 +325,31 @@
           "edit": {
             "kind": "inkAdded",
             "page": 1,
-            "stroke": [
-              {
-                "x": 10,
-                "y": 10
-              },
-              {
-                "x": 50,
-                "y": 50
-              },
-              {
-                "x": 90,
-                "y": 20
-              }
+            "strokes": [
+              [
+                {
+                  "x": 10,
+                  "y": 10
+                },
+                {
+                  "x": 50,
+                  "y": 50
+                },
+                {
+                  "x": 90,
+                  "y": 20
+                }
+              ],
+              [
+                {
+                  "x": 20,
+                  "y": 80
+                },
+                {
+                  "x": 70,
+                  "y": 80
+                }
+              ]
             ],
             "color": {
               "red": 0,
@@ -352,7 +364,10 @@
       "expect": {
         "kind": "inkAdded",
         "page": 1,
-        "strokePointCount": 3,
+        "strokePointCounts": [
+          3,
+          2
+        ],
         "lineWidth": 3
       }
     },

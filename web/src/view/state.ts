@@ -34,15 +34,11 @@ export interface PdfViewState {
  *
  * An event saying only "annotation 3 was added" cannot be reproduced by a peer — it does
  * not say what to add — so each case mirrors the parameters of the API it came from.
- *
- * `inkAdded` carries one stroke, not many: iOS builds a single annotation from several
- * strokes while web and Android build one per stroke, so a multi-stroke edit has no
- * faithful cross-platform meaning.
  */
 export type PdfEdit =
   | { readonly kind: 'noteAdded'; readonly page: number; readonly rect: PdfRect;
       readonly contents: string; readonly color: PdfColor }
-  | { readonly kind: 'inkAdded'; readonly page: number; readonly stroke: readonly PdfPoint[];
+  | { readonly kind: 'inkAdded'; readonly page: number; readonly strokes: readonly (readonly PdfPoint[])[];
       readonly color: PdfColor; readonly lineWidth: number }
   | { readonly kind: 'highlightAdded'; readonly page: number; readonly quads: readonly PdfQuad[];
       readonly color: PdfColor }

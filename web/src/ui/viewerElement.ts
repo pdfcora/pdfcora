@@ -153,7 +153,7 @@ export class PdfViewerElement {
         await viewer.addNote({ left: point.x, bottom: point.y - 24, right: point.x + 24, top: point.y }, 'Note');
         this.created++;
       } else if (this.tool === 'ink') {
-        await viewer.addInk([transform.toPdf(from), transform.toPdf(to)]);
+        await viewer.addInk([[transform.toPdf(from), transform.toPdf(to)]]);
         this.created++;
       } else if (this.tool === 'highlight' || this.tool === 'redact') {
         const rect = transform.toPdfRect({

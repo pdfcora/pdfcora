@@ -327,9 +327,9 @@ final class ViewStateConformanceTests: XCTestCase {
                 let expectedRect = try XCTUnwrap(expect["rect"] as? [String: Any])
                 XCTAssertEqual(rect.left, expectedRect["left"] as? Double, name)
                 XCTAssertEqual(rect.top, expectedRect["top"] as? Double, name)
-            case ("inkAdded", .inkAdded(let page, let stroke, _, let lineWidth)):
+            case ("inkAdded", .inkAdded(let page, let strokes, _, let lineWidth)):
                 XCTAssertEqual(page, expect["page"] as? Int, name)
-                XCTAssertEqual(stroke.count, expect["strokePointCount"] as? Int, name)
+                XCTAssertEqual(strokes.map(\.count), expect["strokePointCounts"] as? [Int], name)
                 XCTAssertEqual(lineWidth, expect["lineWidth"] as? Double, name)
             case ("annotationRemoved", .annotationRemoved(let page, let index)):
                 XCTAssertEqual(page, expect["page"] as? Int, name)

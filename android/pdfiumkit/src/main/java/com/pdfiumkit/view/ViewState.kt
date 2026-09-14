@@ -54,13 +54,10 @@ data class PdfViewState(
  *
  * An event saying only "annotation 3 was added" cannot be reproduced by a peer — it does
  * not say what to add — so each case mirrors the parameters of the API it came from.
- *
- * [InkAdded] carries one stroke, not many: this SDK's addInk takes several on Apple
- * platforms and one here, so a multi-stroke edit has no faithful cross-platform meaning.
  */
 sealed class PdfEdit {
     data class NoteAdded(val page: Int, val rect: PdfRect, val contents: String, val color: PdfColor) : PdfEdit()
-    data class InkAdded(val page: Int, val stroke: List<PdfPoint>, val color: PdfColor, val lineWidth: Float) : PdfEdit()
+    data class InkAdded(val page: Int, val strokes: List<List<PdfPoint>>, val color: PdfColor, val lineWidth: Float) : PdfEdit()
     data class HighlightAdded(val page: Int, val quads: List<PdfQuad>, val color: PdfColor) : PdfEdit()
     data class AnnotationRemoved(val page: Int, val index: Int) : PdfEdit()
     data class FieldTextSet(val page: Int, val annotationIndex: Int, val value: String) : PdfEdit()

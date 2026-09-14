@@ -87,8 +87,8 @@ public enum PdfViewCodec {
         case .noteAdded(let page, let r, let contents, let c):
             return ["kind": "noteAdded", "page": page, "rect": rect(r),
                     "contents": contents, "color": colour(c)]
-        case .inkAdded(let page, let stroke, let c, let lineWidth):
-            return ["kind": "inkAdded", "page": page, "stroke": stroke.map(point),
+        case .inkAdded(let page, let strokes, let c, let lineWidth):
+            return ["kind": "inkAdded", "page": page, "strokes": strokes.map { $0.map(point) },
                     "color": colour(c), "lineWidth": lineWidth]
         case .highlightAdded(let page, let quads, let c):
             return ["kind": "highlightAdded", "page": page, "color": colour(c),
@@ -147,8 +147,8 @@ public enum PdfViewCodec {
                               contents: raw["contents"] as? String ?? "",
                               color: try colour(raw["color"]))
         case "inkAdded":
-            let stroke = try (raw["stroke"] as? [Any] ?? []).map(point)
-            return .inkAdded(page: page, stroke: stroke, color: try colour(raw["color"]),
+            let strokes = try (raw["strokes"] as? [[Any]] ?? []).map { try $0.map(point) }
+            return .inkAdded(page: page, strokes: strokes, color: try colour(raw["color"]),
                              lineWidth: try number(raw["lineWidth"]))
         case "highlightAdded":
             let quads = try (raw["quads"] as? [[String: Any]] ?? []).map { q in

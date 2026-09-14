@@ -195,13 +195,13 @@ export class PdfViewer {
     return index;
   }
 
-  async addInk(stroke: readonly PdfPoint[],
+  async addInk(strokes: readonly (readonly PdfPoint[])[],
                color: PdfColor = { red: 0, green: 0, blue: 0 },
                lineWidth = 2): Promise<number> {
     this.requirePresenter();
     const index = await (await this.document.page(this.current.pageIndex))
-      .addInk(stroke, color, lineWidth);
-    this.emitEdit({ kind: 'inkAdded', page: this.current.pageIndex, stroke, color, lineWidth });
+      .addInk(strokes, color, lineWidth);
+    this.emitEdit({ kind: 'inkAdded', page: this.current.pageIndex, strokes, color, lineWidth });
     return index;
   }
 
@@ -365,7 +365,7 @@ export class PdfViewer {
     const page = await this.document.page(edit.kind === 'redacted' ? this.current.pageIndex : edit.page);
     switch (edit.kind) {
       case 'noteAdded': await page.addNote(edit.rect, edit.contents, edit.color); break;
-      case 'inkAdded': await page.addInk(edit.stroke, edit.color, edit.lineWidth); break;
+      case 'inkAdded': await page.addInk(edit.strokes, edit.color, edit.lineWidth); break;
       case 'highlightAdded': await page.addHighlight(edit.quads, edit.color); break;
       case 'annotationRemoved': await page.removeAnnotation(edit.index); break;
       case 'fieldTextSet': await page.setText(edit.value, edit.annotationIndex); break;

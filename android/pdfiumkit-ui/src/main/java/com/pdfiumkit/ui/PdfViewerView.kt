@@ -160,7 +160,7 @@ private suspend fun handleDrag(
             onCreated(); null
         }
         PdfTool.INK -> {
-            v.addInk(listOf(t.toPdf(from.x, from.y), t.toPdf(to.x, to.y)))
+            v.addInk(listOf(listOf(t.toPdf(from.x, from.y), t.toPdf(to.x, to.y))))
             onCreated(); null
         }
         PdfTool.HIGHLIGHT, PdfTool.REDACT -> {

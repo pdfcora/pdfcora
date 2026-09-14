@@ -43,13 +43,9 @@ public struct PdfViewState: Equatable, Sendable {
 /// An event saying only "annotation 3 was added" cannot be reproduced by a peer — it
 /// does not say what to add — so each case mirrors the parameters of the API it came
 /// from.
-///
-/// `inkAdded` carries one stroke, not many: this SDK's `addInk` takes several on Apple
-/// platforms and one on the others, so a multi-stroke edit has no faithful
-/// cross-platform meaning.
 public enum PdfEdit: Equatable, Sendable {
     case noteAdded(page: Int, rect: PdfRect, contents: String, color: PdfColor)
-    case inkAdded(page: Int, stroke: [PdfPoint], color: PdfColor, lineWidth: Double)
+    case inkAdded(page: Int, strokes: [[PdfPoint]], color: PdfColor, lineWidth: Double)
     case highlightAdded(page: Int, quads: [PdfQuad], color: PdfColor)
     case annotationRemoved(page: Int, index: Int)
     case fieldTextSet(page: Int, annotationIndex: Int, value: String)

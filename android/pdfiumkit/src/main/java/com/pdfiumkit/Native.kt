@@ -31,7 +31,8 @@ internal object Native {
     @JvmStatic external fun annotationString(handle: Long, pageIndex: Int, annotIndex: Int, key: String): String
     @JvmStatic external fun inkStroke(handle: Long, pageIndex: Int, annotIndex: Int, strokeIndex: Int): FloatArray
     @JvmStatic external fun addInk(
-        handle: Long, pageIndex: Int, points: FloatArray, r: Int, g: Int, b: Int, a: Int, width: Float
+        handle: Long, pageIndex: Int, points: FloatArray, strokeLengths: IntArray,
+        r: Int, g: Int, b: Int, a: Int, width: Float
     ): Int
     @JvmStatic external fun addMarkup(
         handle: Long, pageIndex: Int, subtype: Int, quads: FloatArray,

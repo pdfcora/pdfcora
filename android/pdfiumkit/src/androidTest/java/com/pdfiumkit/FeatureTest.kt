@@ -114,19 +114,22 @@ class FeatureTest {
     }
 
     @Test
-    fun addedInkIsReadBack() = runTest {
+    fun addedInkIsReadBackAsOneAnnotationWithEveryStroke() = runTest {
         open("hello_world.pdf").use { document ->
             val page = document.page(0)
             val before = page.annotations().size
 
-            page.addInk(listOf(PdfPoint(10f, 10f), PdfPoint(50f, 50f), PdfPoint(90f, 20f)))
+            page.addInk(listOf(
+                listOf(PdfPoint(10f, 10f), PdfPoint(50f, 50f), PdfPoint(90f, 20f)),
+                listOf(PdfPoint(20f, 80f), PdfPoint(70f, 80f)),
+            ))
 
             val after = page.annotations()
             assertEquals(before + 1, after.size)
             val ink = after.last()
             assertTrue("last annotation is not ink: $ink", ink is PdfAnnotation.Ink)
-            assertEquals(1, (ink as PdfAnnotation.Ink).strokes.size)
-            assertEquals(3, ink.strokes[0].size)
+            assertEquals(listOf(3, 2), (ink as PdfAnnotation.Ink).strokes.map { it.size })
+            assertEquals(PdfRect(10f, 10f, 90f, 80f), ink.base.rect)
         }
     }
 

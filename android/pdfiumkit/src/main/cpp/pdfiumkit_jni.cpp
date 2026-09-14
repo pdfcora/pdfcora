@@ -456,7 +456,8 @@ Java_com_pdfiumkit_Native_inkStroke(JNIEnv* env, jclass, jlong handle, jint page
 
 JNIEXPORT jint JNICALL
 Java_com_pdfiumkit_Native_addInk(JNIEnv* env, jclass, jlong handle, jint pageIndex,
-                                 jfloatArray points, jint r, jint g, jint b, jint a, jfloat width) {
+                                 jfloatArray points, jintArray strokeLengths,
+                                 jint r, jint g, jint b, jint a, jfloat width) {
     auto* d = asDoc(handle);
     FPDF_PAGE page = loadPage(d, pageIndex);
     if (!page) return -1;
@@ -464,19 +465,26 @@ Java_com_pdfiumkit_Native_addInk(JNIEnv* env, jclass, jlong handle, jint pageInd
     FPDF_ANNOTATION annot = FPDFPage_CreateAnnot(page, FPDF_ANNOT_INK);
     if (!annot) { unloadPage(d, page); return -1; }
 
+    // points is every stroke's x,y pairs end to end; strokeLengths says where each ends.
     jsize n = env->GetArrayLength(points);
     std::vector<jfloat> flat(static_cast<size_t>(n));
     env->GetFloatArrayRegion(points, 0, n, flat.data());
+    jsize strokeCount = env->GetArrayLength(strokeLengths);
+    std::vector<jint> lengths(static_cast<size_t>(strokeCount));
+    env->GetIntArrayRegion(strokeLengths, 0, strokeCount, lengths.data());
 
-    std::vector<FS_POINTF> stroke;
     float minX = 1e9f, minY = 1e9f, maxX = -1e9f, maxY = -1e9f;
-    for (jsize i = 0; i + 1 < n; i += 2) {
-        stroke.push_back(FS_POINTF{flat[i], flat[i + 1]});
-        minX = std::min(minX, flat[i]);   maxX = std::max(maxX, flat[i]);
-        minY = std::min(minY, flat[i + 1]); maxY = std::max(maxY, flat[i + 1]);
+    size_t offset = 0;
+    for (jint length : lengths) {
+        std::vector<FS_POINTF> stroke;
+        for (jint i = 0; i < length && offset + 1 < flat.size(); i++, offset += 2) {
+            stroke.push_back(FS_POINTF{flat[offset], flat[offset + 1]});
+            minX = std::min(minX, flat[offset]);   maxX = std::max(maxX, flat[offset]);
+            minY = std::min(minY, flat[offset + 1]); maxY = std::max(maxY, flat[offset + 1]);
+        }
+        if (!stroke.empty()) FPDFAnnot_AddInkStroke(annot, stroke.data(), stroke.size());
     }
-    if (!stroke.empty()) {
-        FPDFAnnot_AddInkStroke(annot, stroke.data(), stroke.size());
+    if (offset > 0) {
         FS_RECTF rect{minX, maxY, maxX, minY};
         FPDFAnnot_SetRect(annot, &rect);
     }

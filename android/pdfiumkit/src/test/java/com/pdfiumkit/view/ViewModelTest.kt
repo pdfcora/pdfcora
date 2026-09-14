@@ -269,7 +269,8 @@ class ViewModelTest {
                 "inkAdded" -> {
                     val ink = edit as PdfEdit.InkAdded
                     assertEquals(name, expect.getInt("page"), ink.page)
-                    assertEquals(name, expect.getInt("strokePointCount"), ink.stroke.size)
+                    val counts = expect.getJSONArray("strokePointCounts")
+                    assertEquals(name, (0 until counts.length()).map { counts.getInt(it) }, ink.strokes.map { it.size })
                     assertEquals(name, expect.getDouble("lineWidth").toFloat(), ink.lineWidth, 1e-4f)
                 }
                 "annotationRemoved" -> {
@@ -316,7 +317,7 @@ class EditCodecTest {
     fun everyEditKindSurvivesARoundTrip() {
         val edits = listOf(
             PdfEdit.NoteAdded(0, rect, "n", PdfColor.YELLOW),
-            PdfEdit.InkAdded(1, listOf(PdfPoint(1f, 2f), PdfPoint(3f, 4f)), PdfColor.BLACK, 3f),
+            PdfEdit.InkAdded(1, listOf(listOf(PdfPoint(1f, 2f), PdfPoint(3f, 4f)), listOf(PdfPoint(5f, 6f))), PdfColor.BLACK, 3f),
             PdfEdit.HighlightAdded(2, listOf(PdfQuad(
                 PdfPoint(1f, 2f), PdfPoint(3f, 2f), PdfPoint(1f, 1f), PdfPoint(3f, 1f))),
                 PdfColor.YELLOW),

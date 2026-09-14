@@ -160,7 +160,7 @@ fun EditorScreen(store: DocumentStore) {
                                             noteAt = action.point; noteDraft = ""
                                         }
                                         is PageAction.Ink -> {
-                                            page.addInk(action.points, PdfColor(0, 90, 220))
+                                            page.addInk(listOf(action.points), PdfColor(0, 90, 220))
                                             created++; reload()
                                         }
                                         is PageAction.Highlight -> {

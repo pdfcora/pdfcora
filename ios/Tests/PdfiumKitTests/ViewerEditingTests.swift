@@ -95,12 +95,13 @@ final class ViewerEditingTests: XCTestCase {
     }
 
     func testInkAndHighlightAlsoDelegate() async throws {
-        let stroke = [PdfPoint(x: 10, y: 10), PdfPoint(x: 50, y: 50)]
+        let strokes = [[PdfPoint(x: 10, y: 10), PdfPoint(x: 50, y: 50)],
+                       [PdfPoint(x: 20, y: 80), PdfPoint(x: 70, y: 80)]]
         let viaPage = try await PdfDocument(data: try data())
-        _ = try await viaPage.page(0).addInk(strokes: [stroke], color: .black, lineWidth: 3)
+        _ = try await viaPage.page(0).addInk(strokes: strokes, color: .black, lineWidth: 3)
 
         let (v, viaViewer) = try await viewer()
-        try await v.addInk(stroke, color: .black, lineWidth: 3)
+        try await v.addInk(strokes: strokes, color: .black, lineWidth: 3)
 
         let fromPage = try await viaPage.data(mode: .full)
         let fromViewer = try await viaViewer.data(mode: .full)
@@ -202,7 +203,7 @@ final class ViewerEditingTests: XCTestCase {
     func testEveryEditKindSurvivesARoundTrip() throws {
         let edits: [PdfEdit] = [
             .noteAdded(page: 0, rect: rect, contents: "n", color: .yellow),
-            .inkAdded(page: 1, stroke: [PdfPoint(x: 1, y: 2)], color: .black, lineWidth: 3),
+            .inkAdded(page: 1, strokes: [[PdfPoint(x: 1, y: 2)], [PdfPoint(x: 3, y: 4), PdfPoint(x: 5, y: 6)]], color: .black, lineWidth: 3),
             .highlightAdded(page: 2, quads: [PdfQuad(p1: PdfPoint(x: 1, y: 2), p2: PdfPoint(x: 3, y: 2),
                                                      p3: PdfPoint(x: 1, y: 1), p4: PdfPoint(x: 3, y: 1))],
                             color: .yellow),

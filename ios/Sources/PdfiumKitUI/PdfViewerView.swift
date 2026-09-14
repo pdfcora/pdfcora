@@ -120,7 +120,7 @@ public struct PdfViewerView: View {
             let points = stroke.map { transform.toPdf($0) }
             stroke = []
             guard points.count > 1 else { return }
-            try? await viewer.addInk(points)
+            try? await viewer.addInk(strokes: [points])
             createdCount += 1
             await refresh()
         case .highlight, .redact:

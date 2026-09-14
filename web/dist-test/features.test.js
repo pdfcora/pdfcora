@@ -76,17 +76,20 @@ describe('annotations', () => {
         assert.ok(annotations.some((a) => a.kind === 'highlight'), `expected a highlight, got ${annotations.map((a) => a.kind).join(', ')}`);
         await document.close();
     });
-    test('added ink is read back', async () => {
+    test('added ink is read back as one annotation with every stroke', async () => {
         const document = await open('hello_world.pdf');
         const page = await document.page(0);
         const before = (await page.annotations()).length;
-        await page.addInk([{ x: 10, y: 10 }, { x: 50, y: 50 }, { x: 90, y: 20 }]);
+        await page.addInk([
+            [{ x: 10, y: 10 }, { x: 50, y: 50 }, { x: 90, y: 20 }],
+            [{ x: 20, y: 80 }, { x: 70, y: 80 }],
+        ]);
         const after = await page.annotations();
         assert.equal(after.length, before + 1);
         const ink = after[after.length - 1];
-        assert.equal(ink.kind, 'ink');
-        assert.ok(ink.kind === 'ink' && ink.strokes.length === 1);
-        assert.equal(ink.kind === 'ink' ? ink.strokes[0].length : 0, 3);
+        assert.ok(ink.kind === 'ink', `last annotation is ${ink.kind}`);
+        assert.deepEqual(ink.strokes.map((s) => s.length), [3, 2]);
+        assert.deepEqual(ink.rect, { left: 10, bottom: 10, right: 90, top: 80 });
         await document.close();
     });
     test('added note carries its contents', async () => {

@@ -193,11 +193,11 @@ class PdfViewer private constructor(
         return index
     }
 
-    suspend fun addInk(stroke: List<PdfPoint>, color: PdfColor = PdfColor.BLACK,
+    suspend fun addInk(strokes: List<List<PdfPoint>>, color: PdfColor = PdfColor.BLACK,
                        lineWidth: Float = 2f): Int {
         requirePresenter()
-        val index = document.page(state.pageIndex).addInk(stroke, color, lineWidth)
-        emitEdit(PdfEdit.InkAdded(state.pageIndex, stroke, color, lineWidth))
+        val index = document.page(state.pageIndex).addInk(strokes, color, lineWidth)
+        emitEdit(PdfEdit.InkAdded(state.pageIndex, strokes, color, lineWidth))
         return index
     }
 
@@ -307,7 +307,7 @@ class PdfViewer private constructor(
             is PdfEdit.NoteAdded ->
                 document.page(edit.page).addNote(edit.rect, edit.contents, edit.color)
             is PdfEdit.InkAdded ->
-                document.page(edit.page).addInk(edit.stroke, edit.color, edit.lineWidth)
+                document.page(edit.page).addInk(edit.strokes, edit.color, edit.lineWidth)
             is PdfEdit.HighlightAdded ->
                 document.page(edit.page).addHighlight(edit.quads, edit.color)
             is PdfEdit.AnnotationRemoved ->

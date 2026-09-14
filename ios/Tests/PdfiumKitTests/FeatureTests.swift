@@ -150,19 +150,20 @@ final class FeatureTests: XCTestCase {
         await doc.close()
     }
 
-    func testAddedInkAnnotationIsReadBack() async throws {
+    func testAddedInkIsReadBackAsOneAnnotationWithEveryStroke() async throws {
         let doc = try await open("hello_world.pdf")
         let page = try await doc.page(0)
         let before = try await page.annotations().count
 
-        let stroke = [PdfPoint(x: 10, y: 10), PdfPoint(x: 50, y: 50), PdfPoint(x: 90, y: 20)]
-        try await page.addInk(strokes: [stroke], color: .black, lineWidth: 3)
+        try await page.addInk(strokes: [[PdfPoint(x: 10, y: 10), PdfPoint(x: 50, y: 50), PdfPoint(x: 90, y: 20)],
+                                        [PdfPoint(x: 20, y: 80), PdfPoint(x: 70, y: 80)]],
+                              color: .black, lineWidth: 3)
 
         let after = try await page.annotations()
         XCTAssertEqual(after.count, before + 1)
         guard case .ink(let ink) = try XCTUnwrap(after.last) else { return XCTFail("last annotation is not ink") }
-        XCTAssertEqual(ink.strokes.count, 1)
-        XCTAssertEqual(ink.strokes[0].count, 3)
+        XCTAssertEqual(ink.strokes.map(\.count), [3, 2])
+        XCTAssertEqual(ink.base.rect, PdfRect(left: 10, bottom: 10, right: 90, top: 80))
         await doc.close()
     }
 

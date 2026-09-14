@@ -135,7 +135,7 @@ object PdfViewCodec {
             .put("contents", edit.contents).put("color", colour(edit.color))
         is PdfEdit.InkAdded -> JSONObject()
             .put("kind", "inkAdded").put("page", edit.page)
-            .put("stroke", JSONArray(edit.stroke.map { point(it) }))
+            .put("strokes", JSONArray(edit.strokes.map { stroke -> JSONArray(stroke.map { point(it) }) }))
             .put("color", colour(edit.color)).put("lineWidth", edit.lineWidth.toDouble())
         is PdfEdit.HighlightAdded -> JSONObject()
             .put("kind", "highlightAdded").put("page", edit.page).put("color", colour(edit.color))
@@ -174,7 +174,9 @@ object PdfViewCodec {
             "noteAdded" -> PdfEdit.NoteAdded(page, rect(raw.getJSONObject("rect")),
                                              raw.getString("contents"), colour(raw.getJSONObject("color")))
             "inkAdded" -> PdfEdit.InkAdded(
-                page, raw.getJSONArray("stroke").map { point(it) },
+                page, raw.getJSONArray("strokes").let { strokes ->
+                    (0 until strokes.length()).map { strokes.getJSONArray(it).map { point(it) } }
+                },
                 colour(raw.getJSONObject("color")), raw.getDouble("lineWidth").toFloat(),
             )
             "highlightAdded" -> PdfEdit.HighlightAdded(

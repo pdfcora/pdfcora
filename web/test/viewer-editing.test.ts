@@ -41,11 +41,11 @@ describe('editing through the viewer', () => {
     const seen: PdfViewEvent[] = [];
     viewer.on((e) => seen.push(e));
 
-    await viewer.addInk([{ x: 1, y: 2 }, { x: 3, y: 4 }], { red: 0, green: 90, blue: 220 }, 3);
+    await viewer.addInk([[{ x: 1, y: 2 }, { x: 3, y: 4 }], [{ x: 5, y: 6 }]], { red: 0, green: 90, blue: 220 }, 3);
     const change = seen[0]!.change;
     assert.equal(change.kind, 'edit');
     if (change.kind !== 'edit' || change.edit.kind !== 'inkAdded') return assert.fail('wrong edit');
-    assert.deepEqual(change.edit.stroke, [{ x: 1, y: 2 }, { x: 3, y: 4 }]);
+    assert.deepEqual(change.edit.strokes, [[{ x: 1, y: 2 }, { x: 3, y: 4 }], [{ x: 5, y: 6 }]]);
     assert.equal(change.edit.lineWidth, 3);
     assert.deepEqual(change.edit.color, { red: 0, green: 90, blue: 220 });
   });
@@ -57,7 +57,7 @@ describe('editing through the viewer', () => {
     viewer.on((e) => seen.push(e));
 
     await viewer.addNote(RECT, 'n');
-    await viewer.addInk([{ x: 1, y: 1 }, { x: 2, y: 2 }]);
+    await viewer.addInk([[{ x: 1, y: 1 }, { x: 2, y: 2 }]]);
     await viewer.addHighlight([{ p1: { x: 1, y: 2 }, p2: { x: 3, y: 2 },
                                 p3: { x: 1, y: 1 }, p4: { x: 3, y: 1 } }]);
     await viewer.setFieldText('typed', 0);

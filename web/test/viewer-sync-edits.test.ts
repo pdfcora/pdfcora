@@ -46,7 +46,7 @@ describe('replaying an edit on a peer', () => {
     source.on((e) => sent.push(e));
 
     await source.addNote(RECT, 'n');
-    await source.addInk([{ x: 1, y: 1 }, { x: 2, y: 2 }]);
+    await source.addInk([[{ x: 1, y: 1 }, { x: 2, y: 2 }], [{ x: 3, y: 3 }, { x: 4, y: 4 }]]);
     await source.addHighlight([{ p1: { x: 1, y: 2 }, p2: { x: 3, y: 2 },
                                  p3: { x: 1, y: 1 }, p4: { x: 3, y: 1 } }]);
     await source.setFieldText('typed', 0);

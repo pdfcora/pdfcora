@@ -208,8 +208,8 @@ export class PdfWorkerPage {
   annotations(): Promise<PdfAnnotation[]> { return this.call('page.annotations') as Promise<PdfAnnotation[]>; }
   formFields(): Promise<PdfFormField[]> { return this.call('page.formFields') as Promise<PdfFormField[]>; }
 
-  addInk(stroke: readonly PdfPoint[], color?: PdfColor, lineWidth?: number): Promise<number> {
-    return this.call('page.addInk', [stroke, color, lineWidth]) as Promise<number>;
+  addInk(strokes: readonly (readonly PdfPoint[])[], color?: PdfColor, lineWidth?: number): Promise<number> {
+    return this.call('page.addInk', [strokes, color, lineWidth]) as Promise<number>;
   }
   addNote(rect: PdfRect, contents: string, color?: PdfColor): Promise<number> {
     return this.call('page.addNote', [rect, contents, color]) as Promise<number>;

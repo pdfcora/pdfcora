@@ -195,12 +195,12 @@ public actor PdfViewer {
     }
 
     @discardableResult
-    public func addInk(_ stroke: [PdfPoint], color: PdfColor = .black,
+    public func addInk(strokes: [[PdfPoint]], color: PdfColor = .black,
                        lineWidth: Double = 2) async throws -> Int {
         try requirePresenter()
         let index = try await document.page(state.pageIndex)
-            .addInk(strokes: [stroke], color: color, lineWidth: lineWidth)
-        await emitEdit(.inkAdded(page: state.pageIndex, stroke: stroke,
+            .addInk(strokes: strokes, color: color, lineWidth: lineWidth)
+        await emitEdit(.inkAdded(page: state.pageIndex, strokes: strokes,
                                  color: color, lineWidth: lineWidth))
         return index
     }
@@ -271,8 +271,8 @@ public actor PdfViewer {
         switch edit {
         case .noteAdded(let page, let rect, let contents, let color):
             _ = try await document.page(page).addNote(rect: rect, contents: contents, color: color)
-        case .inkAdded(let page, let stroke, let color, let lineWidth):
-            _ = try await document.page(page).addInk(strokes: [stroke], color: color, lineWidth: lineWidth)
+        case .inkAdded(let page, let strokes, let color, let lineWidth):
+            _ = try await document.page(page).addInk(strokes: strokes, color: color, lineWidth: lineWidth)
         case .highlightAdded(let page, let quads, let color):
             _ = try await document.page(page).addHighlight(quads: quads, color: color)
         case .annotationRemoved(let page, let index):

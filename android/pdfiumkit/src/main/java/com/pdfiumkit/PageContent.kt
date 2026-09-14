@@ -74,18 +74,20 @@ private fun readInkStrokes(handle: Long, pageIndex: Int, annotIndex: Int, count:
         }
     }
 
-/** Adds a freehand ink annotation. Returns the new annotation's index. */
+/** Adds one freehand ink annotation made of [strokes]. Returns the new annotation's index. */
 suspend fun PdfPage.addInk(
-    stroke: List<PdfPoint>,
+    strokes: List<List<PdfPoint>>,
     color: PdfColor = PdfColor.BLACK,
     lineWidth: Float = 2f,
 ): Int = document.onDocument { h ->
-    val flat = FloatArray(stroke.size * 2)
-    stroke.forEachIndexed { i, point ->
+    val points = strokes.flatten()
+    val flat = FloatArray(points.size * 2)
+    points.forEachIndexed { i, point ->
         flat[i * 2] = point.x
         flat[i * 2 + 1] = point.y
     }
-    val result = Native.addInk(h, index, flat, color.red, color.green, color.blue, color.alpha, lineWidth)
+    val lengths = strokes.map { it.size }.toIntArray()
+    val result = Native.addInk(h, index, flat, lengths, color.red, color.green, color.blue, color.alpha, lineWidth)
     if (result < 0) throw PdfError.InvalidOperation("ink annotation could not be created")
     result
 }

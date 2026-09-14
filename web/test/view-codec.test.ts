@@ -110,8 +110,8 @@ describe('the view event wire format', () => {
 
       for (const [key, value] of Object.entries(expect)) {
         if (key === 'kind') continue;
-        if (key === 'strokePointCount') {
-          assert.equal((edit['stroke'] as unknown[]).length, value, testCase.name);
+        if (key === 'strokePointCounts') {
+          assert.deepEqual((edit['strokes'] as unknown[][]).map((s) => s.length), value, testCase.name);
         } else if (key === 'targetCount') {
           assert.equal((edit['targets'] as unknown[]).length, value, testCase.name);
         } else if (key === 'firstTargetKind') {

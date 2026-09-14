@@ -321,7 +321,7 @@ function attachDrawing(stage, canvas, t, page, annotations) {
     if (state.tool === 'ink') {
       const points = stroke.map((q) => t.toPdf(q));
       if (points.length < 2) return;
-      await page.addInk(points, { red: 0, green: 90, blue: 220 });
+      await page.addInk([points], { red: 0, green: 90, blue: 220 });
       state.createdCount++;
       draw();
       return;
@@ -610,10 +610,10 @@ async function renderAnnotations() {
   $panel.append(
     el('div', { className: 'row' },
       button('Add ink', () => refresh(() => page.addInk(
-        Array.from({ length: 21 }, (_, i) => {
+        [Array.from({ length: 21 }, (_, i) => {
           const t = i / 20;
           return { x: 40 + t * 120, y: 90 + Math.sin(t * Math.PI * 2) * 25 };
-        }), { red: 0, green: 90, blue: 220 }))),
+        })], { red: 0, green: 90, blue: 220 }))),
       button('Add note', () => refresh(() =>
         page.addNote({ left: 30, bottom: 30, right: 60, top: 60 }, 'Added from the demo'))),
       button('Remove last', () => refresh(() => page.removeAnnotation(annotations.length - 1)),

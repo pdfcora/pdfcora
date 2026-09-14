@@ -174,21 +174,28 @@ export class PdfPage {
     });
   }
 
-  /** Adds a freehand ink annotation. Resolves to the new annotation's index. */
-  addInk(stroke: readonly PdfPoint[], color: PdfColor = { red: 0, green: 0, blue: 0 }, lineWidth = 2): Promise<number> {
+  /**
+   * Adds one freehand ink annotation made of `strokes`. Resolves to the new annotation's
+   * index.
+   */
+  addInk(strokes: readonly (readonly PdfPoint[])[], color: PdfColor = { red: 0, green: 0, blue: 0 }, lineWidth = 2): Promise<number> {
     return this.document.withPage(this.index, (page, m) => {
       const annot = m.ccall('FPDFPage_CreateAnnot', 'number', ['number', 'number'], [page, SUBTYPE.ink]) as number;
       if (!annot) throw PdfError.invalidOperation('ink annotation could not be created');
 
       try {
-        if (stroke.length > 0) {
+        for (const stroke of strokes) {
+          if (stroke.length === 0) continue;
           withBuffer(m, stroke.length * 8, (ptr) => {
             const view = new Float32Array(m.HEAPU8.buffer, ptr, stroke.length * 2);
             stroke.forEach((p, i) => { view[i * 2] = p.x; view[i * 2 + 1] = p.y; });
             m.ccall('FPDFAnnot_AddInkStroke', 'number', ['number', 'number', 'number'], [annot, ptr, stroke.length]);
           });
-          const xs = stroke.map((p) => p.x);
-          const ys = stroke.map((p) => p.y);
+        }
+        const points = strokes.flat();
+        if (points.length > 0) {
+          const xs = points.map((p) => p.x);
+          const ys = points.map((p) => p.y);
           setRect(m, annot, {
             left: Math.min(...xs), right: Math.max(...xs),
             bottom: Math.min(...ys), top: Math.max(...ys),
