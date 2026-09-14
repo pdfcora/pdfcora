@@ -34,6 +34,10 @@ run() {
     return 1
 }
 
+# The view model is pure logic and runs on the JVM — no device, and not hostage to an
+# emulator that this project has watched die twice.
+run :pdfiumkit:testDebugUnitTest "$@"
+
 run :pdfiumkit:connectedDebugAndroidTest "$@"
 
 run :pdfiumkit:connectedDebugAndroidTest \

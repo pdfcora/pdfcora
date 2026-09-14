@@ -63,6 +63,11 @@ android {
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     implementation("androidx.annotation:annotation:1.7.1")
+    // The view model is pure logic, so it is tested on the JVM rather than on a device:
+    // faster, and not hostage to an emulator.
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20231013")
+
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test:runner:1.5.2")
     androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
