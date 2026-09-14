@@ -21,6 +21,12 @@ enum PdfEngine {
 /// actor, which is what makes the SDK safe to use from any task. Separate documents
 /// have separate actors, so unrelated documents render in parallel.
 public actor PdfDocument {
+    /// Every document runs on the same engine thread. See ``EngineExecutor``: PDFium's
+    /// global state is not thread-safe, so per-actor executors let two documents race it.
+    public nonisolated var unownedExecutor: UnownedSerialExecutor {
+        EngineExecutor.shared.asUnownedSerialExecutor()
+    }
+
     private(set) var handle: FPDF_DOCUMENT?
     private var formHandle: FPDF_FORMHANDLE?
     private var pageCache: [Int: FPDF_PAGE] = [:]
@@ -57,24 +63,38 @@ public actor PdfDocument {
     public nonisolated static var engineVersion: String { PdfEngine.revision }
 
     public init(data: Data, password: String? = nil) async throws {
-        PdfEngine.ensureInitialized()
         self.backing = data
 
-        let opened: FPDF_DOCUMENT? = data.withUnsafeBytes { raw in
-            if let password {
-                return password.withCString { FPDF_LoadMemDocument(raw.baseAddress, Int32(data.count), $0) }
+        // An actor's init runs on the caller's context, *not* on the actor's executor,
+        // so without this hop several documents opening at once would call PDFium
+        // concurrently — which is exactly what CrossDocumentStressTests reproduces.
+        let opened: FPDF_DOCUMENT? = EngineExecutor.shared.run {
+            PdfEngine.ensureInitialized()
+            return data.withUnsafeBytes { raw in
+                if let password {
+                    return password.withCString {
+                        FPDF_LoadMemDocument(raw.baseAddress, Int32(data.count), $0)
+                    }
+                }
+                return FPDF_LoadMemDocument(raw.baseAddress, Int32(data.count), nil)
             }
-            return FPDF_LoadMemDocument(raw.baseAddress, Int32(data.count), nil)
         }
 
         guard let opened else { throw PdfError.fromEngine(passwordSupplied: password != nil) }
         self.handle = opened
 
+        // `formInfo` must be the stored property, never a local: PDFium keeps the
+        // pointer it is given and dereferences it for the life of the form handle, so a
+        // local would dangle the moment init returned — which shows up much later as a
+        // bus error somewhere unrelated.
         formInfo.version = 2
-        self.formHandle = FPDFDOC_InitFormFillEnvironment(opened, &formInfo)
-        if let formHandle {
-            FORM_DoDocumentJSAction(formHandle)
-            FORM_DoDocumentOpenAction(formHandle)
+        self.formHandle = EngineExecutor.shared.run {
+            let form = FPDFDOC_InitFormFillEnvironment(opened, &formInfo)
+            if let form {
+                FORM_DoDocumentJSAction(form)
+                FORM_DoDocumentOpenAction(form)
+            }
+            return form
         }
     }
 
@@ -83,9 +103,18 @@ public actor PdfDocument {
     }
 
     deinit {
-        for (_, page) in pageCache { FPDF_ClosePage(page) }
-        if let formHandle { FPDFDOC_ExitFormFillEnvironment(formHandle) }
-        if let handle { FPDF_CloseDocument(handle) }
+        // An actor's deinit runs on whatever thread drops the last reference, not on the
+        // actor's executor — so freeing here directly would race every other document's
+        // in-flight work, which is the same bug CrossDocumentStressTests exists for.
+        // The handles are captured by value; `self` is gone by the time this runs.
+        let pages = Array(pageCache.values)
+        let form = formHandle
+        let document = handle
+        EngineExecutor.shared.runAsync {
+            for page in pages { FPDF_ClosePage(page) }
+            if let form { FPDFDOC_ExitFormFillEnvironment(form) }
+            if let document { FPDF_CloseDocument(document) }
+        }
     }
 
     /// Releases the document and every page loaded from it. Further use throws ``PdfError/closed``.
