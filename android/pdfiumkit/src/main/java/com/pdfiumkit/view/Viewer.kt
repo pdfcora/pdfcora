@@ -5,7 +5,19 @@ import com.pdfiumkit.PdfColor
 import com.pdfiumkit.PdfDocument
 import com.pdfiumkit.PdfPageRotation
 import com.pdfiumkit.PdfPoint
+import com.pdfiumkit.PdfQuad
 import com.pdfiumkit.PdfRect
+import com.pdfiumkit.PdfRedactionReport
+import com.pdfiumkit.PdfRedactionTarget
+import com.pdfiumkit.addHighlight
+import com.pdfiumkit.addInk
+import com.pdfiumkit.addNote
+import com.pdfiumkit.annotations
+import com.pdfiumkit.redact
+import com.pdfiumkit.removeAnnotation
+import com.pdfiumkit.setChecked
+import com.pdfiumkit.setOption
+import com.pdfiumkit.setText
 import com.pdfiumkit.PdfRenderOptions
 import com.pdfiumkit.PdfSize
 import com.pdfiumkit.PdfViewTransform
@@ -15,10 +27,29 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.UUID
 
+enum class PdfViewerRole { PRESENTER, FOLLOWER }
+
+class PdfFollowerException : IllegalStateException(
+    "this viewer is following another session and cannot edit the document",
+)
+
+class PdfDocumentMismatchException(expected: String, received: String) : IllegalArgumentException(
+    "edit is for a different document (expected $expected, received $received)",
+)
+
 data class PdfViewerOptions(
     val sessionId: String = UUID.randomUUID().toString(),
     /** Viewport changes are coalesced over this window, in milliseconds. Edits are not. */
     val coalesceMillis: Long = 50,
+    /**
+     * A follower may look wherever it likes but may not change the document.
+     *
+     * Concurrent editing is deliberately out of scope: two people editing one annotation
+     * is a distributed-systems problem, and last-writer-wins silently discards work.
+     */
+    val role: PdfViewerRole = PdfViewerRole.PRESENTER,
+    /** When set, only this session's edits are applied. Others are ignored. */
+    val presenterId: String? = null,
 )
 
 /**
@@ -142,6 +173,90 @@ class PdfViewer private constructor(
         emit(PdfViewChange.Tool(tool))
     }
 
+    // MARK: - Editing
+    //
+    // Every method delegates to the existing page API and then emits. Two code paths
+    // producing annotations would drift, and the bug would surface through only one of
+    // them — ViewerEditingTest asserts byte identity to stop that.
+    //
+    // A follower refuses to edit locally. It may still scroll and zoom: following is not
+    // the same as being frozen.
+
+    /** The bytes this viewer's document was opened from. An edit is refused unless the
+     *  sender's matches. */
+    val documentFingerprint: String get() = document.fingerprint
+
+    suspend fun addNote(rect: PdfRect, contents: String, color: PdfColor = PdfColor.YELLOW): Int {
+        requirePresenter()
+        val index = document.page(state.pageIndex).addNote(rect, contents, color)
+        emitEdit(PdfEdit.NoteAdded(state.pageIndex, rect, contents, color))
+        return index
+    }
+
+    suspend fun addInk(stroke: List<PdfPoint>, color: PdfColor = PdfColor.BLACK,
+                       lineWidth: Float = 2f): Int {
+        requirePresenter()
+        val index = document.page(state.pageIndex).addInk(stroke, color, lineWidth)
+        emitEdit(PdfEdit.InkAdded(state.pageIndex, stroke, color, lineWidth))
+        return index
+    }
+
+    suspend fun addHighlight(quads: List<PdfQuad>, color: PdfColor = PdfColor.YELLOW): Int {
+        requirePresenter()
+        val index = document.page(state.pageIndex).addHighlight(quads, color)
+        emitEdit(PdfEdit.HighlightAdded(state.pageIndex, quads, color))
+        return index
+    }
+
+    suspend fun removeAnnotation(index: Int) {
+        requirePresenter()
+        document.page(state.pageIndex).removeAnnotation(index)
+        emitEdit(PdfEdit.AnnotationRemoved(state.pageIndex, index))
+    }
+
+    suspend fun setFieldText(value: String, annotationIndex: Int) {
+        requirePresenter()
+        document.page(state.pageIndex).setText(value, annotationIndex)
+        emitEdit(PdfEdit.FieldTextSet(state.pageIndex, annotationIndex, value))
+    }
+
+    suspend fun setFieldChecked(checked: Boolean, annotationIndex: Int) {
+        requirePresenter()
+        document.page(state.pageIndex).setChecked(checked, annotationIndex)
+        emitEdit(PdfEdit.FieldCheckedSet(state.pageIndex, annotationIndex, checked))
+    }
+
+    suspend fun setFieldOption(option: Int, selected: Boolean, annotationIndex: Int) {
+        requirePresenter()
+        document.page(state.pageIndex).setOption(option, selected, annotationIndex)
+        emitEdit(PdfEdit.FieldOptionSet(state.pageIndex, annotationIndex, option, selected))
+    }
+
+    /**
+     * Removes content so it cannot be recovered.
+     *
+     * **Save with [com.pdfiumkit.PdfSaveMode.FULL] afterwards** — an incremental save
+     * leaves the original content stream in the file, and the removed content with it.
+     */
+    suspend fun redact(targets: List<PdfRedactionTarget>): PdfRedactionReport {
+        requirePresenter()
+        val report = document.redact(targets)
+        emitEdit(PdfEdit.Redacted(targets))
+        return report
+    }
+
+    private fun requirePresenter() {
+        if (options.role == PdfViewerRole.FOLLOWER) throw PdfFollowerException()
+    }
+
+    /** Edits bypass the viewport coalescing: a viewport change may be dropped in favour
+     *  of a later one, an annotation added is not superseded by the next. */
+    private suspend fun emitEdit(edit: PdfEdit) {
+        sequence += 1
+        _events.emit(PdfViewEvent(sequence, options.sessionId, PdfViewEventOrigin.LOCAL,
+                                  PdfViewChange.Edit(edit), document.fingerprint))
+    }
+
     // MARK: - Sync
 
     /**
@@ -166,6 +281,44 @@ class PdfViewer private constructor(
             }
             is PdfViewChange.Selection -> selection = change.selection
             is PdfViewChange.Tool -> tool = change.tool
+            is PdfViewChange.Edit -> applyIncomingEdit(event, change.edit)
+        }
+    }
+
+    /**
+     * Replays a peer's edit. Emits nothing.
+     *
+     * Refuses one meant for other bytes — indices are positions in a specific document —
+     * but ignores one from a session that is not the presenter rather than throwing: in a
+     * broadcast transport everyone hears everyone, and throwing would turn a third
+     * participant's stray edit into an error on every peer.
+     */
+    private suspend fun applyIncomingEdit(event: PdfViewEvent, edit: PdfEdit) {
+        val theirs = event.documentFingerprint
+        if (theirs != null && theirs != document.fingerprint) {
+            throw PdfDocumentMismatchException(document.fingerprint, theirs)
+        }
+        if (options.presenterId != null && event.sessionId != options.presenterId) return
+        replay(edit)
+    }
+
+    private suspend fun replay(edit: PdfEdit) {
+        when (edit) {
+            is PdfEdit.NoteAdded ->
+                document.page(edit.page).addNote(edit.rect, edit.contents, edit.color)
+            is PdfEdit.InkAdded ->
+                document.page(edit.page).addInk(edit.stroke, edit.color, edit.lineWidth)
+            is PdfEdit.HighlightAdded ->
+                document.page(edit.page).addHighlight(edit.quads, edit.color)
+            is PdfEdit.AnnotationRemoved ->
+                document.page(edit.page).removeAnnotation(edit.index)
+            is PdfEdit.FieldTextSet ->
+                document.page(edit.page).setText(edit.value, edit.annotationIndex)
+            is PdfEdit.FieldCheckedSet ->
+                document.page(edit.page).setChecked(edit.checked, edit.annotationIndex)
+            is PdfEdit.FieldOptionSet ->
+                document.page(edit.page).setOption(edit.option, edit.selected, edit.annotationIndex)
+            is PdfEdit.Redacted -> document.redact(edit.targets)
         }
     }
 

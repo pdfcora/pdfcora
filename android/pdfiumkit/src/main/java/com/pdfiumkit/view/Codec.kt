@@ -1,8 +1,12 @@
 package com.pdfiumkit.view
 
+import com.pdfiumkit.PdfColor
 import com.pdfiumkit.PdfPageRotation
+import com.pdfiumkit.PdfQuad
+import com.pdfiumkit.PdfRedactionTarget
 import com.pdfiumkit.PdfPoint
 import com.pdfiumkit.PdfRect
+import org.json.JSONArray
 import org.json.JSONObject
 
 class PdfViewCodecException(message: String) : IllegalArgumentException(message)
@@ -43,7 +47,10 @@ object PdfViewCodec {
                     .put("selection", change.selection?.let { encodeSelection(it) } ?: JSONObject.NULL)
             is PdfViewChange.Tool ->
                 JSONObject().put("kind", "tool").put("tool", change.tool.wire)
+            is PdfViewChange.Edit ->
+                JSONObject().put("kind", "edit").put("edit", encodeEdit(change.edit))
         })
+        event.documentFingerprint?.let { put("documentFingerprint", it) }
     }.toString()
 
     fun decode(wire: String): PdfViewEvent {
@@ -68,8 +75,10 @@ object PdfViewCodec {
                     PdfTool.fromWire(change.getString("tool"))
                         ?: throw PdfViewCodecException("unknown tool"),
                 )
+                "edit" -> PdfViewChange.Edit(decodeEdit(change.getJSONObject("edit")))
                 else -> throw PdfViewCodecException("unknown change kind $kind")
             },
+            documentFingerprint = raw.optString("documentFingerprint").ifEmpty { null },
         )
     }
 
@@ -96,6 +105,100 @@ object PdfViewCodec {
             layout = PdfPageLayout.fromWire(raw.getString("layout"))
                 ?: throw PdfViewCodecException("unknown layout"),
         )
+    }
+
+    private fun rect(r: PdfRect) = JSONObject()
+        .put("left", r.left.toDouble()).put("bottom", r.bottom.toDouble())
+        .put("right", r.right.toDouble()).put("top", r.top.toDouble())
+
+    private fun rect(o: JSONObject) = PdfRect(
+        o.getDouble("left").toFloat(), o.getDouble("bottom").toFloat(),
+        o.getDouble("right").toFloat(), o.getDouble("top").toFloat(),
+    )
+
+    private fun colour(c: PdfColor) = JSONObject()
+        .put("red", c.red).put("green", c.green).put("blue", c.blue).put("alpha", c.alpha)
+
+    private fun colour(o: JSONObject) = PdfColor(
+        o.getInt("red"), o.getInt("green"), o.getInt("blue"), o.optInt("alpha", 255),
+    )
+
+    private fun point(p: PdfPoint) = JSONObject().put("x", p.x.toDouble()).put("y", p.y.toDouble())
+    private fun point(o: JSONObject) = PdfPoint(o.getDouble("x").toFloat(), o.getDouble("y").toFloat())
+
+    private fun <T> JSONArray.map(transform: (JSONObject) -> T): List<T> =
+        (0 until length()).map { transform(getJSONObject(it)) }
+
+    fun encodeEdit(edit: PdfEdit): JSONObject = when (edit) {
+        is PdfEdit.NoteAdded -> JSONObject()
+            .put("kind", "noteAdded").put("page", edit.page).put("rect", rect(edit.rect))
+            .put("contents", edit.contents).put("color", colour(edit.color))
+        is PdfEdit.InkAdded -> JSONObject()
+            .put("kind", "inkAdded").put("page", edit.page)
+            .put("stroke", JSONArray(edit.stroke.map { point(it) }))
+            .put("color", colour(edit.color)).put("lineWidth", edit.lineWidth.toDouble())
+        is PdfEdit.HighlightAdded -> JSONObject()
+            .put("kind", "highlightAdded").put("page", edit.page).put("color", colour(edit.color))
+            .put("quads", JSONArray(edit.quads.map {
+                JSONObject().put("p1", point(it.p1)).put("p2", point(it.p2))
+                    .put("p3", point(it.p3)).put("p4", point(it.p4))
+            }))
+        is PdfEdit.AnnotationRemoved -> JSONObject()
+            .put("kind", "annotationRemoved").put("page", edit.page).put("index", edit.index)
+        is PdfEdit.FieldTextSet -> JSONObject()
+            .put("kind", "fieldTextSet").put("page", edit.page)
+            .put("annotationIndex", edit.annotationIndex).put("value", edit.value)
+        is PdfEdit.FieldCheckedSet -> JSONObject()
+            .put("kind", "fieldCheckedSet").put("page", edit.page)
+            .put("annotationIndex", edit.annotationIndex).put("checked", edit.checked)
+        is PdfEdit.FieldOptionSet -> JSONObject()
+            .put("kind", "fieldOptionSet").put("page", edit.page)
+            .put("annotationIndex", edit.annotationIndex)
+            .put("option", edit.option).put("selected", edit.selected)
+        is PdfEdit.Redacted -> JSONObject()
+            .put("kind", "redacted")
+            .put("targets", JSONArray(edit.targets.map { target ->
+                when (target) {
+                    is PdfRedactionTarget.Region -> JSONObject()
+                        .put("kind", "region").put("pageIndex", target.pageIndex)
+                        .put("rect", rect(target.rect))
+                    is PdfRedactionTarget.TextMatches -> JSONObject()
+                        .put("kind", "textMatches").put("query", target.query)
+                }
+            }))
+    }
+
+    fun decodeEdit(raw: JSONObject): PdfEdit {
+        val page = raw.optInt("page", 0)
+        return when (val kind = raw.getString("kind")) {
+            "noteAdded" -> PdfEdit.NoteAdded(page, rect(raw.getJSONObject("rect")),
+                                             raw.getString("contents"), colour(raw.getJSONObject("color")))
+            "inkAdded" -> PdfEdit.InkAdded(
+                page, raw.getJSONArray("stroke").map { point(it) },
+                colour(raw.getJSONObject("color")), raw.getDouble("lineWidth").toFloat(),
+            )
+            "highlightAdded" -> PdfEdit.HighlightAdded(
+                page,
+                raw.getJSONArray("quads").map {
+                    PdfQuad(point(it.getJSONObject("p1")), point(it.getJSONObject("p2")),
+                            point(it.getJSONObject("p3")), point(it.getJSONObject("p4")))
+                },
+                colour(raw.getJSONObject("color")),
+            )
+            "annotationRemoved" -> PdfEdit.AnnotationRemoved(page, raw.getInt("index"))
+            "fieldTextSet" -> PdfEdit.FieldTextSet(page, raw.getInt("annotationIndex"), raw.getString("value"))
+            "fieldCheckedSet" -> PdfEdit.FieldCheckedSet(page, raw.getInt("annotationIndex"), raw.getBoolean("checked"))
+            "fieldOptionSet" -> PdfEdit.FieldOptionSet(page, raw.getInt("annotationIndex"),
+                                                       raw.getInt("option"), raw.getBoolean("selected"))
+            "redacted" -> PdfEdit.Redacted(raw.getJSONArray("targets").map { t ->
+                when (val targetKind = t.getString("kind")) {
+                    "region" -> PdfRedactionTarget.Region(rect(t.getJSONObject("rect")), t.optInt("pageIndex"))
+                    "textMatches" -> PdfRedactionTarget.TextMatches(t.getString("query"))
+                    else -> throw PdfViewCodecException("unknown redaction target $targetKind")
+                }
+            })
+            else -> throw PdfViewCodecException("unknown edit kind $kind")
+        }
     }
 
     private fun encodeSelection(selection: PdfSelection): JSONObject = when (selection) {

@@ -1,11 +1,15 @@
 package com.pdfiumkit.view
 
+import com.pdfiumkit.PdfColor
 import com.pdfiumkit.PdfPageRotation
+import com.pdfiumkit.PdfQuad
+import com.pdfiumkit.PdfRedactionTarget
 import com.pdfiumkit.PdfPoint
 import com.pdfiumkit.PdfRect
 import com.pdfiumkit.PdfSize
 import com.pdfiumkit.PdfViewTransform
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -245,5 +249,44 @@ class ViewModelTest {
             dir = dir.parentFile
         }
         throw IllegalStateException("conformance/view-state.json not found above ${System.getProperty("user.dir")}")
+    }
+}
+
+/** The edit event's wire format. Pure logic, so it runs on the JVM. */
+class EditCodecTest {
+
+    private val rect = PdfRect(10f, 10f, 30f, 30f)
+
+    @Test
+    fun everyEditKindSurvivesARoundTrip() {
+        val edits = listOf(
+            PdfEdit.NoteAdded(0, rect, "n", PdfColor.YELLOW),
+            PdfEdit.InkAdded(1, listOf(PdfPoint(1f, 2f), PdfPoint(3f, 4f)), PdfColor.BLACK, 3f),
+            PdfEdit.HighlightAdded(2, listOf(PdfQuad(
+                PdfPoint(1f, 2f), PdfPoint(3f, 2f), PdfPoint(1f, 1f), PdfPoint(3f, 1f))),
+                PdfColor.YELLOW),
+            PdfEdit.AnnotationRemoved(3, 4),
+            PdfEdit.FieldTextSet(0, 1, "typed"),
+            PdfEdit.FieldCheckedSet(0, 2, true),
+            PdfEdit.FieldOptionSet(0, 3, 4, true),
+            PdfEdit.Redacted(listOf(
+                PdfRedactionTarget.Region(rect, 0),
+                PdfRedactionTarget.TextMatches("secret"))),
+        )
+        for (edit in edits) {
+            val event = PdfViewEvent(1, "a", PdfViewEventOrigin.LOCAL,
+                                     PdfViewChange.Edit(edit), "abc-123")
+            assertEquals("$edit did not survive", event, PdfViewCodec.decode(PdfViewCodec.encode(event)))
+        }
+    }
+
+    @Test
+    fun theFingerprintRidesOnEditsOnly() {
+        val withEdit = PdfViewEvent(1, "a", PdfViewEventOrigin.LOCAL,
+                                    PdfViewChange.Edit(PdfEdit.AnnotationRemoved(0, 0)), "fp-1")
+        assertTrue(PdfViewCodec.encode(withEdit).contains("documentFingerprint"))
+
+        val withTool = PdfViewEvent(1, "a", PdfViewEventOrigin.LOCAL, PdfViewChange.Tool(PdfTool.INK))
+        assertFalse(PdfViewCodec.encode(withTool).contains("documentFingerprint"))
     }
 }

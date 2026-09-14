@@ -2,7 +2,10 @@ package com.pdfiumkit.view
 
 import com.pdfiumkit.PdfPageRotation
 import com.pdfiumkit.PdfPoint
+import com.pdfiumkit.PdfColor
+import com.pdfiumkit.PdfQuad
 import com.pdfiumkit.PdfRect
+import com.pdfiumkit.PdfRedactionTarget
 import com.pdfiumkit.PdfSize
 import com.pdfiumkit.PdfViewTransform
 
@@ -46,11 +49,31 @@ data class PdfViewState(
     val layout: PdfPageLayout,
 )
 
+/**
+ * A change to the document, carrying the arguments of the call that made it.
+ *
+ * An event saying only "annotation 3 was added" cannot be reproduced by a peer — it does
+ * not say what to add — so each case mirrors the parameters of the API it came from.
+ *
+ * [InkAdded] carries one stroke, not many: this SDK's addInk takes several on Apple
+ * platforms and one here, so a multi-stroke edit has no faithful cross-platform meaning.
+ */
+sealed class PdfEdit {
+    data class NoteAdded(val page: Int, val rect: PdfRect, val contents: String, val color: PdfColor) : PdfEdit()
+    data class InkAdded(val page: Int, val stroke: List<PdfPoint>, val color: PdfColor, val lineWidth: Float) : PdfEdit()
+    data class HighlightAdded(val page: Int, val quads: List<PdfQuad>, val color: PdfColor) : PdfEdit()
+    data class AnnotationRemoved(val page: Int, val index: Int) : PdfEdit()
+    data class FieldTextSet(val page: Int, val annotationIndex: Int, val value: String) : PdfEdit()
+    data class FieldCheckedSet(val page: Int, val annotationIndex: Int, val checked: Boolean) : PdfEdit()
+    data class FieldOptionSet(val page: Int, val annotationIndex: Int, val option: Int, val selected: Boolean) : PdfEdit()
+    data class Redacted(val targets: List<PdfRedactionTarget>) : PdfEdit()
+}
+
 sealed class PdfViewChange {
     data class Viewport(val state: PdfViewState) : PdfViewChange()
     data class Selection(val selection: PdfSelection?) : PdfViewChange()
     data class Tool(val tool: PdfTool) : PdfViewChange()
-    // An Edit change arrives with the editing phase, in its own plan.
+    data class Edit(val edit: PdfEdit) : PdfViewChange()
 }
 
 enum class PdfViewEventOrigin { LOCAL, REMOTE;
@@ -65,6 +88,11 @@ data class PdfViewEvent(
     /** Applying a remote event must emit nothing, or two viewers echo each other. */
     val origin: PdfViewEventOrigin,
     val change: PdfViewChange,
+    /**
+     * Set on edit events: a hash of the bytes the sender opened. A peer refuses an edit
+     * whose fingerprint does not match its own, since indices are positions in bytes.
+     */
+    val documentFingerprint: String? = null,
 )
 
 /**

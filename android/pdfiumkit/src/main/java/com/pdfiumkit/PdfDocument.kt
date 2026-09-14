@@ -33,6 +33,30 @@ class PdfDocument private constructor(
 
     internal fun originalBytes(): ByteArray = backing
 
+    private var cachedFingerprint: String? = null
+
+    /**
+     * A stable identifier for the bytes this document was opened from.
+     *
+     * Two documents opened from identical bytes share it; any difference changes it.
+     * Used to refuse replaying an edit against the wrong document — annotation and field
+     * indices are positions in specific bytes, so a removal replayed elsewhere removes
+     * the wrong thing, silently.
+     *
+     * FNV-1a rather than a cryptographic digest: this answers "are these the same
+     * bytes", not "has someone tampered with them". The length is appended, since a hash
+     * collision alone should not be enough.
+     */
+    val fingerprint: String
+        get() = cachedFingerprint ?: run {
+            var hash = -0x7ee3623b  // 0x811c9dc5 as a signed Int
+            for (byte in backing) {
+                hash = hash xor (byte.toInt() and 0xff)
+                hash *= 16777619
+            }
+            "%08x-%d".format(hash, backing.size).also { cachedFingerprint = it }
+        }
+
     private val closed = AtomicBoolean(false)
 
     companion object {
