@@ -1,4 +1,6 @@
-import type { PdfPoint, PdfRect, PdfPageRotation } from '../types.js';
+import type {
+  PdfColor, PdfPoint, PdfQuad, PdfRect, PdfPageRotation, PdfRedactionTarget,
+} from '../types.js';
 import type { PdfZoom } from './zoom.js';
 
 export type PdfPageLayout = 'single' | 'continuous';
@@ -27,15 +29,49 @@ export interface PdfViewState {
   readonly layout: PdfPageLayout;
 }
 
+/**
+ * A change to the document, carrying the arguments of the call that made it.
+ *
+ * An event saying only "annotation 3 was added" cannot be reproduced by a peer — it does
+ * not say what to add — so each case mirrors the parameters of the API it came from.
+ *
+ * `inkAdded` carries one stroke, not many: iOS builds a single annotation from several
+ * strokes while web and Android build one per stroke, so a multi-stroke edit has no
+ * faithful cross-platform meaning.
+ */
+export type PdfEdit =
+  | { readonly kind: 'noteAdded'; readonly page: number; readonly rect: PdfRect;
+      readonly contents: string; readonly color: PdfColor }
+  | { readonly kind: 'inkAdded'; readonly page: number; readonly stroke: readonly PdfPoint[];
+      readonly color: PdfColor; readonly lineWidth: number }
+  | { readonly kind: 'highlightAdded'; readonly page: number; readonly quads: readonly PdfQuad[];
+      readonly color: PdfColor }
+  | { readonly kind: 'annotationRemoved'; readonly page: number; readonly index: number }
+  | { readonly kind: 'fieldTextSet'; readonly page: number; readonly annotationIndex: number;
+      readonly value: string }
+  | { readonly kind: 'fieldCheckedSet'; readonly page: number; readonly annotationIndex: number;
+      readonly checked: boolean }
+  | { readonly kind: 'fieldOptionSet'; readonly page: number; readonly annotationIndex: number;
+      readonly option: number; readonly selected: boolean }
+  | { readonly kind: 'redacted'; readonly targets: readonly PdfRedactionTarget[] };
+
 export type PdfViewChange =
   | { readonly kind: 'viewport'; readonly state: PdfViewState }
   | { readonly kind: 'selection'; readonly selection: PdfSelection | null }
-  | { readonly kind: 'tool'; readonly tool: PdfTool };
-// An 'edit' change arrives with the editing phase, in its own plan.
+  | { readonly kind: 'tool'; readonly tool: PdfTool }
+  | { readonly kind: 'edit'; readonly edit: PdfEdit };
 
 export interface PdfViewEvent {
   /** Per sender. A peer ignores anything at or below the highest it has seen. */
   readonly sequence: number;
+  /**
+   * Set on edit events: a hash of the bytes the sender opened.
+   *
+   * Annotation and field indices are positions in specific bytes, so replaying a
+   * removal against a different document removes the wrong thing. A peer refuses an
+   * edit whose fingerprint does not match its own.
+   */
+  readonly documentFingerprint?: string;
   readonly sessionId: string;
   /** Applying a remote event must emit nothing, or two viewers echo each other. */
   readonly origin: 'local' | 'remote';

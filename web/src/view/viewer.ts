@@ -1,12 +1,13 @@
 import type { PdfDocument } from '../document.js';
 import type {
-  PdfPoint, PdfRect, PdfRenderOptions, PdfSize, PdfPageRotation,
+  PdfColor, PdfPoint, PdfQuad, PdfRect, PdfRenderOptions, PdfSize, PdfPageRotation,
+  PdfRedactionReport, PdfRedactionTarget,
 } from '../types.js';
 import type { PdfImageData } from '../page.js';
 import { PdfViewTransform } from '../types.js';
 import { fittingSize, fittingWidth, stepped, type PdfZoom } from './zoom.js';
 import type {
-  PdfPageLayout, PdfSelection, PdfTool, PdfViewChange, PdfViewEvent, PdfViewState,
+  PdfEdit, PdfPageLayout, PdfSelection, PdfTool, PdfViewChange, PdfViewEvent, PdfViewState,
 } from './state.js';
 
 export interface PdfViewerOptions {
@@ -159,6 +160,70 @@ export class PdfViewer {
     this.emit({ kind: 'tool', tool });
   }
 
+  // MARK: - Editing
+  //
+  // Every method delegates to the existing page API and then emits. Two code paths
+  // producing annotations would drift, and the bug would only surface through one of
+  // them — `viewer-delegation.test.ts` asserts byte identity to stop that.
+
+  async addNote(rect: PdfRect, contents: string,
+                color: PdfColor = { red: 255, green: 255, blue: 0, alpha: 128 }): Promise<number> {
+    const index = await (await this.document.page(this.current.pageIndex))
+      .addNote(rect, contents, color);
+    this.emitEdit({ kind: 'noteAdded', page: this.current.pageIndex, rect, contents, color });
+    return index;
+  }
+
+  async addInk(stroke: readonly PdfPoint[],
+               color: PdfColor = { red: 0, green: 0, blue: 0 },
+               lineWidth = 2): Promise<number> {
+    const index = await (await this.document.page(this.current.pageIndex))
+      .addInk(stroke, color, lineWidth);
+    this.emitEdit({ kind: 'inkAdded', page: this.current.pageIndex, stroke, color, lineWidth });
+    return index;
+  }
+
+  async addHighlight(quads: readonly PdfQuad[],
+                     color: PdfColor = { red: 255, green: 255, blue: 0, alpha: 128 }): Promise<number> {
+    const index = await (await this.document.page(this.current.pageIndex))
+      .addHighlight(quads, color);
+    this.emitEdit({ kind: 'highlightAdded', page: this.current.pageIndex, quads, color });
+    return index;
+  }
+
+  async removeAnnotation(index: number): Promise<void> {
+    await (await this.document.page(this.current.pageIndex)).removeAnnotation(index);
+    this.emitEdit({ kind: 'annotationRemoved', page: this.current.pageIndex, index });
+  }
+
+  async setFieldText(value: string, annotationIndex: number): Promise<void> {
+    await (await this.document.page(this.current.pageIndex)).setText(value, annotationIndex);
+    this.emitEdit({ kind: 'fieldTextSet', page: this.current.pageIndex, annotationIndex, value });
+  }
+
+  async setFieldChecked(checked: boolean, annotationIndex: number): Promise<void> {
+    await (await this.document.page(this.current.pageIndex)).setChecked(checked, annotationIndex);
+    this.emitEdit({ kind: 'fieldCheckedSet', page: this.current.pageIndex, annotationIndex, checked });
+  }
+
+  async setFieldOption(option: number, selected: boolean, annotationIndex: number): Promise<void> {
+    await (await this.document.page(this.current.pageIndex))
+      .setOption(option, selected, annotationIndex);
+    this.emitEdit({ kind: 'fieldOptionSet', page: this.current.pageIndex, annotationIndex, option, selected });
+  }
+
+  /**
+   * Removes content so it cannot be recovered.
+   *
+   * **Save with `'full'` afterwards** — an incremental save leaves the original content
+   * stream in the file, and the removed content with it.
+   */
+  async redact(targets: readonly PdfRedactionTarget[]): Promise<PdfRedactionReport> {
+    const report = await this.document.redact(targets);
+    this.emitEdit({ kind: 'redacted', targets });
+    return report;
+  }
+
   // MARK: - Sync
 
   /**
@@ -228,6 +293,16 @@ export class PdfViewer {
     const latest = this.pending;
     this.pending = null;
     if (latest) this.emit({ kind: 'viewport', state: latest });
+  }
+
+  /**
+   * Edits bypass the viewport throttle.
+   *
+   * A viewport change may be dropped in favour of a later one — only the latest matters.
+   * An annotation added is not superseded by the next, and dropping it loses data.
+   */
+  private emitEdit(edit: PdfEdit): void {
+    this.emit({ kind: 'edit', edit });
   }
 
   private emit(change: PdfViewChange): void {
