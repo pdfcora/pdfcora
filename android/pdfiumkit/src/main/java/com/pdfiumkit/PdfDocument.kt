@@ -1,13 +1,9 @@
 package com.pdfiumkit
 
 import android.graphics.Bitmap
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.withContext
 import java.io.Closeable
 import java.io.File
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -22,8 +18,6 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 class PdfDocument private constructor(
     private var handle: Long,
-    private val executor: java.util.concurrent.ExecutorService,
-    private val dispatcher: CoroutineDispatcher,
     /**
      * The bytes the document was opened from. A signature's byte range is measured
      * against them and verification re-hashes them; PDFium's own copy is not
@@ -65,34 +59,25 @@ class PdfDocument private constructor(
         const val ENGINE_VERSION: String = "chromium/7243"
 
         /**
-         * Every PDFium call in the process runs here, on one thread.
-         *
-         * Not one executor per document: PDFium's global state is not thread-safe, so
-         * two documents working at once race it. That is not theoretical — it kills the
-         * process with a fatal signal on the document thread, reproducibly, which is
-         * what `CrossDocumentStressTest` exists to prove.
-         *
-         * The cost is that documents no longer work in parallel with each other. Calls
-         * on a single document were always serialised, so nothing there changes; what
-         * goes away is cross-document concurrency, which was never safe to begin with.
+         * How long one engine call may run before the calls queued behind it fail with
+         * [PdfError.EngineUnresponsive]. Every document shares one engine thread, and
+         * PDFium can hang inside a single call on a malformed page. The stuck call itself
+         * cannot be interrupted. Defaults to 30 seconds.
          */
-        private val engineExecutor: ExecutorService by lazy {
-            Executors.newSingleThreadExecutor { runnable ->
-                Thread(runnable, "pdfiumkit-engine").apply { isDaemon = true }
-            }
-        }
-        private val engineDispatcher by lazy { engineExecutor.asCoroutineDispatcher() }
+        var engineTimeoutMillis: Long
+            get() = EngineExecutor.timeoutMillis
+            set(value) { EngineExecutor.timeoutMillis = value }
 
         suspend fun open(bytes: ByteArray, password: String? = null): PdfDocument {
-            val dispatcher = engineDispatcher
             // The error is read in the same hop as the load: PDFium's last error is one
             // global, and another document's failure could overwrite it between hops.
-            val handle = withContext(dispatcher) {
+            val handle = withContext(EngineExecutor.dispatcher) {
+                EngineExecutor.ensureResponsive()
                 Native.openDocument(bytes, password).also {
                     if (it == 0L) throw PdfError.fromEngine(password != null)
                 }
             }
-            return PdfDocument(handle, engineExecutor, dispatcher, bytes)
+            return PdfDocument(handle, bytes)
         }
 
         suspend fun open(file: File, password: String? = null): PdfDocument =
@@ -104,7 +89,8 @@ class PdfDocument private constructor(
         // Checked before dispatching: the shared executor outlives this document, so
         // only this flag distinguishes a closed document from a live one.
         if (closed.get()) throw PdfError.Closed
-        return withContext(dispatcher) {
+        return withContext(EngineExecutor.dispatcher) {
+            EngineExecutor.ensureResponsive()
             val current = handle
             if (closed.get() || current == 0L) throw PdfError.Closed
             block(current)
@@ -192,7 +178,7 @@ class PdfDocument private constructor(
         // which corrupts global engine state rather than failing loudly.
         // The executor is shared by every document, so it is never shut down here —
         // doing so would take every other open document down with it.
-        if (current != 0L) executor.execute { Native.closeDocument(current) }
+        if (current != 0L) EngineExecutor.executeUnwatched { Native.closeDocument(current) }
     }
 }
 

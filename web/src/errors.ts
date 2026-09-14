@@ -9,7 +9,8 @@ export type PdfErrorCode =
   | 'cancelled'
   | 'saveFailed'
   | 'invalidOperation'
-  | 'engine';
+  | 'engine'
+  | 'engineUnresponsive';
 
 /**
  * Every failure this SDK raises. `code` is the stable, switchable discriminator;
@@ -55,6 +56,10 @@ export class PdfError extends Error {
   }
   static engine(code: number) {
     return new PdfError('engine', `PDFium error ${code}`);
+  }
+  /** A PDFium call never returned, so nothing behind it can run. */
+  static engineUnresponsive() {
+    return new PdfError('engineUnresponsive', 'the PDF engine is stuck on an earlier call and cannot take work');
   }
 
   /** Maps FPDF_GetLastError, using whether a password was supplied to disambiguate. */

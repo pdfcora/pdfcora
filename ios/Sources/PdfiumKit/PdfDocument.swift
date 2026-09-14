@@ -68,13 +68,22 @@ public actor PdfDocument {
     /// The PDFium revision this SDK was built against.
     public nonisolated static var engineVersion: String { PdfEngine.revision }
 
+    /// How long one engine call may run before the calls queued behind it fail with
+    /// ``PdfError/engineUnresponsive``. Every document shares one engine thread, and
+    /// PDFium can hang inside a single call on a malformed page. The stuck call itself
+    /// cannot be interrupted. Defaults to 30 seconds.
+    public nonisolated static var engineTimeout: TimeInterval {
+        get { EngineExecutor.shared.timeout }
+        set { EngineExecutor.shared.timeout = newValue }
+    }
+
     public init(data: Data, password: String? = nil) async throws {
         self.backing = data
 
         // An actor's init runs on the caller's context, *not* on the actor's executor,
         // so without this hop several documents opening at once would call PDFium
         // concurrently — which is exactly what CrossDocumentStressTests reproduces.
-        let opened: FPDF_DOCUMENT? = EngineExecutor.shared.run {
+        let opened: FPDF_DOCUMENT? = try EngineExecutor.shared.run {
             PdfEngine.ensureInitialized()
             return data.withUnsafeBytes { raw in
                 if let password {
@@ -90,8 +99,9 @@ public actor PdfDocument {
         self.handle = opened
 
         formInfo.pointee.version = 2
-        self.formHandle = EngineExecutor.shared.run {
-            let form = FPDFDOC_InitFormFillEnvironment(opened, formInfo)
+        let info = formInfo
+        self.formHandle = try EngineExecutor.shared.run {
+            let form = FPDFDOC_InitFormFillEnvironment(opened, info)
             if let form {
                 FORM_DoDocumentJSAction(form)
                 FORM_DoDocumentOpenAction(form)
@@ -126,26 +136,45 @@ public actor PdfDocument {
 
     /// Releases the document and every page loaded from it. Further use throws ``PdfError/closed``.
     public func close() {
+        guard EngineExecutor.shared.isResponsive else { return closeWhenEngineReturns() }
         for (_, page) in pageCache { FPDF_ClosePage(page) }
         pageCache.removeAll()
         if let formHandle { FPDFDOC_ExitFormFillEnvironment(formHandle); self.formHandle = nil }
         if let handle { FPDF_CloseDocument(handle); self.handle = nil }
     }
 
+    /// Detaches the handles now and frees them on the engine thread once the stuck call
+    /// returns. Freeing here would call PDFium alongside it.
+    private func closeWhenEngineReturns() {
+        let pages = Array(pageCache.values)
+        let form = formHandle
+        let document = handle
+        pageCache.removeAll()
+        formHandle = nil
+        handle = nil
+        EngineExecutor.shared.runAsync {
+            for page in pages { FPDF_ClosePage(page) }
+            if let form { FPDFDOC_ExitFormFillEnvironment(form) }
+            if let document { FPDF_CloseDocument(document) }
+        }
+    }
+
     public var isClosed: Bool { handle == nil }
 
+    /// Zero when the document is closed or the engine is unresponsive.
     public var pageCount: Int {
-        guard let handle else { return 0 }
+        guard EngineExecutor.shared.isResponsive, let handle else { return 0 }
         return Int(FPDF_GetPageCount(handle))
     }
 
     public var permissions: PdfPermissions {
-        guard let handle else { return [] }
+        guard EngineExecutor.shared.isResponsive, let handle else { return [] }
         return PdfPermissions(rawValue: Int(FPDF_GetDocPermissions(handle)))
     }
 
     /// A lightweight reference to a page. Loading is deferred until the page is used.
     public func page(_ index: Int) throws -> PdfPage {
+        try EngineExecutor.shared.ensureResponsive()
         let count = pageCount
         guard index >= 0 && index < count else {
             throw PdfError.pageOutOfRange(index, count: count)
@@ -156,6 +185,7 @@ public actor PdfDocument {
     // MARK: - Internal, actor-isolated primitives
 
     func requireHandle() throws -> FPDF_DOCUMENT {
+        try EngineExecutor.shared.ensureResponsive()
         guard let handle else { throw PdfError.closed }
         return handle
     }
@@ -183,7 +213,8 @@ public actor PdfDocument {
 
     /// Releases a cached page. Safe to call for a page that was never loaded.
     func releasePage(_ index: Int) {
-        guard let page = pageCache.removeValue(forKey: index) else { return }
+        guard EngineExecutor.shared.isResponsive,
+              let page = pageCache.removeValue(forKey: index) else { return }
         if let formHandle {
             FORM_DoPageAAction(page, formHandle, FPDFPAGE_AACTION_CLOSE)
             FORM_OnBeforeClosePage(page, formHandle)

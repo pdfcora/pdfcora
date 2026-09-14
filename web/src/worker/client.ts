@@ -25,6 +25,14 @@ export interface PdfWorkerOptions {
   glueUrl: string | URL;
   /** URL of the matching `pdfium.esm.wasm`. */
   wasmUrl: string | URL;
+  /**
+   * How long the worker may go without answering, while calls are pending, before it is
+   * treated as hung: it is terminated and every pending call rejects with
+   * `engineUnresponsive`. PDFium can hang inside a single call on a malformed page, and
+   * the worker runs one call at a time, so nothing behind a hung call would ever run.
+   * Terminating discards every document open in the worker. Defaults to 30 seconds.
+   */
+  callTimeoutMs?: number;
 }
 
 interface Pending {
@@ -39,8 +47,11 @@ export class PdfWorker {
   private nextId = 1;
   private terminated = false;
   private readonly ready: Promise<void>;
+  private readonly callTimeoutMs: number;
+  private watchdog?: ReturnType<typeof setTimeout>;
 
   constructor(options: PdfWorkerOptions) {
+    this.callTimeoutMs = options.callTimeoutMs ?? 30_000;
     this.worker = new Worker(options.workerUrl, { type: 'module' });
     this.worker.onmessage = (event: MessageEvent<WorkerResponse>) => this.settle(event.data);
     this.worker.onerror = (event) => this.rejectAll(new Error(`worker error: ${event.message}`));
@@ -56,6 +67,8 @@ export class PdfWorker {
     const entry = this.pending.get(response.id);
     if (!entry) return;
     this.pending.delete(response.id);
+    // Any answer is progress, so the deadline restarts for whatever is still pending.
+    this.armWatchdog();
 
     if (response.ok) {
       entry.resolve(response.result);
@@ -68,6 +81,22 @@ export class PdfWorker {
   private rejectAll(error: unknown): void {
     for (const entry of this.pending.values()) entry.reject(error);
     this.pending.clear();
+    this.armWatchdog();
+  }
+
+  /**
+   * Restarts the deadline, or clears it when nothing is pending. Only answers restart
+   * it, never new calls: calls queued behind a hung one must not keep it alive.
+   */
+  private armWatchdog(): void {
+    clearTimeout(this.watchdog);
+    this.watchdog = undefined;
+    if (this.terminated || this.pending.size === 0) return;
+    this.watchdog = setTimeout(() => {
+      this.terminated = true;
+      this.worker.terminate();
+      this.rejectAll(PdfError.engineUnresponsive());
+    }, this.callTimeoutMs);
   }
 
   /** @internal */
@@ -76,6 +105,7 @@ export class PdfWorker {
     const id = this.nextId++;
     return new Promise((resolve, reject) => {
       this.pending.set(id, { resolve, reject });
+      if (this.pending.size === 1) this.armWatchdog();
       this.worker.postMessage({ ...request, id } as WorkerRequest, transfer ?? []);
     });
   }

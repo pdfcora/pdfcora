@@ -14,6 +14,11 @@ public enum PdfError: Error, Equatable, Sendable {
     /// An FPDF_GetLastError value with no more specific mapping.
     case engine(code: Int)
 
+    /// A PDFium call has outlived ``PdfDocument/engineTimeout`` and still holds the
+    /// engine, which every document shares. Calls behind it fail with this instead of
+    /// waiting forever; they succeed again if the stuck call ever returns.
+    case engineUnresponsive
+
     /// This viewer is following someone else's session and may not edit.
     case readOnlyFollower
 
@@ -47,6 +52,8 @@ extension PdfError: CustomStringConvertible {
         case .saveFailed(let reason): return "saving failed: \(reason)"
         case .invalidOperation(let reason): return "invalid operation: \(reason)"
         case .engine(let code):       return "PDFium error \(code)"
+        case .engineUnresponsive:
+            return "the PDF engine is stuck on an earlier call and cannot take work"
         case .readOnlyFollower:
             return "this viewer is following another session and cannot edit the document"
         case .documentMismatch(let expected, let received):

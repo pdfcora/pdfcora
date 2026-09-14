@@ -8,17 +8,11 @@ import XCTest
 /// passing an environment flag through xcodebuild to the test process does not work
 /// reliably here. Run it deliberately with `-only-testing` and a time allowance.
 final class HangProbeTests: XCTestCase {
-    /// Disabled: cannot run against a serialised engine.
-    ///
-    /// This works by wedging a render forever. Every PDFium call now shares one engine
-    /// thread — because per-document threads let documents race PDFium's global state
-    /// and killed the process, which `CrossDocumentStressTests` reproduces — so the
-    /// wedge outlives the test and takes every later call with it.
-    ///
-    /// Re-enable if a watchdog is added that can abandon a stuck engine thread.
+    /// Disabled: the question is answered — the hang reproduces natively — and this test
+    /// never finishes by design. `BlastRadiusTests` covers what the SDK does about it.
 
     override func setUpWithError() throws {
-        throw XCTSkip("a deliberate hang cannot coexist with a single shared engine thread")
+        throw XCTSkip("probe only; see BlastRadiusTests")
     }
 
     func testRenderingTheHangDocument() async throws {

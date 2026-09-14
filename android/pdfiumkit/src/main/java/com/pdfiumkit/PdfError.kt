@@ -14,6 +14,13 @@ sealed class PdfError(message: String) : Exception(message) {
     class InvalidOperation(val reason: String) : PdfError("invalid operation: $reason")
     class Engine(val code: Int) : PdfError("PDFium error $code")
 
+    /**
+     * A PDFium call has outlived [PdfDocument.engineTimeoutMillis] and still holds the
+     * engine, which every document shares. Calls behind it fail with this instead of
+     * waiting forever; they succeed again if the stuck call ever returns.
+     */
+    object EngineUnresponsive : PdfError("the PDF engine is stuck on an earlier call and cannot take work")
+
     internal companion object {
         fun fromEngine(passwordSupplied: Boolean): PdfError = when (Native.lastError()) {
             2 -> Corrupt("file could not be read")

@@ -9,31 +9,21 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Ignore
+import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * How far a hung render spreads.
+ * How far a genuinely hung render spreads.
  *
- * This test used to assert the opposite of what it asserts now, and the reversal is the
- * point. Documents once owned a thread each, so a hang cost exactly that document — but
- * that isolation was only possible because calls were *not* serialised across documents,
- * and PDFium's global state is not thread-safe. `CrossDocumentStressTest` kills the
- * process reproducibly under the old arrangement.
+ * `hang-probe.pdf` never returns from PDFium's render. Every PDFium call shares one engine
+ * thread, so without the watchdog this blocks every document forever; with it, calls
+ * behind the hang fail fast with [PdfError.EngineUnresponsive].
  *
- * Every PDFium call now runs on one engine thread, so a hung render wedges the engine
- * for everyone. That is strictly worse for liveness and strictly better for memory
- * safety, and there is no third option while PDFium stays single-threaded: correctness
- * requires serialisation, and serialisation means one stuck call blocks the queue.
- *
- * Making that survivable — a watchdog that abandons a wedged thread and fails the calls
- * behind it — is a design decision, not a bug fix, and is deliberately not smuggled in
- * here. This test pins the current behaviour so the trade-off is visible rather than
- * discovered.
+ * The render spins a core for the life of the process and the engine stays unresponsive,
+ * so this runs in its own pass; see [LeaksNativeThreads].
  */
 @RunWith(AndroidJUnit4::class)
 @LeaksNativeThreads
@@ -41,41 +31,39 @@ class BlastRadiusTest {
     private fun asset(name: String) =
         InstrumentationRegistry.getInstrumentation().context.assets.open(name).use { it.readBytes() }
 
-    @Ignore(
-        "Cannot run against a serialised engine. The test works by wedging a render " +
-            "forever, and there is now one engine thread, so the wedge outlives the test " +
-            "and takes every later call with it — including this test's own assertion. " +
-            "Re-enable if a watchdog is added that can abandon a stuck engine thread.",
-    )
     @Test
-    fun aHungRenderWedgesTheEngineForEveryone() = runTest {
+    fun aHungRenderFailsOtherDocumentsFastInsteadOfBlockingThem() = runTest {
         // Real dispatchers and real time: runTest's virtual clock would skip the delays
         // that let the hang actually start.
         withContext(Dispatchers.Default) {
-            val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+            PdfDocument.engineTimeoutMillis = 1_000
+            val helloWorld = asset("corpus/hello_world.pdf")
+            val other = PdfDocument.open(helloWorld)
+            val page = PdfDocument.open(asset("hang-probe.pdf")).page(0)
 
-            val hung = PdfDocument.open(asset("hang-probe.pdf"))
-            val page = hung.page(0)
-            scope.launch { runCatching { page.render(width = 80) } }
-            delay(500)
+            CoroutineScope(SupervisorJob() + Dispatchers.Default).launch {
+                runCatching { page.render(width = 80) }
+            }
+            delay(2_000)
 
-            // Coroutines unrelated to the engine keep running: the wedge is one thread,
-            // not the whole process.
+            // Coroutines unrelated to the engine keep running: the wedge is one thread.
             var ticks = 0
             repeat(10) { delay(100); ticks++ }
             assertEquals("unrelated coroutines were starved", 10, ticks)
 
-            // But anything that needs the engine is stuck behind the hung call, however
-            // unrelated the document.
-            val other = withTimeoutOrNull(4_000) {
-                PdfDocument.open(asset("corpus/hello_world.pdf")).page(0).render(width = 120).width
+            val started = System.nanoTime()
+            try {
+                other.page(0).render(width = 120)
+                fail("a render behind the hung one completed")
+            } catch (e: PdfError.EngineUnresponsive) {
             }
-            assertNull(
-                "a hung render no longer blocks other documents — if this passes, the " +
-                    "engine is no longer serialised, and CrossDocumentStressTest should " +
-                    "be failing too",
-                other,
-            )
+            try {
+                PdfDocument.open(helloWorld)
+                fail("opening behind the hung render completed")
+            } catch (e: PdfError.EngineUnresponsive) {
+            }
+            val elapsedMillis = (System.nanoTime() - started) / 1_000_000
+            assertTrue("failing fast took ${elapsedMillis}ms", elapsedMillis < 1_000)
         }
     }
 }

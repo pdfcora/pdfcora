@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 # Runs the iOS SDK tests on a simulator.
 #
-# One pass. BlastRadiusTests and HangProbeTests used to run separately because they leave
-# native render threads spinning forever; they are now skipped outright, since a wedged
-# render never clears once every PDFium call shares one engine thread.
+# Two passes: BlastRadiusTests leaves a native render thread spinning forever, so it runs
+# in its own process after everything else.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -19,9 +18,11 @@ for suite in "${LEAKY[@]}"; do skip+=("-skip-testing:$suite"); done
 
 xcodebuild test -scheme "$SCHEME" -destination "$DESTINATION" "${skip[@]}" "$@"
 
-# The second pass is gone: both leaky suites deliberately wedge a render, and every
-# PDFium call now shares one engine thread, so a wedge never clears. They skip
-# themselves and there is nothing left for this pass to run.
+# BlastRadiusTests wedges a render for real and leaves the engine unresponsive for the
+# rest of the process, so it gets a process of its own. HangProbeTests stays skipped:
+# it was a one-off probe, and its question is answered.
+xcodebuild test -scheme "$SCHEME" -destination "$DESTINATION" \
+    -only-testing:PdfiumKitTests/BlastRadiusTests "$@"
 
 # The AI package's own suite.
 xcodebuild test -scheme "$SCHEME" -destination "$DESTINATION" \

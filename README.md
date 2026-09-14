@@ -198,38 +198,34 @@ the SDK. No cancellation mechanism on any platform can break out of it, includin
 iOS progressive path.
 
 **What this means for you:** if you render PDFs that users supply, a 1 KB file can wedge
-the thread doing the rendering, permanently. A timeout around the `await` is not enough —
-the work keeps running.
+the thread doing the rendering, permanently. The call that hit it never returns.
 
 This is PDFium behaviour, not a binding bug; it reproduces with raw `FPDF_*` calls.
 
-**On Web there is a supported way out** — see below. On iOS and Android the damage is
-contained but the thread is not recoverable — see the measurements below.
+#### What the SDK does about it
 
-#### How far the damage spreads, measured
+Every PDFium call in the process runs on one engine thread, because PDFium's global
+state is not thread-safe (two documents calling it at once crashed the process). So a
+hang would block every document, not just the one that hit it.
 
-The hang reproduces natively, not only in WASM: on the iOS simulator the render never
-returns and the process spins a core at ~99%.
+A watchdog prevents that. When one call outlives the engine timeout, the calls queued
+behind it fail fast instead of waiting forever:
 
-The per-document executor design contains it. Measured by deliberately starting more
-simultaneous hangs than the machine has cores:
-
-| | hangs started | other documents still render? | unrelated async work? |
+| | timeout setting | behind a hung call | the hung call |
 |---|---|---|---|
-| iOS (14 cores) | 16 | ✅ | ✅ |
-| Android (8 cores) | 10 | ✅ | ✅ |
+| iOS | `PdfDocument.engineTimeout` (30 s) | throw `PdfError.engineUnresponsive` | never returns |
+| Android | `PdfDocument.engineTimeoutMillis` (30 s) | throw `PdfError.EngineUnresponsive` | never returns |
+| Web, `PdfWorker` | `callTimeoutMs` (30 s) | reject with `engineUnresponsive` | rejects too; the worker is terminated |
+| Web, in process | — | the tab freezes | — |
 
-So a hung render costs:
+On iOS and Android the stuck thread cannot be killed, so it spins a core until the
+process exits, and the engine stays unresponsive for as long as the call is stuck. If
+the call ever returns, the engine takes work again. Unrelated app work is unaffected.
+`BlastRadiusTests` / `BlastRadiusTest` measure this against the hanging document.
 
-- **that one document, permanently** — every later call on it never returns
-- **one thread and one core**, spinning until the process exits
-
-It does *not* cascade: other documents, and the rest of the app, keep working. Process
-isolation would only buy back the thread and the CPU, not containment.
-
-**What to do in an app:** race your own deadline around a render of an untrusted
-document, and on timeout treat that `PdfDocument` as lost — stop using it and open a
-fresh one. Do not retry on the same document; it will never answer again.
+**What to do in an app:** treat `engineUnresponsive` as "PDF features are unavailable
+until restart", and render untrusted documents on the web through `PdfWorker`, where a
+new worker recovers fully.
 
 ### Web: run untrusted documents in a Worker
 
@@ -250,7 +246,8 @@ const doc  = await worker.open(bytes)
 const page = await doc.page(0)
 const img  = await page.render({ width: 1200 })   // identical to the in-process API
 
-// If a render does not come back, this is your escape hatch.
+// A call that does not come back within callTimeoutMs terminates the worker and rejects
+// pending calls with 'engineUnresponsive'. You can also give up sooner yourself:
 worker.terminate()   // pending calls reject with PdfError code 'cancelled'
 ```
 

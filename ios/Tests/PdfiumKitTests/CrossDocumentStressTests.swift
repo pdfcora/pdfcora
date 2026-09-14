@@ -64,7 +64,7 @@ final class CrossDocumentStressTests: XCTestCase {
         }
 
         gate.signal()
-        EngineExecutor.shared.run {}
+        try EngineExecutor.shared.run {}
     }
 
     func testOpeningAndClosingWhileOthersWorkDoesNotCorruptTheEngine() async throws {
