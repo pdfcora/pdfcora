@@ -23,6 +23,7 @@ only appear through one of them. TypeScript first, then ported.
 | Redaction is available through the document | ✅ `PdfDocument.redact(_:)` returning a report, on all three platforms |
 | The viewer already emits and applies viewport, selection and tool changes | ✅ phases 1–2, 220/20/21 tests |
 | Annotation indices are positions in a specific document | ✅ `removeAnnotation(at:)` takes an index, so replaying it against different bytes removes the wrong thing — hence the fingerprint in Task 3 |
+| `addInk` means the same thing everywhere | ❌ **no** — iOS takes `strokes: [[PdfPoint]]` and makes *one* annotation of many strokes; web and Android take a single `stroke` and would make *one annotation per stroke*. Not equivalent, so the wire carries one stroke — see Limitations |
 | A full save is required after redaction | ✅ pinned by existing tests: an incremental save leaves the original content stream |
 
 ## Global Constraints
@@ -87,7 +88,7 @@ Expected: FAIL, `PdfEdit` is not exported
 export type PdfEdit =
   | { readonly kind: 'noteAdded'; readonly page: number; readonly rect: PdfRect;
       readonly contents: string; readonly color: PdfColor }
-  | { readonly kind: 'inkAdded'; readonly page: number; readonly strokes: readonly (readonly PdfPoint[])[];
+  | { readonly kind: 'inkAdded'; readonly page: number; readonly stroke: readonly PdfPoint[];
       readonly color: PdfColor; readonly lineWidth: number }
   | { readonly kind: 'highlightAdded'; readonly page: number; readonly quads: readonly PdfQuad[];
       readonly color: PdfColor }
@@ -345,6 +346,11 @@ the arguments a peer must end up calling with.
   Out of scope, and said plainly rather than left to be discovered.
 - **Replay assumes identical bytes.** The fingerprint turns a silent corruption into a
   refusal, but it cannot merge divergent documents.
+- **Ink syncs one stroke at a time.** iOS's `addInk` builds a single annotation from
+  many strokes; web's and Android's build one annotation from one stroke. Those are not
+  the same document, so the wire carries a single stroke and a multi-stroke iOS
+  annotation cannot be replayed faithfully. Aligning the three signatures is a separate
+  change to the core API and is not smuggled into this plan.
 - **No UI.** That is phase 5.
 
 ## Risks
