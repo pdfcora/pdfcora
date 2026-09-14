@@ -6,6 +6,7 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.withContext
 import java.io.Closeable
 import java.io.File
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -63,18 +64,32 @@ class PdfDocument private constructor(
         /** The PDFium revision this SDK was built against. */
         const val ENGINE_VERSION: String = "chromium/7243"
 
-        suspend fun open(bytes: ByteArray, password: String? = null): PdfDocument {
-            val executor = Executors.newSingleThreadExecutor { runnable ->
-                Thread(runnable, "pdfiumkit-document").apply { isDaemon = true }
+        /**
+         * Every PDFium call in the process runs here, on one thread.
+         *
+         * Not one executor per document: PDFium's global state is not thread-safe, so
+         * two documents working at once race it. That is not theoretical — it kills the
+         * process with a fatal signal on the document thread, reproducibly, which is
+         * what `CrossDocumentStressTest` exists to prove.
+         *
+         * The cost is that documents no longer work in parallel with each other. Calls
+         * on a single document were always serialised, so nothing there changes; what
+         * goes away is cross-document concurrency, which was never safe to begin with.
+         */
+        private val engineExecutor: ExecutorService by lazy {
+            Executors.newSingleThreadExecutor { runnable ->
+                Thread(runnable, "pdfiumkit-engine").apply { isDaemon = true }
             }
-            val dispatcher = executor.asCoroutineDispatcher()
+        }
+        private val engineDispatcher by lazy { engineExecutor.asCoroutineDispatcher() }
+
+        suspend fun open(bytes: ByteArray, password: String? = null): PdfDocument {
+            val dispatcher = engineDispatcher
             val handle = withContext(dispatcher) { Native.openDocument(bytes, password) }
             if (handle == 0L) {
-                val error = withContext(dispatcher) { PdfError.fromEngine(password != null) }
-                executor.shutdown()
-                throw error
+                throw withContext(dispatcher) { PdfError.fromEngine(password != null) }
             }
-            return PdfDocument(handle, executor, dispatcher, bytes)
+            return PdfDocument(handle, engineExecutor, dispatcher, bytes)
         }
 
         suspend fun open(file: File, password: String? = null): PdfDocument =
@@ -83,8 +98,8 @@ class PdfDocument private constructor(
 
     /** Runs [block] on this document's dispatcher, refusing once closed. */
     internal suspend fun <T> onDocument(block: (Long) -> T): T {
-        // Checked before dispatching: after close() the executor is shut down, so
-        // dispatching would surface a rejection rather than PdfError.Closed.
+        // Checked before dispatching: the shared executor outlives this document, so
+        // only this flag distinguishes a closed document from a live one.
         if (closed.get()) throw PdfError.Closed
         return withContext(dispatcher) {
             val current = handle
@@ -172,8 +187,9 @@ class PdfDocument private constructor(
         // Must free on this document's own thread. PDFium is not thread-safe, and
         // closing from anywhere else races every other document's in-flight work —
         // which corrupts global engine state rather than failing loudly.
+        // The executor is shared by every document, so it is never shut down here —
+        // doing so would take every other open document down with it.
         if (current != 0L) executor.execute { Native.closeDocument(current) }
-        executor.shutdown()
     }
 }
 
