@@ -1,0 +1,218 @@
+{
+  "version": 1,
+  "note": "Shared by all three platforms. Expected offsets were computed by independent arithmetic, not by running the SDK, so this checks the implementation rather than copying it. Scale is Float on Android and Double elsewhere, so compare to single precision (1e-4), never exactly.",
+  "cases": [
+    {
+      "name": "a free zoom is adopted verbatim by every receiver",
+      "page": {
+        "width": 612,
+        "height": 792
+      },
+      "wire": {
+        "v": 1,
+        "sequence": 1,
+        "sessionId": "presenter",
+        "origin": "local",
+        "change": {
+          "kind": "viewport",
+          "state": {
+            "pageIndex": 0,
+            "center": {
+              "x": 306,
+              "y": 396
+            },
+            "zoom": {
+              "scale": 2,
+              "mode": "free"
+            },
+            "rotation": 0,
+            "layout": "single"
+          }
+        }
+      },
+      "receivers": [
+        {
+          "viewport": {
+            "width": 390,
+            "height": 700
+          },
+          "expectScale": 2,
+          "expectScrollOffset": {
+            "x": 417.0,
+            "y": 442.0
+          }
+        },
+        {
+          "viewport": {
+            "width": 1200,
+            "height": 800
+          },
+          "expectScale": 2,
+          "expectScrollOffset": {
+            "x": 12.0,
+            "y": 392.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "fit-width is re-derived per receiver, so the scales differ",
+      "page": {
+        "width": 612,
+        "height": 792
+      },
+      "wire": {
+        "v": 1,
+        "sequence": 2,
+        "sessionId": "presenter",
+        "origin": "local",
+        "change": {
+          "kind": "viewport",
+          "state": {
+            "pageIndex": 0,
+            "center": {
+              "x": 306,
+              "y": 396
+            },
+            "zoom": {
+              "scale": 0.6372549019607843,
+              "mode": "fitWidth"
+            },
+            "rotation": 0,
+            "layout": "single"
+          }
+        }
+      },
+      "receivers": [
+        {
+          "viewport": {
+            "width": 390,
+            "height": 700
+          },
+          "expectScale": 0.637255,
+          "expectScrollOffset": {
+            "x": 0.0,
+            "y": 0.0
+          }
+        },
+        {
+          "viewport": {
+            "width": 1200,
+            "height": 800
+          },
+          "expectScale": 1.960784,
+          "expectScrollOffset": {
+            "x": 0.0,
+            "y": 376.4706
+          }
+        }
+      ]
+    },
+    {
+      "name": "a centre near the page edge clamps rather than scrolling out of range",
+      "page": {
+        "width": 612,
+        "height": 792
+      },
+      "wire": {
+        "v": 1,
+        "sequence": 3,
+        "sessionId": "presenter",
+        "origin": "local",
+        "change": {
+          "kind": "viewport",
+          "state": {
+            "pageIndex": 0,
+            "center": {
+              "x": 10,
+              "y": 780
+            },
+            "zoom": {
+              "scale": 3,
+              "mode": "free"
+            },
+            "rotation": 0,
+            "layout": "single"
+          }
+        }
+      },
+      "receivers": [
+        {
+          "viewport": {
+            "width": 390,
+            "height": 700
+          },
+          "expectScale": 3,
+          "expectScrollOffset": {
+            "x": 0.0,
+            "y": 0.0
+          }
+        },
+        {
+          "viewport": {
+            "width": 1200,
+            "height": 800
+          },
+          "expectScale": 3,
+          "expectScrollOffset": {
+            "x": 0.0,
+            "y": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "a centre near the far corner clamps to the end of the range, not to zero",
+      "page": {
+        "width": 612,
+        "height": 792
+      },
+      "wire": {
+        "v": 1,
+        "sequence": 4,
+        "sessionId": "presenter",
+        "origin": "local",
+        "change": {
+          "kind": "viewport",
+          "state": {
+            "pageIndex": 0,
+            "center": {
+              "x": 600,
+              "y": 10
+            },
+            "zoom": {
+              "scale": 3,
+              "mode": "free"
+            },
+            "rotation": 0,
+            "layout": "single"
+          }
+        }
+      },
+      "receivers": [
+        {
+          "viewport": {
+            "width": 390,
+            "height": 700
+          },
+          "expectScale": 3,
+          "expectScrollOffset": {
+            "x": 1446,
+            "y": 1676
+          }
+        },
+        {
+          "viewport": {
+            "width": 1200,
+            "height": 800
+          },
+          "expectScale": 3,
+          "expectScrollOffset": {
+            "x": 636,
+            "y": 1576
+          }
+        }
+      ]
+    }
+  ]
+}
