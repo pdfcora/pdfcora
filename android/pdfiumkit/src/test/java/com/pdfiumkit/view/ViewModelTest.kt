@@ -239,6 +239,61 @@ class ViewModelTest {
         }
     }
 
+    /** The edit half of the contract: the same file the web and iOS suites read. */
+    @Test
+    fun everyFixtureEditCaseDecodesToTheExpectedArguments() {
+        val fixture = org.json.JSONObject(fixtureFile().readText())
+        val cases = fixture.getJSONArray("editCases")
+        assertTrue(cases.length() >= 5)
+
+        for (i in 0 until cases.length()) {
+            val testCase = cases.getJSONObject(i)
+            val name = testCase.getString("name")
+            val wire = testCase.getJSONObject("wire")
+            val event = PdfViewCodec.decode(wire.toString())
+            val edit = (event.change as PdfViewChange.Edit).edit
+            val expect = testCase.getJSONObject("expect")
+
+            assertEquals("$name: the fingerprint must survive decoding",
+                         wire.getString("documentFingerprint"), event.documentFingerprint)
+
+            when (val kind = expect.getString("kind")) {
+                "noteAdded" -> {
+                    val note = edit as PdfEdit.NoteAdded
+                    assertEquals(name, expect.getInt("page"), note.page)
+                    assertEquals(name, expect.getString("contents"), note.contents)
+                    val r = expect.getJSONObject("rect")
+                    assertEquals(name, r.getDouble("left").toFloat(), note.rect.left, 1e-4f)
+                    assertEquals(name, r.getDouble("top").toFloat(), note.rect.top, 1e-4f)
+                }
+                "inkAdded" -> {
+                    val ink = edit as PdfEdit.InkAdded
+                    assertEquals(name, expect.getInt("page"), ink.page)
+                    assertEquals(name, expect.getInt("strokePointCount"), ink.stroke.size)
+                    assertEquals(name, expect.getDouble("lineWidth").toFloat(), ink.lineWidth, 1e-4f)
+                }
+                "annotationRemoved" -> {
+                    val removed = edit as PdfEdit.AnnotationRemoved
+                    assertEquals(name, expect.getInt("page"), removed.page)
+                    assertEquals(name, expect.getInt("index"), removed.index)
+                }
+                "fieldTextSet" -> {
+                    val field = edit as PdfEdit.FieldTextSet
+                    assertEquals(name, expect.getInt("annotationIndex"), field.annotationIndex)
+                    assertEquals(name, expect.getString("value"), field.value)
+                }
+                "redacted" -> {
+                    val redacted = edit as PdfEdit.Redacted
+                    assertEquals(name, expect.getInt("targetCount"), redacted.targets.size)
+                    assertTrue(name, redacted.targets[0] is PdfRedactionTarget.Region)
+                    assertEquals(name, expect.getString("secondQuery"),
+                                 (redacted.targets[1] as PdfRedactionTarget.TextMatches).query)
+                }
+                else -> throw AssertionError("$name: unhandled kind $kind")
+            }
+        }
+    }
+
     /** Walks up from the module directory, so the test does not depend on where Gradle
      *  happens to set the working directory. */
     private fun fixtureFile(): File {

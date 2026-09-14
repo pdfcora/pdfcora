@@ -91,6 +91,40 @@ describe('the view event wire format', () => {
     assert.equal(decoded.change.state.layout, rotated.expectLayout);
   });
 
+  test('every shared edit case decodes to the arguments a peer must call with', () => {
+    // The edit half of the cross-platform contract. iOS and Android read this same file
+    // and assert the same things, so a platform that renames or drops a field fails here
+    // rather than silently replaying the wrong call.
+    assert.ok(FIXTURE.editCases.length >= 5);
+
+    for (const testCase of FIXTURE.editCases) {
+      const decoded = decodeEvent(JSON.stringify(testCase.wire));
+      assert.equal(decoded.change.kind, 'edit', testCase.name);
+      if (decoded.change.kind !== 'edit') continue;
+      const edit = decoded.change.edit as Record<string, unknown>;
+      const expect = testCase.expect as Record<string, unknown>;
+
+      assert.equal(edit['kind'], expect['kind'], testCase.name);
+      assert.equal(decoded.documentFingerprint, testCase.wire.documentFingerprint,
+                   `${testCase.name}: the fingerprint must survive decoding`);
+
+      for (const [key, value] of Object.entries(expect)) {
+        if (key === 'kind') continue;
+        if (key === 'strokePointCount') {
+          assert.equal((edit['stroke'] as unknown[]).length, value, testCase.name);
+        } else if (key === 'targetCount') {
+          assert.equal((edit['targets'] as unknown[]).length, value, testCase.name);
+        } else if (key === 'firstTargetKind') {
+          assert.equal((edit['targets'] as Record<string, unknown>[])[0]!['kind'], value, testCase.name);
+        } else if (key === 'secondQuery') {
+          assert.equal((edit['targets'] as Record<string, unknown>[])[1]!['query'], value, testCase.name);
+        } else {
+          assert.deepEqual(edit[key], value, `${testCase.name}: ${key}`);
+        }
+      }
+    }
+  });
+
   test('the fixture contains a case that clamps to the far end, not just to zero', () => {
     // A clamp test where every expected offset is zero proves very little.
     const nonZero = FIXTURE.cases.some((c: { receivers: { expectScrollOffset: { x: number; y: number } }[] }) =>

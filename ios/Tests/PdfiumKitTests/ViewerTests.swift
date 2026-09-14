@@ -302,6 +302,55 @@ private final class EventBox: @unchecked Sendable {
 /// one mistake.
 final class ViewStateConformanceTests: XCTestCase {
 
+    /// The edit half of the contract: the same file the web and Android suites read.
+    func testEveryFixtureEditCaseDecodesToTheExpectedArguments() throws {
+        let url = Repo.root.appendingPathComponent("conformance/view-state.json")
+        let fixture = try XCTUnwrap(
+            try JSONSerialization.jsonObject(with: try Data(contentsOf: url)) as? [String: Any])
+        let cases = try XCTUnwrap(fixture["editCases"] as? [[String: Any]])
+        XCTAssertGreaterThanOrEqual(cases.count, 5)
+
+        for testCase in cases {
+            let name = testCase["name"] as? String ?? "?"
+            let wire = try XCTUnwrap(testCase["wire"] as? [String: Any])
+            let event = try PdfViewCodec.decode(try JSONSerialization.data(withJSONObject: wire))
+            guard case .edit(let edit) = event.change else { return XCTFail("\(name): not an edit") }
+
+            XCTAssertEqual(event.documentFingerprint, wire["documentFingerprint"] as? String,
+                           "\(name): the fingerprint must survive decoding")
+
+            let expect = try XCTUnwrap(testCase["expect"] as? [String: Any])
+            switch (expect["kind"] as? String, edit) {
+            case ("noteAdded", .noteAdded(let page, let rect, let contents, _)):
+                XCTAssertEqual(page, expect["page"] as? Int, name)
+                XCTAssertEqual(contents, expect["contents"] as? String, name)
+                let expectedRect = try XCTUnwrap(expect["rect"] as? [String: Any])
+                XCTAssertEqual(rect.left, expectedRect["left"] as? Double, name)
+                XCTAssertEqual(rect.top, expectedRect["top"] as? Double, name)
+            case ("inkAdded", .inkAdded(let page, let stroke, _, let lineWidth)):
+                XCTAssertEqual(page, expect["page"] as? Int, name)
+                XCTAssertEqual(stroke.count, expect["strokePointCount"] as? Int, name)
+                XCTAssertEqual(lineWidth, expect["lineWidth"] as? Double, name)
+            case ("annotationRemoved", .annotationRemoved(let page, let index)):
+                XCTAssertEqual(page, expect["page"] as? Int, name)
+                XCTAssertEqual(index, expect["index"] as? Int, name)
+            case ("fieldTextSet", .fieldTextSet(let page, let annotationIndex, let value)):
+                XCTAssertEqual(page, expect["page"] as? Int, name)
+                XCTAssertEqual(annotationIndex, expect["annotationIndex"] as? Int, name)
+                XCTAssertEqual(value, expect["value"] as? String, name)
+            case ("redacted", .redacted(let targets)):
+                XCTAssertEqual(targets.count, expect["targetCount"] as? Int, name)
+                guard case .region = targets.first else { return XCTFail("\(name): first target") }
+                guard case .textMatches(let query, _) = targets[1] else {
+                    return XCTFail("\(name): second target")
+                }
+                XCTAssertEqual(query, expect["secondQuery"] as? String, name)
+            default:
+                XCTFail("\(name): decoded \(edit) does not match expected kind")
+            }
+        }
+    }
+
     func testEveryFixtureCaseDerivesTheOffsetsItClaims() throws {
         let url = Repo.root.appendingPathComponent("conformance/view-state.json")
         let fixture = try XCTUnwrap(
