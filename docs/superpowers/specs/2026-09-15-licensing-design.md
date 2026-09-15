@@ -167,25 +167,28 @@ matrix and no background fill. The document is not modified.
 
 When the document needs the watermark, `data` / `toByteArray` / `toBytes`:
 
-1. save as today, in the requested mode;
+1. save as today, but always in full;
 2. open those bytes as a temporary document, insert the watermark into every page's
    content, and regenerate the content;
-3. save the temporary document in the same mode — a full save rewrites, an incremental
-   save appends to the bytes from step 1 — and return that.
+3. save the temporary document in full and return that.
+
+**Always in full.** Measured on 2026-09-15: PDFium `chromium/7243` writes an empty
+incremental update after `FPDFPage_GenerateContent`, whether or not the page is still
+loaded, so a stamped watermark survives only a full save. A requested incremental save of
+a marked document is therefore written in full, and the documentation says so. A licensed
+document keeps both modes.
 
 The open document is never modified, so repeated saves never stamp twice, and a
 following render still overlays exactly one watermark.
 
-**Must be verified first:** PDFium `chromium/7243` does not write annotations created in
-the session during an incremental save. Whether regenerated page content survives an
-incremental save is unknown. If it does not, an incremental save of a marked document
-produces a full save instead, and the documentation says so.
-
 ### 7.3 Signing
 
 Signing works on the document's original bytes. When `signing` is not licensed, or in
-trial, the SDK first appends a watermark revision to those bytes (§7.2, incremental),
-then signs the result. The signature covers the watermark and verifies.
+trial, the SDK first stamps those bytes (§7.2, so in full), then signs the result as an
+incremental update. The new signature covers the watermark and verifies.
+
+**Trial limitation, documented:** because the stamp is a full rewrite, signatures that
+were already in the file no longer verify in the result. A licensed signing keeps them.
 
 ### 7.4 AI
 
@@ -229,6 +232,7 @@ constant in each platform's source, the same 65 bytes everywhere.
   - two saves of a marked document stamp once each;
   - an `editing` call without the module marks the document; with it, does not;
   - unlicensed signing verifies, on the host with `pdfsig`, and contains the watermark;
+  - an incremental save of a marked document comes back as a full save with the watermark;
   - unlicensed redaction still removes the redacted text from the saved bytes;
   - unlicensed AI output carries the prefix and its quotes still verify;
   - an invalid key never throws.
