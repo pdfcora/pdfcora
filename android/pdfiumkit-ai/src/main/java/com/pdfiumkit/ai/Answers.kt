@@ -78,19 +78,26 @@ internal object GroundedAnswers {
     }
 
     /**
-     * Turns a reply into an answer whose highlights come only from verified quotes. A quote
-     * is looked for in the passage it names, and only there. Coordinates never come from
-     * the model.
+     * Turns a reply into an answer whose highlights come only from verified quotes.
+     *
+     * A quote is looked for in the passage it names first, then in the other passages the
+     * model was shown, and nowhere else. Apple's on-device model quotes accurately but often
+     * names a passage that does not exist ("p1-3", or a heading), so the quote decides and
+     * the id is only a hint. Coordinates never come from the model.
+     *
+     * With no citations at all there is nothing to verify, so the answer is `NotFound`: the
+     * same model replies "not mentioned in the passages" rather than the empty answer asked for.
      */
     suspend fun verify(
         reply: PdfGroundedReply, document: PdfDocument, index: PdfTextIndex, passages: List<PdfPassage>,
     ): PdfAnswer {
-        if (reply.answer.isBlank() && reply.citations.isEmpty()) return PdfAnswer.NotFound(index.pagesWithoutText)
-        val byId = passages.associateBy { it.id }
+        if (reply.citations.isEmpty()) return PdfAnswer.NotFound(index.pagesWithoutText)
         val citations = mutableListOf<PdfCitation>()
         for (cited in reply.citations) {
-            val passage = byId[cited.passage] ?: continue
-            val found = locateQuote(passage.text, cited.quote) ?: continue
+            val candidates = passages.filter { it.id == cited.passage } + passages.filter { it.id != cited.passage }
+            val (passage, found) = candidates.firstNotNullOfOrNull { candidate ->
+                locateQuote(candidate.text, cited.quote)?.let { candidate to it }
+            } ?: continue
             val start = passage.start + found.first
             val end = passage.start + found.last + 1
             val page = index.pages.first { it.pageIndex == passage.pageIndex }

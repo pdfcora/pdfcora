@@ -100,18 +100,46 @@ describe('grounded answers', () => {
     await document.close();
   });
 
-  test('a real sentence attributed to the wrong passage is not a citation', async () => {
+  // Apple's model quoted correctly but named passages "p1-3" and "13. Payment": ids are
+  // what it gets wrong, so the quote, not the id, decides.
+  test('a quote credited to the wrong or an unknown passage is found in the passages shown', async () => {
     const document = await contract();
-    const model = provider((prompt) => ({
-      answer: 'Three months.',
-      // A passage on page 1, while the sentence is on page 2.
-      citations: [{ passage: passageId(prompt, 'maintenance services'), quote: NOTICE }],
-    }));
-    const answer = answered(await new PdfiumAI(document, { provider: model }).answers.ask(
-      'What is the notice period for the maintenance services?'));
+    for (const id of [(prompt: string) => passageId(prompt, 'maintenance services'), () => '13. Payment']) {
+      const model = provider((prompt) => ({ answer: 'Three months.', citations: [{ passage: id(prompt), quote: NOTICE }] }));
+      const answer = answered(await new PdfiumAI(document, { provider: model }).answers.ask(
+        'What is the notice period for the maintenance services?'));
+
+      assert.equal(answer.grounded, true);
+      assert.equal(answer.citations[0]!.pageIndex, 1);
+      assert.equal(answer.citations[0]!.quote, NOTICE);
+    }
+    await document.close();
+  });
+
+  test('a real sentence the model was not shown is never a citation', async () => {
+    const document = await contract();
+    const START = 'The agreement starts on 1 March 2026 and runs for an initial term of two years.';
+    const model = provider((prompt) => {
+      assert.ok(!prompt.includes('1 March 2026'), 'the budget should admit only the page-2 passage');
+      return { answer: 'Three months.', citations: [{ passage: passageId(prompt, NOTICE), quote: START }] };
+    });
+    // Room for one passage, so page 1 is never in the prompt.
+    const ai = new PdfiumAI(document, { provider: model, providerContextTokens: 200 });
+    const answer = answered(await ai.answers.ask('What is the notice period?'));
 
     assert.equal(answer.citations.length, 0);
     assert.equal(answer.grounded, false);
+    await document.close();
+  });
+
+  // Apple's model answers "not mentioned in the passages" instead of the empty answer the
+  // prompt asks for. Without a citation there is nothing to verify or highlight.
+  test('an answer with no citations is notFound, whatever its text says', async () => {
+    const document = await contract();
+    const model = provider(() => ({ answer: 'The capital of France is not mentioned in the passages.', citations: [] }));
+    const result = await new PdfiumAI(document, { provider: model }).answers.ask('What is the notice period?');
+
+    assert.deepEqual(result, { value: { kind: 'notFound', pagesWithoutText: [2] }, source: 'customProvider' });
     await document.close();
   });
 

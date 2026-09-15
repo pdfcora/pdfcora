@@ -5,8 +5,8 @@ summaries of a document or page range, on iOS, Android and Web.
 
 **Spec:** `docs/superpowers/specs/2026-09-13-pdfiumkit-ai-requirements.md` §§8, 10, 15
 
-**Status:** built on all three platforms, tested against fakes of every model. **No real
-model has been run** — see "Not verified".
+**Status:** built on all three platforms. Apple's on-device model has been run for real
+(see "Measured against a real model"); ML Kit and Chrome's summariser have not.
 
 ## What was checked before building on it
 
@@ -28,8 +28,9 @@ character ranges and ranked with BM25 on the device (ANS-1). No relevant passage
 the model's budget — Apple's `contextSize`, or `providerContextTokens` for a custom
 provider — and asks for an answer plus up to three passage-id/quote citations, with a
 schema on providers and `@Generable` on Apple (ANS-2, ANS-7). Each quote is looked for in
-the passage it names, tolerating whitespace and line-end hyphenation only; a citation
-that cannot be found is dropped and the answer marked `grounded = false` (ANS-3). Ranges
+the passage it names, then in the other passages the model was shown, tolerating
+whitespace and line-end hyphenation only; a citation that cannot be found is dropped and
+the answer marked `grounded = false`, and a reply with no citations is `notFound` (ANS-3). Ranges
 become rectangles from the core's per-character boxes, one per line (ANS-5). Pages with
 no text layer are reported (ANS-6).
 
@@ -47,17 +48,37 @@ one call covers everything (SUM-2). An unsupported language is
 `conformance/fixtures/contract.pdf` is the shared document, written by
 `conformance/make-contract.mjs` by hand rather than with the SDK. The acceptance test —
 "what's the notice period?" highlights §12.1 and nothing else — runs on all three
-platforms, alongside a made-up quote, a real sentence attributed to the wrong passage,
-and a question with no answer.
+platforms, alongside a made-up quote, a wrong or unknown passage id, a real sentence the model was
+not shown, and a question with no answer.
 
 The Phase 0 stub is gone, as its own comment asked; the demos show answers and summaries.
 
+## Measured against a real model
+
+On 2026-09-15 the iOS simulator reached the Mac's own Apple Intelligence model (context
+8,192 tokens; the first readings after launch report no budget, which the SDK already
+treats as not promptable). The real `answers` and `summaries` code ran on the contract
+with no provider.
+
+First run: every answer's text was right and every quote was word for word, but only 14
+of 18 were grounded. **The model gets passage ids wrong, not quotes**: it named `p1-3` for
+text inside `p1-0` (it reads the id as "page 1, sentence 3") and once a heading,
+`13. Payment`. Relabelling passages `P1` or `A` made it worse, 0 and 4 of 20. And an
+unanswerable question came back as the answer "not mentioned in the passages" with no
+citations, not the empty answer the prompt asks for.
+
+Two changes, on all three platforms: a quote is looked for in the passage it names, then
+in the other passages the model was shown, and never beyond them; and a reply with no
+citations is `notFound`. After them: **30 of 30** answers grounded on the expected
+sentence across six questions, and the unanswerable question `notFound` **5 of 5**. The
+key-points summary was accurate, in 2.8 s. Answers took about 1.5 s each.
+
 ## Not verified
 
-- **No real model has answered anything.** Apple's model, ML Kit and Chrome's summariser
-  are exercised only through fakes. A simulator reports Apple's model inconsistently, the
-  emulator has no AICore, and Node has no `Summarizer`. The quote check exists precisely
-  because a real model will paraphrase; how often it does is unmeasured.
+- **ML Kit and Chrome's summariser have never run.** The emulator has no AICore, and Node
+  has no `Summarizer`. Neither has a custom provider been used for real.
+- **One document.** The contract is short and clean; a real model on long or messy text,
+  or in another language, is unmeasured.
 - **ML Kit's input limit** is taken as three quarters of the documented ~4,000 tokens.
   It is not reported at runtime.
 - **Characters per token** is fixed at 3 everywhere, conservative for English and

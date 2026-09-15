@@ -9,8 +9,9 @@ The SDK is feature-complete for its stated scope on iOS, Android and Web: render
 search, forms, annotations, digital signatures (read/verify/sign), redaction, and a
 viewer with cross-platform sync and an optional UI component.
 
-`pdfiumkit-ai` Phase 1 — grounded answers and summaries — is built on all three platforms
-but **no real model has been run**; see §4.
+`pdfiumkit-ai` Phase 1 — grounded answers and summaries — is built on all three platforms.
+Apple's model has been run for real and grounds 30 of 30 answers on the contract; ML Kit
+and Chrome have not been run; see §4.
 
 No known defects are open. §3 records what was fixed on 2026-09-14, because each lesson
 generalises.
@@ -26,7 +27,7 @@ generalises.
 | Viewer: editing through the viewer, presenter rule | Done, three platforms |
 | UI layer: component, configurable toolbar, theme | Done, three platforms, adopted by all demos |
 | Engine watchdog: calls behind a hung PDFium call fail fast | Done, three platforms |
-| `pdfiumkit-ai` Phase 1: grounded answers, summaries | Built, three platforms, **tested only against fake models** |
+| `pdfiumkit-ai` Phase 1: grounded answers, summaries | Built, three platforms; real-model tested on Apple only |
 
 Test counts at the time of writing: web 247, web-ai 33, iOS 155 + hung-render pass + AI
 33, Android 133 instrumented + hung-render pass + 16 JVM, AI 19 JVM + 7 instrumented.
@@ -89,10 +90,11 @@ Breaking for web and Android and for the sync wire, accepted pre-release.
 
 ## 4. Open
 
-**`pdfiumkit-ai` has never run against a real model.** Apple's model, ML Kit GenAI and
-Chrome's Summarizer are tested only through fakes — the simulator reports Apple's model
-inconsistently, the emulator has no AICore, and Node has no `Summarizer`. Run the demos'
-AI screens on a real device, with the contract fixture, before trusting quality.
+**`pdfiumkit-ai` has run against Apple's model only.** The iOS simulator reaches the Mac's
+own Apple Intelligence model, and on the contract it grounds 30 of 30 answers — after two
+fixes the real model forced (it misnames passage ids, and says "not mentioned" instead of
+replying empty). ML Kit GenAI needs a real device with AICore, and Chrome's Summarizer
+needs desktop Chrome; neither has run.
 `docs/superpowers/plans/2026-09-14-phase1-ai-answers-summaries.md` lists the other
 unmeasured numbers (ML Kit's input limit, characters per token) and what is not built
 (streaming, cancellable indexing, language detection).

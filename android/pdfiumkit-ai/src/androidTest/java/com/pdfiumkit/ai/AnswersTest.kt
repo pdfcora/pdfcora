@@ -86,14 +86,52 @@ class AnswersTest {
         document.close()
     }
 
+    /**
+     * Apple's model quoted correctly but named passages "p1-3" and "13. Payment": ids are
+     * what it gets wrong, so the quote, not the id, decides.
+     */
     @Test
-    fun aRealSentenceAttributedToTheWrongPassageIsNotACitation() = runTest {
+    fun aQuoteCreditedToTheWrongOrAnUnknownPassageIsFoundInThePassagesShown() = runTest {
         val document = contract()
-        val model = Model { reply("Three months.", passageId(it, "maintenance services"), notice) }
-        val (answer, _) = answered(PdfiumAI(document, PdfiumAIOptions(model)).answers.ask(
-            "What is the notice period for the maintenance services?"))
+        for (id in listOf<(String) -> String>({ passageId(it, "maintenance services") }, { "13. Payment" })) {
+            val model = Model { reply("Three months.", id(it), notice) }
+            val (answer, _) = answered(PdfiumAI(document, PdfiumAIOptions(model)).answers.ask(
+                "What is the notice period for the maintenance services?"))
+            assertTrue(answer.grounded)
+            assertEquals(1, answer.citations.first().pageIndex)
+            assertEquals(notice, answer.citations.first().quote)
+        }
+        document.close()
+    }
+
+    @Test
+    fun aRealSentenceTheModelWasNotShownIsNeverACitation() = runTest {
+        val document = contract()
+        val start = "The agreement starts on 1 March 2026 and runs for an initial term of two years."
+        val model = Model {
+            assertFalse("the budget should admit only the page-2 passage", it.contains("1 March 2026"))
+            reply("Three months.", passageId(it, notice), start)
+        }
+        // Room for one passage, so page 1 is never in the prompt.
+        val ai = PdfiumAI(document, PdfiumAIOptions(model, providerContextTokens = 200))
+        val (answer, _) = answered(ai.answers.ask("What is the notice period?"))
         assertTrue(answer.citations.isEmpty())
         assertFalse(answer.grounded)
+        document.close()
+    }
+
+    /**
+     * Apple's model answers "not mentioned in the passages" instead of the empty answer the
+     * prompt asks for. Without a citation there is nothing to verify or highlight.
+     */
+    @Test
+    fun anAnswerWithNoCitationsIsNotFoundWhateverItsTextSays() = runTest {
+        val document = contract()
+        val model = Model { """{"answer":"The capital of France is not mentioned in the passages.","citations":[]}""" }
+        assertEquals(
+            PdfAiOutcome.Answered(PdfAiResult<PdfAnswer>(PdfAnswer.NotFound(listOf(2)), PdfAiSource.CUSTOM_PROVIDER)),
+            PdfiumAI(document, PdfiumAIOptions(model)).answers.ask("What is the notice period?"),
+        )
         document.close()
     }
 

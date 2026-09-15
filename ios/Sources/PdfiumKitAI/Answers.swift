@@ -79,18 +79,26 @@ enum GroundedAnswers {
         }.prefix(maxCitations).map { $0 })
     }
 
-    /// Turns a reply into an answer whose highlights come only from verified quotes. A quote
-    /// is looked for in the passage it names, and only there. Coordinates never come from
-    /// the model.
+    /// Turns a reply into an answer whose highlights come only from verified quotes.
+    ///
+    /// A quote is looked for in the passage it names first, then in the other passages the
+    /// model was shown, and nowhere else. Apple's on-device model quotes accurately but often
+    /// names a passage that does not exist ("p1-3", or a heading), so the quote decides and
+    /// the id is only a hint. Coordinates never come from the model.
+    ///
+    /// With no citations at all there is nothing to verify, so the answer is `notFound`: the
+    /// same model replies "not mentioned in the passages" rather than the empty answer asked for.
     static func verify(_ reply: PdfGroundedReply, document: PdfDocument, index: PdfTextIndex,
                        passages: [PdfPassage]) async throws -> PdfAnswer {
-        if reply.answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && reply.citations.isEmpty {
+        if reply.citations.isEmpty {
             return .notFound(pagesWithoutText: index.pagesWithoutText)
         }
-        let byId = Dictionary(passages.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         var citations: [PdfCitation] = []
         for cited in reply.citations {
-            guard let passage = byId[cited.passage], let found = locateQuote(in: passage.text, cited.quote)
+            let candidates = passages.filter { $0.id == cited.passage } + passages.filter { $0.id != cited.passage }
+            guard let (passage, found) = candidates.lazy
+                .compactMap({ candidate in locateQuote(in: candidate.text, cited.quote).map { (candidate, $0) } })
+                .first
             else { continue }
             let range = (passage.range.lowerBound + found.lowerBound)..<(passage.range.lowerBound + found.upperBound)
             let page = index.pages.first { $0.pageIndex == passage.pageIndex }!

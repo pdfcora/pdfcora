@@ -109,16 +109,51 @@ final class AnswersTests: XCTestCase {
         await document.close()
     }
 
-    func testARealSentenceAttributedToTheWrongPassageIsNotACitation() async throws {
+    /// Apple's model quoted correctly but named passages "p1-3" and "13. Payment": ids are
+    /// what it gets wrong, so the quote, not the id, decides.
+    func testAQuoteCreditedToTheWrongOrAnUnknownPassageIsFoundInThePassagesShown() async throws {
         let document = try await contract()
         let notice = self.notice
-        let model = Model { prompt in
-            Self.reply(answer: "Three months.", passage: Self.passageId(prompt, "maintenance services"), quote: notice)
+        let ids: [@Sendable (String) -> String] = [{ Self.passageId($0, "maintenance services") }, { _ in "13. Payment" }]
+        for id in ids {
+            let model = Model { prompt in Self.reply(answer: "Three months.", passage: id(prompt), quote: notice) }
+            guard let answer = answered(await ai(document, model).answers.ask(
+                "What is the notice period for the maintenance services?")) else { return }
+            XCTAssertTrue(answer.grounded)
+            XCTAssertEqual(answer.citations.first?.pageIndex, 1)
+            XCTAssertEqual(answer.citations.first?.quote, notice)
         }
-        guard let answer = answered(await ai(document, model).answers.ask(
-            "What is the notice period for the maintenance services?")) else { return }
+        await document.close()
+    }
+
+    func testARealSentenceTheModelWasNotShownIsNeverACitation() async throws {
+        let document = try await contract()
+        let notice = self.notice
+        let start = "The agreement starts on 1 March 2026 and runs for an initial term of two years."
+        let model = Model { prompt in
+            XCTAssertFalse(prompt.contains("1 March 2026"), "the budget should admit only the page-2 passage")
+            return Self.reply(answer: "Three months.", passage: Self.passageId(prompt, notice), quote: start)
+        }
+        // Room for one passage, so page 1 is never in the prompt.
+        var options = PdfiumAIOptions(provider: model, providerContextTokens: 200)
+        options.allowsOnDevice = false
+        guard let answer = answered(await PdfiumAI(document: document, options: options)
+            .answers.ask("What is the notice period?")) else { return }
         XCTAssertTrue(answer.citations.isEmpty)
         XCTAssertFalse(answer.grounded)
+        await document.close()
+    }
+
+    /// Apple's model answers "not mentioned in the passages" instead of the empty answer the
+    /// prompt asks for. Without a citation there is nothing to verify or highlight.
+    func testAnAnswerWithNoCitationsIsNotFoundWhateverItsTextSays() async throws {
+        let document = try await contract()
+        let model = Model { _ in #"{"answer":"The capital of France is not mentioned in the passages.","citations":[]}"# }
+        guard case .answered(let result) = await ai(document, model).answers.ask("What is the notice period?") else {
+            return XCTFail("expected a result")
+        }
+        XCTAssertEqual(result.value, .notFound(pagesWithoutText: [2]))
+        XCTAssertEqual(result.source, .customProvider)
         await document.close()
     }
 

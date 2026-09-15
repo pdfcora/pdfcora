@@ -101,24 +101,31 @@ export function parseReply(structured: unknown, text: string): PdfGroundedReply 
 /**
  * Turns a model's reply into an answer whose highlights come only from verified quotes.
  *
- * A quote is looked for in the passage it names, and only there: a sentence that exists
- * elsewhere in the document does not support a claim about this passage. Coordinates
- * are never taken from the model.
+ * A quote is looked for in the passage it names first, then in the other passages the
+ * model was shown, and nowhere else. Apple's on-device model quotes accurately but often
+ * names a passage that does not exist ("p1-3", or a heading), so the quote decides and the
+ * id is only a hint. Coordinates are never taken from the model.
+ *
+ * With no citations at all there is nothing to verify, so the answer is `notFound`: the
+ * same model replies "not mentioned in the passages" rather than the empty answer asked for.
  */
 export async function verifyReply(
   document: PdfDocument, index: PdfTextIndex, passages: readonly PdfPassage[], reply: PdfGroundedReply,
 ): Promise<PdfAnswer> {
-  if (reply.answer.trim().length === 0 && reply.citations.length === 0) {
+  if (reply.citations.length === 0) {
     return { kind: 'notFound', pagesWithoutText: index.pagesWithoutText };
   }
 
-  const byId = new Map(passages.map((p) => [p.id, p]));
   const citations: PdfCitation[] = [];
   for (const cited of reply.citations) {
-    const passage = byId.get(cited.passage);
-    if (!passage) continue;
-    const found = locateQuote(passage.text, cited.quote);
-    if (!found) continue;
+    const named = passages.filter((p) => p.id === cited.passage);
+    let passage: PdfPassage | undefined;
+    let found: { start: number; end: number } | null = null;
+    for (const candidate of [...named, ...passages.filter((p) => p.id !== cited.passage)]) {
+      found = locateQuote(candidate.text, cited.quote);
+      if (found) { passage = candidate; break; }
+    }
+    if (!passage || !found) continue;
     const start = passage.start + found.start;
     const end = passage.start + found.end;
     const page = index.pages.find((p) => p.pageIndex === passage.pageIndex)!;
