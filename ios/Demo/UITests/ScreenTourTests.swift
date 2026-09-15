@@ -33,6 +33,31 @@ final class ScreenTourTests: XCTestCase {
         save(app, named: "redaction-review-applied")
     }
 
+    /// Form filling in the component: proposals appear as labelled marks, and accepting all
+    /// fills them in.
+    func testFormFillingAcceptsAllAndFills() {
+        let app = XCUIApplication()
+        app.launch()
+        XCTAssertTrue(app.staticTexts["Hello World"].waitForExistence(timeout: 10))
+        let link = app.descendants(matching: .any).matching(identifier: "demo-Form Filling").firstMatch
+        for _ in 0..<3 where !(link.exists && link.isHittable) {
+            app.swipeUp()
+            _ = link.waitForExistence(timeout: 2)
+        }
+        link.tap()
+
+        XCTAssertTrue(app.staticTexts["review-notice"].waitForExistence(timeout: 20))
+        app.buttons["review-accept-all"].tap()
+        let counts = app.staticTexts["review-counts"]
+        // 21 from the synonym list, plus whatever Apple's model adds when the simulator reaches it.
+        XCTAssertTrue(counts.waitForLabel(prefix: "2", timeout: 5) && counts.label.hasSuffix("0 pending"), counts.label)
+        let accepted = counts.label.components(separatedBy: " ").first ?? ""
+        XCTAssertGreaterThanOrEqual(Int(accepted) ?? 0, 21, counts.label)
+        app.buttons["review-apply"].tap()
+        XCTAssertTrue(app.staticTexts["Filled \(accepted) fields"].waitForExistence(timeout: 20))
+        save(app, named: "form-filling-applied")
+    }
+
     func testEveryScreenOpensAndRenders() {
         let app = XCUIApplication()
         app.launch()

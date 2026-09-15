@@ -18,6 +18,7 @@ enum Demo: String, CaseIterable, Identifiable {
     case ai = "AI"
     case component = "Component"
     case redactionReview = "Redaction Review"
+    case formFilling = "Form Filling"
 
     var id: String { rawValue }
 
@@ -38,6 +39,7 @@ enum Demo: String, CaseIterable, Identifiable {
         case .ai: "sparkles"
         case .component: "rectangle.on.rectangle"
         case .redactionReview: "eye.slash"
+        case .formFilling: "text.badge.checkmark"
         }
     }
 
@@ -58,6 +60,7 @@ enum Demo: String, CaseIterable, Identifiable {
         case .ai: "On-device availability and providers"
         case .component: "The SDK's own viewer, toolbar and theme"
         case .redactionReview: "Personal data suggested for redaction, reviewed on the page"
+        case .formFilling: "Form values proposed from a profile, reviewed on the page"
         }
     }
 }
@@ -149,6 +152,7 @@ struct RootView: View {
         case .ai:          AIScreen()
         case .component:   ComponentScreen()
         case .redactionReview: RedactionReviewScreen()
+        case .formFilling: FormFillingScreen()
         }
     }
 }
