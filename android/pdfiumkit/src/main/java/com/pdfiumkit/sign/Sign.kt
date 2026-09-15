@@ -1,10 +1,12 @@
 package com.pdfiumkit.sign
 
 import com.pdfiumkit.PdfDocument
+import com.pdfiumkit.Native
 import com.pdfiumkit.PdfError
 import com.pdfiumkit.cms.CertificateReader
 import com.pdfiumkit.cms.CmsSignedData
 import com.pdfiumkit.cms.DerEncode
+import com.pdfiumkit.license.PdfLicenseModule
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.security.KeyStore
@@ -48,11 +50,20 @@ data class PdfSignOptions(
  * Signs the document, returning the signed bytes.
  *
  * The original bytes are never modified: the signature is appended as an incremental
- * update, so any signature already present keeps verifying.
+ * update, so any signature already present keeps verifying. Without a signing license the
+ * bytes are first watermarked, which is a full rewrite, so earlier signatures in the
+ * result no longer verify.
  */
 suspend fun PdfDocument.sign(options: PdfSignOptions): ByteArray {
+    use(PdfLicenseModule.SIGNING)
+    val base = if (!needsWatermark) originalBytes() else onDocument {
+        noteWatermarked()
+        Native.stampWatermark(originalBytes()).also {
+            if (it.isEmpty()) throw PdfError.SaveFailed("the document could not be watermarked")
+        }
+    }
     val placed = SignatureField.place(
-        originalBytes(),
+        base,
         SignatureField.Options(
             reservedBytes = options.reservedBytes,
             reason = options.reason,

@@ -79,17 +79,20 @@ suspend fun PdfPage.addInk(
     strokes: List<List<PdfPoint>>,
     color: PdfColor = PdfColor.BLACK,
     lineWidth: Float = 2f,
-): Int = document.onDocument { h ->
-    val points = strokes.flatten()
-    val flat = FloatArray(points.size * 2)
-    points.forEachIndexed { i, point ->
-        flat[i * 2] = point.x
-        flat[i * 2 + 1] = point.y
+): Int {
+    document.use(com.pdfiumkit.license.PdfLicenseModule.EDITING)
+    return document.onDocument { h ->
+        val points = strokes.flatten()
+        val flat = FloatArray(points.size * 2)
+        points.forEachIndexed { i, point ->
+            flat[i * 2] = point.x
+            flat[i * 2 + 1] = point.y
+        }
+        val lengths = strokes.map { it.size }.toIntArray()
+        val result = Native.addInk(h, index, flat, lengths, color.red, color.green, color.blue, color.alpha, lineWidth)
+        if (result < 0) throw PdfError.InvalidOperation("ink annotation could not be created")
+        result
     }
-    val lengths = strokes.map { it.size }.toIntArray()
-    val result = Native.addInk(h, index, flat, lengths, color.red, color.green, color.blue, color.alpha, lineWidth)
-    if (result < 0) throw PdfError.InvalidOperation("ink annotation could not be created")
-    result
 }
 
 /** Adds a highlight covering [quads]. Returns the new annotation's index. */
@@ -102,8 +105,9 @@ suspend fun PdfPage.addUnderline(quads: List<PdfQuad>, color: PdfColor = PdfColo
 suspend fun PdfPage.addStrikeout(quads: List<PdfQuad>, color: PdfColor = PdfColor(255, 0, 0)): Int =
     addMarkup(SUBTYPE_STRIKEOUT, quads, color)
 
-private suspend fun PdfPage.addMarkup(subtype: Int, quads: List<PdfQuad>, color: PdfColor): Int =
-    document.onDocument { h ->
+private suspend fun PdfPage.addMarkup(subtype: Int, quads: List<PdfQuad>, color: PdfColor): Int {
+    document.use(com.pdfiumkit.license.PdfLicenseModule.EDITING)
+    return document.onDocument { h ->
         val flat = FloatArray(quads.size * 8)
         quads.forEachIndexed { i, q ->
             val o = i * 8
@@ -117,22 +121,27 @@ private suspend fun PdfPage.addMarkup(subtype: Int, quads: List<PdfQuad>, color:
         if (result < 0) throw PdfError.InvalidOperation("markup annotation could not be created")
         result
     }
+}
 
 /** Adds a sticky note. Returns the new annotation's index. */
 suspend fun PdfPage.addNote(
     rect: PdfRect,
     contents: String,
     color: PdfColor = PdfColor.YELLOW,
-): Int = document.onDocument { h ->
-    val result = Native.addNote(
-        h, index, rect.left, rect.bottom, rect.right, rect.top,
-        contents, color.red, color.green, color.blue, color.alpha
-    )
-    if (result < 0) throw PdfError.InvalidOperation("note annotation could not be created")
-    result
+): Int {
+    document.use(com.pdfiumkit.license.PdfLicenseModule.EDITING)
+    return document.onDocument { h ->
+        val result = Native.addNote(
+            h, index, rect.left, rect.bottom, rect.right, rect.top,
+            contents, color.red, color.green, color.blue, color.alpha
+        )
+        if (result < 0) throw PdfError.InvalidOperation("note annotation could not be created")
+        result
+    }
 }
 
 suspend fun PdfPage.removeAnnotation(annotationIndex: Int) {
+    document.use(com.pdfiumkit.license.PdfLicenseModule.EDITING)
     document.onDocument { h ->
         if (!Native.removeAnnotation(h, index, annotationIndex)) {
             throw PdfError.PageOutOfRange(annotationIndex, Native.annotationCount(h, index))
@@ -218,6 +227,7 @@ private fun readChoices(
 
 /** Sets a text field's value. */
 suspend fun PdfPage.setText(value: String, fieldAt: Int) {
+    document.use(com.pdfiumkit.license.PdfLicenseModule.FORMS)
     document.onDocument { h ->
         if (!Native.setFormText(h, index, fieldAt, value)) {
             throw PdfError.InvalidOperation("field could not take focus")
@@ -227,6 +237,7 @@ suspend fun PdfPage.setText(value: String, fieldAt: Int) {
 
 /** Sets a checkbox or radio button to an explicit state. */
 suspend fun PdfPage.setChecked(checked: Boolean, fieldAt: Int) {
+    document.use(com.pdfiumkit.license.PdfLicenseModule.FORMS)
     document.onDocument { h ->
         if (!Native.setFormChecked(h, index, fieldAt, checked)) {
             throw PdfError.InvalidOperation("field state could not be set")
@@ -236,6 +247,7 @@ suspend fun PdfPage.setChecked(checked: Boolean, fieldAt: Int) {
 
 /** Selects or deselects one option of a combo or list box. */
 suspend fun PdfPage.setOption(optionIndex: Int, selected: Boolean, fieldAt: Int) {
+    document.use(com.pdfiumkit.license.PdfLicenseModule.FORMS)
     document.onDocument { h ->
         if (!Native.setFormOption(h, index, fieldAt, optionIndex, selected)) {
             throw PdfError.InvalidOperation("option $optionIndex could not be selected")

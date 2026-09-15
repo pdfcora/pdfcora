@@ -1,6 +1,9 @@
 package com.pdfiumkit
 
 import android.graphics.Bitmap
+import com.pdfiumkit.license.PdfLicense
+import com.pdfiumkit.license.PdfLicenseModule
+import com.pdfiumkit.license.PdfLicenseStatus
 import kotlinx.coroutines.withContext
 import java.io.Closeable
 import java.io.File
@@ -53,6 +56,21 @@ class PdfDocument private constructor(
         }
 
     private val closed = AtomicBoolean(false)
+
+    /** Set at open in trial mode, or by [use] when a feature is not licensed. */
+    @Volatile internal var needsWatermark: Boolean = PdfLicense.status.isTrial
+        private set
+
+    /** Every paid entry point calls this first. The operation runs either way. */
+    internal fun use(module: PdfLicenseModule) {
+        if (!PdfLicense.status.covers(module)) needsWatermark = true
+    }
+
+    internal fun noteWatermarked() {
+        val status = PdfLicense.status
+        PdfLicense.noteWatermark(if (status is PdfLicenseStatus.Trial) status.message
+                                 else "the license key does not cover every module used")
+    }
 
     companion object {
         /** The PDFium revision this SDK was built against. */
@@ -152,11 +170,23 @@ class PdfDocument private constructor(
         Native.attachmentData(h, index)
     }
 
-    /** Serialises the document, including any edits made through this SDK. */
+    /**
+     * Serialises the document, including any edits made through this SDK. A document that
+     * needs the watermark is always saved in full.
+     */
     suspend fun toByteArray(mode: PdfSaveMode = PdfSaveMode.FULL): ByteArray = onDocument { h ->
-        val bytes = Native.saveDocument(h, mode.flag)
-        if (bytes.isEmpty()) throw PdfError.SaveFailed("no bytes were produced")
-        bytes
+        if (!needsWatermark) {
+            Native.saveDocument(h, mode.flag).also {
+                if (it.isEmpty()) throw PdfError.SaveFailed("no bytes were produced")
+            }
+        } else {
+            noteWatermarked()
+            val full = Native.saveDocument(h, PdfSaveMode.FULL.flag)
+            if (full.isEmpty()) throw PdfError.SaveFailed("no bytes were produced")
+            Native.stampWatermark(full).also {
+                if (it.isEmpty()) throw PdfError.SaveFailed("the saved document could not be watermarked")
+            }
+        }
     }
 
     suspend fun writeTo(file: File, mode: PdfSaveMode = PdfSaveMode.FULL) {
@@ -201,6 +231,7 @@ class PdfPage internal constructor(
         document.onDocument { PdfPageRotation.fromRaw(Native.pageRotation(it, index)) }
 
     suspend fun setRotation(rotation: PdfPageRotation) {
+        document.use(PdfLicenseModule.EDITING)
         document.onDocument { Native.setPageRotation(it, index, rotation.raw) }
     }
 
@@ -233,8 +264,10 @@ class PdfPage internal constructor(
         val bitmap = Bitmap.createBitmap(
             pixelWidth.coerceAtLeast(1), pixelHeight.coerceAtLeast(1), Bitmap.Config.ARGB_8888
         )
+        val watermark = document.needsWatermark
+        if (watermark) document.noteWatermarked()
         val ok = Native.renderPage(h, index, bitmap, options.toFlags(), background.toColorInt(),
-            options.forms)
+            options.forms, watermark)
         if (!ok) {
             bitmap.recycle()
             throw PdfError.Corrupt("rendering page $index failed")

@@ -60,7 +60,21 @@ run :pdfiumkit-ai:connectedDebugAndroidTest "$@"
 # The signing cross-check. An instrumented test cannot run pdfsig — the device has no
 # poppler — so the suite writes a signed document and the gate runs here. Our own
 # verifier agreeing with our own signer would prove nothing.
-SIGNED=/tmp/pdfiumkit-android-signed.pdf
+# Checks a pulled document with pdfsig: the signature is valid and covers the whole file.
+check_pdfsig() {
+    local file="$1" label="$2" report
+    report=$(pdfsig "$file" 2>&1 || true)
+    case "$report" in
+        *"Signature is Valid"*) ;;
+        *) echo "cross-check: pdfsig rejected the $label signature" >&2; echo "$report" >&2; exit 1 ;;
+    esac
+    case "$report" in
+        *"Total document signed"*) ;;
+        *) echo "cross-check: pdfsig says the $label signature does not cover the file" >&2; exit 1 ;;
+    esac
+    echo "cross-check:   pdfsig accepts the $label document"
+}
+
 if command -v pdfsig > /dev/null; then
     # Gradle honours ANDROID_SERIAL, so this must too. Taking "the first device" while
     # Gradle ran on a different one pulls a stale or missing file and then blames the
@@ -78,20 +92,14 @@ if command -v pdfsig > /dev/null; then
     fi
     [ -n "$device" ] || { echo "cross-check: no device" >&2; exit 1; }
 
-    adb -s "$device" exec-out run-as com.pdfiumkit.test \
-        cat files/pdfiumkit-android-signed.pdf > "$SIGNED" 2>/dev/null
-    [ -s "$SIGNED" ] || { echo "cross-check: could not pull the signed document" >&2; exit 1; }
-
-    report=$(pdfsig "$SIGNED" 2>&1 || true)
-    case "$report" in
-        *"Signature is Valid"*) ;;
-        *) echo "cross-check: pdfsig rejected the signature" >&2; echo "$report" >&2; exit 1 ;;
-    esac
-    case "$report" in
-        *"Total document signed"*) ;;
-        *) echo "cross-check: pdfsig says the signature does not cover the file" >&2; exit 1 ;;
-    esac
-    echo "cross-check:   pdfsig accepts the Android-signed document"
+    # The second file is signed without a signing license, so it is watermarked first.
+    for name in signed trial-signed; do
+        file="/tmp/pdfiumkit-android-$name.pdf"
+        adb -s "$device" exec-out run-as com.pdfiumkit.test \
+            cat "files/pdfiumkit-android-$name.pdf" > "$file" 2>/dev/null
+        [ -s "$file" ] || { echo "cross-check: could not pull $file" >&2; exit 1; }
+        check_pdfsig "$file" "Android-$name"
+    done
 else
     echo "cross-check:   skipped, pdfsig is not installed" >&2
 fi
