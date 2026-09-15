@@ -10,6 +10,7 @@ web/dist/
 
 # Generated Xcode project — project.yml is the source of truth
 ios/Demo/*.xcodeproj
+samples/basic-ios/*.xcodeproj
 
 # Gradle
 .gradle/

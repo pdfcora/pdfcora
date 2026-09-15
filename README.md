@@ -46,6 +46,10 @@ SHA-256 of every artifact, and the fetch script refuses anything that does not m
 Demos: `ios/Demo` (SwiftUI, generate with `xcodegen`), `android/demo` (Compose),
 `web/demo` (serve the repo root and open `/web/demo/index.html`).
 
+Basic samples: `samples/basic-ios`, `samples/basic-android` and `samples/basic-web` are the
+smallest integrations — one screen that opens a bundled PDF in the viewer component with
+its default toolbar, consuming the SDK the way an app would. Each has a README.
+
 All three demos have an **Editor** screen — open a file and it lands there — where
 the page behaves like a form rather than a picture of one. Every field is a live
 control sitting on its own rectangle: type straight into text fields, tap checkboxes
