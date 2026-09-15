@@ -11,6 +11,9 @@ internal object Trial {
 
     private fun licensedNow() = PdfLicense.status.covers(PdfLicenseModule.AI)
 
+    /** SDK text shown without an `ai` license gets the same prefix as model output. */
+    fun text(value: String, licensed: Boolean = licensedNow()): String = if (licensed) value else PREFIX + value
+
     fun answer(outcome: PdfAiOutcome<PdfAnswer>, licensed: Boolean = licensedNow()): PdfAiOutcome<PdfAnswer> {
         if (licensed || outcome !is PdfAiOutcome.Answered) return outcome
         val value = outcome.result.value as? PdfAnswer.Answered ?: return outcome

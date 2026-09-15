@@ -34,7 +34,8 @@ android {
 
     // The contract answers are tested on, shared with the iOS and Web suites.
     sourceSets["androidTest"].assets.srcDirs(
-        rootProject.projectDir.parentFile.resolve("conformance/fixtures")
+        rootProject.projectDir.parentFile.resolve("conformance/fixtures"),
+        rootProject.projectDir.parentFile.resolve("conformance/redaction"),
     )
 }
 

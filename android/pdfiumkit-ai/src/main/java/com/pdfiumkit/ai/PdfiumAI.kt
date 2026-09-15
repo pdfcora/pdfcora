@@ -8,6 +8,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import com.pdfiumkit.ai.redaction.PdfRedactionCategory
+import com.pdfiumkit.ai.redaction.PdfRedactionReview
+import com.pdfiumkit.ai.redaction.suggestRedactions
 
 data class PdfiumAIOptions(
     val provider: PdfAiProvider? = null,
@@ -50,6 +53,18 @@ class PdfiumAI(
 
     /** Summarises the document or a page range (SUM). */
     val summaries = Summaries()
+
+    /**
+     * Suggests likely personal data to redact (RED). Patterns run on every device; the custom
+     * provider, when configured, adds names, addresses, dates of birth and ID numbers.
+     * Nothing is written until apply.
+     */
+    val redactions = Redactions()
+
+    inner class Redactions {
+        suspend fun suggest(pages: IntRange? = null, categories: Set<PdfRedactionCategory>? = null): PdfRedactionReview =
+            suggestRedactions(this@PdfiumAI, pages, categories)
+    }
 
     inner class Answers {
         /** Android's on-device prompt API is alpha, so answers need a custom provider. */
