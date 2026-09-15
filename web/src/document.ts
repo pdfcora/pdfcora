@@ -12,6 +12,10 @@ import type {
   PdfRedactionReport, PdfRedactionTarget,
 } from './types.js';
 import { PdfPage } from './page.js';
+import { licenseReady, noteWatermark, PdfLicense } from './license/state.js';
+import type { PdfLicenseModule } from './license/key.js';
+import { drawWatermark, stampWatermark } from './license/watermark.js';
+import { saveHandle } from './save.js';
 
 /**
  * An open PDF document.
@@ -30,6 +34,7 @@ export class PdfDocument {
   private form = 0;
   private formInfo = 0;
   private closedFlag = false;
+  private marked = false;
 
   /** Serialises work; also what makes `await`ed calls ordered and non-overlapping. */
   private queue: Promise<unknown> = Promise.resolve();
@@ -78,6 +83,7 @@ export class PdfDocument {
 
   static async open(bytes: Uint8Array, password?: string): Promise<PdfDocument> {
     const m = await engine();
+    const license = await licenseReady();
     const ptr = m._malloc(bytes.length);
     m.HEAPU8.set(bytes, ptr);
 
@@ -91,7 +97,9 @@ export class PdfDocument {
       m._free(ptr);
       throw PdfError.fromEngine(lastError, password !== undefined);
     }
-    return new PdfDocument(m, handle, ptr, bytes);
+    const document = new PdfDocument(m, handle, ptr, bytes);
+    document.marked = license.kind === 'trial';
+    return document;
   }
 
   /** @internal Runs `body` with the document handle, serialised and closed-checked. */
@@ -107,6 +115,29 @@ export class PdfDocument {
 
   get isClosed(): boolean {
     return this.closedFlag;
+  }
+
+  /** @internal True once anything this document produces must carry the watermark. */
+  get needsWatermark(): boolean {
+    return this.marked;
+  }
+
+  /** @internal Every paid entry point calls this first. The operation runs either way. */
+  use(module: PdfLicenseModule): void {
+    if (!PdfLicense.covers(module)) this.marked = true;
+  }
+
+  /** @internal Called whenever watermarked output is produced. */
+  noteWatermarked(): void {
+    const status = PdfLicense.status;
+    noteWatermark(status.kind === 'trial' ? status.message : 'the license key does not cover every module used');
+  }
+
+  /** @internal Draws the watermark when this document needs it. */
+  watermarkBitmap(m: PdfiumModule, bitmap: number, width: number, height: number): void {
+    if (!this.marked) return;
+    this.noteWatermarked();
+    drawWatermark(m, bitmap, width, height);
   }
 
   pageCount(): Promise<number> {
@@ -195,6 +226,7 @@ export class PdfDocument {
   }
 
   async setRotation(pageIndex: number, rotation: PdfPageRotation): Promise<void> {
+    this.use('editing');
     const raw = { 0: 0, 90: 1, 180: 2, 270: 3 }[rotation];
     await this.withPage(pageIndex, (page, m) => {
       m.ccall('FPDFPage_SetRotation', null, ['number', 'number'], [page, raw]);
@@ -292,9 +324,16 @@ export class PdfDocument {
    *
    * The caller supplies the CMS implementation. WebCrypto has primitives but not CMS,
    * and bundling a library would burden every consumer including those that only read.
+   *
+   * Without a signing license the bytes are first watermarked, which is a full rewrite,
+   * so signatures already in the file no longer verify in the result.
    */
-  sign(options: PdfSignOptions): Promise<Uint8Array> {
-    return signDocument(this.originalBytes, options);
+  async sign(options: PdfSignOptions): Promise<Uint8Array> {
+    this.use('signing');
+    if (!this.marked) return signDocument(this.originalBytes, options);
+    this.noteWatermarked();
+    const stamped = await this.run((_, m) => stampWatermark(m, this.originalBytes));
+    return signDocument(stamped, options);
   }
 
   /**
@@ -305,6 +344,7 @@ export class PdfDocument {
    * stream in the file, and the removed content with it.
    */
   async redact(targets: readonly PdfRedactionTarget[]): Promise<PdfRedactionReport> {
+    this.use('redaction');
     const counts = emptyCounts();
     const pageCount = await this.pageCount();
 
@@ -361,40 +401,15 @@ export class PdfDocument {
     return this.run((h, m) => readBookmarks(m, h, 0, 0));
   }
 
-  /** Serialises the document, including any edits made through this SDK. */
+  /**
+   * Serialises the document, including any edits made through this SDK. A document that
+   * needs the watermark is always saved in full.
+   */
   toBytes(mode: PdfSaveMode = 'full'): Promise<Uint8Array> {
     return this.run((h, m) => {
-      const chunks: Uint8Array[] = [];
-      // FPDF_FILEWRITE is { version, WriteBlock }; the callback receives that pointer.
-      const anyModule = m as unknown as {
-        addFunction(fn: (...args: number[]) => number, signature: string): number;
-        removeFunction(ptr: number): void;
-      };
-      const callback = anyModule.addFunction((_fw: number, data: number, size: number) => {
-        chunks.push(m.HEAPU8.slice(data, data + size));
-        return 1;
-      }, 'iiii');
-
-      try {
-        return withBuffer(m, 8, (writer) => {
-          new Int32Array(m.HEAPU8.buffer, writer, 2).set([1, callback]);
-          const flag = mode === 'incremental' ? 1 : 2;
-          const ok = m.ccall('FPDF_SaveAsCopy', 'number', ['number', 'number', 'number'], [h, writer, flag]) as number;
-          if (!ok) throw PdfError.saveFailed('PDFium refused to serialise the document');
-
-          const total = chunks.reduce((sum, c) => sum + c.length, 0);
-          if (total === 0) throw PdfError.saveFailed('no bytes were produced');
-          const out = new Uint8Array(total);
-          let offset = 0;
-          for (const chunk of chunks) {
-            out.set(chunk, offset);
-            offset += chunk.length;
-          }
-          return out;
-        });
-      } finally {
-        anyModule.removeFunction(callback);
-      }
+      if (!this.marked) return saveHandle(m, h, mode === 'incremental' ? 1 : 2);
+      this.noteWatermarked();
+      return stampWatermark(m, saveHandle(m, h, 2));
     });
   }
 
