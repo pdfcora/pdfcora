@@ -55,6 +55,25 @@ final class ScreenTourTests: XCTestCase {
         save(app, named: "form-filling-applied")
     }
 
+    /// A11Y-2: the component exposes the tagged document's structure, not a bitmap.
+    func testTheComponentExposesTaggedContentToVoiceOver() {
+        let app = XCUIApplication()
+        app.launch()
+        XCTAssertTrue(app.staticTexts["Hello World"].waitForExistence(timeout: 10))
+        let link = app.descendants(matching: .any).matching(identifier: "demo-Accessible Content").firstMatch
+        for _ in 0..<4 where !(link.exists && link.isHittable) {
+            app.swipeUp()
+            _ = link.waitForExistence(timeout: 2)
+        }
+        link.tap()
+
+        let title = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Annual report 2026")).firstMatch
+        XCTAssertTrue(title.waitForExistence(timeout: 20), "the title is not exposed")
+        let chart = app.images["Bar chart of revenue by region"]
+        XCTAssertTrue(chart.waitForExistence(timeout: 5), "the chart is not an image with its alternate text")
+        save(app, named: "accessible-content")
+    }
+
     func testEveryScreenOpensAndRenders() {
         let app = XCUIApplication()
         app.launch()

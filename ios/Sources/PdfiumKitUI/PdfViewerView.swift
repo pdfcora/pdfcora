@@ -29,6 +29,7 @@ public struct PdfViewerView: View {
     @State private var noteDraft = ""
     @State private var marks: [PdfMark] = []
     @State private var transform: PdfViewTransform?
+    @State private var accessible: (page: Int, leaves: [PdfAccessibleNode])?
 
     public init(document: PdfDocument,
                 toolbar: PdfToolbarConfiguration = .default,
@@ -76,6 +77,9 @@ public struct PdfViewerView: View {
                             .shadow(color: theme.pageShadow, radius: 4)
                             .contentShape(Rectangle())
                             .gesture(drag)
+                            // VoiceOver hears the page's structure below, not a bitmap.
+                            .accessibilityHidden(true)
+                        accessibleContent(state)
                         overlay(state)
                     }
                     .padding(12)
@@ -133,6 +137,38 @@ public struct PdfViewerView: View {
             Path { $0.addLines(stroke) }
                 .stroke(theme.accent, style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
         }
+    }
+
+    /// One accessibility element per leaf of the page's accessible content, where it is drawn.
+    @ViewBuilder
+    private func accessibleContent(_ state: PdfViewState) -> some View {
+        if let transform, let accessible, accessible.page == state.pageIndex {
+            ForEach(Array(accessible.leaves.enumerated()), id: \.offset) { index, node in
+                let box = node.bounds.map { transform.toView($0) } ?? .zero
+                Color.clear
+                    .frame(width: max(1, box.width), height: max(1, box.height))
+                    .offset(x: box.minX, y: box.minY)
+                    .allowsHitTesting(false)
+                    .accessibilityElement()
+                    .accessibilityLabel(node.text)
+                    .accessibilityAddTraits(node.role == .heading ? .isHeader : node.role == .figure ? .isImage : [])
+                    .accessibilityHint(Self.hint(node.role))
+                    .accessibilitySortPriority(Double(accessible.leaves.count - index))
+            }
+        }
+    }
+
+    private static func hint(_ role: PdfAccessibleNode.Role) -> String {
+        switch role {
+        case .listItem: "list item"
+        case .cell, .headerCell: "table cell"
+        case .formField: "form field"
+        default: ""
+        }
+    }
+
+    private static func leaves(_ nodes: [PdfAccessibleNode]) -> [PdfAccessibleNode] {
+        nodes.flatMap { $0.children.isEmpty ? [$0] : leaves($0.children) }
     }
 
     @ViewBuilder
@@ -281,6 +317,10 @@ public struct PdfViewerView: View {
         transform = await viewer.transform()
         marks = await viewer.marks
         image = try? await viewer.render(scale: displayScale)
+        if let pageIndex = state?.pageIndex, accessible?.page != pageIndex,
+           let nodes = try? await document.page(pageIndex).accessibleContent() {
+            accessible = (pageIndex, Self.leaves(nodes))
+        }
     }
 
     private func describe(_ report: PdfRedactionReport) -> String {

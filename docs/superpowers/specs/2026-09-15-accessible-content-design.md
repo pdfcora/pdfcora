@@ -107,6 +107,6 @@ on iOS and Android, where touch exploration works on leaves.
   `text_form.pdf` a `formField`.
 - **Web** browser test: the viewer element on the tagged document has an `h1` with the title, a
   `role="img"` with the chart's label, and the canvas is `aria-hidden`.
-- **iOS** demo UI test: a demo screen showing the tagged document exposes a header element
+- **iOS** demo UI test: a demo screen showing the tagged document exposes an element
   labelled "Annual report 2026" and an image labelled "Bar chart of revenue by region".
 - **Android** Compose test: the same, as a heading node and an image node.
