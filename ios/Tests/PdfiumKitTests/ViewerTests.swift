@@ -117,6 +117,27 @@ final class ViewerTests: XCTestCase {
 
     // MARK: - The viewer
 
+    /// Found by the basic sample: the page was rendered one pixel per point and shown on a
+    /// 3x screen, so its text was visibly soft.
+    func testRenderingAtAScreenScaleGivesPixelsForTheSameDisplayedSize() async throws {
+        let viewer = try await PdfViewer(document: try await document(), viewport: phone,
+                                         options: .init(coalesceInterval: 0))
+        let one = try await viewer.render()
+        let three = try await viewer.render(scale: 3)
+        XCTAssertEqual(one.size.width, 390, accuracy: 1)
+        XCTAssertEqual(three.size.width, one.size.width, accuracy: 0.5, "displayed size stays in points")
+        XCTAssertEqual(try XCTUnwrap(three.cgImage).width, 1170)
+    }
+
+    func testAScaleBeyondTheBitmapCapKeepsTheDisplayedSize() async throws {
+        let viewer = try await PdfViewer(document: try await document(), viewport: phone,
+                                         options: .init(coalesceInterval: 0))
+        await viewer.zoom(to: scrollable)
+        let image = try await viewer.render(scale: 6)
+        XCTAssertEqual(try XCTUnwrap(image.cgImage).width, 4000, "800pt at 6x is capped")
+        XCTAssertEqual(image.size.width, 800, accuracy: 0.5)
+    }
+
     func testEveryChangeEmitsExactlyOneEvent() async throws {
         let viewer = try await PdfViewer(document: try await document(), viewport: phone,
                                          options: .init(coalesceInterval: 0))

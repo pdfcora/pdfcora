@@ -12,6 +12,7 @@ public struct PdfViewerView: View {
     private let theme: PdfViewerTheme
     private let onSave: ((Data) -> Void)?
 
+    @Environment(\.displayScale) private var displayScale
     @State private var viewer: PdfViewer?
     @State private var image: UIImage?
     @State private var state: PdfViewState?
@@ -206,7 +207,7 @@ public struct PdfViewerView: View {
     private func refresh() async {
         guard let viewer else { return }
         state = await viewer.state
-        image = try? await viewer.render()
+        image = try? await viewer.render(scale: displayScale)
     }
 
     private func describe(_ report: PdfRedactionReport) -> String {

@@ -99,12 +99,19 @@ public actor PdfViewer {
         transform().scrollOffset(centering: state.center, in: viewport)
     }
 
+    /// Renders the current page at the zoomed size. `scale` is pixels per point — the
+    /// screen's display scale — and the image carries it, so its `size` stays in points
+    /// while the bitmap is sharp. The bitmap is capped at 4,000 pixels wide.
     public func render(options: PdfRenderOptions = .default,
-                       background: PdfColor = PdfColor(red: 255, green: 255, blue: 255)) async throws -> UIImage {
+                       background: PdfColor = PdfColor(red: 255, green: 255, blue: 255),
+                       scale: Double = 1) async throws -> UIImage {
         // Rendered at the zoomed size rather than scaling one bitmap up, so text stays sharp.
-        let width = Int((pageSize.width * state.zoom.scale).rounded())
-        return try await document.page(state.pageIndex)
-            .render(width: min(max(width, 1), 4000), options: options, background: background)
+        let points = max(pageSize.width * state.zoom.scale, 1)
+        let pixels = min(max(Int((points * scale).rounded()), 1), 4000)
+        let image = try await document.page(state.pageIndex)
+            .render(width: pixels, options: options, background: background)
+        guard let bitmap = image.cgImage else { return image }
+        return UIImage(cgImage: bitmap, scale: Double(pixels) / points, orientation: .up)
     }
 
     // MARK: - Viewport

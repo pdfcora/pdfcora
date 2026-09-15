@@ -103,11 +103,17 @@ export class PdfViewer {
     return this.transform().scrollOffsetCentering(this.current.center, this.viewport);
   }
 
-  render(options: PdfRenderOptions = {}): Promise<PdfImageData> {
+  /**
+   * Renders the current page at the zoomed size. `pixelRatio` is device pixels per CSS
+   * pixel — `window.devicePixelRatio` — so the bitmap is sharp when drawn at the zoomed
+   * size on a high-density display.
+   */
+  render(options: PdfRenderOptions & { readonly pixelRatio?: number } = {}): Promise<PdfImageData> {
+    const { pixelRatio = 1, ...renderOptions } = options;
     // Rendered at the zoomed size rather than scaling one bitmap up, so text stays sharp.
-    const width = Math.max(1, Math.round(this.pageSize.width * this.current.zoom.scale));
+    const width = Math.max(1, Math.round(this.pageSize.width * this.current.zoom.scale * pixelRatio));
     return this.document.page(this.current.pageIndex)
-      .then((page) => page.render({ ...options, width }));
+      .then((page) => page.render({ ...renderOptions, width }));
   }
 
   // MARK: - Viewport

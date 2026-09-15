@@ -23,6 +23,17 @@ describe('the headless viewer', () => {
   let doc: PdfDocument;
   before(async () => { doc = await PdfDocument.open(bytes()); });
 
+  // Found by the basic sample: the component drew a bitmap one CSS pixel per pixel, so on
+  // a 2x or 3x display the page was upscaled and its text was soft.
+  test('rendering at a pixel ratio gives device pixels for the same page size', async () => {
+    const viewer = await PdfViewer.open(doc, PHONE, { throttleMs: 0 });
+    const one = await viewer.render();
+    const three = await viewer.render({ pixelRatio: 3 });
+    assert.equal(one.width, 390, 'fit width: the 200pt page drawn 390 CSS pixels wide');
+    assert.equal(three.width, 1170);
+    assert.equal(three.height, one.height * 3);
+  });
+
   test('every change emits exactly one event', async () => {
     const viewer = await PdfViewer.open(doc, PHONE, { throttleMs: 0 });
     const seen: PdfViewEvent[] = [];

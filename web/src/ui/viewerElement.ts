@@ -184,10 +184,15 @@ export class PdfViewerElement {
   private async refresh(): Promise<void> {
     const viewer = this.viewer;
     if (!viewer) return;
-    const image = await viewer.render();
+    // Drawn at CSS size from a device-pixel bitmap, so text is sharp on a 2x or 3x display
+    // and gestures keep working in CSS pixels.
+    const ratio = globalThis.devicePixelRatio || 1;
+    const image = await viewer.render({ pixelRatio: ratio });
     this.canvas.width = image.width;
     this.canvas.height = image.height;
     Object.assign(this.canvas.style, {
+      width: `${image.width / ratio}px`,
+      height: `${image.height / ratio}px`,
       background: this.theme.pageBackground,
       boxShadow: `0 2px 8px ${this.theme.pageShadow}`,
     });
