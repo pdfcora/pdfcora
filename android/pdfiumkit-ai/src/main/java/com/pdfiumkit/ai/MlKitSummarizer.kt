@@ -29,11 +29,11 @@ import kotlin.coroutines.resumeWithException
  */
 internal object MlKitSummarizer {
     /**
-     * Characters per call. ML Kit documents an input limit of about 4,000 tokens; this is
-     * three quarters of that at three characters per token, because the limit is not
-     * reported at runtime and has not been measured on a device here.
+     * Characters per call. ML Kit rejects longer article input with REQUEST_TOO_LARGE,
+     * "exceeds the character limit of 7860", measured on a phone. The SDK used 9,000 before
+     * that measurement, which would have failed any part between the two.
      */
-    const val LIMIT_CHARS = 9_000
+    const val LIMIT_CHARS = 7_860
 
     /** ML Kit refuses article input shorter than this, measured on a phone. */
     const val MINIMUM_CHARS = 400

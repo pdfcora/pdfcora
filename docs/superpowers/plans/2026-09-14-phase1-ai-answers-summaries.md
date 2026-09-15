@@ -89,6 +89,12 @@ importance 100 (foreground), succeeded: a direct call summarised an article in 2
 the SDK's `summaries.summarize()` on the contract returned accurate results from
 `ON_DEVICE` — one bullet for paragraph style, three for key points.
 
+**ML Kit's input limit is 7,860 characters**, which it states when refusing longer
+input (`REQUEST_TOO_LARGE`). The SDK had assumed 9,000 from the documented token count; it
+now uses 7,860. On the phone, 7,860 characters summarise and 7,861 are refused, and a
+40,000-character, 20-page text went through the SDK's splitting and combining in 14 s:
+eight calls, every one between 400 and 7,860 characters.
+
 Code 30 now surfaces as a new reason on every platform, `backgroundUseBlocked`, through a
 `PdfAiUnavailableError` a route can throw to name why it failed; a later route that answers
 still wins. On the phone, the SDK called from the test process returns
@@ -107,12 +113,8 @@ Two things the phone did show, both fixed on every platform they apply to:
 
 - **Chrome's summariser has never run.** Node has no `Summarizer`. Neither has a custom
   provider been used for real.
-- **ML Kit on long documents.** Only the short contract has been summarised on the phone;
-  the 9,000-character part size against the model's real input limit is unmeasured.
 - **One document.** The contract is short and clean; a real model on long or messy text,
   or in another language, is unmeasured.
-- **ML Kit's input limit** is taken as three quarters of the documented ~4,000 tokens.
-  It is not reported at runtime.
 - **Characters per token** is fixed at 3 everywhere, conservative for English and
   unmeasured for German or Japanese.
 - **SUM-4 streaming** and **cancellable indexing** (ANS-7's second half) are not built.
