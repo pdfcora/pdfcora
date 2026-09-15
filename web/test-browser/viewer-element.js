@@ -105,6 +105,28 @@ try {
   for (let i = 0; i < 50 && reviewHost.querySelector('[data-mark-id="m1"]')?.dataset.markState !== 'rejected'; i++) await frame();
   check('activating a mark button cycles it', reviewHost.querySelector('[data-mark-id="m1"]')?.dataset.markState === 'rejected');
 
+  // Text scaling (A11Y-3): with a much larger default font, controls grow and nothing clips.
+  document.documentElement.style.fontSize = '32px';
+  const bigHost = document.createElement('div');
+  bigHost.style.cssText = 'width:360px;height:500px';
+  document.body.append(bigHost);
+  await PdfViewerElement.mount(bigHost, await open(), {
+    review: { marks: [], notice: 'Suggestions may be incomplete.', onApply: () => {} },
+  });
+  const bigButton = bigHost.querySelector('button');
+  const bigBar = bigButton.parentElement;
+  check('toolbar text follows the reader\'s text size', parseFloat(getComputedStyle(bigButton).fontSize) >= 29,
+    getComputedStyle(bigButton).fontSize);
+  check('the toolbar grows instead of clipping its buttons',
+    bigBar.getBoundingClientRect().height >= bigButton.getBoundingClientRect().height,
+    `bar=${bigBar.getBoundingClientRect().height} button=${bigButton.getBoundingClientRect().height}`);
+  const hostRight = bigHost.getBoundingClientRect().right;
+  const reviewButtons = [...bigHost.querySelectorAll('[id^="review-"]')].filter((e) => e.tagName === 'BUTTON');
+  check('review buttons wrap inside the component at large text',
+    reviewButtons.length >= 3 && reviewButtons.every((b) => b.getBoundingClientRect().right <= hostRight + 1),
+    reviewButtons.map((b) => Math.round(b.getBoundingClientRect().right)).join(',') + ` host=${hostRight}`);
+  document.documentElement.style.fontSize = '';
+
   const closed = await open();
   await closed.close();
   const other = document.createElement('div');

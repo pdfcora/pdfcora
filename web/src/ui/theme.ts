@@ -15,7 +15,9 @@ export interface PdfViewerTheme {
   readonly selectionStroke: string;
   readonly redactionFill: string;
   readonly cornerRadius: string;
+  /** In `rem` by default, so the toolbar follows the reader's text size setting. */
   readonly iconSize: string;
+  /** The toolbar's minimum height; it grows with larger text rather than clipping it. */
   readonly toolbarHeight: string;
 }
 
@@ -29,8 +31,8 @@ export const lightTheme: PdfViewerTheme = {
   selectionStroke: '#ff9500',
   redactionFill: 'rgba(29,29,31,0.72)',
   cornerRadius: '7px',
-  iconSize: '15px',
-  toolbarHeight: '44px',
+  iconSize: '0.9375rem',
+  toolbarHeight: '2.75rem',
 };
 
 export const darkTheme: PdfViewerTheme = {

@@ -79,12 +79,12 @@ export class PdfViewerElement {
     // that bug once, and a configurable toolbar makes it likelier because apps add items.
     Object.assign(this.bar.style, {
       display: 'flex', gap: '4px', alignItems: 'center',
-      height: this.theme.toolbarHeight, padding: '0 8px',
+      minHeight: this.theme.toolbarHeight, padding: '0 8px',
       background: this.theme.toolbarBackground, color: this.theme.toolbarForeground,
       overflowX: 'auto', overflowY: 'hidden', whiteSpace: 'nowrap',
     });
     Object.assign(this.stage.style, { overflow: 'auto', position: 'relative' });
-    Object.assign(this.status.style, { margin: '4px 8px', font: '12px sans-serif', color: '#6e6e73' });
+    Object.assign(this.status.style, { margin: '4px 8px', font: '0.75rem sans-serif', color: '#6e6e73' });
 
     Object.assign(this.overlay.style, { position: 'absolute', left: '0', top: '0', pointerEvents: 'none' });
     // Screen readers get the page's structure from a hidden layer; the bitmap says nothing.
@@ -161,7 +161,7 @@ export class PdfViewerElement {
     this.reviewBar.id = 'review-bar';
     Object.assign(this.reviewBar.style, {
       display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', padding: '6px 8px',
-      font: '13px sans-serif', background: this.theme.toolbarBackground, color: this.theme.toolbarForeground,
+      font: '0.8125rem sans-serif', background: this.theme.toolbarBackground, color: this.theme.toolbarForeground,
     });
     this.reviewBar.replaceChildren(
       notice, counts,
