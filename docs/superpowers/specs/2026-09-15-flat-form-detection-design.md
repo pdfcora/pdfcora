@@ -1,7 +1,7 @@
 # PdfiumKit — Flat Form Detection Design
 
 Date: 2026-09-15
-Status: Draft
+Status: Implemented 2026-09-15
 Implements: FORM-7 of `2026-09-13-pdfiumkit-ai-requirements.md` (a MAY, marked "later")
 
 ## 1. Purpose

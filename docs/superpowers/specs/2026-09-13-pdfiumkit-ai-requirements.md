@@ -268,6 +268,10 @@ three — `pushButton`, `signature`, `unknown` — carry no fillable value. Draf
 | FORM-6 | MUST | Cover the 5 fillable field kinds, and classify the other 3 as not fillable rather than proposing values for them. Fields are written only through `apply()` (HIL-1). |
 | FORM-7 | MAY | Later: detect fields on flat PDFs that have no form fields, and propose creating them. This needs layout or image understanding and is not in v1. |
 
+**FORM-7 implemented 2026-09-15** on all three platforms, by rules rather than image understanding:
+underscore runs, lines, boxes and squares become proposed text fields and checkboxes, created by a
+new core `addFormFields`. Design: `2026-09-15-flat-form-detection-design.md`.
+
 ### Acceptance
 
 - On a test set of English and German forms, field-matching precision meets a target set

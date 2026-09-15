@@ -109,6 +109,10 @@ class PdfiumAI(
             profile: Map<com.pdfiumkit.ai.forms.PdfProfileKey, String>,
             pages: IntRange? = null,
         ): com.pdfiumkit.ai.forms.PdfFormProposals = com.pdfiumkit.ai.forms.proposeFormValues(this@PdfiumAI, profile, pages)
+
+        /** Proposes form fields for the blanks of a flat PDF — lines, boxes, underscores (FORM-7). */
+        suspend fun detect(pages: IntRange? = null): com.pdfiumkit.ai.forms.PdfDetectedFields =
+            com.pdfiumkit.ai.forms.detectFields(document, pages)
     }
 
     inner class Redactions {

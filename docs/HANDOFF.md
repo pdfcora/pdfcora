@@ -35,6 +35,7 @@ because each lesson generalises. §4 lists what is open and what was parked.
 | `pdfiumkit-ai` Phase 2b: smart form filling from a profile, labelled marks, undo | Done, three platforms, shared cases in `conformance/forms/`; no on-device model (measured) |
 | Core structure tree read; figure alt text and decorative writes | Done, three platforms; written documents pass veraPDF PDF/UA-1 (`scripts/verapdf-ua1.sh`) |
 | Remediation: core `tagContent`, rule-based tag proposals (Phase 3b) | Done, three platforms, shared document in `conformance/remediation/`; output passes veraPDF PDF/UA-1 |
+| Flat form detection (FORM-7) and core `addFormFields` | Done, three platforms, shared fixture `conformance/forms/flat.pdf`; rules only |
 | Accessible content (A11Y-2): tagged structure exposed to VoiceOver, TalkBack, browser screen readers | Done, three platforms, UI-tested; not yet tried with a real screen reader by a person |
 | `pdfiumkit-ai` semantic diff: sentence alignment, meaning vs wording labels | Done, three platforms, shared pair in `conformance/diff/`; Apple's model 3 of 3 runs right |
 | `pdfiumkit-ai` Phase 3a: alt text proposals for figures in tagged PDFs | Done, three platforms, shared document in `conformance/alt-text/`; ML Kit image description route on Android not run on a real device |
@@ -179,6 +180,11 @@ the tests use a fake provider. The writer finds a figure by page and marked-cont
 figure without marked content, or one whose type is role-mapped to `Figure`, is not listed.
 veraPDF (`scripts/install-verapdf.sh`, Java 11+) is the PDF/UA judge; CI runs it on the web
 output, the local gates on the iOS and Android output.
+
+**Checkboxes are set through PDFium's form-fill environment** (a space key on the focused widget)
+since 2026-09-15. Before, `setChecked` wrote `/V` and `/AS` as strings: PDFium read them back, so
+every test passed, but poppler showed the box unchecked. Only switching a radio button *off* still
+writes strings, because no key does that.
 
 **Remediation is rules only, and limited.** No model is used: the proposals are the same on
 every device. Tables become paragraphs, paths become artifacts (a vector chart is not announced),

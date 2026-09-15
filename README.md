@@ -127,6 +127,7 @@ same results on all three platforms.
 | License keys and trial watermark | ✅ | ✅ | ✅ |
 | Redaction suggestions, reviewed as marks in the viewer | ✅ | ✅ | ✅ |
 | Smart form filling from a profile, reviewed as labelled marks | ✅ | ✅ | ✅ |
+| Create form fields; detect blanks on flat PDFs (lines, boxes, underscores, squares) | ✅ | ✅ | ✅ |
 | Structure tree read; figure alt text and decorative marking, checked with veraPDF | ✅ | ✅ | ✅ |
 | Alt text proposals for figures | ✅ provider | ✅ ML Kit, provider | ✅ provider |
 | Remediation: tag untagged content, rule-based proposals, checked with veraPDF | ✅ | ✅ | ✅ |
@@ -449,6 +450,19 @@ buttons with a visible focus ring, and the focused page zooms with + and − and
 Page Up and Page Down. On every platform the component follows the reader's text size: the web
 toolbar is sized in `rem`, the SwiftUI toolbar scales with Dynamic Type, and the review bar
 reflows at large text on iOS and Android.
+
+## Fields for flat PDFs
+
+A form printed from a word processor has blanks but no fields. `ai.forms.detect()` proposes a text
+field for each underscore run, drawn line and drawn box, and a checkbox for each small square,
+labelled from the text beside it, by rules and with no model. `apply` creates the accepted fields
+through the core's `document.addFormFields`, in a new document, and smart form filling then works
+on them.
+
+```ts
+const detected = await new PdfiumAI(document).forms.detect();
+const withFields = await detected.apply(detected.items.map((i) => i.id));
+```
 
 ## License keys
 
