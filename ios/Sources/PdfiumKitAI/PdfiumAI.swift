@@ -81,7 +81,7 @@ public struct PdfiumAI: Sendable {
             }
 
             let document = ai.document
-            return await resolveRoutes(
+            return Trial.mark(await resolveRoutes(
                 onDevice: appleTokens.map { tokens in {
                     let passages = GroundedAnswers.passages(index, question: question, contextTokens: tokens)
                     guard let reply = try await AppleModel.groundedReply(
@@ -96,7 +96,7 @@ public struct PdfiumAI: Sendable {
                     guard let reply = GroundedAnswers.parse(structured: response.structured, text: response.text)
                     else { return nil }
                     return try await GroundedAnswers.verify(reply, document: document, index: index, passages: passages)
-                } })
+                } }))
         }
     }
 
@@ -133,7 +133,7 @@ public struct PdfiumAI: Sendable {
             let providerTokens = ai.options.providerContextTokens
             func limit(_ tokens: Int) -> Int { Int(Double(tokens * GroundedAnswers.charsPerToken) * 0.6) }
 
-            return await resolveRoutes(
+            return Trial.mark(await resolveRoutes(
                 onDevice: appleTokens.map { tokens in {
                     let text = try await SummaryText.summariseInWindows(texts, limit: limit(tokens)) { part in
                         try await AppleModel.respond(to: SummaryText.prompt(part, style: style)) ?? ""
@@ -146,7 +146,7 @@ public struct PdfiumAI: Sendable {
                             .text.trimmingCharacters(in: .whitespacesAndNewlines)
                     }
                     return PdfSummary(text: text, pagesWithoutText: pagesWithoutText)
-                } })
+                } }))
         }
     }
 }
