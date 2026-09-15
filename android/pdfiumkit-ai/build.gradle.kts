@@ -37,6 +37,7 @@ android {
         rootProject.projectDir.parentFile.resolve("conformance/fixtures"),
         rootProject.projectDir.parentFile.resolve("conformance/redaction"),
         rootProject.projectDir.parentFile.resolve("conformance/forms"),
+        rootProject.projectDir.parentFile.resolve("conformance/alt-text"),
     )
 }
 
@@ -49,6 +50,7 @@ dependencies {
     // overrides its floor and every call is guarded (PKG-3). Allowed here, never in the
     // core: scripts/check-core-deps.sh checks the core's resolved graph.
     implementation("com.google.mlkit:genai-summarization:1.0.0-beta1")
+    implementation("com.google.mlkit:genai-image-description:1.0.0-beta1")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")

@@ -68,6 +68,19 @@ class PdfiumAI(
      */
     val forms = Forms()
 
+    /**
+     * Lists figures in a tagged document that have no alternate text and proposes a
+     * description, or decorative marking, for each (ALT). Descriptions come from ML Kit's
+     * on-device image description when [PdfiumAIOptions.context] is set and the device has it,
+     * else from the custom provider. Nothing is written until apply, which returns a new document.
+     */
+    val altText = AltText()
+
+    inner class AltText {
+        suspend fun suggest(pages: IntRange? = null): com.pdfiumkit.ai.alttext.PdfAltTextReview =
+            com.pdfiumkit.ai.alttext.suggestAltText(this@PdfiumAI, pages)
+    }
+
     inner class Forms {
         suspend fun propose(
             profile: Map<com.pdfiumkit.ai.forms.PdfProfileKey, String>,
