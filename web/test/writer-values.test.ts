@@ -54,3 +54,14 @@ describe('PDF value serialisation', () => {
     assert.equal(bytes, '7 0 obj\n<</X 1>>\nendobj\n');
   });
 });
+
+describe('re-serialising a read dictionary', () => {
+  /** Structure elements carry /T, /Lang and /ActualText; rewriting one must not alter them. */
+  test('literal and hex strings come back byte for byte', async () => {
+    const { parseDictionaryAt } = await import('../dist/writer/dictionary.js');
+    const source = '<</T (a \\(b\\) c\\\\ \xe9) /Lang <FEFF0064> /ID [<ab12> <CD34>]>>';
+    assert.equal(
+      new TextDecoder('latin1').decode(serialize(parseDictionaryAt(source, 0))),
+      '<</T (a \\(b\\) c\\\\ \xe9) /Lang <FEFF0064> /ID [<AB12> <CD34>]>>');
+  });
+});

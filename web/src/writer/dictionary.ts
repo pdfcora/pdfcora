@@ -8,7 +8,7 @@
  */
 
 import type { PdfValue } from './values.js';
-import { name, ref } from './values.js';
+import { hexString, name, raw, ref } from './values.js';
 
 export type Dictionary = Record<string, PdfValue>;
 
@@ -53,7 +53,8 @@ function parseValue(text: string, start: number): [PdfValue, number] {
   }
   if (c === '<') {
     const end = text.indexOf('>', i);
-    return [{ __hexLiteral: text.slice(i, end + 1) } as unknown as PdfValue, end + 1];
+    if (end < 0) throw new Error('unterminated hex string');
+    return [hexString(hexBytes(text.slice(i + 1, end))), end + 1];
   }
   if (c === '[') {
     const items: PdfValue[] = [];
@@ -75,7 +76,9 @@ function parseValue(text: string, start: number): [PdfValue, number] {
       if (text[j] === '(') depth++;
       else if (text[j] === ')' && --depth === 0) { j++; break; }
     }
-    return [text.slice(i + 1, j - 1), j];
+    // Kept as written, escapes and all: decoding and re-encoding would change the bytes
+    // of any string a rewritten object carries forward.
+    return [raw(latin1(text.slice(i, j))), j];
   }
   if (c === '/') {
     const end = endOfToken(text, i + 1);
@@ -123,6 +126,20 @@ function endOfToken(text: string, start: number): number {
   let i = start;
   while (i < text.length && !SPACE.test(text[i]!) && !DELIMITER.test(text[i]!)) i++;
   return i;
+}
+
+function hexBytes(digits: string): Uint8Array {
+  const clean = digits.replace(/[^0-9a-fA-F]/g, '');
+  const padded = clean.length % 2 ? `${clean}0` : clean;
+  const out = new Uint8Array(padded.length / 2);
+  for (let k = 0; k < out.length; k++) out[k] = parseInt(padded.slice(k * 2, k * 2 + 2), 16);
+  return out;
+}
+
+function latin1(value: string): Uint8Array {
+  const out = new Uint8Array(value.length);
+  for (let k = 0; k < value.length; k++) out[k] = value.charCodeAt(k) & 0xff;
+  return out;
 }
 
 const decodeName = (value: string) =>
