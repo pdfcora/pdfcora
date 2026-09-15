@@ -31,12 +31,13 @@ because each lesson generalises. §4 lists what is open and what was parked.
 | `pdfiumkit-ai` Phase 1: grounded answers, summaries | Built, three platforms; real-model tested on Apple and on an Android phone |
 | Basic samples: one screen, bundled PDF in the viewer component | iOS, Android, web — `samples/` |
 | License keys: offline, per module, trial watermark | Done, three platforms, shared cases in `conformance/license/` |
+| `pdfiumkit-ai` Phase 2a: redaction suggestions, review marks in the viewer, undo | Done, three platforms, shared cases in `conformance/redaction/` |
 
-Test counts at the time of writing (2026-09-15): web 278, web-ai 42, browser viewer 15,
-license tool 1, iOS 169 (sweep skipped) + hung-render pass + demo UI 9 + AI 43, Android
-142 instrumented (sweep skipped) + UI 3 + hung-render pass + 16 JVM, AI 28 JVM + 9
-instrumented. pdfsig accepts both the licensed and the trial-signed document on iOS and
-Android.
+Test counts at the time of writing (2026-09-15): web 284, web-ai 72, browser viewer 19,
+license tool 1, iOS 174 (sweep skipped) + hung-render pass + demo UI 10 + AI 53 (Apple
+measurement skipped), Android 147 instrumented (sweep skipped) + UI 4 + hung-render pass + 16
+JVM, AI 31 JVM + 15 instrumented. pdfsig accepts both the licensed and the trial-signed
+document on iOS and Android.
 
 ## 2. Running things
 
@@ -161,6 +162,10 @@ unmeasured numbers (ML Kit's input limit, characters per token) and what is not 
 only, and `experimentalOnDevicePrompt` does nothing yet (spec open question 6): ML Kit's
 Prompt API is alpha. No provider adapters ship (question 4): apps implement the small
 provider interface. The engine timeout stays 30 s on every platform.
+
+**Review marks are small on a phone.** On a page fitted to a phone's width, a line of text is
+about 7 pt tall, so a mark over it is a small target; the iOS UI test taps an IBAN mark for that
+reason. Zooming in helps. A larger touch area around marks is not built.
 
 **The Android AI module skips Kotlin's metadata version check**, because ML Kit ships
 Kotlin 2.1 metadata and the project builds with 1.9. Upgrading Kotlin removes the need.

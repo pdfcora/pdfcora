@@ -326,6 +326,11 @@ Android (**VERIFY LANGUAGES**).
 
 ## 12. Redaction suggestions — RED
 
+**Implemented 2026-09-15** on all three platforms: patterns for English and German, the model
+on Apple's on-device model and the custom provider, review as marks in the viewer, undo by
+snapshot. Apple's model found 3 of 3 English and 4 of 4 German context-dependent items on the
+test document. Design: `2026-09-15-redaction-suggestions-design.md`.
+
 Flag likely personal data by combining a model with plain pattern matching. The SDK only
 ever suggests. A small model will miss things, and a missed redaction leaks data.
 

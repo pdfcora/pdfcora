@@ -92,6 +92,18 @@ It also cited one sentence three times in a reply, and the SDK returned three id
 citations. A repeated citation now counts as verified but is kept once, on all three
 platforms.
 
+### Redaction suggestions with Apple's model
+
+On 2026-09-15, through the iOS simulator (`RedactionMeasurementTests`, opt-in with
+`TEST_RUNNER_PDFIUMKIT_MEASURE_APPLE=1`), on `conformance/redaction/pii.pdf` with only the
+model categories asked for: the English page **3 of 3** (a person's name, a postal address,
+a passport number) in 2.7 s, the German page **4 of 4** (a name, an address, an ID card
+number and a tax ID) in 2.6 s. It also returned each date of birth, and every name at both of
+its occurrences. Its ID quotes are wider than the numbers: "Passport number 502135326", and
+the two German IDs in one quote with their labels, so those redactions take a few extra
+words. The first readings after launch report no prompt budget, so a first call can fall back
+to patterns; the measurement warms the model up with one call.
+
 ### ML Kit on a real phone
 
 On 2026-09-15, a Samsung SM-F971B on Android 17 with Google AICore

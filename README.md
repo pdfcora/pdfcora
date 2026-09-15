@@ -125,6 +125,7 @@ same results on all three platforms.
 | Viewer: state, zoom, events, sync, editing | ✅ | ✅ | ✅ |
 | UI component with configurable toolbar | ✅ SwiftUI | ✅ Compose | ✅ DOM element |
 | License keys and trial watermark | ✅ | ✅ | ✅ |
+| Redaction suggestions, reviewed as marks in the viewer | ✅ | ✅ | ✅ |
 | Raw PDFium escape hatch | ✅ *untested* | — | — |
 
 ⚠️ iOS rendering is cancellable *between* progressive steps, which covers a slow
@@ -326,6 +327,30 @@ Full-corpus results, most recent run:
   PDFium's click path needs FFI callbacks this SDK does not install.
 - **Unknown kinds.** Every sealed hierarchy carries an `unknown` case, so annotation
   and field types this SDK does not model are surfaced rather than dropped.
+
+## Redaction suggestions
+
+`pdfiumkit-ai` suggests personal data to redact. Patterns find IBANs, emails, phone numbers,
+payment cards, dates, URLs and IP addresses on every device; Apple's on-device model or your
+custom provider adds names, postal addresses, dates of birth and ID numbers. Nothing changes
+until the user accepts, and **suggestions may be incomplete: a person must still review the
+whole document.**
+
+```ts
+const review = await new PdfiumAI(document, { provider }).redactions.suggest();
+await PdfViewerElement.mount(element, document, {
+  review: {
+    marks: review.suggestions.map((s) => ({ id: s.id, pageIndex: s.pageIndex, rects: s.rects, state: 'pending' })),
+    notice: review.notice,
+    onApply: async (ids) => {
+      const applied = await review.apply(ids);   // redacts; applied.undo() reopens the document as it was
+    },
+  },
+});
+```
+
+SwiftUI (`PdfViewerView(document:review:)`) and Compose (`PdfViewerView(document, review = …)`)
+take the same review setup. Save with the full save mode afterwards.
 
 ## License keys
 

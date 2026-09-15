@@ -1,7 +1,7 @@
 # PdfiumKit — Redaction Suggestions Design
 
 Date: 2026-09-15
-Status: Draft, pending review
+Status: Implemented 2026-09-15
 Implements: RED-1 to RED-5 and HIL-1 to HIL-3 of `2026-09-13-pdfiumkit-ai-requirements.md`
 (AI Phase 2, first half; smart form filling follows in its own spec)
 
@@ -135,8 +135,12 @@ Generic, with no AI in them, so they live in the core and the core gains no AI d
 viewer.setMarks([{ id, pageIndex, rects, state: 'pending' | 'accepted' | 'rejected' }]);
 viewer.marks;                         // the current marks
 viewer.markAt(pageIndex, point);      // the id of the topmost mark under a page point, or null
-// event: { kind: 'markTapped', id }
+viewer.tapMark(pageIndex, point);     // cycles the tapped mark's state; returns its id, or null
+viewer.setAllMarks(state);
 ```
+
+`tapMark` rather than an event: the three components call it, so the cycling is one tested
+behaviour per platform instead of three copies in UI code.
 
 Marks are local to one viewer. They are not part of the sync wire and never touch the
 document. Setting marks replaces the previous set.
