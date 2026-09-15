@@ -17,3 +17,5 @@ export { lightTheme, darkTheme, type PdfViewerTheme } from './ui/theme.js';
 export { PdfViewer, type PdfViewerOptions } from './view/viewer.js';
 export * from './view/state.js';
 export * from './view/zoom.js';
+export { PdfLicense } from './license/state.js';
+export type { PdfLicenseModule, PdfLicenseReason, PdfLicenseStatus } from './license/key.js';
