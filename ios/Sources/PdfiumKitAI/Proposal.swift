@@ -21,6 +21,8 @@ public struct PdfProposal<T: Sendable>: Sendable {
 
 public enum PdfProposalError: Error, Equatable {
     case unknownProposal(String)
+    /// A decision would write an empty description.
+    case missingDescription(String)
 }
 
 public struct PdfProposalSet<T: Sendable>: Sendable {
