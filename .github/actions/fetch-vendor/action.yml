@@ -1,0 +1,16 @@
+name: Fetch vendor artifacts
+description: >
+  Downloads the prebuilt PDFium binaries from this repository's vendor release and places
+  them in vendor/. fetch-vendor.sh checks every file against vendor.manifest.json.
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        mkdir -p "$RUNNER_TEMP/pdfium-artifacts"
+        gh release download vendor-chromium-7243 --repo "$GITHUB_REPOSITORY" \
+          --pattern pdfium-artifacts.tar.gz --dir "$RUNNER_TEMP" --clobber
+        tar xzf "$RUNNER_TEMP/pdfium-artifacts.tar.gz" -C "$RUNNER_TEMP/pdfium-artifacts"
+        PDFIUMKIT_ARTIFACTS="$RUNNER_TEMP/pdfium-artifacts" ./scripts/fetch-vendor.sh

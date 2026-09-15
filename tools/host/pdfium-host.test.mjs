@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { loadPdfium } from './pdfium-host.mjs';
 
-const CORPUS = '/Users/daos/Projects/Lab/pdfiumkit/src/pdfium/testing/resources';
+const CORPUS = new URL('../../conformance/corpus', import.meta.url).pathname;
 let pdfium;
 before(async () => { pdfium = await loadPdfium(); });
 

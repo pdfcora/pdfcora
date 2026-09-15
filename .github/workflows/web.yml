@@ -1,15 +1,19 @@
 name: web
 on: [push, pull_request]
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '20' }
-      - name: Fetch vendor artifacts
-        run: ./scripts/fetch-vendor.sh
-        env:
-          PDFIUMKIT_ARTIFACTS: ${{ runner.temp }}/pdfium-artifacts
+        with: { node-version: '22' }
+      - name: Install poppler and OpenSSL for the signing cross-checks
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils openssl
+      - uses: ./.github/actions/fetch-vendor
       - name: Install and test
         run: cd web && npm ci && npm test

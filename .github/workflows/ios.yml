@@ -1,18 +1,35 @@
 name: ios
 on: [push, pull_request]
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
+  # The SDK and AI unit suites. The demo app's UI tests take minutes of macOS time per run;
+  # scripts/test-ios.sh runs them locally.
   test:
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '20' }
-      - name: Fetch vendor artifacts
-        run: ./scripts/fetch-vendor.sh
-        env:
-          PDFIUMKIT_ARTIFACTS: ${{ runner.temp }}/pdfium-artifacts
-      - name: Test
+        with: { node-version: '22' }
+      - uses: ./.github/actions/fetch-vendor
+      - name: Pick a simulator
         run: |
-          xcodebuild test -scheme PdfiumKit \
-            -destination 'platform=iOS Simulator,name=iPhone 15' \
-            -derivedDataPath build/dd
+          name=$(xcrun simctl list devices available | grep -m1 -oE 'iPhone [0-9]+( Pro)?' )
+          echo "DESTINATION=platform=iOS Simulator,name=$name" >> "$GITHUB_ENV"
+          echo "using $name"
+      - name: SDK tests
+        run: |
+          xcodebuild test -scheme PdfiumKit-Package -destination "$DESTINATION" \
+            -only-testing:PdfiumKitTests -skip-testing:PdfiumKitTests/BlastRadiusTests \
+            -skip-testing:PdfiumKitTests/HangProbeTests
+      - name: The hung-render suite, in its own process
+        run: |
+          xcodebuild test -scheme PdfiumKit-Package -destination "$DESTINATION" \
+            -only-testing:PdfiumKitTests/BlastRadiusTests
+      - name: AI tests
+        run: |
+          xcodebuild test -scheme PdfiumKit-Package -destination "$DESTINATION" \
+            -only-testing:PdfiumKitAITests

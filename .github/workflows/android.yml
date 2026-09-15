@@ -1,6 +1,13 @@
 name: android
 on: [push, pull_request]
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
+  # The JVM tests and a native build of every ABI. The instrumented suite needs an
+  # emulator, which is slow on hosted runners; scripts/test-android.sh runs it locally.
   test:
     runs-on: ubuntu-latest
     steps:
@@ -8,16 +15,12 @@ jobs:
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: '17' }
       - uses: actions/setup-node@v4
-        with: { node-version: '20' }
-      - name: Fetch vendor artifacts
-        run: ./scripts/fetch-vendor.sh
-        env:
-          PDFIUMKIT_ARTIFACTS: ${{ runner.temp }}/pdfium-artifacts
-      - name: Build library
-        run: cd android && ./gradlew :pdfiumkit:assembleDebug
-      - name: Instrumented tests
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 30
-          arch: x86_64
-          script: cd android && ./gradlew :pdfiumkit:connectedDebugAndroidTest
+        with: { node-version: '22' }
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: '8.14.2' }
+      - uses: ./.github/actions/fetch-vendor
+      - name: Build and run JVM tests
+        run: |
+          cd android
+          gradle :pdfiumkit:assembleDebug :pdfiumkit:testDebugUnitTest \
+            :pdfiumkit-ai:testDebugUnitTest --console=plain

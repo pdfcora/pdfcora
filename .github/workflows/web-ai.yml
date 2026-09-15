@@ -1,17 +1,19 @@
 name: web-ai
 on: [push, pull_request]
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   test:
-    runs-on: macos-14
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '20' }
-      - name: Fetch vendor artifacts
-        run: ./scripts/fetch-vendor.sh
-        env:
-          PDFIUMKIT_ARTIFACTS: ${{ runner.temp }}/pdfium-artifacts
+        with: { node-version: '22' }
+      - uses: ./.github/actions/fetch-vendor
       - name: Build the core the AI package links against
         run: cd web && npm ci && npm run build
       - name: Test
-        run: cd web-ai && npm install && npm test
+        run: cd web-ai && npm ci && npm test
