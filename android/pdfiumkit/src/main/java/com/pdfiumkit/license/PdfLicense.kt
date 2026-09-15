@@ -2,6 +2,7 @@ package com.pdfiumkit.license
 
 import android.content.Context
 import android.util.Log
+import com.pdfiumkit.BuildConfig
 
 /** Set at release by scripts/set-release-date.sh. The private key is held outside this repository. */
 internal object LicenseBuild {
@@ -35,12 +36,17 @@ object PdfLicense {
         Log.w("PdfiumKit", "output is watermarked — $detail")
     }
 
-    /** Test hook; internal to this module. */
+    /**
+     * Test hook. Kotlin `internal` is still a public JVM method, callable from Java as
+     * `configureForTesting$pdfiumkit_release`, so the release build ignores it: otherwise
+     * an app could install its own public key and license itself.
+     */
     @Synchronized
     internal fun configureForTesting(
         publicKey: String? = null, revoked: Set<String>? = null, releaseDate: String? = null,
         appIdentifier: String? = null, key: String? = null, setKey: Boolean = false,
     ): PdfLicenseStatus {
+        if (!BuildConfig.DEBUG) return current
         context = context.copy(
             publicKey = publicKey ?: context.publicKey,
             revoked = revoked ?: context.revoked,

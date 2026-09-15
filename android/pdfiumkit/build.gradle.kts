@@ -53,6 +53,9 @@ android {
 
     publishing { singleVariant("release") { withSourcesJar() } }
 
+    // BuildConfig.DEBUG keeps the license test hook out of the release AAR.
+    buildFeatures { buildConfig = true }
+
     // The shared conformance corpus and expectations, so instrumented tests assert the
     // same contract as the iOS and Web SDKs.
     sourceSets["androidTest"].assets.srcDirs(

@@ -72,6 +72,13 @@ its expiry. Every test suite installs a test key from `conformance/license/cases
 `node conformance/license/make-cases.mjs` regenerates it. The design is
 `docs/superpowers/specs/2026-09-15-licensing-design.md`.
 
+Checked in the release packages on 2026-09-15, each in a throwaway app: no key watermarks,
+a key for the app renders and saves clean, a key for another app reports `wrongApp`. The
+test hook is not reachable in any of them: internal on iOS (not in the interface, not
+exported), refused by the release AAR (Kotlin `internal` is a public JVM method, so it is
+gated on `BuildConfig.DEBUG`), and not exported by the npm package — though on web the file
+is still there to import by path, which is no worse than editing the JavaScript.
+
 **Set `ANDROID_SERIAL` whenever more than one device is attached.** Gradle honours it;
 so does the gate now. They used to disagree, and the signing cross-check pulled the
 signed document off the wrong device and blamed the signature.
