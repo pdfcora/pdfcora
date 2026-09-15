@@ -103,7 +103,8 @@ class PdfiumAI(
 
         /**
          * Call while the app is in the foreground. AICore blocks on-device inference from the
-         * background, and the result is then [PdfAiUnavailableReason.REQUEST_FAILED].
+         * background, and the result is then [PdfAiUnavailableReason.BACKGROUND_USE_BLOCKED]
+         * unless a custom provider answers instead.
          */
         suspend fun summarize(
             pages: IntRange? = null,

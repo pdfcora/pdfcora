@@ -26,7 +26,9 @@ export type PdfAiUnavailableReason =
   /** No on-device route and no custom provider configured. */
   | 'noProvider'
   /** A model or provider was tried and failed, and no other route answered. */
-  | 'requestFailed';
+  | 'requestFailed'
+  /** The platform refuses on-device inference while the app is in the background. */
+  | 'backgroundUseBlocked';
 
 export function unavailable(
   reason: PdfAiUnavailableReason,

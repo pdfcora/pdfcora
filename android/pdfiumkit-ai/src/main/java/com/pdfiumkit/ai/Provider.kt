@@ -27,6 +27,12 @@ sealed class PdfAiOutcome<out T> {
 }
 
 /**
+ * Thrown by a route that failed for a reason the host can act on, such as the platform
+ * refusing inference from the background. Reported if no later route answers.
+ */
+class PdfAiUnavailableException(val reason: PdfAiUnavailableReason) : Exception("unavailable: $reason")
+
+/**
  * Tries each route in the fixed order of PRV-2 and reports which one answered.
  *
  * A route returning null and a route throwing are treated the same — both move on to
@@ -45,6 +51,7 @@ suspend fun <T> resolveRoutes(
     )
 
     var failed = false
+    var named: PdfAiUnavailableReason? = null
     for ((source, route) in ordered) {
         if (route == null) continue
         val value = try {
@@ -53,13 +60,14 @@ suspend fun <T> resolveRoutes(
             // Swallowed so the next route can answer, but remembered: a failure is not a
             // missing configuration, and reporting it as one sends the integrator the wrong way.
             failed = true
+            if (named == null && e is PdfAiUnavailableException) named = e.reason
             null
         }
         if (value != null) return PdfAiOutcome.Answered(PdfAiResult(value, source))
     }
     return PdfAiOutcome.NotAvailable(
         PdfAiAvailability.Unavailable(
-            if (failed) PdfAiUnavailableReason.REQUEST_FAILED else PdfAiUnavailableReason.NO_PROVIDER,
+            named ?: if (failed) PdfAiUnavailableReason.REQUEST_FAILED else PdfAiUnavailableReason.NO_PROVIDER,
         ),
     )
 }

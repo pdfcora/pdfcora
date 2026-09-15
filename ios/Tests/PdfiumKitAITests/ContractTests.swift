@@ -52,6 +52,25 @@ final class ContractTests: XCTestCase {
         XCTAssertEqual(state, .unavailable(.requestFailed))
     }
 
+    /// AICore refuses inference from a background app. Saying so tells the host what to do:
+    /// call again from the foreground, rather than configure something.
+    func testARouteThatFailsForANamedReasonReportsThatReasonWhenNothingAnswers() async {
+        struct Boom: Error {}
+        let outcome: PdfAiOutcome<String> = await resolveRoutes(
+            onDevice: { throw PdfAiUnavailableError(reason: .backgroundUseBlocked) },
+            customProvider: { throw Boom() })
+        guard case .unavailable(let state) = outcome else { return XCTFail("expected unavailable") }
+        XCTAssertEqual(state, .unavailable(.backgroundUseBlocked))
+    }
+
+    func testALaterRouteThatAnswersStillWinsOverANamedFailure() async {
+        let outcome: PdfAiOutcome<String> = await resolveRoutes(
+            onDevice: { throw PdfAiUnavailableError(reason: .backgroundUseBlocked) },
+            customProvider: { "from-provider" })
+        guard case .answered(let result) = outcome else { return XCTFail("expected an answer") }
+        XCTAssertEqual(result.source, .customProvider)
+    }
+
     func testARouteThatThrowsDoesNotStopTheNextOne() async {
         struct Boom: Error {}
         let outcome: PdfAiOutcome<String> = await resolveRoutes(

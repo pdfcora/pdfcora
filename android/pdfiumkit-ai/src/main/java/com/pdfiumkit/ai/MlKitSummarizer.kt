@@ -25,7 +25,7 @@ import kotlin.coroutines.resumeWithException
  * AICore refuses inference from an app that is not in the foreground: status 30,
  * BACKGROUND_USE_BLOCKED, which this ML Kit release does not name and reports as
  * "30-UNKNOWN". Measured on a phone: the same call fails from a test process and succeeds
- * from a resumed activity.
+ * from a resumed activity. It is reported as [PdfAiUnavailableReason.BACKGROUND_USE_BLOCKED].
  */
 internal object MlKitSummarizer {
     /**
@@ -37,6 +37,9 @@ internal object MlKitSummarizer {
 
     /** ML Kit refuses article input shorter than this, measured on a phone. */
     const val MINIMUM_CHARS = 400
+
+    /** AICore's BACKGROUND_USE_BLOCKED, newer than this ML Kit release's error codes. */
+    private const val BACKGROUND_USE_BLOCKED = 30
 
     private fun supported(context: Context?): Boolean = context != null && Build.VERSION.SDK_INT >= 26
 
@@ -108,6 +111,11 @@ internal object MlKitSummarizer {
             val summarizer = client(context!!, style, language(languageTag)!!)
             try {
                 summarizer.runInference(SummarizationRequest.builder(part).build()).await().summary
+            } catch (e: GenAiException) {
+                if (e.errorCode == BACKGROUND_USE_BLOCKED) {
+                    throw PdfAiUnavailableException(PdfAiUnavailableReason.BACKGROUND_USE_BLOCKED)
+                }
+                throw e
             } finally {
                 summarizer.close()
             }

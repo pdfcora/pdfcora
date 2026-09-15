@@ -22,6 +22,9 @@ enum class PdfAiUnavailableReason {
 
     /** A model or provider was tried and failed, and no other route answered. */
     REQUEST_FAILED,
+
+    /** The platform refuses on-device inference while the app is in the background. */
+    BACKGROUND_USE_BLOCKED,
 }
 
 /**

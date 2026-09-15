@@ -1,9 +1,27 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { resolve } from '../dist/provider.js';
+import { PdfAiUnavailableError, resolve } from '../dist/provider.js';
 
 describe('provider resolution order', () => {
+  // AICore refuses inference from a background app. Saying so tells the host what to do:
+  // call again from the foreground, rather than configure something.
+  test('a route that fails for a named reason reports that reason when nothing answers', async () => {
+    const result = await resolve<string>({
+      onDevice: async () => { throw new PdfAiUnavailableError('backgroundUseBlocked'); },
+      customProvider: async () => { throw new Error('502'); },
+    });
+    assert.deepEqual(result, { kind: 'unavailable', reason: 'backgroundUseBlocked' });
+  });
+
+  test('a later route that answers still wins over a named failure', async () => {
+    const result = await resolve<string>({
+      onDevice: async () => { throw new PdfAiUnavailableError('backgroundUseBlocked'); },
+      customProvider: async () => 'from-provider',
+    });
+    assert.deepEqual(result, { value: 'from-provider', source: 'customProvider' });
+  });
+
   test('routes are tried in order and the winner is named', async () => {
     const calls: string[] = [];
     const result = await resolve<string>({

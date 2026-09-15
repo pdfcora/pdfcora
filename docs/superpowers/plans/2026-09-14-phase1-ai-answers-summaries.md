@@ -89,6 +89,11 @@ importance 100 (foreground), succeeded: a direct call summarised an article in 2
 the SDK's `summaries.summarize()` on the contract returned accurate results from
 `ON_DEVICE` — one bullet for paragraph style, three for key points.
 
+Code 30 now surfaces as a new reason on every platform, `backgroundUseBlocked`, through a
+`PdfAiUnavailableError` a route can throw to name why it failed; a later route that answers
+still wins. On the phone, the SDK called from the test process returns
+`BACKGROUND_USE_BLOCKED`.
+
 Two things the phone did show, both fixed on every platform they apply to:
 
 - **ML Kit refuses article input under 400 characters.** Text that short is no longer

@@ -1,4 +1,4 @@
-import { type PdfAiAvailability, unavailable } from './availability.js';
+import { type PdfAiAvailability, type PdfAiUnavailableReason, unavailable } from './availability.js';
 
 /** Where an answer came from. Shown to users and logged for audits (PRV-3). */
 export type PdfAiSource = 'onDevice' | 'customProvider' | 'rules';
@@ -29,6 +29,17 @@ export interface PdfAiProvider {
 type Route<T> = () => Promise<T | null>;
 
 /**
+ * Thrown by a route that failed for a reason the host can act on, such as the platform
+ * refusing inference from the background. Reported if no later route answers.
+ */
+export class PdfAiUnavailableError extends Error {
+  constructor(readonly reason: PdfAiUnavailableReason) {
+    super(`unavailable: ${reason}`);
+    this.name = 'PdfAiUnavailableError';
+  }
+}
+
+/**
  * Tries each route in the fixed order of PRV-2 and reports which one answered.
  *
  * A route returns null when it has no answer and throws when it broke; both move on to
@@ -47,16 +58,18 @@ export async function resolve<T>(routes: {
   ];
 
   let failed = false;
+  let named: PdfAiUnavailableReason | undefined;
   for (const [source, route] of ordered) {
     if (!route) continue;
     try {
       const value = await route();
       if (value != null) return { value, source };
-    } catch {
+    } catch (error) {
       // Swallowed so the next route can answer, but remembered: a failure is not a
       // missing configuration, and reporting it as one sends the integrator the wrong way.
       failed = true;
+      if (error instanceof PdfAiUnavailableError) named ??= error.reason;
     }
   }
-  return unavailable(failed ? 'requestFailed' : 'noProvider');
+  return unavailable(named ?? (failed ? 'requestFailed' : 'noProvider'));
 }

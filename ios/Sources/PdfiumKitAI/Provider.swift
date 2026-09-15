@@ -49,6 +49,13 @@ public enum PdfAiOutcome<T: Sendable>: Sendable {
     case unavailable(PdfAiAvailability)
 }
 
+/// Thrown by a route that failed for a reason the host can act on, such as the platform
+/// refusing inference from the background. Reported if no later route answers.
+public struct PdfAiUnavailableError: Error, Equatable, Sendable {
+    public let reason: PdfAiUnavailableReason
+    public init(reason: PdfAiUnavailableReason) { self.reason = reason }
+}
+
 /// Tries each route in the fixed order of PRV-2 and reports which one answered.
 ///
 /// A route returning nil and a route throwing are treated the same — both move on to
@@ -64,6 +71,7 @@ public func resolveRoutes<T: Sendable>(
     ]
 
     var failed = false
+    var named: PdfAiUnavailableReason?
     for (source, route) in ordered {
         guard let route else { continue }
         do {
@@ -74,7 +82,8 @@ public func resolveRoutes<T: Sendable>(
             // Swallowed so the next route can answer, but remembered: a failure is not a
             // missing configuration, and reporting it as one sends the integrator the wrong way.
             failed = true
+            if named == nil, let error = error as? PdfAiUnavailableError { named = error.reason }
         }
     }
-    return .unavailable(.unavailable(failed ? .requestFailed : .noProvider))
+    return .unavailable(.unavailable(named ?? (failed ? .requestFailed : .noProvider)))
 }

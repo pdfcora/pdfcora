@@ -75,6 +75,31 @@ class ContractTest {
         )
     }
 
+    /**
+     * AICore refuses inference from a background app. Saying so tells the host what to do:
+     * call again from the foreground, rather than configure something.
+     */
+    @Test
+    fun aRouteThatFailsForANamedReasonReportsThatReasonWhenNothingAnswers() = runTest {
+        val outcome = resolveRoutes<String>(
+            onDevice = { throw PdfAiUnavailableException(PdfAiUnavailableReason.BACKGROUND_USE_BLOCKED) },
+            customProvider = { throw IllegalStateException("502") },
+        )
+        assertEquals(
+            PdfAiOutcome.NotAvailable(PdfAiAvailability.Unavailable(PdfAiUnavailableReason.BACKGROUND_USE_BLOCKED)),
+            outcome,
+        )
+    }
+
+    @Test
+    fun aLaterRouteThatAnswersStillWinsOverANamedFailure() = runTest {
+        val outcome = resolveRoutes(
+            onDevice = { throw PdfAiUnavailableException(PdfAiUnavailableReason.BACKGROUND_USE_BLOCKED) },
+            customProvider = { "from-provider" },
+        )
+        assertEquals(PdfAiOutcome.Answered(PdfAiResult("from-provider", PdfAiSource.CUSTOM_PROVIDER)), outcome)
+    }
+
     @Test
     fun aRouteThatThrowsDoesNotStopTheNextOne() = runTest {
         val outcome = resolveRoutes(
