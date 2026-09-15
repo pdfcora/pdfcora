@@ -8,71 +8,15 @@
  *
  * Usage: node conformance/alt-text/make-tagged.mjs
  */
-import { readFileSync, writeFileSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { deflateSync } from 'node:zlib';
+import { addFont, escape, image, stream, writePdf } from './fixture-kit.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const TITLE = 'Annual report 2026';
 
-// --- the font -------------------------------------------------------------------------
-
-const ttf = readFileSync(join(HERE, 'LiberationSans-Regular.ttf'));
-const tables = {};
-for (let i = 0; i < ttf.readUInt16BE(4); i++) {
-  const at = 12 + i * 16;
-  tables[ttf.toString('latin1', at, at + 4)] = ttf.readUInt32BE(at + 8);
-}
-const unitsPerEm = ttf.readUInt16BE(tables.head + 18);
-const scale = (v) => Math.round((v * 1000) / unitsPerEm);
-const bbox = [36, 38, 40, 42].map((o) => scale(ttf.readInt16BE(tables.head + o)));
-const ascent = scale(ttf.readInt16BE(tables.hhea + 4));
-const descent = scale(ttf.readInt16BE(tables.hhea + 6));
-const metrics = ttf.readUInt16BE(tables.hhea + 34);
-
-function glyphOf(code) {
-  const count = ttf.readUInt16BE(tables.cmap + 2);
-  for (let i = 0; i < count; i++) {
-    const at = tables.cmap + 4 + i * 8;
-    if (ttf.readUInt16BE(at) !== 3 || ttf.readUInt16BE(at + 2) !== 1) continue;
-    const sub = tables.cmap + ttf.readUInt32BE(at + 4);
-    const segments = ttf.readUInt16BE(sub + 6) / 2;
-    const ends = sub + 14;
-    const starts = ends + segments * 2 + 2;
-    const deltas = starts + segments * 2;
-    const offsets = deltas + segments * 2;
-    for (let s = 0; s < segments; s++) {
-      if (code > ttf.readUInt16BE(ends + s * 2)) continue;
-      const start = ttf.readUInt16BE(starts + s * 2);
-      if (code < start) return 0;
-      const rangeOffset = ttf.readUInt16BE(offsets + s * 2);
-      const delta = ttf.readInt16BE(deltas + s * 2);
-      if (rangeOffset === 0) return (code + delta) & 0xffff;
-      const glyph = ttf.readUInt16BE(offsets + s * 2 + rangeOffset + (code - start) * 2);
-      return glyph === 0 ? 0 : (glyph + delta) & 0xffff;
-    }
-  }
-  return 0;
-}
-const advance = (glyph) => scale(ttf.readUInt16BE(tables.hmtx + Math.min(glyph, metrics - 1) * 4));
-const widths = [];
-for (let code = 32; code <= 126; code++) widths.push(advance(glyphOf(code)));
-
 // --- images ---------------------------------------------------------------------------
-
-function image(width, height, pixel) {
-  const data = Buffer.alloc(width * height * 3);
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) data.set(pixel(x, y), (y * width + x) * 3);
-  }
-  const body = deflateSync(data);
-  return {
-    header: `<< /Type /XObject /Subtype /Image /Width ${width} /Height ${height} ` +
-      `/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /FlateDecode /Length ${body.length} >>`,
-    body,
-  };
-}
 
 const photo = image(180, 120, (x, y) => {
   const sun = (x - 130) ** 2 + (y - 35) ** 2 < 18 ** 2;
@@ -86,7 +30,6 @@ const logo = image(96, 96, (x, y) =>
 
 // --- pages ----------------------------------------------------------------------------
 
-const escape = (text) => text.replace(/[\\()]/g, (c) => `\\${c}`);
 const text = (tag, mcid, size, x, y, value) =>
   `/${tag} <</MCID ${mcid}>> BDC BT /F1 ${size} Tf ${x} ${y} Td (${escape(value)}) Tj ET EMC`;
 const drawn = (mcid, name, w, h, x, y) =>
@@ -135,18 +78,12 @@ const EXPECTED = {
 
 const objects = [];
 const add = (body) => { objects.push(body); return objects.length; };
-const stream = (header, body) => ({ header, body: Buffer.isBuffer(body) ? body : Buffer.from(body, 'latin1') });
 
 const catalog = add(null);
 const pagesId = add(null);
 const treeRoot = add(null);
 const documentElement = add(null);
-const fontFile = add(stream(`<< /Length ${ttf.length} /Length1 ${ttf.length} >>`, ttf));
-const descriptor = add(`<< /Type /FontDescriptor /FontName /LiberationSans /Flags 32 ` +
-  `/FontBBox [${bbox.join(' ')}] /ItalicAngle 0 /Ascent ${ascent} /Descent ${descent} ` +
-  `/CapHeight 729 /StemV 80 /FontFile2 ${fontFile} 0 R >>`);
-const font = add(`<< /Type /Font /Subtype /TrueType /BaseFont /LiberationSans /FirstChar 32 ` +
-  `/LastChar 126 /Widths [${widths.join(' ')}] /Encoding /WinAnsiEncoding /FontDescriptor ${descriptor} 0 R >>`);
+const font = addFont(add);
 
 const xmp = `<?xpacket begin="ï»¿" id="W5M0MpCehiHzreSzNTczkc9d"?>
 <x:xmpmeta xmlns:x="adobe:ns:meta/">
@@ -196,23 +133,7 @@ objects[catalog - 1] = `<< /Type /Catalog /Pages ${pagesId} 0 R /StructTreeRoot 
   `/ViewerPreferences << /DisplayDocTitle true >> >>`;
 objects[pagesId - 1] = `<< /Type /Pages /Kids [${pageIds.map((id) => `${id} 0 R`).join(' ')}] /Count ${pageIds.length} >>`;
 
-const parts = [Buffer.from('%PDF-1.7\n%\xe2\xe3\xcf\xd3\n', 'latin1')];
-let length = parts[0].length;
-const offsets = objects.map((body, i) => {
-  const at = length;
-  const chunk = typeof body === 'string'
-    ? [Buffer.from(`${i + 1} 0 obj\n${body}\nendobj\n`, 'latin1')]
-    : [Buffer.from(`${i + 1} 0 obj\n${body.header}\nstream\n`, 'latin1'), body.body,
-      Buffer.from('\nendstream\nendobj\n', 'latin1')];
-  for (const c of chunk) { parts.push(c); length += c.length; }
-  return at;
-});
-let tail = `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
-tail += offsets.map((o) => `${String(o).padStart(10, '0')} 00000 n \n`).join('');
-tail += `trailer\n<< /Size ${objects.length + 1} /Root ${catalog} 0 R /Info ${info} 0 R >>\nstartxref\n${length}\n%%EOF\n`;
-parts.push(Buffer.from(tail, 'latin1'));
-
-const pdf = Buffer.concat(parts);
+const pdf = writePdf(objects, `/Root ${catalog} 0 R /Info ${info} 0 R`);
 writeFileSync(join(HERE, 'tagged.pdf'), pdf);
 writeFileSync(join(HERE, 'tagged-expected.json'), JSON.stringify(EXPECTED, null, 2) + '\n');
 console.log(`wrote tagged.pdf (${pdf.length} bytes)`);

@@ -127,3 +127,25 @@ export function markArtifacts(m: PdfiumModule, page: number, ids: ReadonlySet<nu
   if (changed > 0) m.ccall('FPDFPage_GenerateContent', 'number', ['number'], [page]);
   return changed;
 }
+
+/**
+ * Gives each listed object a content mark named `tag`, with an `MCID` parameter unless
+ * `mcid` is negative, and regenerates the page's content.
+ */
+export function markTags(
+  m: PdfiumModule,
+  document: number,
+  page: number,
+  marks: readonly { readonly index: number; readonly tag: string; readonly mcid: number }[],
+): void {
+  for (const { index, tag, mcid } of marks) {
+    const object = m.ccall('FPDFPage_GetObject', 'number', ['number', 'number'], [page, index]) as number;
+    if (!object) continue;
+    const mark = m.ccall('FPDFPageObj_AddMark', 'number', ['number', 'string'], [object, tag]) as number;
+    if (mark && mcid >= 0) {
+      m.ccall('FPDFPageObjMark_SetIntParam', 'number', ['number', 'number', 'number', 'string', 'number'],
+        [document, object, mark, 'MCID', mcid]);
+    }
+  }
+  m.ccall('FPDFPage_GenerateContent', 'number', ['number'], [page]);
+}

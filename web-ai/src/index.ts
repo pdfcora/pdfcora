@@ -25,6 +25,8 @@ export type { PdfProfileKey } from './forms/synonyms.js';
 import { suggestRedactions, type PdfRedactionOptions, type PdfRedactionReview } from './redaction/suggest.js';
 import { proposeFormValues, type PdfFormProposals, type PdfProfile } from './forms/propose.js';
 import { suggestAltText, type PdfAltTextReview } from './alt-text/suggest.js';
+import { proposeRemediation, type PdfRemediationReview } from './remediation/propose.js';
+export type { PdfRemediationBlock, PdfRemediationOptions, PdfRemediationReview } from './remediation/propose.js';
 export type { PdfAltTextDecision, PdfAltTextProposal, PdfAltTextReview } from './alt-text/suggest.js';
 import type { PdfPageRange as FormPageRange } from './text.js';
 
@@ -126,6 +128,16 @@ export class PdfiumAI {
   readonly altText = {
     suggest: (options?: { pages?: FormPageRange }): Promise<PdfAltTextReview> =>
       suggestAltText(this.document, this.options.provider, options),
+  };
+
+  /**
+   * Proposes tags and a reading order for an untagged document (REM), by rules on the page
+   * objects, identically on every platform. Nothing is written until `apply`, which returns a
+   * new document; describe its figures with `altText` afterwards.
+   */
+  readonly remediation = {
+    suggest: (options?: { pages?: FormPageRange }): Promise<PdfRemediationReview> =>
+      proposeRemediation(this.document, options),
   };
 
   /** Summarises the document or a page range (SUM). */

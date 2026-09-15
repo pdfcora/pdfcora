@@ -1,0 +1,86 @@
+[
+  {
+    "pageIndex": 0,
+    "type": "H1",
+    "objectCount": 1,
+    "text": "Quarterly newsletter"
+  },
+  {
+    "pageIndex": 0,
+    "type": "P",
+    "objectCount": 2,
+    "text": "Welcome to the autumn issue. This quarter we opened two offices and welcomed forty new colleagues."
+  },
+  {
+    "pageIndex": 0,
+    "type": "H2",
+    "objectCount": 1,
+    "text": "Highlights"
+  },
+  {
+    "pageIndex": 0,
+    "type": "LI",
+    "objectCount": 1,
+    "text": "• A new office in Berlin"
+  },
+  {
+    "pageIndex": 0,
+    "type": "LI",
+    "objectCount": 1,
+    "text": "• A new office in Madrid"
+  },
+  {
+    "pageIndex": 0,
+    "type": "LI",
+    "objectCount": 1,
+    "text": "• The staff survey results"
+  },
+  {
+    "pageIndex": 0,
+    "type": "P",
+    "objectCount": 1,
+    "text": "The photo below shows the Berlin office."
+  },
+  {
+    "pageIndex": 0,
+    "type": "Figure",
+    "objectCount": 1,
+    "text": ""
+  },
+  {
+    "pageIndex": 0,
+    "type": "P",
+    "objectCount": 1,
+    "text": "Figure 1: The Berlin office at dusk."
+  },
+  {
+    "pageIndex": 0,
+    "type": "Artifact",
+    "objectCount": 1,
+    "text": ""
+  },
+  {
+    "pageIndex": 1,
+    "type": "H2",
+    "objectCount": 1,
+    "text": "Next steps"
+  },
+  {
+    "pageIndex": 1,
+    "type": "LI",
+    "objectCount": 1,
+    "text": "1. Open the Madrid office in spring."
+  },
+  {
+    "pageIndex": 1,
+    "type": "LI",
+    "objectCount": 1,
+    "text": "2. Repeat the survey next year."
+  },
+  {
+    "pageIndex": 1,
+    "type": "P",
+    "objectCount": 1,
+    "text": "Thank you for reading."
+  }
+]

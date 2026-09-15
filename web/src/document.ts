@@ -9,9 +9,12 @@ import type {
   PdfAttachment, PdfMetadata, PdfOutlineItem, PdfPermissions, PdfSaveMode, PdfSize,
   PdfPageRotation,
   PdfSignature, PdfSignatureValidity, PdfVerifyOptions,
-  PdfRedactionReport, PdfRedactionTarget, PdfFigureEdit,
+  PdfRedactionReport, PdfRedactionTarget, PdfFigureEdit, PdfTagBlock, PdfTagOptions,
 } from './types.js';
-import { markArtifacts } from './structure.js';
+import { markArtifacts, markTags } from './structure.js';
+import { writeTagTree } from './writer/tagging.js';
+import { readCatalog } from './writer/read.js';
+import { entryOf } from './writer/values.js';
 import { FigureNotFoundError, findFigures, writeFigures } from './writer/structure.js';
 import { PdfPage } from './page.js';
 import { licenseReady, noteWatermark, PdfLicense } from './license/state.js';
@@ -451,6 +454,88 @@ export class PdfDocument {
       if (error instanceof FigureNotFoundError) throw PdfError.invalidOperation(error.message);
       throw error;
     }
+  }
+
+  /**
+   * Tags an untagged document's content as a structure tree, returning a new document. This
+   * document is left unchanged.
+   *
+   * `blocks` are in reading order; consecutive `LI` blocks become one list. Every page object
+   * not in a block, and every object in an `Artifact` block, is marked as an artifact. Rejects
+   * with `invalidOperation`, writing nothing, when the document is already tagged, an object
+   * index is out of range or listed twice, `altText` is given for a non-figure, or there is no
+   * title or language (given or already in the document). The pages are regenerated, so earlier
+   * signatures stop verifying.
+   */
+  async tagContent(blocks: readonly PdfTagBlock[], options: PdfTagOptions = {}): Promise<PdfDocument> {
+    this.use('editing');
+    if (await this.isTagged()) throw PdfError.invalidOperation('the document is already tagged');
+    const pageCount = await this.pageCount();
+    const objectCounts = await this.run((h, m) => Array.from({ length: pageCount }, (_, i) => {
+      const page = m.ccall('FPDF_LoadPage', 'number', ['number', 'number'], [h, i]) as number;
+      try {
+        return page ? m.ccall('FPDFPage_CountObjects', 'number', ['number'], [page]) as number : 0;
+      } finally {
+        if (page) m.ccall('FPDF_ClosePage', null, ['number'], [page]);
+      }
+    }));
+
+    const seen = new Set<string>();
+    for (const block of blocks) {
+      if (block.pageIndex < 0 || block.pageIndex >= pageCount) throw PdfError.pageOutOfRange(block.pageIndex, pageCount);
+      if (block.altText !== undefined && block.type !== 'Figure') {
+        throw PdfError.invalidOperation(`alt text is for figures, not ${block.type}`);
+      }
+      for (const index of block.objectIndices) {
+        const key = `${block.pageIndex}:${index}`;
+        if (index < 0 || index >= objectCounts[block.pageIndex]!) throw PdfError.invalidOperation(`no object ${key}`);
+        if (seen.has(key)) throw PdfError.invalidOperation(`object ${key} is in two blocks`);
+        seen.add(key);
+      }
+    }
+
+    const title = options.title ?? (await this.metadata()).title;
+    if (!title) throw PdfError.invalidOperation('a title is needed: the document has none');
+    let base = await this.run((h, m) => saveHandle(m, h, 2));
+    if (!options.language && entryOf((await readCatalog(base)).value, 'Lang') === undefined) {
+      throw PdfError.invalidOperation('a language is needed: the document has no /Lang');
+    }
+
+    const mcidCounts = Array<number>(pageCount).fill(0);
+    const tagged = blocks.filter((b) => b.type !== 'Artifact').map((block) => ({
+      pageIndex: block.pageIndex,
+      type: block.type,
+      mcids: block.objectIndices.map(() => mcidCounts[block.pageIndex]!++),
+      ...(block.altText ? { altText: block.altText } : {}),
+    }));
+
+    const scratch = await PdfDocument.open(base);
+    try {
+      for (let pageIndex = 0; pageIndex < pageCount; pageIndex++) {
+        const marks: { index: number; tag: string; mcid: number }[] = [];
+        const counter = { next: 0 };
+        for (const block of blocks.filter((b) => b.pageIndex === pageIndex)) {
+          for (const index of block.objectIndices) {
+            marks.push(block.type === 'Artifact'
+              ? { index, tag: 'Artifact', mcid: -1 }
+              : { index, tag: block.type === 'LI' ? 'LBody' : block.type, mcid: counter.next++ });
+          }
+        }
+        for (let index = 0; index < objectCounts[pageIndex]!; index++) {
+          if (!seen.has(`${pageIndex}:${index}`)) marks.push({ index, tag: 'Artifact', mcid: -1 });
+        }
+        await scratch.withPage(pageIndex, (page, m) => markTags(m, scratch.handleForLinks(), page, marks));
+      }
+      base = await scratch.run((h, m) => saveHandle(m, h, 2));
+    } finally {
+      await scratch.close();
+    }
+
+    const updated = await PdfDocument.open(await writeTagTree(base, {
+      blocks: tagged, mcidCounts, title, ...(options.language ? { language: options.language } : {}),
+    }));
+    if (this.marked) updated.marked = true;
+    return updated;
   }
 
   /** The document outline, or an empty array when there is none. */

@@ -407,3 +407,23 @@ export interface PdfStructureElement {
 export type PdfFigureEdit =
   | { readonly pageIndex: number; readonly markedContentIds: readonly number[]; readonly altText: string }
   | { readonly pageIndex: number; readonly markedContentIds: readonly number[]; readonly decorative: true };
+
+/** Structure types remediation writes. `LI` blocks in a row become one list. */
+export type PdfTagType = 'H1' | 'H2' | 'H3' | 'H4' | 'H5' | 'H6' | 'P' | 'LI' | 'Figure' | 'Artifact';
+
+/** Page objects to tag as one structure element, in reading order. */
+export interface PdfTagBlock {
+  readonly pageIndex: number;
+  readonly type: PdfTagType;
+  /** Indices from {@link PdfPage.objects}. */
+  readonly objectIndices: readonly number[];
+  /** Figures only. */
+  readonly altText?: string;
+}
+
+export interface PdfTagOptions {
+  /** Written to the XMP metadata; defaults to the document's title. */
+  readonly title?: string;
+  /** BCP 47, written to /Lang; defaults to the document's own /Lang. */
+  readonly language?: string;
+}
