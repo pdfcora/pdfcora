@@ -17,6 +17,8 @@ struct PdfToolbarView: View {
     let hasSelection: Bool
     var reviewing = false
     let perform: (PdfToolbarItem) -> Void
+    /// Grows the toolbar with Dynamic Type, so larger text settings enlarge the controls too.
+    @ScaledMetric(relativeTo: .body) private var scale: CGFloat = 1
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -26,7 +28,7 @@ struct PdfToolbarView: View {
             .padding(.horizontal, 8)
             .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
         }
-        .frame(height: CGFloat(theme.toolbarHeight))
+        .frame(height: CGFloat(theme.toolbarHeight) * scale)
         .background(theme.toolbarBackground)
     }
 
@@ -36,12 +38,12 @@ struct PdfToolbarView: View {
         case .spacer:
             Spacer(minLength: 12)
         case .divider:
-            Divider().frame(height: 24)
+            Divider().frame(height: 24 * scale)
         default:
             Button { perform(item) } label: {
                 Image(systemName: item.systemImage)
-                    .font(.system(size: CGFloat(theme.iconSize)))
-                    .frame(width: 34, height: 30)
+                    .font(.system(size: CGFloat(theme.iconSize) * scale))
+                    .frame(width: 34 * scale, height: 30 * scale)
                     .background(isActive(item) ? theme.accent.opacity(0.18) : .clear)
                     .clipShape(RoundedRectangle(cornerRadius: CGFloat(theme.cornerRadius)))
             }

@@ -55,6 +55,33 @@ final class ScreenTourTests: XCTestCase {
         save(app, named: "form-filling-applied")
     }
 
+    /// A11Y-3: at the largest accessibility text size the toolbar grows with the text and the
+    /// review bar's buttons stay on screen.
+    func testTheComponentScalesWithTheLargestTextSize() {
+        let app = XCUIApplication()
+        app.launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        app.launch()
+        let link = app.descendants(matching: .any).matching(identifier: "demo-Form Filling").firstMatch
+        _ = link.waitForExistence(timeout: 15)
+        for _ in 0..<8 where !(link.exists && link.isHittable) {
+            app.swipeUp()
+            _ = link.waitForExistence(timeout: 2)
+        }
+        link.tap()
+
+        XCTAssertTrue(app.staticTexts["review-notice"].waitForExistence(timeout: 20))
+        let zoom = app.buttons["zoom-in"]
+        XCTAssertTrue(zoom.waitForExistence(timeout: 5))
+        XCTAssertGreaterThanOrEqual(zoom.frame.height, 44, "toolbar buttons did not grow with the text size")
+        let screen = app.windows.firstMatch.frame
+        for id in ["review-accept-all", "review-reject-all", "review-apply"] {
+            let button = app.buttons[id]
+            XCTAssertTrue(button.exists, id)
+            XCTAssertTrue(screen.contains(button.frame), "\(id) is off screen at \(button.frame)")
+        }
+        save(app, named: "large-text")
+    }
+
     /// A11Y-2: the component exposes the tagged document's structure, not a bitmap.
     func testTheComponentExposesTaggedContentToVoiceOver() {
         let app = XCUIApplication()
