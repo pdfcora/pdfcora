@@ -1,13 +1,14 @@
 import { readUtf16, withBuffer, withUtf16, type PdfiumModule } from './engine.js';
 import { PdfError } from './errors.js';
 import { readPageObjects } from './pageObjects.js';
-import { readStructure } from './structure.js';
+import { readStructure, textByMarkedContentId } from './structure.js';
+import { accessibleNodes } from './accessible.js';
 import type { PdfDocument } from './document.js';
 import type {
   PdfAnnotation, PdfAnnotationBase, PdfColor, PdfFormField, PdfFormFieldBase,
   PdfLink, PdfLinkTarget, PdfPoint, PdfQuad, PdfRect, PdfRenderOptions,
   PdfSearchOptions, PdfSize, PdfTextMatch,
-  PdfPageObject, PdfStructureElement,
+  PdfPageObject, PdfStructureElement, PdfAccessibleNode,
 } from './types.js';
 
 // PDFium annotation subtypes (fpdf_annot.h)
@@ -71,6 +72,20 @@ export class PdfPage {
    */
   structure(): Promise<PdfStructureElement[]> {
     return this.document.withPage(this.index, (page, m) => readStructure(m, page));
+  }
+
+  /**
+   * The page as a screen reader should hear it: headings, paragraphs, lists, figures by their
+   * alternate text, tables and form fields, in reading order. An untagged page is one paragraph.
+   */
+  async accessibleContent(): Promise<PdfAccessibleNode[]> {
+    const [size, read, fields] = await Promise.all([
+      this.size(),
+      this.document.withPage(this.index, (page, m) => ({ roots: readStructure(m, page), text: textByMarkedContentId(m, page) })),
+      this.formFields(),
+    ]);
+    return accessibleNodes(read.roots, read.text.byId, read.text.all,
+      { left: 0, bottom: 0, right: size.width, top: size.height }, fields);
   }
 
   get text(): PdfTextPage {

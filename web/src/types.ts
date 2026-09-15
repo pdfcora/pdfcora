@@ -427,3 +427,15 @@ export interface PdfTagOptions {
   /** BCP 47, written to /Lang; defaults to the document's own /Lang. */
   readonly language?: string;
 }
+
+/** One thing a screen reader announces on a page. */
+export interface PdfAccessibleNode {
+  readonly role: 'heading' | 'paragraph' | 'list' | 'listItem' | 'figure' | 'table' | 'row'
+    | 'headerCell' | 'cell' | 'formField';
+  /** Headings only, 1–6. */
+  readonly level?: number;
+  /** The label to speak; empty for lists, tables and rows, and for a figure without alternate text. */
+  readonly text: string;
+  readonly bounds?: PdfRect;
+  readonly children: readonly PdfAccessibleNode[];
+}

@@ -149,3 +149,28 @@ export function markTags(
   }
   m.ccall('FPDFPage_GenerateContent', 'number', ['number'], [page]);
 }
+
+/**
+ * The page's text split by marked-content id, through each character's text object. A generated
+ * character (a space or line break PDFium inserts) belongs to the character before it.
+ */
+export function textByMarkedContentId(m: PdfiumModule, page: number): { byId: Map<number, string>; all: string } {
+  const byId = new Map<number, string>();
+  let all = '';
+  const textPage = m.ccall('FPDFText_LoadPage', 'number', ['number'], [page]) as number;
+  if (!textPage) return { byId, all };
+  try {
+    const count = m.ccall('FPDFText_CountChars', 'number', ['number'], [textPage]) as number;
+    let current = -1;
+    for (let i = 0; i < count; i++) {
+      const char = String.fromCodePoint(m.ccall('FPDFText_GetUnicode', 'number', ['number', 'number'], [textPage, i]) as number || 32);
+      all += char;
+      const object = m.ccall('FPDFText_GetTextObject', 'number', ['number', 'number'], [textPage, i]) as number;
+      if (object) current = m.ccall('FPDFPageObj_GetMarkedContentID', 'number', ['number'], [object]) as number;
+      if (current >= 0) byId.set(current, (byId.get(current) ?? '') + char);
+    }
+  } finally {
+    m.ccall('FPDFText_ClosePage', null, ['number'], [textPage]);
+  }
+  return { byId, all };
+}

@@ -4,6 +4,7 @@ import type { PdfTool } from '../view/state.js';
 import { defaultToolbar, type PdfToolbarConfiguration, type PdfToolbarItem } from './toolbar.js';
 import { lightTheme, type PdfViewerTheme } from './theme.js';
 import type { PdfMark, PdfMarkState } from '../view/state.js';
+import type { PdfAccessibleNode } from '../types.js';
 
 export interface PdfReviewOptions {
   readonly marks: readonly PdfMark[];
@@ -41,6 +42,8 @@ export class PdfViewerElement {
   private readonly status = document.createElement('p');
   private readonly overlay = document.createElement('div');
   private readonly reviewBar = document.createElement('div');
+  private readonly accessible = document.createElement('div');
+  private accessiblePage = -1;
 
   private constructor(
     private readonly host: HTMLElement,
@@ -79,7 +82,14 @@ export class PdfViewerElement {
     Object.assign(this.status.style, { margin: '4px 8px', font: '12px sans-serif', color: '#6e6e73' });
 
     Object.assign(this.overlay.style, { position: 'absolute', left: '0', top: '0', pointerEvents: 'none' });
-    this.stage.append(this.canvas, this.overlay);
+    // Screen readers get the page's structure from a hidden layer; the bitmap says nothing.
+    this.canvas.setAttribute('aria-hidden', 'true');
+    this.accessible.className = 'pdf-accessible-content';
+    Object.assign(this.accessible.style, {
+      position: 'absolute', width: '1px', height: '1px', overflow: 'hidden',
+      clipPath: 'inset(50%)', whiteSpace: 'nowrap',
+    });
+    this.stage.append(this.canvas, this.overlay, this.accessible);
     this.host.replaceChildren(this.bar, this.stage, ...(this.review ? [this.reviewBar] : []), this.status);
     this.renderToolbar();
     this.renderReview();
@@ -293,5 +303,47 @@ export class PdfViewerElement {
     this.canvas.getContext('2d')?.putImageData(
       new ImageData(pixels, image.width, image.height), 0, 0);
     this.drawMarks();
+    await this.renderAccessible();
+  }
+
+  /** Rebuilt when the page changes: headings, paragraphs, lists, figures, tables, form fields. */
+  private async renderAccessible(): Promise<void> {
+    const viewer = this.viewer;
+    if (!viewer || viewer.state.pageIndex === this.accessiblePage) return;
+    const pageIndex = viewer.state.pageIndex;
+    this.accessiblePage = pageIndex;
+    const nodes = await (await this.pdf.page(pageIndex)).accessibleContent();
+    if (this.accessiblePage !== pageIndex) return;
+
+    const element = (node: PdfAccessibleNode): HTMLElement => {
+      const make = (tag: string, text = node.text) => {
+        const e = document.createElement(tag);
+        if (text) e.textContent = text;
+        return e;
+      };
+      switch (node.role) {
+        case 'heading': return make(`h${node.level ?? 1}`);
+        case 'paragraph': return make('p');
+        case 'listItem': return make('li');
+        case 'headerCell': return make('th');
+        case 'cell': return make('td');
+        case 'list': { const e = make('ul', ''); e.append(...node.children.map(element)); return e; }
+        case 'table': { const e = make('table', ''); e.append(...node.children.map(element)); return e; }
+        case 'row': { const e = make('tr', ''); e.append(...node.children.map(element)); return e; }
+        case 'figure': {
+          const e = make('div', '');
+          e.setAttribute('role', 'img');
+          e.setAttribute('aria-label', node.text);
+          return e;
+        }
+        case 'formField': {
+          const e = make('div', '');
+          e.setAttribute('role', 'group');
+          e.setAttribute('aria-label', node.text);
+          return e;
+        }
+      }
+    };
+    this.accessible.replaceChildren(...nodes.map(element));
   }
 }

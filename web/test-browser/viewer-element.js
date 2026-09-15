@@ -45,6 +45,20 @@ try {
   check('zoom in makes the page larger', canvas.getBoundingClientRect().width > cssWidth,
     `before=${cssWidth} after=${canvas.getBoundingClientRect().width}`);
 
+  // Screen readers: the tagged document's structure is in the accessible layer, the bitmap is hidden.
+  const taggedHost = document.createElement('div');
+  taggedHost.style.cssText = 'width:400px;height:500px';
+  document.body.append(taggedHost);
+  const tagged = await PdfDocument.open(new Uint8Array(await (await fetch('../../conformance/alt-text/tagged.pdf')).arrayBuffer()));
+  await PdfViewerElement.mount(taggedHost, tagged);
+  const layer = taggedHost.querySelector('.pdf-accessible-content');
+  for (let i = 0; i < 100 && !layer?.querySelector('h1'); i++) await frame();
+  check('the canvas is hidden from screen readers', taggedHost.querySelector('canvas')?.getAttribute('aria-hidden') === 'true');
+  check('the title is an h1', layer?.querySelector('h1')?.textContent === 'Annual report 2026', layer?.innerHTML.slice(0, 200));
+  check('the chart is an image with its alternate text',
+    layer?.querySelector('[role="img"]')?.getAttribute('aria-label') === 'Bar chart of revenue by region');
+  check('the accessible layer is visually hidden', layer && layer.getBoundingClientRect().width <= 1);
+
   // Review mode: a mark over the page, tapped once to accept, then applied.
   const reviewHost = document.createElement('div');
   reviewHost.style.cssText = 'width:400px;height:500px';
