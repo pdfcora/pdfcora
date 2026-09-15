@@ -1,0 +1,128 @@
+[
+  {
+    "pageIndex": 0,
+    "fieldName": "fname",
+    "key": "givenName",
+    "value": "Anna"
+  },
+  {
+    "pageIndex": 0,
+    "fieldName": "Surname_1",
+    "key": "familyName",
+    "value": "Schmidt"
+  },
+  {
+    "pageIndex": 0,
+    "fieldName": "Text3",
+    "key": "dateOfBirth",
+    "value": "03/14/1985"
+  },
+  {
+    "pageIndex": 0,
+    "fieldName": "email",
+    "key": "email",
+    "value": "anna.schmidt@example.com"
+  },
+  {
+    "pageIndex": 0,
+    "fieldName": "Text5",
+    "key": "phone",
+    "value": "+44 20 7946 0958"
+  },
+  {
+    "pageIndex": 0,
+    "fieldName": "Text6",
+    "key": "street",
+    "value": "221B Baker Street"
+  },
+  {
+    "pageIndex": 0,
+    "fieldName": "Zip",
+    "key": "postalCode",
+    "value": "NW1 6XE"
+  },
+  {
+    "pageIndex": 0,
+    "fieldName": "Town",
+    "key": "city",
+    "value": "London"
+  },
+  {
+    "pageIndex": 0,
+    "fieldName": "Country",
+    "key": "country",
+    "value": 1
+  },
+  {
+    "pageIndex": 0,
+    "fieldName": "Text9",
+    "key": "iban",
+    "value": "GB29 NWBK 6016 1331 9268 19"
+  },
+  {
+    "pageIndex": 0,
+    "fieldName": "Text11",
+    "key": "company",
+    "value": "Example Holdings Ltd"
+  },
+  {
+    "pageIndex": 1,
+    "fieldName": "Vorname",
+    "key": "givenName",
+    "value": "Anna"
+  },
+  {
+    "pageIndex": 1,
+    "fieldName": "Feld2",
+    "key": "familyName",
+    "value": "Schmidt"
+  },
+  {
+    "pageIndex": 1,
+    "fieldName": "Geb",
+    "key": "dateOfBirth",
+    "value": "14.03.1985"
+  },
+  {
+    "pageIndex": 1,
+    "fieldName": "Feld4",
+    "key": "email",
+    "value": "anna.schmidt@example.com"
+  },
+  {
+    "pageIndex": 1,
+    "fieldName": "Feld5",
+    "key": "phone",
+    "value": "+44 20 7946 0958"
+  },
+  {
+    "pageIndex": 1,
+    "fieldName": "Feld6",
+    "key": "street",
+    "value": "221B Baker Street"
+  },
+  {
+    "pageIndex": 1,
+    "fieldName": "Plz",
+    "key": "postalCode",
+    "value": "NW1 6XE"
+  },
+  {
+    "pageIndex": 1,
+    "fieldName": "Wohnort",
+    "key": "city",
+    "value": "London"
+  },
+  {
+    "pageIndex": 1,
+    "fieldName": "Feld9",
+    "key": "iban",
+    "value": "GB29 NWBK 6016 1331 9268 19"
+  },
+  {
+    "pageIndex": 1,
+    "fieldName": "Feld11",
+    "key": "company",
+    "value": "Example Holdings Ltd"
+  }
+]

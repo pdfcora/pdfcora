@@ -72,7 +72,7 @@ Runs on every device. Each key has phrases in English and German:
 | `familyName` | last name, surname, family name, nachname, familienname, zuname |
 | `fullName` | full name, name, your name, vollständiger name, name und vorname |
 | `dateOfBirth` | date of birth, birth date, birthday, dob, geburtsdatum, geboren am |
-| `email` | email, e-mail, email address, e-mail-adresse, mail |
+| `email` | email, e-mail, email address, e-mail address, e-mail-adresse, mail |
 | `phone` | phone, telephone, phone number, mobile, telefon, telefonnummer, mobilnummer, handy |
 | `street` | street, address, street address, address line 1, straße, strasse, straße und hausnummer, anschrift |
 | `postalCode` | postal code, postcode, zip, zip code, plz, postleitzahl |
@@ -88,8 +88,9 @@ normalising (it is kept for date formatting).
 
 **Rule.** Each of `alternateName`, `label` and `name` is tried in that order; the first that
 yields a match decides. A text matches a phrase when the normalised phrase equals the text or
-appears in it as whole words. When several phrases match, the longest wins (so "nachname"
-beats "name"); ties go to the key earlier in §3. No match is `unknown`.
+appears in it as whole words. When several phrases match, the one with the most words wins,
+then the one with the most letters (so "e mail" beats "address" in "E-mail address", and
+"nachname" beats "name"); ties go to the key earlier in §3. No match is `unknown`.
 
 ### 5.2 The model
 
