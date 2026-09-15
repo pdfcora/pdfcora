@@ -159,8 +159,8 @@ fixes the real model forced (it misnames passage ids, and says "not mentioned" i
 replying empty). ML Kit GenAI summarises accurately on a real phone (Samsung SM-F971B, Android 17) — but
 **only from a foreground app**: AICore returns code 30, `BACKGROUND_USE_BLOCKED`, otherwise,
 and ML Kit beta1 prints that as "30-UNKNOWN". The SDK reports it as
-`BACKGROUND_USE_BLOCKED`. Test processes count as background; probe from a resumed activity. Chrome's Summarizer needs desktop Chrome and has
-not run.
+`BACKGROUND_USE_BLOCKED`. Test processes count as background; probe from a resumed activity. Chrome's Summarizer ran in Chrome 152
+(see below).
 `docs/superpowers/plans/2026-09-14-phase1-ai-answers-summaries.md` lists the other
 unmeasured numbers (ML Kit's input limit, characters per token) and what is not built
 (streaming, cancellable indexing, language detection).
