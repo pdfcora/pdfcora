@@ -52,11 +52,12 @@ try {
   let applied = null;
   await PdfViewerElement.mount(reviewHost, await open(), {
     review: {
-      marks: [{ id: 'm1', pageIndex: 0, rects: [{ left: 0, bottom: 0, right: 612, top: 792 }], state: 'pending' }],
+      marks: [{ id: 'm1', pageIndex: 0, rects: [{ left: 0, bottom: 0, right: 612, top: 792 }], state: 'pending', label: 'Anna' }],
       notice: 'Suggestions may be incomplete. Review the whole document.',
       onApply: (ids) => { applied = ids; },
     },
   });
+  check('a mark shows its label', reviewHost.querySelector('[data-mark-id="m1"]')?.textContent === 'Anna');
   check('the review notice is shown', document.getElementById('review-notice')?.textContent.includes('may be incomplete'));
   const reviewCanvas = reviewHost.querySelector('canvas');
   const box = reviewCanvas.getBoundingClientRect();

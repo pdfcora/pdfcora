@@ -151,7 +151,7 @@ fun PdfViewerView(
                 if (v != null) {
                     val transform = v.transform()
                     marks.filter { it.pageIndex == v.state.pageIndex }.forEach { mark ->
-                        mark.rects.forEach { rect ->
+                        mark.rects.forEachIndexed { index, rect ->
                             val box = transform.toView(rect)
                             val (fill, border) = when (mark.state) {
                                 PdfMarkState.PENDING -> Color(0x2EFF9500) to Color(0xFFFF9500)
@@ -167,7 +167,13 @@ fun PdfViewerView(
                                 .clickable {
                                     v.tapMark(mark.pageIndex, transform.toPdf(box.centerX(), box.centerY()))
                                     marks = v.marks
-                                })
+                                }) {
+                                if (index == 0) mark.label?.let { label ->
+                                    Text(label, maxLines = 1, style = MaterialTheme.typography.labelSmall,
+                                        color = if (mark.state == PdfMarkState.ACCEPTED) Color.White else Color(0xFF1D1D1F),
+                                        modifier = Modifier.padding(horizontal = 2.dp))
+                                }
+                            }
                         }
                     }
                 }

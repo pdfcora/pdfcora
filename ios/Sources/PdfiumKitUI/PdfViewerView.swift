@@ -102,9 +102,18 @@ public struct PdfViewerView: View {
     private func overlay(_ state: PdfViewState) -> some View {
         if let transform {
             ForEach(marks.filter { $0.pageIndex == state.pageIndex }, id: \.id) { mark in
-                ForEach(Array(mark.rects.enumerated()), id: \.offset) { _, rect in
+                ForEach(Array(mark.rects.enumerated()), id: \.offset) { index, rect in
                     let box = transform.toView(rect)
                     markShape(mark.state)
+                        .overlay(alignment: .leading) {
+                            if index == 0, let label = mark.label {
+                                Text(label)
+                                    .font(.system(size: max(7, min(12, box.height * 0.7))))
+                                    .lineLimit(1)
+                                    .foregroundColor(mark.state == .accepted ? .white : .primary)
+                                    .padding(.horizontal, 2)
+                            }
+                        }
                         .frame(width: box.width, height: box.height)
                         .offset(x: box.minX, y: box.minY)
                         .accessibilityElement()

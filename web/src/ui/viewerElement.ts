@@ -166,13 +166,19 @@ export class PdfViewerElement {
     };
     const boxes: HTMLElement[] = [];
     for (const mark of viewer.marks.filter((m) => m.pageIndex === viewer.state.pageIndex)) {
-      for (const rect of mark.rects) {
+      for (const [index, rect] of mark.rects.entries()) {
         const r = transform.toViewRect(rect);
         const box = document.createElement('div');
         box.dataset.markId = mark.id;
         box.dataset.markState = mark.state;
         Object.assign(box.style, { position: 'absolute', left: `${r.x}px`, top: `${r.y}px`,
           width: `${r.width}px`, height: `${r.height}px`, boxSizing: 'border-box' }, style[mark.state]);
+        if (mark.label && index === 0) {
+          box.textContent = mark.label;
+          Object.assign(box.style, { font: `${Math.max(8, Math.min(12, r.height * 0.7))}px sans-serif`,
+            lineHeight: `${r.height - 4}px`, padding: '0 3px', overflow: 'hidden', whiteSpace: 'nowrap',
+            color: mark.state === 'accepted' ? '#ffffff' : '#1d1d1f' });
+        }
         boxes.push(box);
       }
     }

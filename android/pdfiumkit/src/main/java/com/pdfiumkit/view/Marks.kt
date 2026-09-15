@@ -10,4 +10,6 @@ data class PdfMark(
     val pageIndex: Int,
     val rects: List<PdfRect>,
     val state: PdfMarkState = PdfMarkState.PENDING,
+    /** Shown inside the mark, such as the value a form proposal would fill in. */
+    val label: String? = null,
 )

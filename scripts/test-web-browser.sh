@@ -33,8 +33,9 @@ for _ in $(seq 1 20); do [ -s "$work/port" ] && break; sleep 0.2; done
 "$CHROME" --headless=new --disable-gpu --user-data-dir="$work/profile" --force-device-scale-factor=2 \
     --window-size=800,800 "http://127.0.0.1:$(cat "$work/port")/web/test-browser/viewer-element.html" \
     > /dev/null 2>&1 &
-for _ in $(seq 1 60); do [ -s "$work/result" ] && break; sleep 1; done
+# The first run after a rebuild has twice produced no result within 60 s; 120 s has not failed.
+for _ in $(seq 1 120); do [ -s "$work/result" ] && break; sleep 1; done
 
-[ -s "$work/result" ] || { echo "browser tests: no result within 60 s" >&2; exit 1; }
+[ -s "$work/result" ] || { echo "browser tests: no result within 120 s" >&2; exit 1; }
 cat "$work/result"; echo
 grep -q '^PASS' "$work/result"

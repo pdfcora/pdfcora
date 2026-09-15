@@ -7,6 +7,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performScrollTo
@@ -98,13 +99,14 @@ class PdfViewerViewTest {
         var applied: List<String>? = null
         compose.setContent {
             PdfViewerView(document, Modifier.fillMaxSize(), review = PdfReviewConfiguration(
-                marks = listOf(PdfMark("m1", 0, listOf(PdfRect(0f, 0f, 612f, 792f)))),
+                marks = listOf(PdfMark("m1", 0, listOf(PdfRect(0f, 0f, 612f, 792f)), label = "Anna")),
                 notice = "Suggestions may be incomplete. Review the whole document.",
                 onApply = { applied = it },
             ))
         }
         waitForPage()
         compose.onNodeWithContentDescription("review-notice").assertIsDisplayed()
+        compose.onNodeWithText("Anna", useUnmergedTree = true).assertExists()
         compose.onNodeWithContentDescription("mark-m1").performClick()
         compose.waitUntil(5_000) {
             compose.onAllNodesWithText("1 accepted", substring = true).fetchSemanticsNodes().isNotEmpty()

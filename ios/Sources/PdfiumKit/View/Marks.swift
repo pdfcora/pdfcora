@@ -8,12 +8,15 @@ public struct PdfMark: Equatable, Sendable {
     public let pageIndex: Int
     public let rects: [PdfRect]
     public var state: PdfMarkState
+    /// Shown inside the mark, such as the value a form proposal would fill in.
+    public let label: String?
 
-    public init(id: String, pageIndex: Int, rects: [PdfRect], state: PdfMarkState = .pending) {
+    public init(id: String, pageIndex: Int, rects: [PdfRect], state: PdfMarkState = .pending, label: String? = nil) {
         self.id = id
         self.pageIndex = pageIndex
         self.rects = rects
         self.state = state
+        self.label = label
     }
 }
 

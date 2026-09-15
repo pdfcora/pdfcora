@@ -102,4 +102,6 @@ export interface PdfMark {
   readonly pageIndex: number;
   readonly rects: readonly PdfRect[];
   readonly state: PdfMarkState;
+  /** Shown inside the mark, such as the value a form proposal would fill in. */
+  readonly label?: string;
 }
