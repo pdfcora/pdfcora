@@ -13,6 +13,7 @@ import com.pdfiumkit.addHighlight
 import com.pdfiumkit.addInk
 import com.pdfiumkit.addNote
 import com.pdfiumkit.annotations
+import com.pdfiumkit.contains
 import com.pdfiumkit.redact
 import com.pdfiumkit.removeAnnotation
 import com.pdfiumkit.setChecked
@@ -84,6 +85,35 @@ class PdfViewer private constructor(
         private set
 
     val events: Flow<PdfViewEvent> get() = _events
+
+    // MARK: - Marks
+    //
+    // Local to this viewer: none of these emit an event, so a sync transport never carries a
+    // review, and none touch the document.
+
+    @Volatile var marks: List<PdfMark> = emptyList()
+        private set
+
+    fun setMarks(marks: List<PdfMark>) { this.marks = marks.toList() }
+
+    fun setAllMarks(state: PdfMarkState) { marks = marks.map { it.copy(state = state) } }
+
+    /** The id of the topmost mark under a point on a page — the last one set — or null. */
+    fun markAt(page: Int, point: PdfPoint): String? =
+        marks.lastOrNull { mark -> mark.pageIndex == page && mark.rects.any { it.contains(point) } }?.id
+
+    /** Cycles the tapped mark PENDING → ACCEPTED → REJECTED → PENDING. Returns its id, or null. */
+    fun tapMark(page: Int, point: PdfPoint): String? {
+        val id = markAt(page, point) ?: return null
+        marks = marks.map { mark ->
+            if (mark.id != id) mark else mark.copy(state = when (mark.state) {
+                PdfMarkState.PENDING -> PdfMarkState.ACCEPTED
+                PdfMarkState.ACCEPTED -> PdfMarkState.REJECTED
+                PdfMarkState.REJECTED -> PdfMarkState.PENDING
+            })
+        }
+        return id
+    }
 
     companion object {
         suspend fun open(

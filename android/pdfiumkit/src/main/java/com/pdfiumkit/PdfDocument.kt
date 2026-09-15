@@ -59,7 +59,7 @@ class PdfDocument private constructor(
 
     /** Set at open in trial mode, or by [use] when a feature is not licensed. */
     @Volatile internal var needsWatermark: Boolean = PdfLicense.status.isTrial
-        private set
+        internal set
 
     /** Every paid entry point calls this first. The operation runs either way. */
     internal fun use(module: PdfLicenseModule) {
