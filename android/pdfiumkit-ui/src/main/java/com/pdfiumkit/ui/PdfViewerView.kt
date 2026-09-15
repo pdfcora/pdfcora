@@ -25,8 +25,15 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.testTag
+import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.unit.dp
 import com.pdfiumkit.*
 import com.pdfiumkit.view.*
@@ -58,9 +65,14 @@ fun PdfViewerView(
     var status by remember { mutableStateOf<String?>(null) }
     var viewportPx by remember { mutableStateOf(IntSizeZero) }
     var marks by remember { mutableStateOf(emptyList<PdfMark>()) }
+    var accessible by remember { mutableStateOf<Pair<Int, List<PdfAccessibleNode>>?>(null) }
 
     suspend fun refresh() {
         bitmap = viewer?.render()
+        val pageIndex = viewer?.state?.pageIndex ?: return
+        if (accessible?.first != pageIndex) {
+            accessible = pageIndex to leaves(runCatching { document.page(pageIndex).accessibleContent() }.getOrDefault(emptyList()))
+        }
     }
 
     LaunchedEffect(document, viewportPx) {
@@ -123,9 +135,11 @@ fun PdfViewerView(
             } else {
                 Image(
                     bitmap = image.asImageBitmap(),
-                    contentDescription = "Page",
+                    contentDescription = null,
                     modifier = Modifier
                         .size(with(density) { image.width.toDp() }, with(density) { image.height.toDp() })
+                        // TalkBack hears the page's structure below, not a bitmap.
+                        .clearAndSetSemantics { testTag = "pdf-page" }
                         .background(theme.pageBackground)
                         .pointerInput(tool, viewer) {
                             var start: Offset? = null
@@ -150,6 +164,24 @@ fun PdfViewerView(
                 val v = viewer
                 if (v != null) {
                     val transform = v.transform()
+                    accessible?.takeIf { it.first == v.state.pageIndex }?.second?.forEachIndexed { order, node ->
+                        val box = node.bounds?.let { transform.toView(it) } ?: return@forEachIndexed
+                        Box(Modifier
+                            .offset { IntOffset(box.left.toInt(), box.top.toInt()) }
+                            .size(with(density) { maxOf(1f, box.width()).toDp() }, with(density) { maxOf(1f, box.height()).toDp() })
+                            .semantics {
+                                contentDescription = node.text
+                                traversalIndex = order.toFloat()
+                                when (node.role) {
+                                    PdfAccessibleNode.Role.HEADING -> heading()
+                                    PdfAccessibleNode.Role.FIGURE -> role = Role.Image
+                                    PdfAccessibleNode.Role.LIST_ITEM -> stateDescription = "list item"
+                                    PdfAccessibleNode.Role.CELL, PdfAccessibleNode.Role.HEADER_CELL -> stateDescription = "table cell"
+                                    PdfAccessibleNode.Role.FORM_FIELD -> stateDescription = "form field"
+                                    else -> Unit
+                                }
+                            })
+                    }
                     marks.filter { it.pageIndex == v.state.pageIndex }.forEach { mark ->
                         mark.rects.forEachIndexed { index, rect ->
                             val box = transform.toView(rect)
@@ -191,6 +223,9 @@ fun PdfViewerView(
 }
 
 private val IntSizeZero = 0 to 0
+
+private fun leaves(nodes: List<PdfAccessibleNode>): List<PdfAccessibleNode> =
+    nodes.flatMap { if (it.children.isEmpty()) listOf(it) else leaves(it.children) }
 
 /** Turns a drag into whichever edit the current tool means. */
 private suspend fun handleDrag(

@@ -1595,3 +1595,28 @@ Java_com_pdfiumkit_Native_markTags(JNIEnv* env, jclass, jlong handle, jint pageI
     FPDFPage_GenerateContent(page);
 }
 
+/// [code0, id0, code1, id1, …]: each character of the page's text and the marked-content id of
+/// its text object. A generated character carries the id of the character before it.
+extern "C" JNIEXPORT jintArray JNICALL
+Java_com_pdfiumkit_Native_charMarkedContentIds(JNIEnv* env, jclass, jlong handle, jint pageIndex) {
+    auto* d = asDoc(handle);
+    FPDF_PAGE page = d ? loadPage(d, pageIndex) : nullptr;
+    FPDF_TEXTPAGE textPage = page ? FPDFText_LoadPage(page) : nullptr;
+    std::vector<jint> out;
+    if (textPage) {
+        int count = FPDFText_CountChars(textPage);
+        int current = -1;
+        for (int i = 0; i < count; i++) {
+            unsigned int code = FPDFText_GetUnicode(textPage, i);
+            FPDF_PAGEOBJECT object = FPDFText_GetTextObject(textPage, i);
+            if (object) current = FPDFPageObj_GetMarkedContentID(object);
+            out.push_back(static_cast<jint>(code == 0 ? 32 : code));
+            out.push_back(current);
+        }
+        FPDFText_ClosePage(textPage);
+    }
+    jintArray result = env->NewIntArray(static_cast<jsize>(out.size()));
+    if (!out.empty()) env->SetIntArrayRegion(result, 0, static_cast<jsize>(out.size()), out.data());
+    return result;
+}
+

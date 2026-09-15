@@ -130,6 +130,7 @@ same results on all three platforms.
 | Structure tree read; figure alt text and decorative marking, checked with veraPDF | ✅ | ✅ | ✅ |
 | Alt text proposals for figures | ✅ provider | ✅ ML Kit, provider | ✅ provider |
 | Remediation: tag untagged content, rule-based proposals, checked with veraPDF | ✅ | ✅ | ✅ |
+| Tagged content exposed to screen readers in the viewer component | ✅ VoiceOver | ✅ TalkBack | ✅ semantic HTML |
 | Raw PDFium escape hatch | ✅ *untested* | — | — |
 
 ⚠️ iOS rendering is cancellable *between* progressive steps, which covers a slow
@@ -416,6 +417,16 @@ const tagged = await review.apply({ language: 'en-GB', types: { [captionId]: 'P'
 Tables are proposed as paragraphs, vector graphics as artifacts, and reading order follows the
 content stream, so multi-column layouts may need the reviewer's attention. Annotations and form
 fields are not tagged, and a document without embedded fonts cannot pass PDF/UA whatever its tags.
+
+## Screen readers
+
+`page.accessibleContent()` maps a tagged page's structure tree to what a screen reader announces:
+headings with their level, paragraphs, lists and list items, figures by their alternate text,
+tables, and form fields by their tooltip or name, in reading order. The viewer components expose
+it: the web element as visually hidden semantic HTML beside an `aria-hidden` canvas, the SwiftUI
+view as VoiceOver elements (header and image traits) placed where the content is drawn, and the
+Compose view as TalkBack semantics (heading, image role) placed the same way. An untagged page is
+announced as one paragraph of its text; remediate it first for structure.
 
 ## License keys
 

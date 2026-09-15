@@ -33,7 +33,10 @@ android {
     // dialog that hides the composition under test.
     testOptions { targetSdk = 34 }
 
-    sourceSets["androidTest"].assets.srcDirs(rootProject.projectDir.parentFile.resolve("conformance/corpus"))
+    sourceSets["androidTest"].assets.srcDirs(
+        rootProject.projectDir.parentFile.resolve("conformance/corpus"),
+        rootProject.projectDir.parentFile.resolve("conformance/alt-text"),
+    )
 }
 
 dependencies {

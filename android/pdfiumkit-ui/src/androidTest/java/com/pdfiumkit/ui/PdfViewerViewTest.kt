@@ -10,6 +10,12 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -35,7 +41,23 @@ class PdfViewerViewTest {
     }
 
     private fun waitForPage() = compose.waitUntil(timeoutMillis = 5_000) {
-        compose.onAllNodesWithContentDescription("Page").fetchSemanticsNodes().isNotEmpty()
+        compose.onAllNodesWithTag("pdf-page").fetchSemanticsNodes().isNotEmpty()
+    }
+
+    /** A11Y-2: TalkBack hears the tagged document's structure, not a bitmap. */
+    @Test
+    fun theTaggedStructureIsExposedToTalkBack() {
+        val bytes = InstrumentationRegistry.getInstrumentation().context.assets.open("tagged.pdf").use { it.readBytes() }
+        val document = runBlocking { PdfDocument.open(bytes) }
+        compose.setContent { PdfViewerView(document, Modifier.fillMaxSize()) }
+        compose.waitUntil(timeoutMillis = 10_000) {
+            compose.onAllNodes(hasContentDescription("Annual report 2026")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNode(hasContentDescription("Annual report 2026") and SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading))
+            .assertExists()
+        compose.onNode(hasContentDescription("Bar chart of revenue by region") and
+            SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Image)).assertExists()
+        document.close()
     }
 
     /**
@@ -49,7 +71,7 @@ class PdfViewerViewTest {
         compose.setContent { PdfViewerView(document, Modifier.fillMaxSize()) }
         waitForPage()
 
-        val page = compose.onNodeWithContentDescription("Page").assertIsDisplayed().fetchSemanticsNode()
+        val page = compose.onNodeWithTag("pdf-page").assertIsDisplayed().fetchSemanticsNode()
         val root = compose.onRoot().fetchSemanticsNode()
         assertTrue("page is ${page.size.width}px wide in a ${root.size.width}px view",
                    kotlin.math.abs(page.size.width - root.size.width) <= 2)

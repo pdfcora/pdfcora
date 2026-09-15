@@ -392,6 +392,11 @@ untagged PDF cannot conform by itself, which is where remediation comes in.
 
 A11Y-2 needs the same structure-tree read API as ALT-1. Building it once serves both.
 
+**A11Y-2 implemented 2026-09-15** on all three platforms: `page.accessibleContent()` in the core,
+exposed by the web element (semantic HTML), the SwiftUI view (VoiceOver elements) and the Compose
+view (TalkBack semantics), each asserted by its UI test. Design: `2026-09-15-accessible-content-design.md`.
+A11Y-1 and A11Y-4 need an independent audit; A11Y-3 (keyboard and text scaling) is not done.
+
 ## 14. Later and side bets
 
 **Semantic document diff — later.** Match up sections across two versions by their text.

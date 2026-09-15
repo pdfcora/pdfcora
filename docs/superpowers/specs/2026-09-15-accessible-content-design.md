@@ -1,7 +1,7 @@
 # PdfiumKit — Accessible Content Design
 
 Date: 2026-09-15
-Status: Draft
+Status: Implemented 2026-09-15
 Implements: A11Y-2 of `2026-09-13-pdfiumkit-ai-requirements.md` (the core accessibility track)
 
 ## 1. Purpose
