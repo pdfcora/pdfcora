@@ -96,6 +96,9 @@ class FeatureTest {
                 .filterIsInstance<PdfFormField.CheckBox>()
                 .first { it.base.annotationIndex == target.base.annotationIndex }
             assertNotEquals("checkbox state did not change", before, updated.isChecked)
+            // The state is a name, as the PDF spec requires; other viewers ignore a string /AS.
+            val saved = document.toByteArray().toString(Charsets.ISO_8859_1)
+            assertFalse(Regex("/AS\\s*\\(").containsMatchIn(saved))
         }
     }
 

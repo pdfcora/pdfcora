@@ -707,6 +707,25 @@ Java_com_pdfiumkit_Native_setFormChecked(JNIEnv* env, jclass, jlong handle, jint
 
     FPDF_ANNOTATION annot = FPDFPage_GetAnnot(page, annotIndex);
     jboolean ok = JNI_FALSE;
+    // Toggled through the form-fill environment with a space key, so PDFium writes V and AS as
+    // names and regenerates the appearance; strings written directly are read by PDFium but
+    // shown unchecked by poppler and other viewers. Read-only fields ignore keys, so the flag is
+    // lifted for the toggle. A radio button cannot be switched off by a key; that case falls
+    // through to writing the values directly.
+    if (annot && (FPDFAnnot_IsChecked(d->form, annot) != 0) != (checked == JNI_TRUE)) {
+        int flags = FPDFAnnot_GetFormFieldFlags(d->form, annot);
+        if (flags & 1) FPDFAnnot_SetFormFieldFlags(d->form, annot, flags & ~1);
+        if (FORM_SetFocusedAnnot(d->form, annot)) {
+            FORM_OnChar(d->form, page, 0x20, 0);
+            FORM_ForceToKillFocus(d->form);
+        }
+        if (flags & 1) FPDFAnnot_SetFormFieldFlags(d->form, annot, flags);
+    }
+    if (annot && (FPDFAnnot_IsChecked(d->form, annot) != 0) == (checked == JNI_TRUE)) {
+        FPDFPage_CloseAnnot(annot);
+        unloadPage(d, page);
+        return JNI_TRUE;
+    }
     if (annot) {
         std::u16string target = u"Off";
         if (checked) {

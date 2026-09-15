@@ -13,6 +13,9 @@ internal class PdfDictionaryReader(private val text: String) {
 
     fun read(start: Int): Map<String, PdfValue> = readDictionary(start).first
 
+    /** Reads the array (`[`) or dictionary (`<<`) beginning at [start]. */
+    fun readContainer(start: Int): PdfValue = readValue(start).first
+
     private fun readDictionary(start: Int): Pair<Map<String, PdfValue>, Int> {
         if (at(start) != '<' || at(start + 1) != '<') {
             throw PdfError.SaveFailed("expected a dictionary")

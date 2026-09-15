@@ -34,13 +34,11 @@ internal object PdfReader {
         // right: a caller that then wrote a replacement would corrupt the file.
         if (header.range.first != 0 || header.groupValues[1].toIntOrNull() != number) return null
 
-        val at = text.indexOf("<<", header.range.last + 1)
-        // Only dictionaries are modelled; an array or number here must not be mistaken for
+        // Dictionaries and arrays are modelled; a number or string here must not be mistaken for
         // the next object's dictionary.
-        if (at < 0 || text.substring(header.range.last + 1, at).isNotBlank()) return null
-        return runCatching { PdfDictionaryReader(text).read(at) }
-            .map { PdfValue.Dictionary(it.toList()) }
-            .getOrNull()
+        val at = (header.range.last + 1 until text.length).firstOrNull { !text[it].isWhitespace() } ?: return null
+        if (!text.startsWith("<<", at) && text[at] != '[') return null
+        return runCatching { PdfDictionaryReader(text).readContainer(at) }.getOrNull()
     }
 
     /**
@@ -77,11 +75,9 @@ internal object PdfReader {
         if (start >= data.size) return null
 
         val body = data.copyOfRange(start, data.size).toString(Charsets.ISO_8859_1)
-        val at = body.indexOf("<<")
-        if (at < 0 || body.substring(0, at).isNotBlank()) return null
-        return runCatching { PdfDictionaryReader(body).read(at) }
-            .map { PdfValue.Dictionary(it.toList()) }
-            .getOrNull()
+        val at = body.indices.firstOrNull { !body[it].isWhitespace() } ?: return null
+        if (!body.startsWith("<<", at) && body[at] != '[') return null
+        return runCatching { PdfDictionaryReader(body).readContainer(at) }.getOrNull()
     }
 
     /** The document Catalog, with the object number so it can be rewritten. */
