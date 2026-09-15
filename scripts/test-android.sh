@@ -46,6 +46,7 @@ run() {
 run :pdfiumkit:testDebugUnitTest "$@"
 
 run :pdfiumkit:connectedDebugAndroidTest "$@"
+run :pdfiumkit-ui:connectedDebugAndroidTest "$@"
 
 run :pdfiumkit:connectedDebugAndroidTest \
   -Pandroid.testInstrumentationRunnerArguments.annotation=com.pdfiumkit.LeaksNativeThreads \

@@ -58,12 +58,18 @@ fun PdfViewerView(
     LaunchedEffect(document, viewportPx) {
         if (viewportPx.first <= 0) return@LaunchedEffect
         val port = PdfViewport(viewportPx.first.toFloat(), viewportPx.second.toFloat())
-        if (viewer == null) {
-            viewer = PdfViewer.open(document, port)
-        } else {
-            viewer?.setViewport(port)
+        // An SDK error here, such as a document closed underneath the view, would
+        // otherwise escape the composition and take the whole app down.
+        try {
+            if (viewer == null) {
+                viewer = PdfViewer.open(document, port)
+            } else {
+                viewer?.setViewport(port)
+            }
+            refresh()
+        } catch (e: PdfError) {
+            status = "Could not show the document: ${e.message}"
         }
-        refresh()
     }
 
     Column(modifier.background(theme.background)) {
