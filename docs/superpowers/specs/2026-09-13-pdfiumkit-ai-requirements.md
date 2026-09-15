@@ -301,6 +301,12 @@ desktop Chrome only.
 
 ## 11. Alt text and accessibility remediation — ALT · REM
 
+**ALT implemented 2026-09-15** on all three platforms, for tagged PDFs: a structure-tree read
+over PDFium, figure alt text and decorative marking written through `PdfWriter` (and PDFium
+content marks), proposals through the custom provider and, on Android, ML Kit image
+description. Documents written from the shared test document pass veraPDF PDF/UA-1 on all
+three. Design: `2026-09-15-alt-text-design.md`. REM is not built yet.
+
 Alt text feeds the accessibility roadmap, with a person confirming every description.
 Remediation takes the same approach to tags and reading order.
 

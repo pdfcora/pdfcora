@@ -127,6 +127,8 @@ same results on all three platforms.
 | License keys and trial watermark | ✅ | ✅ | ✅ |
 | Redaction suggestions, reviewed as marks in the viewer | ✅ | ✅ | ✅ |
 | Smart form filling from a profile, reviewed as labelled marks | ✅ | ✅ | ✅ |
+| Structure tree read; figure alt text and decorative marking, checked with veraPDF | ✅ | ✅ | ✅ |
+| Alt text proposals for figures | ✅ provider | ✅ ML Kit, provider | ✅ provider |
 | Raw PDFium escape hatch | ✅ *untested* | — | — |
 
 ⚠️ iOS rendering is cancellable *between* progressive steps, which covers a slow
@@ -371,6 +373,29 @@ const applied = await proposals.apply(acceptedIds);   // applied.undo() reopens 
 
 Apple's on-device model is not used for matching fields: measured, it assigned fields in list
 order rather than by meaning.
+
+## Alt text
+
+`page.structure()` reads a tagged PDF's structure tree (types, alt text, marked-content ids,
+bounds), and `document.updateFigures(edits)` writes alternate text for figures, or marks them
+decorative, into a new document: descriptions as `/Alt` in an incremental update, decorative
+figures re-marked as artifacts in the content and removed from the tree. The original document
+is untouched. On the shared test document the result passes veraPDF's PDF/UA-1 profile on all
+three platforms (`scripts/verapdf-ua1.sh`).
+
+`pdfiumkit-ai` lists the figures that have no alternate text and proposes a description for
+each, or decorative for a figure too thin or small to carry information. Descriptions need an
+image model: your custom provider on iOS and the web (Apple's on-device model takes no images),
+ML Kit's on-device image description (English, beta) and then the provider on Android.
+
+```ts
+const review = await new PdfiumAI(document, { provider }).altText.suggest();
+// review.untagged: the document needs tags first. Show review.items as labelled marks; then:
+const updated = await review.apply([{ id, text: 'edited description' }, { id: otherId }]);
+```
+
+Untagged documents are not handled here; tagging them is remediation, which is not built yet.
+Role-mapped figure types are not found, because PDFium does not expose `/RoleMap`.
 
 ## License keys
 

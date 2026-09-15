@@ -33,6 +33,8 @@ because each lesson generalises. §4 lists what is open and what was parked.
 | License keys: offline, per module, trial watermark | Done, three platforms, shared cases in `conformance/license/` |
 | `pdfiumkit-ai` Phase 2a: redaction suggestions, review marks in the viewer, undo | Done, three platforms, shared cases in `conformance/redaction/` |
 | `pdfiumkit-ai` Phase 2b: smart form filling from a profile, labelled marks, undo | Done, three platforms, shared cases in `conformance/forms/`; no on-device model (measured) |
+| Core structure tree read; figure alt text and decorative writes | Done, three platforms; written documents pass veraPDF PDF/UA-1 (`scripts/verapdf-ua1.sh`) |
+| `pdfiumkit-ai` Phase 3a: alt text proposals for figures in tagged PDFs | Done, three platforms, shared document in `conformance/alt-text/`; ML Kit image description route on Android not run on a real device |
 
 Test counts at the time of writing (2026-09-15): web 284, web-ai 107, browser viewer 20,
 license tool 1, iOS 174 (sweep skipped) + hung-render pass + demo UI 11 + AI 60 (two Apple
@@ -167,6 +169,13 @@ provider interface. The engine timeout stays 30 s on every platform.
 **Review marks are small on a phone.** On a page fitted to a phone's width, a line of text is
 about 7 pt tall, so a mark over it is a small target; the iOS UI test taps an IBAN mark for that
 reason. Zooming in helps. A larger touch area around marks is not built.
+
+**Alt text: what is not proven.** ML Kit's image description route is built but has not run on
+a phone (the emulator has no AICore), and no real image model has described the test figures;
+the tests use a fake provider. The writer finds a figure by page and marked-content ids, so a
+figure without marked content, or one whose type is role-mapped to `Figure`, is not listed.
+veraPDF (`scripts/install-verapdf.sh`, Java 11+) is the PDF/UA judge; CI runs it on the web
+output, the local gates on the iOS and Android output.
 
 **The Android AI module skips Kotlin's metadata version check**, because ML Kit ships
 Kotlin 2.1 metadata and the project builds with 1.9. Upgrading Kotlin removes the need.
