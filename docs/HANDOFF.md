@@ -36,6 +36,8 @@ because each lesson generalises. §4 lists what is open and what was parked.
 | Core structure tree read; figure alt text and decorative writes | Done, three platforms; written documents pass veraPDF PDF/UA-1 (`scripts/verapdf-ua1.sh`) |
 | Remediation: core `tagContent`, rule-based tag proposals (Phase 3b) | Done, three platforms, shared document in `conformance/remediation/`; output passes veraPDF PDF/UA-1 |
 | Flat form detection (FORM-7) and core `addFormFields` | Done, three platforms, shared fixture `conformance/forms/flat.pdf`; rules only |
+| Agent tools: MCP server (`mcp/`) and WebMCP registration | Done; read tools plus proposal/apply/undo, saving only to a new file; WebMCP checked in Chrome 152 behind a flag |
+| Automated accessibility audits in the gates (A11Y-1) | Done, three platforms; draft report in `docs/accessibility/conformance-report.md`. A11Y-4 still needs an independent audit |
 | Accessible content (A11Y-2): tagged structure exposed to VoiceOver, TalkBack, browser screen readers | Done, three platforms, UI-tested; not yet tried with a real screen reader by a person |
 | `pdfiumkit-ai` semantic diff: sentence alignment, meaning vs wording labels | Done, three platforms, shared pair in `conformance/diff/`; Apple's model 3 of 3 runs right |
 | `pdfiumkit-ai` Phase 3a: alt text proposals for figures in tagged PDFs | Done, three platforms, shared document in `conformance/alt-text/`; ML Kit image description route on Android not run on a real device |
@@ -185,6 +187,13 @@ output, the local gates on the iOS and Android output.
 since 2026-09-15. Before, `setChecked` wrote `/V` and `/AS` as strings: PDFium read them back, so
 every test passed, but poppler showed the box unchecked. Only switching a radio button *off* still
 writes strings, because no key does that.
+
+**Compose 1.8 breaks the UI test suite.** Upgrading the Compose BOM to get
+`enableAccessibilityChecks` made `performScrollTo` on the toolbar crash the instrumentation process,
+and the suite hung at 0 of 7. The upgrade is reverted (BOM 2024.06, compileSdk 34) and Android's
+audit runs through the Accessibility Test Framework instead, which only sees the Compose host view.
+Whether the crash is a defect in our toolbar or in the 1.8 test API is unknown — worth settling
+before an app on Compose 1.8 hits it.
 
 **Remediation is rules only, and limited.** No model is used: the proposals are the same on
 every device. Tables become paragraphs, paths become artifacts (a vector chart is not announced),

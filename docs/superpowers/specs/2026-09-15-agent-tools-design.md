@@ -1,7 +1,7 @@
 # PdfiumKit — Agent Tools (MCP and WebMCP) Design
 
 Date: 2026-09-15
-Status: Draft
+Status: Implemented 2026-09-16
 Implements: "MCP / WebMCP tools for agents" of `2026-09-13-pdfiumkit-ai-requirements.md` §14
 
 ## 1. Purpose
@@ -24,7 +24,7 @@ Success criteria:
 | --- | --- |
 | Where definitions live | `pdfiumkit-ai` (web): `agentTools` and `PdfAgentSession`, no MCP dependency |
 | MCP server | New package `mcp/` (`pdfiumkit-mcp`), depending on `@modelcontextprotocol/sdk`, stdio transport, many documents by id |
-| WebMCP | `registerWebMcpTools(ai)` in `pdfiumkit-ai`, one document, feature-detected; WebMCP is a Chrome preview, so its API shape is followed as documented and may change |
+| WebMCP | `registerWebMcpTools(session)` in `pdfiumkit-ai`, one document, feature-detected. Chrome 152 exposes `document.modelContext.registerTool(tool, { signal })` behind `--enable-blink-features=WebMCP`; the explainer's `navigator.modelContext` shape is accepted too |
 | Writes | Every change is a proposal set first; `apply_proposals` takes the accepted ids; its description tells the agent to pass only ids the user accepted, and MCP annotations mark it destructive |
 | Model inside tools | The agent is the model: tools run patterns and rules only, unless the host configured a provider for the session |
 | Saving | MCP only, to a path that must differ from the opened file; WebMCP leaves saving to the page |

@@ -399,7 +399,12 @@ A11Y-2 needs the same structure-tree read API as ALT-1. Building it once serves 
 **A11Y-2 implemented 2026-09-15** on all three platforms: `page.accessibleContent()` in the core,
 exposed by the web element (semantic HTML), the SwiftUI view (VoiceOver elements) and the Compose
 view (TalkBack semantics), each asserted by its UI test. Design: `2026-09-15-accessible-content-design.md`.
-A11Y-1 and A11Y-4 need an independent audit. A11Y-3 is partly done (2026-09-15): on the web
+**A11Y-1 partly evidenced 2026-09-16:** an automated audit runs in each platform's gates (axe-core
+on the web component, Xcode's accessibility audit on iOS, the Accessibility Test Framework on
+Android), and what they found is fixed. Automated checks cover perhaps a third of WCAG, so this is
+not a conformance claim. **A11Y-4:** `docs/accessibility/conformance-report.md` is a self-assessed
+draft report; the independent audit it must be based on has not been commissioned, and only the
+owner can do that. A11Y-3 is partly done (2026-09-15): on the web
 every toolbar control and review mark is a button with a visible focus indicator, and the focused
 page zooms with + and − and turns with Page Up and Page Down. Text scaling is done on all three:
 the web component sizes its text in `rem` and its toolbar grows, the SwiftUI toolbar scales with
@@ -408,9 +413,14 @@ at large font scales (it squeezed its counts to nothing before). The SDK has no 
 
 ## 14. Later and side bets
 
+**MCP and WebMCP implemented 2026-09-16**: `pdfiumkit-ai` carries the tool definitions (reads, plus
+proposal and apply tools that follow HIL-1 and HIL-2), the `mcp/` package serves them over stdio
+with the Model Context Protocol SDK, and `registerWebMcpTools` registers them with Chrome's
+`document.modelContext`. Design: `2026-09-15-agent-tools-design.md`.
+
 **Semantic diff implemented 2026-09-15** on all three platforms: deterministic sentence alignment,
 meaning/wording labels from Apple's model (iOS) or the custom provider. Design:
-`2026-09-15-semantic-diff-design.md`. MCP / WebMCP tools remain a side bet, not built.
+`2026-09-15-semantic-diff-design.md`.
 
 **Semantic document diff — later.** Match up sections across two versions by their text.
 The model then labels each changed pair (*meaning changed* or *wording only*) and

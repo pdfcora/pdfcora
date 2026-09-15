@@ -133,6 +133,8 @@ same results on all three platforms.
 | Remediation: tag untagged content, rule-based proposals, checked with veraPDF | ✅ | ✅ | ✅ |
 | Tagged content exposed to screen readers in the viewer component | ✅ VoiceOver | ✅ TalkBack | ✅ semantic HTML |
 | Semantic diff of two versions, meaning vs wording | ✅ Apple model, provider | ✅ provider | ✅ provider |
+| Tools for AI agents: MCP server, WebMCP in the browser | — | — | ✅ `mcp/`, `registerWebMcpTools` |
+| Automated accessibility audit in the gates (axe, Xcode, ATF) | ✅ | ✅ | ⚠️ view level only |
 | Raw PDFium escape hatch | ✅ *untested* | — | — |
 
 ⚠️ iOS rendering is cancellable *between* progressive steps, which covers a slow
@@ -420,6 +422,15 @@ Tables are proposed as paragraphs, vector graphics as artifacts, and reading ord
 content stream, so multi-column layouts may need the reviewer's attention. Annotations and form
 fields are not tagged, and a document without embedded fonts cannot pass PDF/UA whatever its tags.
 
+## Tools for AI agents
+
+`mcp/` is an MCP server: an agent can open a PDF, read its text, search it, list its form fields and
+read a page's structure, and change it only through proposals — redactions, form values, fields for
+flat forms, alt text — applied with the ids the user accepted, undoable, and saved to a new file.
+The same tools are available to a browser agent through WebMCP: `registerWebMcpTools(session)` from
+`pdfiumkit-ai` registers them with `document.modelContext` where the browser has it (Chrome 152
+behind `--enable-blink-features=WebMCP`). See `mcp/README.md`.
+
 ## Semantic diff
 
 `ai.diff.compare(revised)` aligns the sentences of two versions of a document without a model
@@ -463,6 +474,14 @@ on them.
 const detected = await new PdfiumAI(document).forms.detect();
 const withFields = await detected.apply(detected.items.map((i) => i.id));
 ```
+
+## Accessibility
+
+The viewer components are built for screen readers, keyboards and large text, and the gates run an
+automated audit on each platform: axe-core's WCAG 2.1 A/AA rules on the web component, Xcode's
+accessibility audit on the iOS demo, and the Accessibility Test Framework's checks on the Compose
+component. `docs/accessibility/conformance-report.md` records what passes, what is not yet
+evaluated, and what an independent audit still has to cover — it is a self-assessment, not a VPAT®.
 
 ## License keys
 
