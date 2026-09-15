@@ -17,6 +17,7 @@ enum Demo: String, CaseIterable, Identifiable {
     case export = "Export"
     case ai = "AI"
     case component = "Component"
+    case redactionReview = "Redaction Review"
 
     var id: String { rawValue }
 
@@ -36,6 +37,7 @@ enum Demo: String, CaseIterable, Identifiable {
         case .export: "square.and.arrow.up"
         case .ai: "sparkles"
         case .component: "rectangle.on.rectangle"
+        case .redactionReview: "eye.slash"
         }
     }
 
@@ -55,6 +57,7 @@ enum Demo: String, CaseIterable, Identifiable {
         case .export: "Save edits and share"
         case .ai: "On-device availability and providers"
         case .component: "The SDK's own viewer, toolbar and theme"
+        case .redactionReview: "Personal data suggested for redaction, reviewed on the page"
         }
     }
 }
@@ -145,6 +148,7 @@ struct RootView: View {
         case .export:      ExportScreen()
         case .ai:          AIScreen()
         case .component:   ComponentScreen()
+        case .redactionReview: RedactionReviewScreen()
         }
     }
 }

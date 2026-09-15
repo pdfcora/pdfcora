@@ -5,6 +5,34 @@ import XCTest
 final class ScreenTourTests: XCTestCase {
     private let outputDirectory = ProcessInfo.processInfo.environment["SCREENSHOT_DIR"]
 
+    /// Redaction review in the component: suggestions appear as marks, a tap accepts one,
+    /// and Apply redacts it.
+    func testRedactionReviewAcceptsAndApplies() {
+        let app = XCUIApplication()
+        app.launch()
+        XCTAssertTrue(app.staticTexts["Hello World"].waitForExistence(timeout: 10))
+        let link = app.descendants(matching: .any).matching(identifier: "demo-Redaction Review").firstMatch
+        // Last in a long list: swipe until it is on screen.
+        for _ in 0..<3 where !(link.exists && link.isHittable) {
+            app.swipeUp()
+            _ = link.waitForExistence(timeout: 2)
+        }
+        link.tap()
+
+        let notice = app.staticTexts["review-notice"]
+        XCTAssertTrue(notice.waitForExistence(timeout: 20))
+        XCTAssertTrue(notice.label.contains("may be incomplete"))
+        // The IBAN: a whole line wide, so the tap cannot miss.
+        let mark = app.descendants(matching: .any).matching(NSPredicate(format: "identifier ENDSWITH ':iban'")).firstMatch
+        XCTAssertTrue(mark.waitForExistence(timeout: 10))
+        mark.tap()
+        let counts = app.staticTexts["review-counts"]
+        XCTAssertTrue(counts.waitForLabel(prefix: "1 accepted", timeout: 5), counts.label)
+        app.buttons["review-apply"].tap()
+        XCTAssertTrue(app.staticTexts["redaction-result"].waitForExistence(timeout: 20))
+        save(app, named: "redaction-review-applied")
+    }
+
     func testEveryScreenOpensAndRenders() {
         let app = XCUIApplication()
         app.launch()
@@ -310,5 +338,13 @@ final class ScreenTourTests: XCTestCase {
         guard let outputDirectory else { return }
         let url = URL(fileURLWithPath: outputDirectory).appendingPathComponent("\(name).png")
         try? screenshot.pngRepresentation.write(to: url)
+    }
+}
+
+private extension XCUIElement {
+    func waitForLabel(prefix: String, timeout: TimeInterval) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline { if label.hasPrefix(prefix) { return true }; Thread.sleep(forTimeInterval: 0.2) }
+        return false
     }
 }

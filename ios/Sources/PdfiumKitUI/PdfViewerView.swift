@@ -11,6 +11,7 @@ public struct PdfViewerView: View {
     private let toolbar: PdfToolbarConfiguration
     private let theme: PdfViewerTheme
     private let onSave: ((Data) -> Void)?
+    private let review: PdfReviewConfiguration?
 
     @Environment(\.displayScale) private var displayScale
     @State private var viewer: PdfViewer?
@@ -26,14 +27,18 @@ public struct PdfViewerView: View {
     @State private var failure: String?
     @State private var pendingNote: PdfPoint?
     @State private var noteDraft = ""
+    @State private var marks: [PdfMark] = []
+    @State private var transform: PdfViewTransform?
 
     public init(document: PdfDocument,
                 toolbar: PdfToolbarConfiguration = .default,
                 theme: PdfViewerTheme = .light,
+                review: PdfReviewConfiguration? = nil,
                 onSave: ((Data) -> Void)? = nil) {
         self.document = document
         self.toolbar = toolbar
         self.theme = theme
+        self.review = review
         self.onSave = onSave
     }
 
@@ -41,8 +46,16 @@ public struct PdfViewerView: View {
         VStack(spacing: 0) {
             PdfToolbarView(items: toolbar.items, theme: theme, tool: tool,
                            canUndo: createdCount > 0, hasSelection: selection != nil,
-                           perform: perform)
+                           reviewing: review != nil, perform: perform)
             page
+            if let review {
+                PdfReviewBar(configuration: review, marks: marks, theme: theme) { state in
+                    Task {
+                        await viewer?.setAllMarks(state)
+                        marks = await viewer?.marks ?? []
+                    }
+                }
+            }
             if let status {
                 Text(status).font(.caption).foregroundColor(.secondary).padding(.vertical, 4)
             }
@@ -87,6 +100,20 @@ public struct PdfViewerView: View {
 
     @ViewBuilder
     private func overlay(_ state: PdfViewState) -> some View {
+        if let transform {
+            ForEach(marks.filter { $0.pageIndex == state.pageIndex }, id: \.id) { mark in
+                ForEach(Array(mark.rects.enumerated()), id: \.offset) { _, rect in
+                    let box = transform.toView(rect)
+                    markShape(mark.state)
+                        .frame(width: box.width, height: box.height)
+                        .offset(x: box.minX, y: box.minY)
+                        .accessibilityElement()
+                        .accessibilityIdentifier("mark-\(mark.id)")
+                        .accessibilityAddTraits(.isButton)
+                        .onTapGesture { Task { await tap(mark: mark, at: CGPoint(x: box.midX, y: box.midY)) } }
+                }
+            }
+        }
         if let rect = dragRect {
             Rectangle()
                 .fill(tool == .redact ? theme.redactionFill : theme.accent.opacity(0.3))
@@ -97,6 +124,21 @@ public struct PdfViewerView: View {
             Path { $0.addLines(stroke) }
                 .stroke(theme.accent, style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
         }
+    }
+
+    @ViewBuilder
+    private func markShape(_ state: PdfMarkState) -> some View {
+        switch state {
+        case .pending: Rectangle().fill(Color.orange.opacity(0.18)).overlay(Rectangle().stroke(Color.orange, lineWidth: 2))
+        case .accepted: Rectangle().fill(theme.redactionFill)
+        case .rejected: Rectangle().stroke(Color.gray, style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+        }
+    }
+
+    private func tap(mark: PdfMark, at point: CGPoint) async {
+        guard let viewer, let transform else { return }
+        await viewer.tapMark(page: mark.pageIndex, point: transform.toPdf(point))
+        marks = await viewer.marks
     }
 
     // MARK: - Gestures
@@ -115,6 +157,8 @@ public struct PdfViewerView: View {
     }
 
     private func finish(_ gesture: DragGesture.Value) async {
+        // While reviewing, a tap is about a mark; editing tools stay out of the way.
+        if review != nil { return }
         guard let viewer else { return }
         let transform = await viewer.transform()
 
@@ -203,6 +247,7 @@ public struct PdfViewerView: View {
         // Shown in place of the page: swallowing the error left a spinner turning forever.
         do {
             viewer = try await PdfViewer(document: document, viewport: viewport)
+            if let review { await viewer?.setMarks(review.marks) }
         } catch {
             failure = "Could not show the document: \(error)"
             return
@@ -224,6 +269,8 @@ public struct PdfViewerView: View {
     private func refresh() async {
         guard let viewer else { return }
         state = await viewer.state
+        transform = await viewer.transform()
+        marks = await viewer.marks
         image = try? await viewer.render(scale: displayScale)
     }
 

@@ -15,6 +15,7 @@ struct PdfToolbarView: View {
     let tool: PdfTool
     let canUndo: Bool
     let hasSelection: Bool
+    var reviewing = false
     let perform: (PdfToolbarItem) -> Void
 
     var body: some View {
@@ -60,6 +61,7 @@ struct PdfToolbarView: View {
         switch item.kind {
         case .undo: return !canUndo
         case .deleteSelection: return !hasSelection
+        case .tool: return reviewing
         default: return false
         }
     }
