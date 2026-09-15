@@ -213,6 +213,21 @@ extension PdfDocument {
         }
         defer { FPDFPage_CloseAnnot(annot) }
 
+        // Toggled through the form-fill environment with a space key, so PDFium writes V and AS as
+        // names and regenerates the appearance. Strings written directly, as before, are read by
+        // PDFium but shown unchecked by poppler and other viewers. Read-only fields ignore keys, so
+        // the flag is lifted for the toggle. A radio button cannot be switched off by a key; that
+        // case still writes the values directly.
+        guard (FPDFAnnot_IsChecked(form, annot) != 0) != checked else { return }
+        let flags = FPDFAnnot_GetFormFieldFlags(form, annot)
+        if flags & 1 != 0 { FPDFAnnot_SetFormFieldFlags(form, annot, flags & ~1) }
+        if FORM_SetFocusedAnnot(form, annot) != 0 {
+            FORM_OnChar(form, page, 0x20, 0)
+            FORM_ForceToKillFocus(form)
+        }
+        if flags & 1 != 0 { FPDFAnnot_SetFormFieldFlags(form, annot, flags) }
+        guard (FPDFAnnot_IsChecked(form, annot) != 0) != checked else { return }
+
         let onValue = widgetString(annot, form: form, FPDFAnnot_GetFormFieldExportValue) ?? "Yes"
         let target = checked ? onValue : "Off"
 

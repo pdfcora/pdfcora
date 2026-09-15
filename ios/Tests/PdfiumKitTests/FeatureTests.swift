@@ -135,6 +135,9 @@ final class FeatureTests: LicensedTestCase {
         guard let updated = after.first(where: { $0.base.annotationIndex == target.base.annotationIndex }),
               case .checkBox(let now) = updated else { return XCTFail("field changed type") }
         XCTAssertNotEqual(before.isChecked, now.isChecked, "toggling did not change the checkbox")
+        // The state is a name, as the PDF spec requires; other viewers ignore a string /AS.
+        let saved = latin1([UInt8](try await doc.data()))
+        XCTAssertNil(saved.range(of: #"/AS\s*\("#, options: .regularExpression))
         await doc.close()
     }
 

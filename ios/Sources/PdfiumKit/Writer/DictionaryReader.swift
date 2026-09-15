@@ -22,6 +22,12 @@ struct PdfDictionaryReader {
         return try readDictionary(at: start).value
     }
 
+    /// Reads the array (`[`) or dictionary (`<<`) beginning at `index`.
+    func readContainer(from index: String.Index) throws -> PdfValue {
+        let start = text.unicodeScalars.distance(from: text.unicodeScalars.startIndex, to: index)
+        return try readValue(at: start).value
+    }
+
     private func readDictionary(at start: Int) throws -> (value: [String: PdfValue], next: Int) {
         guard peek(start) == "<", peek(start + 1) == "<" else {
             throw PdfError.saveFailed(reason: "expected a dictionary")

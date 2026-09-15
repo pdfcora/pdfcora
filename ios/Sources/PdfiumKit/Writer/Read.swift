@@ -37,13 +37,12 @@ enum PdfReader {
             return nil
         }
 
-        // Only dictionaries are modelled; an array or number here must not be mistaken for
-        // the next object's dictionary.
+        // Dictionaries and arrays are modelled; a number or string here must not be mistaken
+        // for the next object's dictionary.
         guard let headerEnd = Range(header.range, in: text)?.upperBound,
-              let at = text.range(of: "<<", range: headerEnd..<text.endIndex),
-              text[headerEnd..<at.lowerBound].allSatisfy(\.isWhitespace) else { return nil }
-        return (try? PdfDictionaryReader(text).read(from: at.lowerBound))
-            .map { .dictionary($0.map { ($0.key, $0.value) }) }
+              let at = text[headerEnd...].firstIndex(where: { !$0.isWhitespace }),
+              text[at...].hasPrefix("<<") || text[at] == "[" else { return nil }
+        return try? PdfDictionaryReader(text).readContainer(from: at)
     }
 
     /// An object inside a compressed object stream.
@@ -71,9 +70,9 @@ enum PdfReader {
         guard start < data.count else { return nil }
 
         let body = latin1(data[start...])
-        guard let at = body.range(of: "<<"), body[..<at.lowerBound].allSatisfy(\.isWhitespace) else { return nil }
-        return (try? PdfDictionaryReader(body).read(from: at.lowerBound))
-            .map { .dictionary($0.map { ($0.key, $0.value) }) }
+        guard let at = body.firstIndex(where: { !$0.isWhitespace }),
+              body[at...].hasPrefix("<<") || body[at] == "[" else { return nil }
+        return try? PdfDictionaryReader(body).readContainer(from: at)
     }
 
     /// The document Catalog, with the object number so it can be rewritten.
