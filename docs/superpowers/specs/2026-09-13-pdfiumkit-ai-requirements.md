@@ -305,7 +305,13 @@ desktop Chrome only.
 over PDFium, figure alt text and decorative marking written through `PdfWriter` (and PDFium
 content marks), proposals through the custom provider and, on Android, ML Kit image
 description. Documents written from the shared test document pass veraPDF PDF/UA-1 on all
-three. Design: `2026-09-15-alt-text-design.md`. REM is not built yet.
+three. Design: `2026-09-15-alt-text-design.md`.
+
+**REM implemented 2026-09-15** on all three platforms: rule-based proposals (no model) for
+headings, paragraphs, lists, figures and artifacts in content order, written by a new core
+`tagContent`. The shared untagged test document, remediated and its figure described, passes
+veraPDF PDF/UA-1 on all three; CI checks the web output. Tables and multi-column reading order
+are not proposed. Design: `2026-09-15-remediation-design.md`.
 
 Alt text feeds the accessibility roadmap, with a person confirming every description.
 Remediation takes the same approach to tags and reading order.

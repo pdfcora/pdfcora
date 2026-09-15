@@ -129,6 +129,7 @@ same results on all three platforms.
 | Smart form filling from a profile, reviewed as labelled marks | ✅ | ✅ | ✅ |
 | Structure tree read; figure alt text and decorative marking, checked with veraPDF | ✅ | ✅ | ✅ |
 | Alt text proposals for figures | ✅ provider | ✅ ML Kit, provider | ✅ provider |
+| Remediation: tag untagged content, rule-based proposals, checked with veraPDF | ✅ | ✅ | ✅ |
 | Raw PDFium escape hatch | ✅ *untested* | — | — |
 
 ⚠️ iOS rendering is cancellable *between* progressive steps, which covers a slow
@@ -394,8 +395,27 @@ const review = await new PdfiumAI(document, { provider }).altText.suggest();
 const updated = await review.apply([{ id, text: 'edited description' }, { id: otherId }]);
 ```
 
-Untagged documents are not handled here; tagging them is remediation, which is not built yet.
 Role-mapped figure types are not found, because PDFium does not expose `/RoleMap`.
+
+## Remediation
+
+For an untagged document, `pdfiumkit-ai` proposes headings, paragraphs, list items, figures and
+artifacts in reading order, from rules on the page objects (font sizes, line spacing, list
+markers), with the same result on every platform and no model. `document.tagContent(blocks)`
+in the core writes what the user confirms as a structure tree, with the content marked, `/Lang`,
+`/MarkInfo` and PDF/UA metadata, into a new document. Describe its figures with the alt text
+feature afterwards. On the shared test document the result passes veraPDF's PDF/UA-1 profile on
+all three platforms.
+
+```ts
+const review = await new PdfiumAI(document).remediation.suggest();
+// Show review.blocks as marks labelled "<order> <type>"; then:
+const tagged = await review.apply({ language: 'en-GB', types: { [captionId]: 'P' } });
+```
+
+Tables are proposed as paragraphs, vector graphics as artifacts, and reading order follows the
+content stream, so multi-column layouts may need the reviewer's attention. Annotations and form
+fields are not tagged, and a document without embedded fonts cannot pass PDF/UA whatever its tags.
 
 ## License keys
 

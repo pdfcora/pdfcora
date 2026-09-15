@@ -34,6 +34,7 @@ because each lesson generalises. §4 lists what is open and what was parked.
 | `pdfiumkit-ai` Phase 2a: redaction suggestions, review marks in the viewer, undo | Done, three platforms, shared cases in `conformance/redaction/` |
 | `pdfiumkit-ai` Phase 2b: smart form filling from a profile, labelled marks, undo | Done, three platforms, shared cases in `conformance/forms/`; no on-device model (measured) |
 | Core structure tree read; figure alt text and decorative writes | Done, three platforms; written documents pass veraPDF PDF/UA-1 (`scripts/verapdf-ua1.sh`) |
+| Remediation: core `tagContent`, rule-based tag proposals (Phase 3b) | Done, three platforms, shared document in `conformance/remediation/`; output passes veraPDF PDF/UA-1 |
 | `pdfiumkit-ai` Phase 3a: alt text proposals for figures in tagged PDFs | Done, three platforms, shared document in `conformance/alt-text/`; ML Kit image description route on Android not run on a real device |
 
 Test counts at the time of writing (2026-09-15): web 297, web-ai 116 (one Ollama test skipped),
@@ -176,6 +177,11 @@ the tests use a fake provider. The writer finds a figure by page and marked-cont
 figure without marked content, or one whose type is role-mapped to `Figure`, is not listed.
 veraPDF (`scripts/install-verapdf.sh`, Java 11+) is the PDF/UA judge; CI runs it on the web
 output, the local gates on the iOS and Android output.
+
+**Remediation is rules only, and limited.** No model is used: the proposals are the same on
+every device. Tables become paragraphs, paths become artifacts (a vector chart is not announced),
+reading order is content order, and annotations and form fields are not tagged. It has only been
+checked on the hand-written test document, not on real-world untagged PDFs.
 
 **The Android AI module skips Kotlin's metadata version check**, because ML Kit ships
 Kotlin 2.1 metadata and the project builds with 1.9. Upgrading Kotlin removes the need.

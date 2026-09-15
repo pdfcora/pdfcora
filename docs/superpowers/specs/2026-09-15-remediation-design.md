@@ -1,7 +1,7 @@
 # PdfiumKit — Remediation Design
 
 Date: 2026-09-15
-Status: Draft
+Status: Implemented 2026-09-15
 Implements: REM-1 and REM-2 of `2026-09-13-pdfiumkit-ai-requirements.md` (AI Phase 3, second half)
 
 ## 1. Purpose
