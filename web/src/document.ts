@@ -413,6 +413,24 @@ export class PdfDocument {
     });
   }
 
+  /**
+   * A copy of the document as it is now, to reopen later — for undoing a change that
+   * cannot be undone in place, such as a redaction.
+   *
+   * The copy's bytes are never exposed: they are not watermarked, and handing them out
+   * would be a way round the license. The reopened document needs the watermark if this
+   * one does.
+   */
+  async snapshot(): Promise<PdfDocumentSnapshot> {
+    const bytes = await this.run((h, m) => saveHandle(m, h, 2));
+    const marked = this.marked;
+    return new PdfDocumentSnapshot(async () => {
+      const document = await PdfDocument.open(bytes);
+      if (marked) document.marked = true;
+      return document;
+    });
+  }
+
   /** Releases the document. Further use rejects with a `closed` {@link PdfError}. */
   async close(): Promise<void> {
     if (this.closedFlag) return;
@@ -472,4 +490,19 @@ function bookmarkPage(m: PdfiumModule, doc: number, bookmark: number): number | 
   if (!dest) return undefined;
   const index = m.ccall('FPDFDest_GetDestPageIndex', 'number', ['number', 'number'], [doc, dest]) as number;
   return index >= 0 ? index : undefined;
+}
+
+/** A document as it was when `snapshot()` was called. See {@link PdfDocument.snapshot}. */
+export class PdfDocumentSnapshot {
+  readonly #reopen: () => Promise<PdfDocument>;
+
+  /** @internal */
+  constructor(reopen: () => Promise<PdfDocument>) {
+    this.#reopen = reopen;
+  }
+
+  /** Opens a new document from the snapshot. Each call opens another. */
+  open(): Promise<PdfDocument> {
+    return this.#reopen();
+  }
 }
