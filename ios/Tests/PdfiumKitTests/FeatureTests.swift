@@ -308,6 +308,20 @@ final class FeatureTests: XCTestCase {
         }
     }
 
+    /// A closed document counts zero pages, so page(0) reported "out of range (document has
+    /// 0)" — true, and useless. Web and Android say closed; the basic sample showed iOS did not.
+    func testAClosedDocumentsPageThrowsClosedNotOutOfRange() async throws {
+        let doc = try await open("hello_world.pdf")
+        await doc.close()
+
+        do {
+            _ = try await doc.page(0)
+            XCTFail("expected PdfError.closed")
+        } catch let error as PdfError {
+            XCTAssertEqual(error, .closed)
+        }
+    }
+
     func testPageOutOfRangeReportsTheBounds() async throws {
         let doc = try await open("hello_world.pdf")
         do {

@@ -174,7 +174,8 @@ public actor PdfDocument {
 
     /// A lightweight reference to a page. Loading is deferred until the page is used.
     public func page(_ index: Int) throws -> PdfPage {
-        try EngineExecutor.shared.ensureResponsive()
+        // Closed first: a closed document counts zero pages, and "out of range" would hide why.
+        _ = try requireHandle()
         let count = pageCount
         guard index >= 0 && index < count else {
             throw PdfError.pageOutOfRange(index, count: count)

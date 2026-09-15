@@ -23,6 +23,7 @@ public struct PdfViewerView: View {
     @State private var viewport: CGSize = .zero
     @State private var createdCount = 0
     @State private var status: String?
+    @State private var failure: String?
     @State private var pendingNote: PdfPoint?
     @State private var noteDraft = ""
 
@@ -66,7 +67,17 @@ public struct PdfViewerView: View {
                     }
                     .padding(12)
                 } else {
-                    ProgressView().frame(maxWidth: .infinity).padding(40)
+                    ProgressView().frame(maxWidth: .infinity).padding(40).opacity(failure == nil ? 1 : 0)
+                }
+            }
+            // Outside the scroll view, which scrolls both ways and so would never wrap it.
+            .overlay {
+                if let failure {
+                    Text(failure)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(24)
+                        .frame(width: geometry.size.width)
                 }
             }
             .onAppear { resize(geometry.size) }
@@ -189,7 +200,13 @@ public struct PdfViewerView: View {
 
     private func open() async {
         guard viewer == nil, viewport.width > 0 else { return }
-        viewer = try? await PdfViewer(document: document, viewport: viewport)
+        // Shown in place of the page: swallowing the error left a spinner turning forever.
+        do {
+            viewer = try await PdfViewer(document: document, viewport: viewport)
+        } catch {
+            failure = "Could not show the document: \(error)"
+            return
+        }
         await refresh()
     }
 
