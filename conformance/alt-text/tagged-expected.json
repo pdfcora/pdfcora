@@ -1,0 +1,36 @@
+{
+  "figuresWithoutAlt": [
+    {
+      "pageIndex": 0,
+      "markedContentIds": [
+        4
+      ],
+      "kind": "description",
+      "caption": "Figure 2: The new office building in Berlin at dusk."
+    },
+    {
+      "pageIndex": 0,
+      "markedContentIds": [
+        6
+      ],
+      "kind": "decorative"
+    },
+    {
+      "pageIndex": 1,
+      "markedContentIds": [
+        2
+      ],
+      "kind": "description",
+      "caption": "Figure 3: The company logo."
+    }
+  ],
+  "figuresWithAlt": [
+    {
+      "pageIndex": 0,
+      "markedContentIds": [
+        2
+      ],
+      "altText": "Bar chart of revenue by region"
+    }
+  ]
+}
