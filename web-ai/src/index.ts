@@ -24,6 +24,8 @@ export type { PdfFormApplied, PdfFormProposal, PdfFormProposals, PdfProfile } fr
 export type { PdfProfileKey } from './forms/synonyms.js';
 import { suggestRedactions, type PdfRedactionOptions, type PdfRedactionReview } from './redaction/suggest.js';
 import { proposeFormValues, type PdfFormProposals, type PdfProfile } from './forms/propose.js';
+import { detectFields, type PdfDetectedFields } from './forms/detect.js';
+export type { PdfDetectedField, PdfDetectedFields } from './forms/detect.js';
 import { suggestAltText, type PdfAltTextReview } from './alt-text/suggest.js';
 import { proposeRemediation, type PdfRemediationReview } from './remediation/propose.js';
 import { compareDocuments, type PdfDiff, type PdfDiffOptions } from './diff/compare.js';
@@ -110,6 +112,9 @@ export class PdfiumAI {
   readonly forms = {
     propose: (profile: PdfProfile, options?: { pages?: FormPageRange }): Promise<PdfFormProposals> =>
       proposeFormValues(this.document, this.options.provider, profile, options),
+    /** Proposes form fields for the blanks of a flat PDF — lines, boxes, underscores (FORM-7). */
+    detect: (options?: { pages?: FormPageRange }): Promise<PdfDetectedFields> =>
+      detectFields(this.document, options?.pages),
   };
 
   /**
