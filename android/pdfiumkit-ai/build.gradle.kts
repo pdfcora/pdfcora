@@ -23,12 +23,7 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-        // ML Kit GenAI ships Kotlin 2.1 metadata and this project builds with 1.9. The
-        // classes that trip the check are ML Kit internals this module never references.
-        freeCompilerArgs += "-Xskip-metadata-version-check"
-    }
+    kotlinOptions { jvmTarget = "17" }
 
     publishing { singleVariant("release") { withSourcesJar() } }
 

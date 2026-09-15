@@ -39,11 +39,11 @@ because each lesson generalises. §4 lists what is open and what was parked.
 | `pdfiumkit-ai` semantic diff: sentence alignment, meaning vs wording labels | Done, three platforms, shared pair in `conformance/diff/`; Apple's model 3 of 3 runs right |
 | `pdfiumkit-ai` Phase 3a: alt text proposals for figures in tagged PDFs | Done, three platforms, shared document in `conformance/alt-text/`; ML Kit image description route on Android not run on a real device |
 
-Test counts at the time of writing (2026-09-15): web 297, web-ai 116 (one Ollama test skipped),
-browser viewer 20, license tool 1, iOS 182 (sweep skipped) + hung-render pass + demo UI 11 + AI 66
-(two Apple measurements skipped), Android 156 instrumented (sweep skipped) + UI 4 + hung-render
-pass + 16 JVM, AI 32 JVM + 25 instrumented. pdfsig accepts both the licensed and the
-trial-signed document on iOS and Android; veraPDF passes the alt text output on all three.
+Test counts at the time of writing (2026-09-15): web 300, web-ai 119 (one Ollama test skipped),
+browser viewer 28, license tool 1, iOS 189 (sweep skipped) + hung-render pass + demo UI 12 + AI 73
+(three Apple measurements skipped), Android 163 instrumented (sweep skipped) + UI 5 + hung-render
+pass + JVM, AI JVM + 30 instrumented. pdfsig accepts both the licensed and the trial-signed
+document on iOS and Android; veraPDF passes the alt text and remediation output on all three.
 
 ## 2. Running things
 
@@ -187,11 +187,13 @@ checked on the hand-written test document. Over the 293 PDFium test resources (w
 remediation proposed and wrote a tree for all 234 untagged files that open, with no crash; the
 only errors were the typed `corrupt` errors of pages that do not load at all.
 
-**The Android AI module skips Kotlin's metadata version check**, because ML Kit ships
-Kotlin 2.1 metadata and the project builds with 1.9. Upgrading Kotlin removes the need.
+**Android builds with Kotlin 2.1.21 and AGP 8.7.3** since 2026-09-15 (the Compose compiler is the
+Kotlin plugin; the AI module no longer skips the metadata version check ML Kit's Kotlin 2.1 classes
+needed). AGP 8.7 uninstalls test APKs after a run, so `scripts/test-android.sh` passes
+`android.injected.androidTest.leaveApksInstalledAfterRun=true` for the cross-checks to pull files.
 
 **Parked on 2026-09-15, to do later:** Chrome's Summarizer is untested (it needs a
-multi-gigabyte model in a Chrome profile), and the Kotlin upgrade. A real custom provider
+multi-gigabyte model in a Chrome profile). A real custom provider
 has run: Llama 3.2 3B through Ollama grounds 25 of 30 answers (`web-ai/test/ollama.test.ts`).
 
 **The code is on GitHub** at `github.com/indaos/PdfiumKit-v2`, a **private** repository,

@@ -19,7 +19,9 @@ cd "$(dirname "$0")/../android"
 run() {
     local log
     log=$(mktemp)
-    if gradle "$@" --console=plain 2>&1 | tee "$log"; then
+    # AGP 8.7 uninstalls the test APK after a run, which deletes the files the cross-checks
+    # below pull from it.
+    if gradle "$@" -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true --console=plain 2>&1 | tee "$log"; then
         rm -f "$log"
         return 0
     fi
