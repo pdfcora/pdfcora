@@ -93,3 +93,13 @@ export function currentPage(
   // Past the end: the last page, rather than an index nobody can use.
   return Math.max(0, pages.length - 1);
 }
+
+/** A reviewable region drawn over a page, such as a redaction suggestion. */
+export type PdfMarkState = 'pending' | 'accepted' | 'rejected';
+
+export interface PdfMark {
+  readonly id: string;
+  readonly pageIndex: number;
+  readonly rects: readonly PdfRect[];
+  readonly state: PdfMarkState;
+}

@@ -7,7 +7,7 @@ import type { PdfImageData } from '../page.js';
 import { PdfViewTransform } from '../types.js';
 import { fittingSize, fittingWidth, stepped, type PdfZoom } from './zoom.js';
 import type {
-  PdfEdit, PdfPageLayout, PdfSelection, PdfTool, PdfViewChange, PdfViewEvent, PdfViewState,
+  PdfEdit, PdfMark, PdfMarkState, PdfPageLayout, PdfSelection, PdfTool, PdfViewChange, PdfViewEvent, PdfViewState,
 } from './state.js';
 
 export interface PdfViewerOptions {
@@ -88,6 +88,45 @@ export class PdfViewer {
   get tool(): PdfTool { return this.currentTool; }
   private currentSelection: PdfSelection | null = null;
   private currentTool: PdfTool = 'select';
+
+  // MARK: - Marks
+  //
+  // Local to this viewer: none of these emit an event, so a sync transport never carries a
+  // review, and none touch the document.
+
+  private currentMarks: PdfMark[] = [];
+
+  get marks(): readonly PdfMark[] { return this.currentMarks; }
+
+  setMarks(marks: readonly PdfMark[]): void {
+    this.currentMarks = [...marks];
+  }
+
+  setAllMarks(state: PdfMarkState): void {
+    this.currentMarks = this.currentMarks.map((mark) => ({ ...mark, state }));
+  }
+
+  /** The id of the topmost mark under a point on a page — the last one set — or null. */
+  markAt(pageIndex: number, point: PdfPoint): string | null {
+    for (let i = this.currentMarks.length - 1; i >= 0; i--) {
+      const mark = this.currentMarks[i]!;
+      if (mark.pageIndex === pageIndex && mark.rects.some((r) =>
+        point.x >= Math.min(r.left, r.right) && point.x <= Math.max(r.left, r.right)
+        && point.y >= Math.min(r.bottom, r.top) && point.y <= Math.max(r.bottom, r.top))) {
+        return mark.id;
+      }
+    }
+    return null;
+  }
+
+  /** Cycles the tapped mark pending → accepted → rejected → pending. Returns its id, or null. */
+  tapMark(pageIndex: number, point: PdfPoint): string | null {
+    const id = this.markAt(pageIndex, point);
+    if (id === null) return null;
+    const next: Record<PdfMarkState, PdfMarkState> = { pending: 'accepted', accepted: 'rejected', rejected: 'pending' };
+    this.currentMarks = this.currentMarks.map((mark) => (mark.id === id ? { ...mark, state: next[mark.state] } : mark));
+    return id;
+  }
 
   on(listener: Listener): () => void {
     this.listeners.push(listener);
