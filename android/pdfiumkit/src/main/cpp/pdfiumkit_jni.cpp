@@ -1569,3 +1569,29 @@ Java_com_pdfiumkit_Native_markArtifacts(JNIEnv* env, jclass, jlong handle, jint 
     return changed;
 }
 
+/// Gives each listed object a content mark named after its tag, with an MCID parameter
+/// unless the id is negative, and regenerates the page.
+extern "C" JNIEXPORT void JNICALL
+Java_com_pdfiumkit_Native_markTags(JNIEnv* env, jclass, jlong handle, jint pageIndex,
+                                   jintArray indexArray, jobjectArray tagArray, jintArray mcidArray) {
+    auto* d = asDoc(handle);
+    FPDF_PAGE page = d ? loadPage(d, pageIndex) : nullptr;
+    if (!page) return;
+    jsize count = env->GetArrayLength(indexArray);
+    jint* indices = env->GetIntArrayElements(indexArray, nullptr);
+    jint* mcids = env->GetIntArrayElements(mcidArray, nullptr);
+    for (jsize i = 0; i < count; i++) {
+        FPDF_PAGEOBJECT object = FPDFPage_GetObject(page, indices[i]);
+        if (!object) continue;
+        auto tag = static_cast<jstring>(env->GetObjectArrayElement(tagArray, i));
+        const char* name = env->GetStringUTFChars(tag, nullptr);
+        FPDF_PAGEOBJECTMARK mark = FPDFPageObj_AddMark(object, name);
+        if (mark && mcids[i] >= 0) FPDFPageObjMark_SetIntParam(d->doc, object, mark, "MCID", mcids[i]);
+        env->ReleaseStringUTFChars(tag, name);
+        env->DeleteLocalRef(tag);
+    }
+    env->ReleaseIntArrayElements(indexArray, indices, JNI_ABORT);
+    env->ReleaseIntArrayElements(mcidArray, mcids, JNI_ABORT);
+    FPDFPage_GenerateContent(page);
+}
+

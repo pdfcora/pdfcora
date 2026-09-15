@@ -76,6 +76,18 @@ class PdfiumAI(
      */
     val altText = AltText()
 
+    /**
+     * Proposes tags and a reading order for an untagged document (REM), by rules on the page
+     * objects, identically on every platform. Nothing is written until apply, which returns a new
+     * document; describe its figures with [altText] afterwards.
+     */
+    val remediation = Remediation()
+
+    inner class Remediation {
+        suspend fun suggest(pages: IntRange? = null): com.pdfiumkit.ai.remediation.PdfRemediationReview =
+            com.pdfiumkit.ai.remediation.suggestRemediation(this@PdfiumAI, pages)
+    }
+
     inner class AltText {
         suspend fun suggest(pages: IntRange? = null): com.pdfiumkit.ai.alttext.PdfAltTextReview =
             com.pdfiumkit.ai.alttext.suggestAltText(this@PdfiumAI, pages)

@@ -93,4 +93,5 @@ internal object Native {
     @JvmStatic external fun structure(handle: Long, pageIndex: Int): Array<Any>
     @JvmStatic external fun pageObjectMarkedContentIds(handle: Long, pageIndex: Int): IntArray
     @JvmStatic external fun markArtifacts(handle: Long, pageIndex: Int, ids: IntArray): Int
+    @JvmStatic external fun markTags(handle: Long, pageIndex: Int, indices: IntArray, tags: Array<String>, mcids: IntArray)
 }
