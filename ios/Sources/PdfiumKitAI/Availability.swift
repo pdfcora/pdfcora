@@ -14,6 +14,8 @@ public enum PdfAiUnavailableReason: Equatable, Sendable {
     case languageNotSupported
     /// No on-device route and no custom provider configured.
     case noProvider
+    /// A model or provider was tried and failed, and no other route answered.
+    case requestFailed
 }
 
 /// Whether a feature can run right now.

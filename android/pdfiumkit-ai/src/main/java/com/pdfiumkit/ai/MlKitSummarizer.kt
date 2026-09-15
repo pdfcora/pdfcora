@@ -30,6 +30,9 @@ internal object MlKitSummarizer {
      */
     const val LIMIT_CHARS = 9_000
 
+    /** ML Kit refuses article input shorter than this, measured on a phone. */
+    const val MINIMUM_CHARS = 400
+
     private fun supported(context: Context?): Boolean = context != null && Build.VERSION.SDK_INT >= 26
 
     /** ML Kit's language constant for a BCP 47 tag, or null when unsupported. English when unspecified. */

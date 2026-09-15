@@ -27,6 +27,19 @@ internal object SummaryText {
         return summarise(parts[0])
     }
 
+    /**
+     * [summarise] for a summariser that also refuses input shorter than [minimum] — ML Kit
+     * rejects articles under 400 characters. Null when the whole text is shorter, so the
+     * caller's next route answers instead. A short part of a longer document, such as a
+     * short page or summaries being combined, is already short and passes through as it is.
+     */
+    suspend fun summariseAtLeast(
+        pages: List<String>, limit: Int, minimum: Int, summarise: suspend (String) -> String,
+    ): String? {
+        if (pages.sumOf { it.length } < minimum) return null
+        return summarise(pages, limit) { part -> if (part.length < minimum) part else summarise(part) }
+    }
+
     private fun pack(pieces: List<String>, limit: Int): List<String> {
         val parts = mutableListOf<String>()
         var current = ""

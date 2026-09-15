@@ -46,14 +46,17 @@ export async function resolve<T>(routes: {
     ['rules', routes.rules],
   ];
 
+  let failed = false;
   for (const [source, route] of ordered) {
     if (!route) continue;
     try {
       const value = await route();
       if (value != null) return { value, source };
     } catch {
-      // Deliberately swallowed: the next route is the fallback this exists for.
+      // Swallowed so the next route can answer, but remembered: a failure is not a
+      // missing configuration, and reporting it as one sends the integrator the wrong way.
+      failed = true;
     }
   }
-  return unavailable('noProvider');
+  return unavailable(failed ? 'requestFailed' : 'noProvider');
 }

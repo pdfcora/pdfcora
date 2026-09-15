@@ -6,7 +6,8 @@ summaries of a document or page range, on iOS, Android and Web.
 **Spec:** `docs/superpowers/specs/2026-09-13-pdfiumkit-ai-requirements.md` §§8, 10, 15
 
 **Status:** built on all three platforms. Apple's on-device model has been run for real
-(see "Measured against a real model"); ML Kit and Chrome's summariser have not.
+(see "Measured against a real model"). ML Kit was tried on a real phone and fails inside
+AICore; Chrome's summariser has not been run.
 
 ## What was checked before building on it
 
@@ -73,10 +74,31 @@ citations is `notFound`. After them: **30 of 30** answers grounded on the expect
 sentence across six questions, and the unanswerable question `notFound` **5 of 5**. The
 key-points summary was accurate, in 2.8 s. Answers took about 1.5 s each.
 
+### ML Kit on a real phone
+
+On 2026-09-15, a Samsung SM-F971B on Android 17 with Google AICore
+(`prod_aicore_20260723`). ML Kit reports summarisation available, with base model
+`nano-v4-fast`, and `prepare()` completes. **Every inference then fails inside AICore**
+with `INFERENCE_ERROR`, code `30-UNKNOWN`; even `prepareInferenceEngine()` fails the same
+way, before any text is involved. The reason AICore logs is `(REDACTED) %s due to %s`.
+Not the input (clean article text fails too), not the app being in the background (a
+foreground activity changes nothing), and not a missing warm-up. Untested explanations:
+ML Kit `1.0.0-beta1` (the only release) against this newer AICore or this Samsung build,
+or a restriction on debug or test apps.
+
+Two things the phone did show, both fixed on every platform they apply to:
+
+- **ML Kit refuses article input under 400 characters.** Text that short is no longer
+  sent: the on-device route steps aside for the next one, and a short part of a longer
+  document — a short page, or summaries being combined — passes through as it is.
+- **A route that throws was reported as `noProvider`**, telling the integrator to
+  configure something that was not missing. When a route throws and nothing else
+  answers, the reason is now `requestFailed`.
+
 ## Not verified
 
-- **ML Kit and Chrome's summariser have never run.** The emulator has no AICore, and Node
-  has no `Summarizer`. Neither has a custom provider been used for real.
+- **ML Kit has never produced a summary, and Chrome's summariser has never run.** Node has
+  no `Summarizer`. Neither has a custom provider been used for real.
 - **One document.** The contract is short and clean; a real model on long or messy text,
   or in another language, is unmeasured.
 - **ML Kit's input limit** is taken as three quarters of the documented ~4,000 tokens.

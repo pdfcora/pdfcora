@@ -19,6 +19,9 @@ enum class PdfAiUnavailableReason {
 
     /** No on-device route and no custom provider configured. */
     NO_PROVIDER,
+
+    /** A model or provider was tried and failed, and no other route answered. */
+    REQUEST_FAILED,
 }
 
 /**

@@ -60,6 +60,21 @@ class ContractTest {
         )
     }
 
+    /**
+     * On a real phone ML Kit threw on every call while reporting itself available, and the
+     * caller was told to configure a provider. A failure is not a missing configuration.
+     */
+    @Test
+    fun whenARouteThrowsAndNothingAnswersTheReasonIsRequestFailed() = runTest {
+        val outcome = resolveRoutes<String>(
+            onDevice = { throw IllegalStateException("AICore error 30") }, customProvider = { null },
+        )
+        assertEquals(
+            PdfAiOutcome.NotAvailable(PdfAiAvailability.Unavailable(PdfAiUnavailableReason.REQUEST_FAILED)),
+            outcome,
+        )
+    }
+
     @Test
     fun aRouteThatThrowsDoesNotStopTheNextOne() = runTest {
         val outcome = resolveRoutes(

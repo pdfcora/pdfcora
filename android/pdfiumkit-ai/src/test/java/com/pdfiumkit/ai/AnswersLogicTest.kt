@@ -106,6 +106,30 @@ class AnswersLogicTest {
         assertTrue(result.startsWith("S"))
     }
 
+    /** ML Kit refuses article input under 400 characters, measured on a phone. */
+    private suspend fun mlKitLike(text: String): String {
+        if (text.length < 400) throw IllegalArgumentException("Input text length is smaller than the minimum of 400")
+        return "- summary of ${text.length} characters"
+    }
+
+    @Test
+    fun textShorterThanTheMinimumIsNotSentAndTheRouteStepsAside() = runTest {
+        var calls = 0
+        val result = SummaryText.summariseAtLeast(listOf("A short page."), 9_000, 400) { calls++; mlKitLike(it) }
+        assertNull(result)
+        assertEquals(0, calls)
+    }
+
+    @Test
+    fun shortPartsOfALongDocumentPassThroughInsteadOfFailing() = runTest {
+        // Long pages, whose short bullet summaries are then combined: the combining call
+        // is well under 400 characters and would be refused.
+        val pages = (0 until 6).map { "Page $it. " + "Clause text goes here. ".repeat(60) }
+        val result = SummaryText.summariseAtLeast(pages + "A short last page.", 2_000, 400, ::mlKitLike)
+        assertNotNull(result)
+        assertTrue(result!!.contains("summary of"))
+    }
+
     @Test
     fun aSinglePageLongerThanTheLimitIsSplitAtSentences() = runTest {
         val inputs = mutableListOf<String>()

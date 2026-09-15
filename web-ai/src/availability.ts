@@ -24,7 +24,9 @@ export type PdfAiUnavailableReason =
   /** The document's language is not supported by the platform. */
   | 'languageNotSupported'
   /** No on-device route and no custom provider configured. */
-  | 'noProvider';
+  | 'noProvider'
+  /** A model or provider was tried and failed, and no other route answered. */
+  | 'requestFailed';
 
 export function unavailable(
   reason: PdfAiUnavailableReason,

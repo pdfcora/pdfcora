@@ -42,6 +42,16 @@ final class ContractTests: XCTestCase {
         XCTAssertEqual(state, .unavailable(.noProvider))
     }
 
+    /// On a real phone ML Kit threw on every call while reporting itself available, and the
+    /// caller was told to configure a provider. A failure is not a missing configuration.
+    func testWhenARouteThrowsAndNothingAnswersTheReasonIsRequestFailed() async {
+        struct Boom: Error {}
+        let outcome: PdfAiOutcome<String> = await resolveRoutes(
+            onDevice: { throw Boom() }, customProvider: { nil })
+        guard case .unavailable(let state) = outcome else { return XCTFail("expected unavailable") }
+        XCTAssertEqual(state, .unavailable(.requestFailed))
+    }
+
     func testARouteThatThrowsDoesNotStopTheNextOne() async {
         struct Boom: Error {}
         let outcome: PdfAiOutcome<String> = await resolveRoutes(
@@ -120,7 +130,7 @@ final class ContractTests: XCTestCase {
         guard case .unavailable(let state) = await ai.summaries.summarize() else {
             return XCTFail("expected unavailable")
         }
-        XCTAssertEqual(state, .unavailable(.noProvider))
+        XCTAssertEqual(state, .unavailable(.requestFailed))
     }
 
     func testNothingDownloadsUnlessTheHostAsks() async throws {

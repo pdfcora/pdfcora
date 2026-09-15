@@ -24,6 +24,16 @@ describe('provider resolution order', () => {
     assert.deepEqual(result, { kind: 'unavailable', reason: 'noProvider' });
   });
 
+  // On a real phone ML Kit threw on every call while reporting itself available, and the
+  // caller was told to configure a provider. A failure is not a missing configuration.
+  test('when a route throws and nothing answers, the reason is requestFailed, not noProvider', async () => {
+    const result = await resolve<string>({
+      onDevice: async () => { throw new Error('AICore error 30'); },
+      customProvider: async () => null,
+    });
+    assert.deepEqual(result, { kind: 'unavailable', reason: 'requestFailed' });
+  });
+
   test('a route that throws does not stop the next one', async () => {
     // A provider is someone else's server. It failing must not take the feature down
     // when a rules fallback exists.

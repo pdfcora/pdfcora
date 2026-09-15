@@ -44,17 +44,22 @@ suspend fun <T> resolveRoutes(
         PdfAiSource.RULES to rules,
     )
 
+    var failed = false
     for ((source, route) in ordered) {
         if (route == null) continue
         val value = try {
             route()
         } catch (e: Exception) {
-            // Deliberately swallowed: the next route is the fallback this exists for.
+            // Swallowed so the next route can answer, but remembered: a failure is not a
+            // missing configuration, and reporting it as one sends the integrator the wrong way.
+            failed = true
             null
         }
         if (value != null) return PdfAiOutcome.Answered(PdfAiResult(value, source))
     }
     return PdfAiOutcome.NotAvailable(
-        PdfAiAvailability.Unavailable(PdfAiUnavailableReason.NO_PROVIDER),
+        PdfAiAvailability.Unavailable(
+            if (failed) PdfAiUnavailableReason.REQUEST_FAILED else PdfAiUnavailableReason.NO_PROVIDER,
+        ),
     )
 }

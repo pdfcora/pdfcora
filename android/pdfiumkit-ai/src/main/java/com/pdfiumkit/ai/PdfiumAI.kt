@@ -115,7 +115,8 @@ class PdfiumAI(
             return resolveRoutes(
                 onDevice = {
                     MlKitSummarizer.open(options.context, style, language)?.let { summarise ->
-                        PdfSummary(SummaryText.summarise(texts, MlKitSummarizer.LIMIT_CHARS, summarise), pagesWithoutText)
+                        SummaryText.summariseAtLeast(texts, MlKitSummarizer.LIMIT_CHARS, MlKitSummarizer.MINIMUM_CHARS, summarise)
+                            ?.let { PdfSummary(it, pagesWithoutText) }
                     }
                 },
                 customProvider = provider?.let {

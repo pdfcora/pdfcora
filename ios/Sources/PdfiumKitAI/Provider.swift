@@ -63,11 +63,18 @@ public func resolveRoutes<T: Sendable>(
         (.onDevice, onDevice), (.customProvider, customProvider), (.rules, rules),
     ]
 
+    var failed = false
     for (source, route) in ordered {
         guard let route else { continue }
-        if let value = try? await route() {
-            return .answered(PdfAiResult(value: value, source: source))
+        do {
+            if let value = try await route() {
+                return .answered(PdfAiResult(value: value, source: source))
+            }
+        } catch {
+            // Swallowed so the next route can answer, but remembered: a failure is not a
+            // missing configuration, and reporting it as one sends the integrator the wrong way.
+            failed = true
         }
     }
-    return .unavailable(.unavailable(.noProvider))
+    return .unavailable(.unavailable(failed ? .requestFailed : .noProvider))
 }
