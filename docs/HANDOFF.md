@@ -157,16 +157,17 @@ not run.
 unmeasured numbers (ML Kit's input limit, characters per token) and what is not built
 (streaming, cancellable indexing, language detection).
 
-**Decisions taken without you, to revisit.** Android answers use the custom provider only,
-and `experimentalOnDevicePrompt` does nothing yet (spec open question 6). No provider
-adapters ship (question 4). The engine timeout defaults to 30 s on every platform.
+**Decisions, confirmed by the owner on 2026-09-15.** Android answers use the custom provider
+only, and `experimentalOnDevicePrompt` does nothing yet (spec open question 6): ML Kit's
+Prompt API is alpha. No provider adapters ship (question 4): apps implement the small
+provider interface. The engine timeout stays 30 s on every platform.
 
 **The Android AI module skips Kotlin's metadata version check**, because ML Kit ships
 Kotlin 2.1 metadata and the project builds with 1.9. Upgrading Kotlin removes the need.
 
 **Parked on 2026-09-15, to do later:** Apple's model returns window summaries with "- - "
 bullets; Chrome's Summarizer and a real custom provider are untested (each needs a
-multi-gigabyte download); the three decisions above; and the Kotlin upgrade.
+multi-gigabyte download); and the Kotlin upgrade.
 
 **The code is on GitHub** at `github.com/indaos/PdfiumKit-v2`, a **private** repository,
 first pushed on 2026-09-15. Keep it private: the SDK's source includes the license check.
