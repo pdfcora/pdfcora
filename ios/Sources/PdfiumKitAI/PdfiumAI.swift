@@ -42,7 +42,7 @@ public struct PdfiumAI: Sendable {
     public var summaries: Summaries { Summaries(ai: self) }
 
     /// One reading of the Apple model for this call, or nil when tests have ruled it out.
-    fileprivate func appleReading() -> AppleModel.Reading? {
+    func appleReading() -> AppleModel.Reading? {
         options.allowsOnDevice ? AppleModel.read() : nil
     }
 

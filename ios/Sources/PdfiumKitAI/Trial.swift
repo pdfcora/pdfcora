@@ -28,6 +28,11 @@ enum Trial {
                                      source: result.source))
     }
 
+    /// A notice or other SDK text shown without an `ai` license gets the same prefix as model output.
+    static func text(_ value: String, licensed: Bool = PdfLicense.status.covers(.ai)) -> String {
+        licensed ? value : prefix + value
+    }
+
     private static func warn() {
         lock.lock()
         let first = !warned
