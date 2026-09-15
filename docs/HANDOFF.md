@@ -140,7 +140,10 @@ have never been pushed — **the repository has no remote**.
 `node conformance/robustness.mjs`, `scripts/sweep-ios.sh`, and
 `ANDROID_SERIAL=<device> scripts/sweep-android.sh`. On 2026-09-15 all three agreed file by
 file: 265 ok, 23 rejected, 4 typed errors, no crashes, no untyped throws, and one timeout
-(`bug_451265.pdf`, a render that hangs inside PDFium). The native sweeps are not part of
+(`bug_451265.pdf`). Its page draws a form whose tiling pattern draws the same form again;
+rendering hangs at every size while text extraction returns at once. PDFium added the file
+in 2015 as a stack-exhaustion case and never tests it automatically, so this is PDFium's
+behaviour, and the watchdog is the SDK's answer to it. The native sweeps are not part of
 the gates; their tests skip without a corpus.
 
 **Not yet tested:** the iOS
