@@ -96,8 +96,10 @@ the SDK's `summaries.summarize()` on the contract returned accurate results from
 input (`REQUEST_TOO_LARGE`). The SDK had assumed 9,000 from the documented token count; it
 now uses 7,860. On the phone, 7,860 characters summarise and 7,861 are refused, and a
 40,000-character, 20-page text went through the SDK's splitting and combining in 14 s:
-eight calls, every one between 400 and 7,860 characters. (That run predates windows; the
-windowed path has not yet been run on the phone.)
+eight calls, every one between 400 and 7,860 characters. That run predates windows. With
+windows, on the same phone, the 36,000-character, 30-page text of ten topics took five
+calls of 7,077 to 7,502 characters in 9.5 s, and the three bullets named nine of the ten
+topics (force majeure was left out).
 
 Windows against Apple's real model: a 36,000-character, 30-page text of ten repeating
 topics went through three windows of 14,286, 14,031 and 9,137 characters (limit 14,745) in
