@@ -61,3 +61,11 @@ if command -v pdfsig > /dev/null; then
 else
     echo "cross-check:   skipped, pdfsig is not installed" >&2
 fi
+
+# The alt text test writes a document with descriptions and a decorative figure; veraPDF is
+# the independent judge of whether it passes PDF/UA-1.
+if [ -x "${VERAPDF:-$HOME/.cache/verapdf/app/verapdf}" ] || command -v verapdf > /dev/null; then
+    scripts/verapdf-ua1.sh build/alt-text/written-ios.pdf
+else
+    echo "PDF/UA-1:   skipped, veraPDF is not installed (scripts/install-verapdf.sh)" >&2
+fi

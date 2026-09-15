@@ -103,3 +103,14 @@ if command -v pdfsig > /dev/null; then
 else
     echo "cross-check:   skipped, pdfsig is not installed" >&2
 fi
+
+# The alt text test writes a document with descriptions and a decorative figure; veraPDF is
+# the independent judge of whether it passes PDF/UA-1.
+if [ -x "${VERAPDF:-$HOME/.cache/verapdf/app/verapdf}" ] || command -v verapdf > /dev/null; then
+    device="${ANDROID_SERIAL:-$(adb devices | awk '/device$/{print $1; exit}')}"
+    file="/tmp/pdfiumkit-android-alt-text.pdf"
+    adb -s "$device" exec-out run-as com.pdfiumkit.test cat files/pdfiumkit-android-alt-text.pdf > "$file" 2>/dev/null
+    ../scripts/verapdf-ua1.sh "$file"
+else
+    echo "PDF/UA-1:   skipped, veraPDF is not installed (scripts/install-verapdf.sh)" >&2
+fi

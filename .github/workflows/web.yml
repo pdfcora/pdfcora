@@ -15,5 +15,11 @@ jobs:
       - name: Install poppler and OpenSSL for the signing cross-checks
         run: sudo apt-get update && sudo apt-get install -y poppler-utils openssl
       - uses: ./.github/actions/fetch-vendor
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '21' }
+      - name: Install veraPDF for the PDF/UA check
+        run: scripts/install-verapdf.sh
       - name: Install and test
         run: cd web && npm ci && npm test
+      - name: PDF/UA-1 check of the document the alt text test wrote
+        run: scripts/verapdf-ua1.sh build/alt-text/written-web.pdf
