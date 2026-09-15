@@ -3,11 +3,22 @@ import { PdfViewer } from '../view/viewer.js';
 import type { PdfTool } from '../view/state.js';
 import { defaultToolbar, type PdfToolbarConfiguration, type PdfToolbarItem } from './toolbar.js';
 import { lightTheme, type PdfViewerTheme } from './theme.js';
+import type { PdfMark, PdfMarkState } from '../view/state.js';
+
+export interface PdfReviewOptions {
+  readonly marks: readonly PdfMark[];
+  /** Always shown while reviewing. For redaction, say that suggestions may be incomplete. */
+  readonly notice: string;
+  readonly applyLabel?: string;
+  readonly onApply: (acceptedIds: string[]) => void | Promise<void>;
+  readonly onCancel?: () => void;
+}
 
 export interface PdfViewerElementOptions {
   readonly toolbar?: PdfToolbarConfiguration;
   readonly theme?: PdfViewerTheme;
   readonly onSave?: (bytes: Uint8Array) => void;
+  readonly review?: PdfReviewOptions;
 }
 
 /**
@@ -28,6 +39,8 @@ export class PdfViewerElement {
   private readonly bar = document.createElement('div');
   private readonly stage = document.createElement('div');
   private readonly status = document.createElement('p');
+  private readonly overlay = document.createElement('div');
+  private readonly reviewBar = document.createElement('div');
 
   private constructor(
     private readonly host: HTMLElement,
@@ -35,12 +48,13 @@ export class PdfViewerElement {
     private readonly toolbar: PdfToolbarConfiguration,
     private readonly theme: PdfViewerTheme,
     private readonly onSave?: (bytes: Uint8Array) => void,
+    private readonly review?: PdfReviewOptions,
   ) {}
 
   static async mount(host: HTMLElement, pdf: PdfDocument,
                      options: PdfViewerElementOptions = {}): Promise<PdfViewerElement> {
     const element = new PdfViewerElement(
-      host, pdf, options.toolbar ?? defaultToolbar, options.theme ?? lightTheme, options.onSave);
+      host, pdf, options.toolbar ?? defaultToolbar, options.theme ?? lightTheme, options.onSave, options.review);
     await element.build();
     return element;
   }
@@ -48,6 +62,7 @@ export class PdfViewerElement {
   private async build(): Promise<void> {
     const width = Math.max(240, this.host.clientWidth || 800);
     this.viewer = await PdfViewer.open(this.pdf, { width, height: this.host.clientHeight || 600 });
+    if (this.review) this.viewer.setMarks(this.review.marks);
 
     Object.assign(this.host.style, { background: this.theme.background, display: 'block' });
 
@@ -63,9 +78,11 @@ export class PdfViewerElement {
     Object.assign(this.stage.style, { overflow: 'auto', position: 'relative' });
     Object.assign(this.status.style, { margin: '4px 8px', font: '12px sans-serif', color: '#6e6e73' });
 
-    this.stage.append(this.canvas);
-    this.host.replaceChildren(this.bar, this.stage, this.status);
+    Object.assign(this.overlay.style, { position: 'absolute', left: '0', top: '0', pointerEvents: 'none' });
+    this.stage.append(this.canvas, this.overlay);
+    this.host.replaceChildren(this.bar, this.stage, ...(this.review ? [this.reviewBar] : []), this.status);
     this.renderToolbar();
+    this.renderReview();
     this.attachGestures();
     await this.refresh();
   }
@@ -99,7 +116,68 @@ export class PdfViewerElement {
     });
     button.onclick = () => { void this.perform(item); };
     if (item.item.kind === 'undo' && this.created === 0) button.disabled = true;
+    if (this.review && item.item.kind === 'tool') button.disabled = true;
     return button;
+  }
+
+  private renderReview(): void {
+    const review = this.review;
+    const viewer = this.viewer;
+    if (!review || !viewer) return;
+    const count = (state: PdfMarkState) => viewer.marks.filter((m) => m.state === state).length;
+    const button = (id: string, label: string, action: () => void) => {
+      const b = document.createElement('button');
+      b.id = id;
+      b.textContent = label;
+      b.onclick = action;
+      return b;
+    };
+    const notice = document.createElement('span');
+    notice.id = 'review-notice';
+    notice.textContent = review.notice;
+    const counts = document.createElement('span');
+    counts.id = 'review-counts';
+    counts.textContent = `${count('accepted')} accepted · ${count('pending')} pending`;
+    this.reviewBar.id = 'review-bar';
+    Object.assign(this.reviewBar.style, {
+      display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', padding: '6px 8px',
+      font: '13px sans-serif', background: this.theme.toolbarBackground, color: this.theme.toolbarForeground,
+    });
+    this.reviewBar.replaceChildren(
+      notice, counts,
+      button('review-accept-all', 'Accept all', () => { viewer.setAllMarks('accepted'); this.drawMarks(); }),
+      button('review-reject-all', 'Reject all', () => { viewer.setAllMarks('rejected'); this.drawMarks(); }),
+      button('review-apply', review.applyLabel ?? 'Apply', () => {
+        void review.onApply(viewer.marks.filter((m) => m.state === 'accepted').map((m) => m.id));
+      }),
+      button('review-cancel', 'Cancel', () => review.onCancel?.()),
+    );
+  }
+
+  /** Marks on the current page, positioned in the canvas's CSS pixels. */
+  private drawMarks(): void {
+    const viewer = this.viewer;
+    if (!viewer) return;
+    const transform = viewer.transform();
+    const style: Record<PdfMarkState, Partial<CSSStyleDeclaration>> = {
+      pending: { border: '2px solid #ff9500', background: 'rgba(255,149,0,0.18)' },
+      accepted: { border: '2px solid #1d1d1f', background: this.theme.redactionFill },
+      rejected: { border: '1px dashed #8e8e93', background: 'transparent' },
+    };
+    const boxes: HTMLElement[] = [];
+    for (const mark of viewer.marks.filter((m) => m.pageIndex === viewer.state.pageIndex)) {
+      for (const rect of mark.rects) {
+        const r = transform.toViewRect(rect);
+        const box = document.createElement('div');
+        box.dataset.markId = mark.id;
+        box.dataset.markState = mark.state;
+        Object.assign(box.style, { position: 'absolute', left: `${r.x}px`, top: `${r.y}px`,
+          width: `${r.width}px`, height: `${r.height}px`, boxSizing: 'border-box' }, style[mark.state]);
+        boxes.push(box);
+      }
+    }
+    this.overlay.replaceChildren(...boxes);
+    this.renderReview();
   }
 
   private async perform(item: PdfToolbarItem): Promise<void> {
@@ -147,6 +225,12 @@ export class PdfViewerElement {
       if (!from || !viewer) return;
       const to = local(event);
       const transform = viewer.transform();
+
+      // While reviewing, a tap is about a mark; editing tools stay out of the way.
+      if (this.review) {
+        if (viewer.tapMark(viewer.state.pageIndex, transform.toPdf(to))) this.drawMarks();
+        return;
+      }
 
       if (this.tool === 'note') {
         const point = transform.toPdf(to);
@@ -202,5 +286,6 @@ export class PdfViewerElement {
     const pixels = image.data as unknown as Uint8ClampedArray<ArrayBuffer>;
     this.canvas.getContext('2d')?.putImageData(
       new ImageData(pixels, image.width, image.height), 0, 0);
+    this.drawMarks();
   }
 }

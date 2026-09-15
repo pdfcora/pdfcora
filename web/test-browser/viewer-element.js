@@ -45,6 +45,32 @@ try {
   check('zoom in makes the page larger', canvas.getBoundingClientRect().width > cssWidth,
     `before=${cssWidth} after=${canvas.getBoundingClientRect().width}`);
 
+  // Review mode: a mark over the page, tapped once to accept, then applied.
+  const reviewHost = document.createElement('div');
+  reviewHost.style.cssText = 'width:400px;height:500px';
+  document.body.append(reviewHost);
+  let applied = null;
+  await PdfViewerElement.mount(reviewHost, await open(), {
+    review: {
+      marks: [{ id: 'm1', pageIndex: 0, rects: [{ left: 0, bottom: 0, right: 612, top: 792 }], state: 'pending' }],
+      notice: 'Suggestions may be incomplete. Review the whole document.',
+      onApply: (ids) => { applied = ids; },
+    },
+  });
+  check('the review notice is shown', document.getElementById('review-notice')?.textContent.includes('may be incomplete'));
+  const reviewCanvas = reviewHost.querySelector('canvas');
+  const box = reviewCanvas.getBoundingClientRect();
+  const at = { clientX: box.left + box.width / 2, clientY: box.top + box.height / 2, bubbles: true };
+  reviewCanvas.dispatchEvent(new PointerEvent('pointerdown', at));
+  reviewCanvas.dispatchEvent(new PointerEvent('pointerup', at));
+  for (let i = 0; i < 50 && !document.getElementById('review-counts')?.textContent.startsWith('1 accepted'); i++) await frame();
+  check('tapping a mark accepts it', document.getElementById('review-counts')?.textContent.startsWith('1 accepted'),
+    document.getElementById('review-counts')?.textContent);
+  check('an accepted mark is drawn as accepted', reviewHost.querySelector('[data-mark-id="m1"]')?.dataset.markState === 'accepted');
+  document.getElementById('review-apply').click();
+  for (let i = 0; i < 50 && applied === null; i++) await frame();
+  check('apply hands over the accepted ids', JSON.stringify(applied) === '["m1"]', JSON.stringify(applied));
+
   const closed = await open();
   await closed.close();
   const other = document.createElement('div');
