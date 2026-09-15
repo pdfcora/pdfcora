@@ -5,7 +5,7 @@ import os
 /// held outside this repository.
 enum LicenseBuild {
     static let releaseDate = "2026-09-15"
-    static let publicKey = "REPLACED_IN_TASK_12"
+    static let publicKey = "BP4TsodWBykQxZzmAYu-OckkjD2s9a4QXlG_kCjIUsdjRdIetrVP_Zu3nJ2RS7IIooaqHpjlFgu0gGRxPg-s6cg"
     static let revoked: Set<String> = []
 }
 

@@ -51,9 +51,15 @@ extension PdfDocument {
     /// Signs the document, returning the signed bytes.
     ///
     /// The original bytes are never modified: the signature is appended as an incremental
-    /// update, so any signature already present keeps verifying.
+    /// update, so any signature already present keeps verifying. Without a signing
+    /// license the bytes are first watermarked, which is a full rewrite, so earlier
+    /// signatures in the result no longer verify.
     public func sign(_ options: PdfSignOptions) async throws -> Data {
-        try await Signer.sign(backing, options: options)
+        use(.signing)
+        guard needsWatermark else { return try await Signer.sign(backing, options: options) }
+        noteWatermarked()
+        _ = try requireHandle()
+        return try await Signer.sign(try Watermark.stamp(backing), options: options)
     }
 }
 

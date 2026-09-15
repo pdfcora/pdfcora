@@ -68,6 +68,11 @@ extension PdfDocument {
             FPDF_FFLDraw(form, bitmap, page, 0, 0, w, h, 0, flags)
         }
 
+        if needsWatermark {
+            noteWatermarked()
+            Watermark.draw(on: bitmap, width: w, height: h)
+        }
+
         return try image(from: bitmap, width: pixelSize.width, height: pixelSize.height)
     }
 

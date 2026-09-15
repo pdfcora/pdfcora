@@ -58,6 +58,7 @@ extension PdfDocument {
     }
 
     func setPageRotation(_ rotation: PdfPageRotation, at index: Int) throws {
+        use(.editing)
         let page = try loadedPage(index)
         FPDFPage_SetRotation(page, Int32(rotation.rawValue))
     }
