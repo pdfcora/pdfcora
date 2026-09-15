@@ -7,7 +7,7 @@ import XCTest
 /// Excluded from normal runs with `-skip-testing:PdfiumKitTests/HangProbeTests`, since
 /// passing an environment flag through xcodebuild to the test process does not work
 /// reliably here. Run it deliberately with `-only-testing` and a time allowance.
-final class HangProbeTests: XCTestCase {
+final class HangProbeTests: LicensedTestCase {
     /// Disabled: the question is answered — the hang reproduces natively — and this test
     /// never finishes by design. `BlastRadiusTests` covers what the SDK does about it.
 

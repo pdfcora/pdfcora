@@ -2,7 +2,7 @@ import XCTest
 @testable import PdfiumKit
 
 /// Mirrors `web/test/{viewer-editing,viewer-delegation,viewer-sync-edits,viewer-presenter}.test.ts`.
-final class ViewerEditingTests: XCTestCase {
+final class ViewerEditingTests: LicensedTestCase {
 
     private let phone = CGSize(width: 390, height: 700)
     private let rect = PdfRect(left: 10, bottom: 10, right: 30, top: 30)

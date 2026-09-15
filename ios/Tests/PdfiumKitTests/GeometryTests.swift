@@ -4,7 +4,7 @@ import CoreGraphics
 
 /// PDF space is bottom-left origin, view space is top-left. Getting that flip wrong is
 /// the most common bug in PDF integration work, so it is tested rather than eyeballed.
-final class PdfViewTransformTests: XCTestCase {
+final class PdfViewTransformTests: LicensedTestCase {
     private let page = PdfSize(width: 200, height: 400)
 
     func testTopLeftOfThePageIsTheOriginInViewSpace() {
@@ -68,7 +68,7 @@ final class PdfViewTransformTests: XCTestCase {
     }
 }
 
-final class PdfRectHitTestingTests: XCTestCase {
+final class PdfRectHitTestingTests: LicensedTestCase {
     private let rect = PdfRect(left: 10, bottom: 20, right: 60, top: 120)
 
     func testContainsAPointInside() {

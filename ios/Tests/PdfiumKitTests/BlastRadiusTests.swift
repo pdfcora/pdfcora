@@ -9,7 +9,7 @@ import XCTest
 ///
 /// Runs in its own pass (see `scripts/test-ios.sh`): the render spins a core until the
 /// process exits and the engine stays unresponsive, so no test may run after it.
-final class BlastRadiusTests: XCTestCase {
+final class BlastRadiusTests: LicensedTestCase {
 
     func testAHungRenderFailsOtherDocumentsFastInsteadOfBlockingThem() async throws {
         PdfDocument.engineTimeout = 1

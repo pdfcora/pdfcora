@@ -4,7 +4,7 @@ import XCTest
 /// Every PDFium call shares one engine thread, so a call that never returns would block
 /// every document forever. Calls queued behind one that outlives the deadline fail fast
 /// instead, and service resumes if it ever returns.
-final class EngineWatchdogTests: XCTestCase {
+final class EngineWatchdogTests: LicensedTestCase {
 
     override func tearDown() {
         PdfDocument.engineTimeout = 30

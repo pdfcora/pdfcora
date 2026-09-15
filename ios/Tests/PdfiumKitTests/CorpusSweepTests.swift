@@ -9,7 +9,7 @@ import XCTest
 /// where to start. A crash kills this process, so the script notes the last file started,
 /// records it as a crash and runs the test again from the next one. Skipped without a corpus,
 /// so it costs nothing in the normal gate.
-final class CorpusSweepTests: XCTestCase {
+final class CorpusSweepTests: LicensedTestCase {
     private let environment = ProcessInfo.processInfo.environment
 
     func testSweep() async throws {

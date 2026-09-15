@@ -3,7 +3,7 @@ import PdfiumKit
 @testable import PdfiumKitAI
 
 /// The same assertions as `web-ai/test/answers.test.ts` and `summaries.test.ts`.
-final class AnswersTests: XCTestCase {
+final class AnswersTests: LicensedTestCase {
     private let notice = "The notice period is three months, ending on the last day of a calendar month."
 
     private func contract() async throws -> PdfDocument {

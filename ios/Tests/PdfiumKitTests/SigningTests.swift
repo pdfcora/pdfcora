@@ -6,7 +6,7 @@ import XCTest
 ///
 /// The gate is `pdfsig`, not our own verifier: ours agreeing with our own signer would
 /// prove nothing, since they would share any bug.
-final class XrefTests: XCTestCase {
+final class XrefTests: LicensedTestCase {
     private func read(_ name: String) throws -> [UInt8] {
         [UInt8](try Data(contentsOf: Repo.corpus.appendingPathComponent(name)))
     }
@@ -93,7 +93,7 @@ final class XrefTests: XCTestCase {
     }
 }
 
-final class SignatureFieldTests: XCTestCase {
+final class SignatureFieldTests: LicensedTestCase {
     private func read(_ name: String) throws -> Data {
         try Data(contentsOf: Repo.corpus.appendingPathComponent(name))
     }
@@ -141,7 +141,7 @@ final class SignatureFieldTests: XCTestCase {
     }
 }
 
-final class SigningTests: XCTestCase {
+final class SigningTests: LicensedTestCase {
     private func read(_ name: String) throws -> Data {
         try Data(contentsOf: Repo.corpus.appendingPathComponent(name))
     }
@@ -250,7 +250,7 @@ final class SigningTests: XCTestCase {
 /// Web supplies its own CMS implementation while iOS and Android build one natively, so
 /// the mechanism differs — but the properties a signed document must have do not, and
 /// that is what this pins.
-final class SigningContractTests: XCTestCase {
+final class SigningContractTests: LicensedTestCase {
     func testASignedDocumentMeetsTheContract() async throws {
         let base = try Data(contentsOf: Repo.corpus.appendingPathComponent("hello_world.pdf"))
         let p12 = try Data(contentsOf: Repo.root

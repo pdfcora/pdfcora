@@ -3,7 +3,7 @@ import XCTest
 
 /// Mirrors `web/test/writer-*.test.ts` assertion for assertion, so the two
 /// implementations are held to one contract.
-final class PdfValueTests: XCTestCase {
+final class PdfValueTests: LicensedTestCase {
     private func text(_ value: PdfValue) -> String {
         String(decoding: PdfValue.serialize(value), as: UTF8.self)
     }
@@ -52,7 +52,7 @@ final class PdfValueTests: XCTestCase {
     }
 }
 
-final class TrailerScanTests: XCTestCase {
+final class TrailerScanTests: LicensedTestCase {
     private func read(_ name: String) throws -> Data {
         try Data(contentsOf: Repo.corpus.appendingPathComponent(name))
     }
@@ -100,7 +100,7 @@ final class TrailerScanTests: XCTestCase {
     }
 }
 
-final class IncrementalUpdateTests: XCTestCase {
+final class IncrementalUpdateTests: LicensedTestCase {
     private func read(_ name: String) throws -> Data {
         try Data(contentsOf: Repo.corpus.appendingPathComponent(name))
     }

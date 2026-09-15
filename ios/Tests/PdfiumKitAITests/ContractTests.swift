@@ -6,7 +6,7 @@ import PdfiumKit
 ///
 /// If a Swift test here needs different assertions than its TypeScript twin, the two
 /// implementations have diverged and one of them is wrong.
-final class ContractTests: XCTestCase {
+final class ContractTests: LicensedTestCase {
 
     private struct BrokenProvider: PdfAiProvider {
         struct Boom: Error {}

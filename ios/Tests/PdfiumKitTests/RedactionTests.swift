@@ -8,7 +8,7 @@ import XCTest
  box drawn over text looks right and leaves every word in the document, which is the
  classic redaction failure and the reason this feature exists.
  */
-final class RedactionTests: XCTestCase {
+final class RedactionTests: LicensedTestCase {
     private func read(_ name: String) throws -> Data {
         try Data(contentsOf: Repo.corpus.appendingPathComponent(name))
     }
@@ -223,7 +223,7 @@ final class RedactionTests: XCTestCase {
 ///
 /// The gate is the saved bytes, not the text layer: a black box over text passes an
 /// extraction check and leaves every word in the file.
-final class RedactionContractTests: XCTestCase {
+final class RedactionContractTests: LicensedTestCase {
     func testRedactedContentIsGoneFromTheTextAndTheBytes() async throws {
         let base = try Data(contentsOf: Repo.corpus.appendingPathComponent("hello_world.pdf"))
         let document = try await PdfDocument(data: base)

@@ -5,7 +5,7 @@ import XCTest
 ///
 /// If a test here needs different assertions than its TypeScript twin, the two
 /// implementations have diverged and one of them is wrong.
-final class ViewerTests: XCTestCase {
+final class ViewerTests: LicensedTestCase {
 
     private let letter = PdfSize(width: 612, height: 792)
     // The corpus pages are 200x200 — smaller than any plausible viewport — so viewports
@@ -321,7 +321,7 @@ private final class EventBox: @unchecked Sendable {
 /// The fixture's expected values were computed by independent arithmetic rather than by
 /// running any of the three SDKs, so agreement is evidence rather than three copies of
 /// one mistake.
-final class ViewStateConformanceTests: XCTestCase {
+final class ViewStateConformanceTests: LicensedTestCase {
 
     /// The edit half of the contract: the same file the web and Android suites read.
     func testEveryFixtureEditCaseDecodesToTheExpectedArguments() throws {
