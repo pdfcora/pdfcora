@@ -72,7 +72,11 @@ internal object FormProposer {
         field is PdfFormField.RadioButton || field is PdfFormField.ComboBox || field is PdfFormField.ListBox)
 
     fun prompt(fields: List<PdfFieldDescription>): String = (listOf(
-        "Match each form field below to one of these profile keys, or \"unknown\": ${PdfProfileKey.values().joinToString(", ") { it.id }}.",
+        "For each form field below, decide which personal detail it asks for, judging only by that field's own name, tooltip and label.",
+        "Details: givenName (first name), familyName (last name), fullName (whole name), dateOfBirth, email, phone,",
+        "street (street and house number), postalCode, city, country, iban (bank account number), company (employer).",
+        "Answer \"unknown\" unless the field's own text clearly names the detail. A name like \"Text3\" names nothing.",
+        "The fields are in no particular order; do not assign details by position.",
         "Reply with JSON: {\"fields\": [{\"id\": \"...\", \"key\": \"...\"}]}.",
         "Fields:",
     ) + fields.map { f ->

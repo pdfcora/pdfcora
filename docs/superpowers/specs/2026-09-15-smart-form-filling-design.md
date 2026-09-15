@@ -1,7 +1,7 @@
 # PdfiumKit — Smart Form Filling Design
 
 Date: 2026-09-15
-Status: Approved, in progress
+Status: Implemented 2026-09-15
 Implements: FORM-1 to FORM-6 and HIL-1 to HIL-3 of `2026-09-13-pdfiumkit-ai-requirements.md`
 (AI Phase 2, second half)
 
@@ -29,7 +29,7 @@ the redaction suggestions design.
 | --- | --- |
 | Languages of the synonym list | English and German (open question 3), as for redaction |
 | Profile | Passed in per call as key → string; never stored (FORM-4) |
-| Model | Optional: Apple's on-device model on iOS, the custom provider everywhere; the synonym list runs first and wins |
+| Model | The custom provider only, everywhere; the synonym list runs first and wins. Apple's on-device model is not used (§5.2) |
 | Review | The redaction review marks, with a label showing each proposed value |
 | Undo | Snapshot before apply, as for redaction |
 | Measurement | Apple's model through the iOS simulator |
@@ -94,11 +94,17 @@ then the one with the most letters (so "e mail" beats "address" in "E-mail addre
 
 ### 5.2 The model
 
-When the synonym list leaves fillable fields `unknown` and a route is available (Apple on iOS,
-the custom provider anywhere), those field descriptions go to the model in one prompt, with a
-JSON schema: `{ "fields": [{ "id": …, "key": … }] }`. A key outside §3 or `unknown`, or an id
+When the synonym list leaves fillable fields `unknown` and a custom provider is configured,
+those field descriptions go to it in one prompt, with a JSON schema:
+`{ "fields": [{ "id": …, "key": … }] }`. The prompt says to answer `unknown` unless a field's
+own text names the detail, and not to assign details by position.
+
+**Apple's on-device model is not used.** Measured on 2026-09-15 on the test form with labels
+removed, over four runs, it assigned keys in the order the fields were listed (the German page
+came back familyName, fullName, dateOfBirth, email… for Vorname, Feld2, Geb, Feld4…), or echoed
+field names as keys. A single such match would propose a date of birth for an IBAN field. A key outside §3 or `unknown`, or an id
 not sent, is dropped. The model never overrides a synonym match; that is how the list
-double-checks it. `source` is `onDevice` or `customProvider` for these, `rules` for synonyms.
+double-checks it. `source` is `customProvider` for these, `rules` for synonyms.
 
 ### 5.3 Fillable kinds (FORM-6)
 
@@ -145,7 +151,7 @@ proposed value.
 - `apply` writes the accepted values and leaves the rest; an unknown id writes nothing; `undo`
   restores the original values.
 - Viewer marks draw `label`.
-- Apple's model measured on the fields the synonym list cannot match.
+- Apple's model measured on field matching, as the evidence for not using it.
 
 ## 9. Out of scope
 

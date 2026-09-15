@@ -58,9 +58,12 @@ enum FormProposer {
         func quote(_ s: String?) -> String {
             String(data: try! JSONSerialization.data(withJSONObject: [s ?? ""]), encoding: .utf8)!.dropFirst().dropLast().description
         }
-        let keys = PdfProfileKey.allCases.map(\.rawValue).joined(separator: ", ")
         return ([
-            "Match each form field below to one of these profile keys, or \"unknown\": \(keys).",
+            "For each form field below, decide which personal detail it asks for, judging only by that field's own name, tooltip and label.",
+            "Details: givenName (first name), familyName (last name), fullName (whole name), dateOfBirth, email, phone,",
+            "street (street and house number), postalCode, city, country, iban (bank account number), company (employer).",
+            "Answer \"unknown\" unless the field's own text clearly names the detail. A name like \"Text3\" names nothing.",
+            "The fields are in no particular order; do not assign details by position.",
             "Reply with JSON: {\"fields\": [{\"id\": \"...\", \"key\": \"...\"}]}.",
             "Fields:",
         ] + fields.map { f in
@@ -149,9 +152,8 @@ extension PdfiumAI {
         let ai: PdfiumAI
 
         /// Proposes values for the document's form fields from a profile the host passes in
-        /// (FORM). The synonym list runs on every device; Apple's on-device model, or the custom
-        /// provider, matches fields it cannot. The profile is not stored. Nothing is written
-        /// until `apply`.
+        /// (FORM). The synonym list runs on every device; the custom provider, when configured,
+        /// matches fields it cannot. The profile is not stored. Nothing is written until `apply`.
         public func propose(profile: [PdfProfileKey: String], pages: ClosedRange<Int>? = nil) async throws -> PdfFormProposals {
             let document = ai.document
             let fields = try await FieldDescriber.describe(document, pages: pages).filter { FormProposer.isFillable($0.field) }
@@ -164,27 +166,17 @@ extension PdfiumAI {
                 }
             }
 
+            // Apple's on-device model is not used here: measured on 2026-09-15 it assigned keys by
+            // the fields' order in the prompt, so a date of birth was proposed for an IBAN field.
+            // An app's own provider may be a stronger model, so it is still asked.
             var modelUsed = false
             let unknown = fields.filter { matched[id($0)] == nil }
-            let apple = ai.appleReading()
-            let provider = ai.options.provider
-            if !unknown.isEmpty, apple?.isPromptable == true || provider != nil {
+            if !unknown.isEmpty, let provider = ai.options.provider {
                 let prompt = FormProposer.prompt(unknown)
-                var onDevice: PdfAiRoute<[FormProposer.FieldMatch]>?
-                if apple?.isPromptable == true {
-                    onDevice = {
-                        guard let reply = try await AppleModel.respond(to: prompt) else { return nil }
-                        return FormProposer.parse(reply)
-                    }
-                }
-                var customProvider: PdfAiRoute<[FormProposer.FieldMatch]>?
-                if let provider {
-                    customProvider = {
-                        let response = try await provider.generate(PdfAiRequest(prompt: prompt, schema: FormProposer.schema))
-                        return FormProposer.parse(response.structured ?? response.text)
-                    }
-                }
-                let outcome = await resolveRoutes(onDevice: onDevice, customProvider: customProvider)
+                let outcome: PdfAiOutcome<[FormProposer.FieldMatch]> = await resolveRoutes(customProvider: {
+                    let response = try await provider.generate(PdfAiRequest(prompt: prompt, schema: FormProposer.schema))
+                    return FormProposer.parse(response.structured ?? response.text)
+                })
                 if case .answered(let result) = outcome {
                     modelUsed = true
                     let sent = Set(unknown.map(id))

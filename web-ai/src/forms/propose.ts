@@ -54,7 +54,11 @@ export const formSchema = {
 export function formPrompt(fields: readonly PdfFieldDescription[]): string {
   const quote = (s?: string) => JSON.stringify(s ?? '');
   return [
-    `Match each form field below to one of these profile keys, or "unknown": ${PROFILE_KEYS.join(', ')}.`,
+    "For each form field below, decide which personal detail it asks for, judging only by that field's own name, tooltip and label.",
+    'Details: givenName (first name), familyName (last name), fullName (whole name), dateOfBirth, email, phone,',
+    'street (street and house number), postalCode, city, country, iban (bank account number), company (employer).',
+    'Answer "unknown" unless the field\'s own text clearly names the detail. A name like "Text3" names nothing.',
+    'The fields are in no particular order; do not assign details by position.',
     'Reply with JSON: {"fields": [{"id": "...", "key": "..."}]}.',
     'Fields:',
     ...fields.map((f) => {

@@ -49,12 +49,9 @@ final class ScreenTourTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["review-notice"].waitForExistence(timeout: 20))
         app.buttons["review-accept-all"].tap()
         let counts = app.staticTexts["review-counts"]
-        // 21 from the synonym list, plus whatever Apple's model adds when the simulator reaches it.
-        XCTAssertTrue(counts.waitForLabel(prefix: "2", timeout: 5) && counts.label.hasSuffix("0 pending"), counts.label)
-        let accepted = counts.label.components(separatedBy: " ").first ?? ""
-        XCTAssertGreaterThanOrEqual(Int(accepted) ?? 0, 21, counts.label)
+        XCTAssertTrue(counts.waitForLabel(prefix: "21 accepted · 0 pending", timeout: 5), counts.label)
         app.buttons["review-apply"].tap()
-        XCTAssertTrue(app.staticTexts["Filled \(accepted) fields"].waitForExistence(timeout: 20))
+        XCTAssertTrue(app.staticTexts["Filled 21 fields"].waitForExistence(timeout: 20))
         save(app, named: "form-filling-applied")
     }
 
