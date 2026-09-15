@@ -20,7 +20,11 @@ export { locateQuote } from './quote.js';
 export type {
   PdfRedactionApplied, PdfRedactionCategory, PdfRedactionOptions, PdfRedactionReview, PdfRedactionSuggestion,
 } from './redaction/suggest.js';
+export type { PdfFormApplied, PdfFormProposal, PdfFormProposals, PdfProfile } from './forms/propose.js';
+export type { PdfProfileKey } from './forms/synonyms.js';
 import { suggestRedactions, type PdfRedactionOptions, type PdfRedactionReview } from './redaction/suggest.js';
+import { proposeFormValues, type PdfFormProposals, type PdfProfile } from './forms/propose.js';
+import type { PdfPageRange as FormPageRange } from './text.js';
 
 export interface PdfiumAIOptions {
   readonly provider?: PdfAiProvider;
@@ -90,6 +94,16 @@ export class PdfiumAI {
         },
       });
     },
+  };
+
+  /**
+   * Proposes values for the document's form fields from a profile the host passes in (FORM).
+   * The synonym list runs on every device; the custom provider matches fields it cannot.
+   * The profile is not stored. Nothing is written until `apply`.
+   */
+  readonly forms = {
+    propose: (profile: PdfProfile, options?: { pages?: FormPageRange }): Promise<PdfFormProposals> =>
+      proposeFormValues(this.document, this.options.provider, profile, options),
   };
 
   /**
