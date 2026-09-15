@@ -45,6 +45,19 @@ try {
   check('zoom in makes the page larger', canvas.getBoundingClientRect().width > cssWidth,
     `before=${cssWidth} after=${canvas.getBoundingClientRect().width}`);
 
+  // Keyboard (A11Y-3): controls show a focus ring, and the page zooms from the keyboard.
+  const zoomButton = document.getElementById('zoom-out');
+  zoomButton.focus();
+  check('a focused toolbar button shows a focus indicator', getComputedStyle(zoomButton).outlineStyle !== 'none',
+    `outline=${getComputedStyle(zoomButton).outlineStyle}`);
+  const stage = canvas.parentElement;
+  stage.focus();
+  const beforeKey = canvas.getBoundingClientRect().width;
+  stage.dispatchEvent(new KeyboardEvent('keydown', { key: '+', bubbles: true }));
+  for (let i = 0; i < 50 && canvas.getBoundingClientRect().width <= beforeKey; i++) await new Promise((r) => setTimeout(r, 20));
+  check('+ on the focused page zooms in', document.activeElement === stage && canvas.getBoundingClientRect().width > beforeKey,
+    `before=${beforeKey} after=${canvas.getBoundingClientRect().width}`);
+
   // Screen readers: the tagged document's structure is in the accessible layer, the bitmap is hidden.
   const taggedHost = document.createElement('div');
   taggedHost.style.cssText = 'width:400px;height:500px';
@@ -85,6 +98,12 @@ try {
   document.getElementById('review-apply').click();
   for (let i = 0; i < 50 && applied === null; i++) await frame();
   check('apply hands over the accepted ids', JSON.stringify(applied) === '["m1"]', JSON.stringify(applied));
+  const markButton = reviewHost.querySelector('[data-mark-id="m1"]');
+  check('a mark is a button a keyboard can reach', markButton?.tagName === 'BUTTON' && markButton.getAttribute('aria-label') === 'Anna: accepted',
+    `${markButton?.tagName} ${markButton?.getAttribute('aria-label')}`);
+  markButton.click();
+  for (let i = 0; i < 50 && reviewHost.querySelector('[data-mark-id="m1"]')?.dataset.markState !== 'rejected'; i++) await frame();
+  check('activating a mark button cycles it', reviewHost.querySelector('[data-mark-id="m1"]')?.dataset.markState === 'rejected');
 
   const closed = await open();
   await closed.close();

@@ -68,6 +68,11 @@ export class PdfViewerElement {
     if (this.review) this.viewer.setMarks(this.review.marks);
 
     Object.assign(this.host.style, { background: this.theme.background, display: 'block' });
+    // A visible focus indicator for every control, marks included (A11Y-3).
+    this.host.classList.add('pdf-viewer-element');
+    const focus = document.createElement('style');
+    focus.textContent = `.pdf-viewer-element button:focus-visible, .pdf-viewer-element [tabindex]:focus-visible {
+      outline: 2px solid ${this.theme.accent}; outline-offset: 2px; }`;
 
     // The toolbar must not clip. Every item has a fixed width, so a row overflows rather
     // than wrapping and whatever does not fit is silently cut off — this project shipped
@@ -90,7 +95,12 @@ export class PdfViewerElement {
       clipPath: 'inset(50%)', whiteSpace: 'nowrap',
     });
     this.stage.append(this.canvas, this.overlay, this.accessible);
-    this.host.replaceChildren(this.bar, this.stage, ...(this.review ? [this.reviewBar] : []), this.status);
+    // The page takes keyboard focus: + and - zoom, Page Up and Page Down turn pages.
+    this.stage.tabIndex = 0;
+    this.stage.setAttribute('role', 'group');
+    this.stage.setAttribute('aria-label', 'Page');
+    this.stage.onkeydown = (event) => { void this.key(event); };
+    this.host.replaceChildren(focus, this.bar, this.stage, ...(this.review ? [this.reviewBar] : []), this.status);
     this.renderToolbar();
     this.renderReview();
     this.attachGestures();
@@ -178,11 +188,20 @@ export class PdfViewerElement {
     for (const mark of viewer.marks.filter((m) => m.pageIndex === viewer.state.pageIndex)) {
       for (const [index, rect] of mark.rects.entries()) {
         const r = transform.toViewRect(rect);
-        const box = document.createElement('div');
+        // A button, so a mark can be reached and cycled from the keyboard too.
+        const box = document.createElement('button');
         box.dataset.markId = mark.id;
         box.dataset.markState = mark.state;
+        box.setAttribute('aria-label', `${mark.label ?? 'Suggestion'}: ${mark.state}`);
+        if (index > 0) box.tabIndex = -1;
+        box.onclick = () => {
+          const point = transform.toPdf({ x: r.x + r.width / 2, y: r.y + r.height / 2 });
+          if (viewer.tapMark(mark.pageIndex, point)) this.drawMarks();
+          this.overlay.querySelector<HTMLElement>(`[data-mark-id="${CSS.escape(mark.id)}"]`)?.focus();
+        };
         Object.assign(box.style, { position: 'absolute', left: `${r.x}px`, top: `${r.y}px`,
-          width: `${r.width}px`, height: `${r.height}px`, boxSizing: 'border-box' }, style[mark.state]);
+          width: `${r.width}px`, height: `${r.height}px`, boxSizing: 'border-box', margin: '0', cursor: 'pointer',
+          pointerEvents: 'auto', font: 'inherit', textAlign: 'left' }, style[mark.state]);
         if (mark.label && index === 0) {
           box.textContent = mark.label;
           Object.assign(box.style, { font: `${Math.max(8, Math.min(12, r.height * 0.7))}px sans-serif`,
@@ -194,6 +213,21 @@ export class PdfViewerElement {
     }
     this.overlay.replaceChildren(...boxes);
     this.renderReview();
+  }
+
+  private async key(event: KeyboardEvent): Promise<void> {
+    const viewer = this.viewer;
+    if (!viewer || event.target !== this.stage) return;
+    const pageIndex = viewer.state.pageIndex;
+    switch (event.key) {
+      case '+': case '=': viewer.zoomIn(); break;
+      case '-': viewer.zoomOut(); break;
+      case 'PageDown': await viewer.goToPage(pageIndex + 1); break;
+      case 'PageUp': await viewer.goToPage(pageIndex - 1); break;
+      default: return;
+    }
+    event.preventDefault();
+    await this.refresh();
   }
 
   private async perform(item: PdfToolbarItem): Promise<void> {

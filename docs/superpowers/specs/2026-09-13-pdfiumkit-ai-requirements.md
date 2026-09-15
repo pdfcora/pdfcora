@@ -395,7 +395,10 @@ A11Y-2 needs the same structure-tree read API as ALT-1. Building it once serves 
 **A11Y-2 implemented 2026-09-15** on all three platforms: `page.accessibleContent()` in the core,
 exposed by the web element (semantic HTML), the SwiftUI view (VoiceOver elements) and the Compose
 view (TalkBack semantics), each asserted by its UI test. Design: `2026-09-15-accessible-content-design.md`.
-A11Y-1 and A11Y-4 need an independent audit; A11Y-3 (keyboard and text scaling) is not done.
+A11Y-1 and A11Y-4 need an independent audit. A11Y-3 is partly done (2026-09-15): on the web
+every toolbar control and review mark is a button with a visible focus indicator, and the focused
+page zooms with + and − and turns with Page Up and Page Down. The SDK has no macOS target, and
+text scaling of the component's own labels is not done.
 
 ## 14. Later and side bets
 

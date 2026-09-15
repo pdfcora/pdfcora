@@ -444,6 +444,10 @@ view as VoiceOver elements (header and image traits) placed where the content is
 Compose view as TalkBack semantics (heading, image role) placed the same way. An untagged page is
 announced as one paragraph of its text; remediate it first for structure.
 
+On the web the component also works from the keyboard: toolbar controls and review marks are
+buttons with a visible focus ring, and the focused page zooms with + and − and turns with
+Page Up and Page Down.
+
 ## License keys
 
 Without a license key every feature works, and rendered pages, saved files and AI output
