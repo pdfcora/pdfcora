@@ -653,10 +653,10 @@ describe('watermark', () => {
 
   test('trial save carries the watermark on every page; licensed save does not', async () => {
     await useKey(null);
-    const trialBytes = await (await PdfDocument.open(read('rectangles_multi_pages.pdf'))).toBytes();
+    const trialBytes = await (await PdfDocument.open(read('hello_world_2_pages_split_streams.pdf'))).toBytes();
     for (const text of await textOfEveryPage(trialBytes)) assert.ok(text.includes(MARK));
     await useKey(FIXTURE.fullKey);
-    const licensedBytes = await (await PdfDocument.open(read('rectangles_multi_pages.pdf'))).toBytes();
+    const licensedBytes = await (await PdfDocument.open(read('hello_world_2_pages_split_streams.pdf'))).toBytes();
     for (const text of await textOfEveryPage(licensedBytes)) assert.ok(!text.includes(MARK));
   });
 
@@ -725,7 +725,7 @@ describe('watermark', () => {
 });
 ```
 
-Before relying on them, confirm the corpus files exist: `ls conformance/corpus/hello_world.pdf conformance/corpus/rectangles_multi_pages.pdf`. If `rectangles_multi_pages.pdf` is absent, use any corpus file with two or more pages (`grep -l` the expectations file for `"pageCount": 2`).
+Before relying on them, confirm the corpus files exist: `ls conformance/corpus/hello_world.pdf conformance/corpus/hello_world_2_pages_split_streams.pdf`. If `hello_world_2_pages_split_streams.pdf` is absent, use any corpus file with two or more pages (`grep -l` the expectations file for `"pageCount": 2`).
 
 - [ ] **Step 3: Run to verify they fail**
 
@@ -1514,10 +1514,10 @@ Append to `LicenseTests`:
 
     func testTrialSaveIsWatermarkedOnEveryPage() async throws {
         try use(nil)
-        let trial = try await PdfDocument(data: try read("rectangles_multi_pages.pdf")).data()
+        let trial = try await PdfDocument(data: try read("hello_world_2_pages_split_streams.pdf")).data()
         for text in try await texts(trial) { XCTAssertTrue(text.contains(mark)) }
         LicensedTestCase.installFullTestLicense()
-        let licensed = try await PdfDocument(data: try read("rectangles_multi_pages.pdf")).data()
+        let licensed = try await PdfDocument(data: try read("hello_world_2_pages_split_streams.pdf")).data()
         for text in try await texts(licensed) { XCTAssertFalse(text.contains(mark)) }
     }
 
@@ -2233,10 +2233,10 @@ Append to `LicenseTest`:
 
     @Test fun trialSaveIsWatermarkedOnEveryPage() = kotlinx.coroutines.runBlocking {
         use(null)
-        val trial = PdfDocument.open(corpus("rectangles_multi_pages.pdf")).use { it.toByteArray() }
+        val trial = PdfDocument.open(corpus("hello_world_2_pages_split_streams.pdf")).use { it.toByteArray() }
         texts(trial).forEach { org.junit.Assert.assertTrue(it.contains(mark)) }
         LicenseFixture.installFullKey()
-        val licensed = PdfDocument.open(corpus("rectangles_multi_pages.pdf")).use { it.toByteArray() }
+        val licensed = PdfDocument.open(corpus("hello_world_2_pages_split_streams.pdf")).use { it.toByteArray() }
         texts(licensed).forEach { org.junit.Assert.assertFalse(it.contains(mark)) }
     }
 
