@@ -180,8 +180,10 @@ output, the local gates on the iOS and Android output.
 
 **Remediation is rules only, and limited.** No model is used: the proposals are the same on
 every device. Tables become paragraphs, paths become artifacts (a vector chart is not announced),
-reading order is content order, and annotations and form fields are not tagged. It has only been
-checked on the hand-written test document, not on real-world untagged PDFs.
+reading order is content order, and annotations and form fields are not tagged. PDF/UA has only been
+checked on the hand-written test document. Over the 293 PDFium test resources (web, 2026-09-15)
+remediation proposed and wrote a tree for all 234 untagged files that open, with no crash; the
+only errors were the typed `corrupt` errors of pages that do not load at all.
 
 **The Android AI module skips Kotlin's metadata version check**, because ML Kit ships
 Kotlin 2.1 metadata and the project builds with 1.9. Upgrading Kotlin removes the need.
