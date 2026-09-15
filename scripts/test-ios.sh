@@ -24,6 +24,13 @@ xcodebuild test -scheme "$SCHEME" -destination "$DESTINATION" "${skip[@]}" "$@"
 xcodebuild test -scheme "$SCHEME" -destination "$DESTINATION" \
     -only-testing:PdfiumKitTests/BlastRadiusTests "$@"
 
+# The UI layer, end to end in the demo app: every screen renders, the component's toolbar
+# can be scrolled to every item, and the component says why it cannot show a document.
+# The Xcode project is generated, so it is regenerated first.
+(cd ios/Demo && xcodegen generate > /dev/null)
+xcodebuild test -project ios/Demo/PdfiumKitDemo.xcodeproj -scheme PdfiumKitDemo \
+    -destination "$DESTINATION" "$@"
+
 # The AI package's own suite.
 xcodebuild test -scheme "$SCHEME" -destination "$DESTINATION" \
     -only-testing:PdfiumKitAITests "$@"

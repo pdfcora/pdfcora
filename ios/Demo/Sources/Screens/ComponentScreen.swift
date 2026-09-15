@@ -11,6 +11,10 @@ import PdfiumKitUI
 struct ComponentScreen: View {
     @EnvironmentObject private var store: DocumentStore
     @State private var savedSize: String?
+    /// For the UI test of the component's error path, launched with
+    /// `-component-closed-document`: a document closed before it is shown.
+    @State private var closedDocument: PdfDocument?
+    private let showsClosedDocument = ProcessInfo.processInfo.arguments.contains("-component-closed-document")
 
     /// A custom toolbar item, to show that an app can add its own. Content is
     /// platform-native on purpose: this is an SF Symbol.
@@ -25,7 +29,10 @@ struct ComponentScreen: View {
 
     var body: some View {
         Group {
-            if let document = store.document {
+            if showsClosedDocument {
+                // A placeholder, not nothing: SwiftUI never starts .task on an empty view.
+                if let closedDocument { PdfViewerView(document: closedDocument, toolbar: toolbar) } else { ProgressView() }
+            } else if let document = store.document {
                 PdfViewerView(document: document, toolbar: toolbar, theme: .light) { data in
                     savedSize = ByteCountFormatter.string(fromByteCount: Int64(data.count),
                                                           countStyle: .file)
@@ -33,6 +40,12 @@ struct ComponentScreen: View {
             } else {
                 Text("No document loaded.").foregroundColor(.secondary)
             }
+        }
+        .task {
+            guard showsClosedDocument, let url = Bundle.main.url(forResource: "sample", withExtension: "pdf"),
+                  let document = try? await PdfDocument(url: url) else { return }
+            await document.close()
+            closedDocument = document
         }
         .navigationTitle("Component")
         .navigationBarTitleDisplayMode(.inline)

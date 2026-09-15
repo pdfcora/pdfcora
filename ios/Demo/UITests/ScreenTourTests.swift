@@ -61,12 +61,50 @@ final class ScreenTourTests: XCTestCase {
             XCTAssertTrue(button.waitForExistence(timeout: 3), "missing \(id)")
         }
 
-        // Whatever fits must be tappable; the rest must be reachable by scrolling.
+        // Whatever fits must be tappable; the rest must be reachable by scrolling. Each item
+        // is scrolled to by dragging the row, and must then be hittable.
         let select = app.descendants(matching: .any).matching(identifier: "tool-select").firstMatch
         XCTAssertTrue(select.isHittable, "the first toolbar item is not even reachable")
         select.tap()
         XCTAssertTrue(app.navigationBars["Component"].exists, "tapping a tool broke the screen")
+        for id in ["tool-ink", "tool-note", "tool-highlight", "tool-redact", "editor-undo",
+                   "zoom-out", "zoom-fit", "zoom-in", "editor-save", "custom-share"] {
+            let button = app.descendants(matching: .any).matching(identifier: id).firstMatch
+            // isHittable throws rather than answering for an element scrolled out of view,
+            // so reachability is judged by the frame first.
+            for _ in 0..<6 where !app.frame.contains(button.frame) {
+                // Drag the row by the distance to centre the button, slowly and with a hold
+                // at the end, so the scroll view does not fling past it.
+                let start = app.coordinate(withNormalizedOffset: .zero)
+                    .withOffset(CGVector(dx: app.frame.midX, dy: select.frame.midY))
+                start.press(forDuration: 0.05,
+                            thenDragTo: start.withOffset(CGVector(dx: app.frame.midX - button.frame.midX, dy: 0)),
+                            withVelocity: .slow, thenHoldForDuration: 0.3)
+            }
+            XCTAssertTrue(button.isHittable, "\(id) cannot be scrolled into reach")
+        }
         save(app, named: "component-toolbar")
+    }
+
+    /// The component's error path: given a document it cannot show, it says why. It used to
+    /// swallow the error and spin forever. The demo hands it a closed document when launched
+    /// with `-component-closed-document`.
+    func testTheComponentSaysWhyItCannotShowADocument() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-component-closed-document"]
+        app.launch()
+        XCTAssertTrue(app.staticTexts["Hello World"].waitForExistence(timeout: 10))
+
+        let link = app.descendants(matching: .any).matching(identifier: "demo-Component").firstMatch
+        if !link.waitForExistence(timeout: 5) { app.swipeUp() }
+        XCTAssertTrue(link.waitForExistence(timeout: 5), "could not reach the Component screen")
+        link.tap()
+
+        let message = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "has been closed")).firstMatch
+        _ = message.waitForExistence(timeout: 10)
+        save(app, named: "component-error")
+        XCTAssertTrue(message.exists, "no error shown for a closed document")
+        XCTAssertTrue(message.exists && app.frame.contains(message.frame), "the error is off screen")
     }
 
     /// The editor is the one screen with real interaction, so it gets exercised rather

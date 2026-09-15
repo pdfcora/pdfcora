@@ -40,6 +40,7 @@ instrumented.
 ```bash
 cd web && npm test                       # web
 cd web-ai && npm test                    # web AI
+./scripts/test-web-browser.sh            # web viewer component in headless Chrome
 ./scripts/test-ios.sh                    # iOS  (simulator)
 ANDROID_SERIAL=emulator-5554 ./scripts/test-android.sh
 ./scripts/check-core-deps.sh             # the core must gain no AI dependency
@@ -135,8 +136,9 @@ bullets; Chrome's Summarizer and a real custom provider are untested (each needs
 multi-gigabyte download); the three decisions above; the Kotlin upgrade; and the commits
 have never been pushed — **the repository has no remote**.
 
-**Not yet tested:** iOS `PdfiumKitUI` has no test target, and the PDFium corpus sweep has
-only run through the web build.
+**Not yet tested:** the PDFium corpus sweep has only run through the web build. The iOS
+viewer component is tested only end to end through the demo app's UI tests, which the iOS
+gate runs.
 
 ## 5. Things that will waste your time if you do not know them
 
