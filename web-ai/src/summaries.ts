@@ -32,7 +32,7 @@ export async function summariseInWindows(
 
   while (next < pieces.length) {
     if (summary !== null && EARLIER.length + summary.length + NEXT.length + pieceChars > limitChars) {
-      summary = await summarise(summary.slice(0, limitChars));
+      summary = collapseBullets(await summarise(summary.slice(0, limitChars)));
       summary = summary.slice(0, Math.max(0, limitChars - EARLIER.length - NEXT.length - pieceChars));
     }
     const room = limitChars - (summary === null ? 0 : EARLIER.length + summary.length + NEXT.length);
@@ -43,9 +43,17 @@ export async function summariseInWindows(
       window = joined;
       next++;
     }
-    summary = await summarise(summary === null ? window : `${EARLIER}${summary}${NEXT}${window}`);
+    summary = collapseBullets(await summarise(summary === null ? window : `${EARLIER}${summary}${NEXT}${window}`));
   }
   return summary ?? '';
+}
+
+/**
+ * Given a bulleted summary to carry forward, a model may bullet its lines again: Apple's
+ * returns "- - point". Two or more markers opening a line become one.
+ */
+function collapseBullets(text: string): string {
+  return text.replace(/^[ \t]*(?:[-*•][ \t]+){2,}/gm, '- ');
 }
 
 function split(text: string, limitChars: number): string[] {

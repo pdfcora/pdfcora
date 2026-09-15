@@ -31,7 +31,7 @@ enum SummaryText {
 
         while index < pieces.count {
             if let current = summary, labels + current.utf16.count + pieceLength > limit {
-                let condensed = try await summarise(prefix(current, limit))
+                let condensed = collapseBullets(try await summarise(prefix(current, limit)))
                 summary = prefix(condensed, max(0, limit - labels - pieceLength))
             }
             let room = limit - (summary.map { labels + $0.utf16.count } ?? 0)
@@ -42,9 +42,19 @@ enum SummaryText {
                 window = joined
                 index += 1
             }
-            summary = try await summarise(summary.map { earlier + $0 + next + window } ?? window)
+            summary = collapseBullets(try await summarise(summary.map { earlier + $0 + next + window } ?? window))
         }
         return summary ?? ""
+    }
+
+    /// Given a bulleted summary to carry forward, a model may bullet its lines again: Apple's
+    /// returns "- - point". Two or more markers opening a line become one.
+    private static let repeatedBullets = try! NSRegularExpression(
+        pattern: #"^[ \t]*(?:[-*•][ \t]+){2,}"#, options: .anchorsMatchLines)
+
+    private static func collapseBullets(_ text: String) -> String {
+        repeatedBullets.stringByReplacingMatches(
+            in: text, range: NSRange(text.startIndex..., in: text), withTemplate: "- ")
     }
 
     private static func prefix(_ text: String, _ length: Int) -> String {

@@ -144,6 +144,15 @@ class AnswersLogicTest {
         assertFalse(result.isNullOrEmpty())
     }
 
+    /** Given a bulleted summary to carry forward, Apple's model bullets its lines again. */
+    @Test
+    fun repeatedBulletMarkersFromTheModelCollapseToOne() = runTest {
+        val result = SummaryText.summariseInWindows(listOf("A short page."), 2_000) {
+            "- - First point\n* - Second point\n- Third point\nA - dash inside a line"
+        }
+        assertEquals("- First point\n- Second point\n- Third point\nA - dash inside a line", result)
+    }
+
     @Test
     fun aDocumentThatFitsOneWindowIsOneCallWithThePlainText() = runTest {
         val inputs = mutableListOf<String>()

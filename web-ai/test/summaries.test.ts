@@ -89,6 +89,13 @@ describe('summaries', () => {
     assert.ok(result.length > 0);
   });
 
+  // Given a bulleted summary to carry forward, Apple's model bullets its lines again.
+  test('repeated bullet markers from the model collapse to one', async () => {
+    const result = await summariseInWindows(['A short page.'], 2_000, async () =>
+      '- - First point\n* - Second point\n- Third point\nA - dash inside a line');
+    assert.equal(result, '- First point\n- Second point\n- Third point\nA - dash inside a line');
+  });
+
   test('a document that fits one window is one call with the plain text', async () => {
     const inputs: string[] = [];
     const result = await summariseInWindows(['A short page.', 'Another page.'], 2_000, async (t: string) => { inputs.push(t); return 'ok'; });

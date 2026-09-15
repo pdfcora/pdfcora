@@ -165,8 +165,7 @@ provider interface. The engine timeout stays 30 s on every platform.
 **The Android AI module skips Kotlin's metadata version check**, because ML Kit ships
 Kotlin 2.1 metadata and the project builds with 1.9. Upgrading Kotlin removes the need.
 
-**Parked on 2026-09-15, to do later:** Apple's model returns window summaries with "- - "
-bullets; Chrome's Summarizer and a real custom provider are untested (each needs a
+**Parked on 2026-09-15, to do later:** Chrome's Summarizer and a real custom provider are untested (each needs a
 multi-gigabyte download); and the Kotlin upgrade.
 
 **The code is on GitHub** at `github.com/indaos/PdfiumKit-v2`, a **private** repository,

@@ -255,6 +255,14 @@ final class AnswersTests: LicensedTestCase {
         return (await calls.calls, await outputs.calls, result)
     }
 
+    /// Given a bulleted summary to carry forward, Apple's model bullets its lines again.
+    func testRepeatedBulletMarkersFromTheModelCollapseToOne() async throws {
+        let result = try await SummaryText.summariseInWindows(["A short page."], limit: 2_000) { _ in
+            "- - First point\n* - Second point\n- Third point\nA - dash inside a line"
+        }
+        XCTAssertEqual(result, "- First point\n- Second point\n- Third point\nA - dash inside a line")
+    }
+
     /// The page markers in the document text of each call, leaving out the summary it carries.
     private static func markers(_ inputs: [String]) -> [Int] {
         inputs.map { input in input.range(of: next).map { String(input[$0.upperBound...]) } ?? input }

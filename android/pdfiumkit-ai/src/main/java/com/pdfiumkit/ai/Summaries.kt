@@ -36,7 +36,7 @@ internal object SummaryText {
         while (index < pieces.size) {
             summary?.let { current ->
                 if (labels + current.length + pieceLength > limit) {
-                    val condensed = if (current.length < minimum) current else summarise(current.take(limit))
+                    val condensed = if (current.length < minimum) current else collapseBullets(summarise(current.take(limit)))
                     summary = condensed.take(maxOf(0, limit - labels - pieceLength))
                 }
             }
@@ -49,10 +49,18 @@ internal object SummaryText {
                 index++
             }
             val input = summary?.let { "$EARLIER$it$NEXT$window" } ?: window
-            summary = if (input.length < minimum) summary?.let { "$it\n\n$window" } ?: window else summarise(input)
+            summary = if (input.length < minimum) summary?.let { "$it\n\n$window" } ?: window else collapseBullets(summarise(input))
         }
         return summary ?: ""
     }
+
+    /**
+     * Given a bulleted summary to carry forward, a model may bullet its lines again: Apple's
+     * returns "- - point". Two or more markers opening a line become one.
+     */
+    private val repeatedBullets = Regex("""^[ \t]*(?:[-*•][ \t]+){2,}""", RegexOption.MULTILINE)
+
+    private fun collapseBullets(text: String): String = repeatedBullets.replace(text, "- ")
 
     private fun split(text: String, limit: Int): List<String> {
         if (text.length <= limit) return if (text.isBlank()) emptyList() else listOf(text)
