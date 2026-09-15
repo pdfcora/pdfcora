@@ -126,6 +126,7 @@ same results on all three platforms.
 | UI component with configurable toolbar | ✅ SwiftUI | ✅ Compose | ✅ DOM element |
 | License keys and trial watermark | ✅ | ✅ | ✅ |
 | Redaction suggestions, reviewed as marks in the viewer | ✅ | ✅ | ✅ |
+| Smart form filling from a profile, reviewed as labelled marks | ✅ | ✅ | ✅ |
 | Raw PDFium escape hatch | ✅ *untested* | — | — |
 
 ⚠️ iOS rendering is cancellable *between* progressive steps, which covers a slow
@@ -351,6 +352,25 @@ await PdfViewerElement.mount(element, document, {
 
 SwiftUI (`PdfViewerView(document:review:)`) and Compose (`PdfViewerView(document, review = …)`)
 take the same review setup. Save with the full save mode afterwards.
+
+## Smart form filling
+
+`pdfiumkit-ai` proposes values for a form's fields from a profile your app passes in (given and
+family name, date of birth, email, phone, street, postal code, city, country, IBAN, company).
+A synonym list in English and German matches each field by its tooltip, the label printed next
+to it, or its name, on every device; your custom provider, if configured, matches what the list
+cannot. Values are formatted for the field — a date to the field's `(TT.MM.JJJJ)` hint, a country
+to one of a combo box's options — and nothing is written until the user accepts. The profile is
+never stored.
+
+```ts
+const proposals = await new PdfiumAI(document, { provider }).forms.propose(profile);
+// Show proposals.items as marks with label = the value, as for redaction; then:
+const applied = await proposals.apply(acceptedIds);   // applied.undo() reopens the document as it was
+```
+
+Apple's on-device model is not used for matching fields: measured, it assigned fields in list
+order rather than by meaning.
 
 ## License keys
 

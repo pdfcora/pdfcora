@@ -104,6 +104,17 @@ the two German IDs in one quote with their labels, so those redactions take a fe
 words. The first readings after launch report no prompt budget, so a first call can fall back
 to patterns; the measurement warms the model up with one call.
 
+### Form field matching with Apple's model
+
+On 2026-09-15, through the iOS simulator (`FormMeasurementTests`), on
+`conformance/forms/forms.pdf` with every label removed so the model had only field names and
+tooltips, over four runs: the English page between 1 and 7 of 13 right, the German page between
+2 and 7 of 12. The errors are not near misses. It assigned keys in the order the fields were
+listed (familyName, fullName, dateOfBirth, email… for Vorname, Feld2, Geb, Feld4…), gave keys to
+names that say nothing ("Feld9" → iban), or echoed the field name as the key. Asking it to answer
+"unknown" unless a field names the detail, and not to go by position, did not fix it. Form
+filling therefore does not use the on-device model; the synonym list and a custom provider do.
+
 ### ML Kit on a real phone
 
 On 2026-09-15, a Samsung SM-F971B on Android 17 with Google AICore

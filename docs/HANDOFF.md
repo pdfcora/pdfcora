@@ -32,11 +32,12 @@ because each lesson generalises. §4 lists what is open and what was parked.
 | Basic samples: one screen, bundled PDF in the viewer component | iOS, Android, web — `samples/` |
 | License keys: offline, per module, trial watermark | Done, three platforms, shared cases in `conformance/license/` |
 | `pdfiumkit-ai` Phase 2a: redaction suggestions, review marks in the viewer, undo | Done, three platforms, shared cases in `conformance/redaction/` |
+| `pdfiumkit-ai` Phase 2b: smart form filling from a profile, labelled marks, undo | Done, three platforms, shared cases in `conformance/forms/`; no on-device model (measured) |
 
-Test counts at the time of writing (2026-09-15): web 284, web-ai 72, browser viewer 19,
-license tool 1, iOS 174 (sweep skipped) + hung-render pass + demo UI 10 + AI 53 (Apple
-measurement skipped), Android 147 instrumented (sweep skipped) + UI 4 + hung-render pass + 16
-JVM, AI 31 JVM + 15 instrumented. pdfsig accepts both the licensed and the trial-signed
+Test counts at the time of writing (2026-09-15): web 284, web-ai 107, browser viewer 20,
+license tool 1, iOS 174 (sweep skipped) + hung-render pass + demo UI 11 + AI 60 (two Apple
+measurements skipped), Android 147 instrumented (sweep skipped) + UI 4 + hung-render pass + 16
+JVM, AI 32 JVM + 19 instrumented. pdfsig accepts both the licensed and the trial-signed
 document on iOS and Android.
 
 ## 2. Running things

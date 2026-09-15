@@ -243,6 +243,13 @@ the prompt contract and quote verification — not the text plumbing.
 
 ## 9. Smart form filling — FORM
 
+**Implemented 2026-09-15** on all three platforms: synonym list for English and German, labels
+read from the page, values formatted per field, a custom provider for unmatched fields, review as
+labelled marks, undo by snapshot. Apple's on-device model is not used: measured, it matched
+fields by their order rather than their meaning ("Form field matching with Apple's model" in
+`plans/2026-09-14-phase1-ai-answers-summaries.md`). Design:
+`2026-09-15-smart-form-filling-design.md`.
+
 The model recognises that "Nachname", "Surname_1" and "Last name" are the same field, and
 proposes values from the user's profile. The user confirms before anything is filled in.
 
