@@ -1,0 +1,22 @@
+[
+  { "text": "IBAN GB29 NWBK 6016 1331 9268 19.", "expected": [["iban", "GB29 NWBK 6016 1331 9268 19"]] },
+  { "text": "Old IBAN GB29 NWBK 6016 1331 9268 18 is wrong.", "expected": [] },
+  { "text": "Konto DE89 3704 0044 0532 0130 00, alt DE89 3704 0044 0532 0130 01.", "expected": [["iban", "DE89 3704 0044 0532 0130 00"]] },
+  { "text": "CH93 0076 2011 6238 5295 7", "expected": [["iban", "CH93 0076 2011 6238 5295 7"]] },
+  { "text": "XDE89370400440532013000", "expected": [] },
+  { "text": "Mail anna.schmidt@example.com or j.doe+invoices@mail.example.co.uk.", "expected": [["email", "anna.schmidt@example.com"], ["email", "j.doe+invoices@mail.example.co.uk"]] },
+  { "text": "Call +41 44 123 45 67 today.", "expected": [["phone", "+41 44 123 45 67"]] },
+  { "text": "US +1 (212) 555-0142 and (212) 555-0142 and 212-555-0199.", "expected": [["phone", "+1 (212) 555-0142"], ["phone", "(212) 555-0142"], ["phone", "212-555-0199"]] },
+  { "text": "London 020 7946 0958, mobile 07700 900123.", "expected": [["phone", "020 7946 0958"], ["phone", "07700 900123"]] },
+  { "text": "Berlin 030 12345678, 030/1234567, 0171 1234567, +49 30 12345678.", "expected": [["phone", "030 12345678"], ["phone", "030/1234567"], ["phone", "0171 1234567"], ["phone", "+49 30 12345678"]] },
+  { "text": "Order 123456 and room 12 34.", "expected": [] },
+  { "text": "Card 4111 1111 1111 1111 and 5500-0000-0000-0004.", "expected": [["paymentCard", "4111 1111 1111 1111"], ["paymentCard", "5500-0000-0000-0004"]] },
+  { "text": "Invalid 4111 1111 1111 1112 and 5500-0000-0000-0005.", "expected": [] },
+  { "text": "On 2026-09-15, 15.09.2026, 15.9.26 and 09/15/2026.", "expected": [["date", "2026-09-15"], ["date", "15.09.2026"], ["date", "15.9.26"], ["date", "09/15/2026"]] },
+  { "text": "Signed 15 September 2026, September 15, 2026 and 15 Sep 2026.", "expected": [["date", "15 September 2026"], ["date", "September 15, 2026"], ["date", "15 Sep 2026"]] },
+  { "text": "Am 15. September 2026, 15. Sept. 2026 und 3. März 2025.", "expected": [["date", "15. September 2026"], ["date", "15. Sept. 2026"], ["date", "3. März 2025"]] },
+  { "text": "Not dates: 31.02.2026, 2026-13-01, version 1.2.3.", "expected": [] },
+  { "text": "See https://example.com/path?x=1, www.example.org. (and https://example.com)", "expected": [["url", "https://example.com/path?x=1"], ["url", "www.example.org"], ["url", "https://example.com"]] },
+  { "text": "Hosts 192.168.0.1, 10.1.1.12, 2001:db8::8a2e:370:7334 and fe80::1.", "expected": [["ipAddress", "192.168.0.1"], ["ipAddress", "10.1.1.12"], ["ipAddress", "2001:db8::8a2e:370:7334"], ["ipAddress", "fe80::1"]] },
+  { "text": "Not addresses: 999.1.1.1 at 10:30:45.", "expected": [] }
+]

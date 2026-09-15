@@ -1,0 +1,127 @@
+[
+  {
+    "pageIndex": 0,
+    "category": "date",
+    "text": "14 March 1985"
+  },
+  {
+    "pageIndex": 0,
+    "category": "email",
+    "text": "anna.schmidt@example.com"
+  },
+  {
+    "pageIndex": 0,
+    "category": "phone",
+    "text": "+44 20 7946 0958"
+  },
+  {
+    "pageIndex": 0,
+    "category": "phone",
+    "text": "020 7946 0958"
+  },
+  {
+    "pageIndex": 0,
+    "category": "phone",
+    "text": "(212) 555-0142"
+  },
+  {
+    "pageIndex": 0,
+    "category": "phone",
+    "text": "212-555-0199"
+  },
+  {
+    "pageIndex": 0,
+    "category": "iban",
+    "text": "GB29 NWBK 6016 1331 9268 19"
+  },
+  {
+    "pageIndex": 0,
+    "category": "paymentCard",
+    "text": "4111 1111 1111 1111"
+  },
+  {
+    "pageIndex": 0,
+    "category": "date",
+    "text": "2019-04-02"
+  },
+  {
+    "pageIndex": 0,
+    "category": "url",
+    "text": "https://portal.example.com/account"
+  },
+  {
+    "pageIndex": 0,
+    "category": "url",
+    "text": "www.example.org"
+  },
+  {
+    "pageIndex": 0,
+    "category": "ipAddress",
+    "text": "192.168.10.25"
+  },
+  {
+    "pageIndex": 0,
+    "category": "ipAddress",
+    "text": "2001:db8::8a2e:370:7334"
+  },
+  {
+    "pageIndex": 0,
+    "category": "date",
+    "text": "September 15, 2026"
+  },
+  {
+    "pageIndex": 1,
+    "category": "date",
+    "text": "3. März 1990"
+  },
+  {
+    "pageIndex": 1,
+    "category": "email",
+    "text": "jonas.mueller@beispiel.de"
+  },
+  {
+    "pageIndex": 1,
+    "category": "phone",
+    "text": "030 12345678"
+  },
+  {
+    "pageIndex": 1,
+    "category": "phone",
+    "text": "0171 1234567"
+  },
+  {
+    "pageIndex": 1,
+    "category": "phone",
+    "text": "030/1234567"
+  },
+  {
+    "pageIndex": 1,
+    "category": "phone",
+    "text": "+49 30 12345678"
+  },
+  {
+    "pageIndex": 1,
+    "category": "iban",
+    "text": "DE89 3704 0044 0532 0130 00"
+  },
+  {
+    "pageIndex": 1,
+    "category": "paymentCard",
+    "text": "5500-0000-0000-0004"
+  },
+  {
+    "pageIndex": 1,
+    "category": "date",
+    "text": "15.09.2026"
+  },
+  {
+    "pageIndex": 1,
+    "category": "date",
+    "text": "16.9.26"
+  },
+  {
+    "pageIndex": 1,
+    "category": "date",
+    "text": "15. Sept. 2026"
+  }
+]
