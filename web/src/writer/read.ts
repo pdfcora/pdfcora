@@ -9,7 +9,7 @@
  * nothing that rewrites an object needs to reconstruct one.
  */
 
-import { parseDictionaryAt } from './dictionary.js';
+import { parseContainerAt, parseDictionaryAt } from './dictionary.js';
 import { buildXref, streamBytes, type XrefMap } from './xref.js';
 import { asName, asRef, entryOf, type PdfValue } from './values.js';
 
@@ -41,11 +41,11 @@ function readAtOffset(bytes: Uint8Array, offset: number, number: number): PdfVal
   // right: a caller that then writes a replacement would otherwise corrupt the file.
   if (!header || Number(header[1]) !== number) return undefined;
 
-  const at = window.indexOf('<<', header[0].length);
-  // Only dictionaries are modelled; an array or number here must not be mistaken for the
+  // Dictionaries and arrays are modelled; a number or string here must not be mistaken for the
   // next object's dictionary.
-  if (at < 0 || window.slice(header[0].length, at).trim() !== '') return undefined;
-  return parseDictionaryAt(window, at) as PdfValue;
+  const at = firstNonSpace(window, header[0].length);
+  if (!window.startsWith('<<', at) && window[at] !== '[') return undefined;
+  return parseContainerAt(window, at);
 }
 
 /**
@@ -88,9 +88,9 @@ async function readFromObjectStream(
   if (offset === undefined || !Number.isFinite(offset)) return undefined;
 
   const body = decoder.decode(data.subarray(first + offset));
-  const at = body.indexOf('<<');
-  if (at < 0 || body.slice(0, at).trim() !== '') return undefined;
-  return parseDictionaryAt(body, at) as PdfValue;
+  const at = firstNonSpace(body, 0);
+  if (!body.startsWith('<<', at) && body[at] !== '[') return undefined;
+  return parseContainerAt(body, at);
 }
 
 /** The document Catalog, with the object number so it can be rewritten. */
@@ -161,4 +161,45 @@ export async function listPages(bytes: Uint8Array, xref: XrefMap, catalog: PdfVa
   const root = refNumber(catalog, 'Pages');
   if (root !== undefined) await visit(root, 0);
   return pages;
+}
+
+function firstNonSpace(text: string, from: number): number {
+  let i = from;
+  while (i < text.length && /[\s\0]/.test(text[i]!)) i++;
+  return i;
+}
+
+const asDictionary = (value: PdfValue | undefined): Record<string, PdfValue> =>
+  value !== null && value !== undefined && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, PdfValue>)
+    : {};
+
+/** `/AcroForm` may be an inline dictionary or a reference; real files use both. */
+export async function acroFormOf(
+  bytes: Uint8Array,
+  xref: XrefMap,
+  catalog: PdfValue,
+): Promise<Record<string, PdfValue> | undefined> {
+  const number = refNumber(catalog, 'AcroForm');
+  if (number !== undefined) {
+    const value = await readObject(bytes, xref, number);
+    return value ? asDictionary(value) : undefined;
+  }
+  const inline = entryOf(catalog, 'AcroForm');
+  return inline ? asDictionary(inline) : undefined;
+}
+
+/** `/Annots` may likewise be an inline array or a reference to one. */
+export async function annotsOf(
+  bytes: Uint8Array,
+  xref: XrefMap,
+  page: PdfValue,
+): Promise<PdfValue[] | undefined> {
+  const inline = entryOf(page, 'Annots');
+  if (Array.isArray(inline)) return [...inline];
+
+  const number = refNumber(page, 'Annots');
+  if (number === undefined) return undefined;
+  const value = await readObject(bytes, xref, number);
+  return Array.isArray(value) ? [...value] : undefined;
 }

@@ -363,12 +363,27 @@ export class PdfPage {
   /**
    * Sets a checkbox or radio button's state.
    *
-   * Writes the field value (`V`) and appearance state (`AS`) directly, rather than
-   * simulating a click — PDFium's click path needs FFI callbacks this SDK does not install.
+   * Toggled through the form-fill environment with a space key, so PDFium writes `V` and `AS` as
+   * names and regenerates the appearance. Writing them with FPDFAnnot_SetStringValue, as this did
+   * before, stored strings, which PDFium reads but poppler and other viewers show as unchecked.
+   * A radio button cannot be switched off by a key; that one case still writes the values directly,
+   * as strings.
    */
   setChecked(checked: boolean, fieldAt: number): Promise<void> {
     this.document.use('forms');
     return this.withFormAnnotation(fieldAt, (m, form, page, annot) => {
+      const isChecked = () => (m.ccall('FPDFAnnot_IsChecked', 'number', ['number', 'number'], [form, annot]) as number) !== 0;
+      if (isChecked() === checked) return;
+      // Read-only fields ignore keys; the flag is lifted for the toggle and put back.
+      const flags = m.ccall('FPDFAnnot_GetFormFieldFlags', 'number', ['number', 'number'], [form, annot]) as number;
+      if (flags & 1) m.ccall('FPDFAnnot_SetFormFieldFlags', 'number', ['number', 'number', 'number'], [form, annot, flags & ~1]);
+      if (m.ccall('FORM_SetFocusedAnnot', 'number', ['number', 'number'], [form, annot])) {
+        m.ccall('FORM_OnChar', 'number', ['number', 'number', 'number', 'number'], [form, page, 0x20, 0]);
+        m.ccall('FORM_ForceToKillFocus', 'number', ['number'], [form]);
+      }
+      if (flags & 1) m.ccall('FPDFAnnot_SetFormFieldFlags', 'number', ['number', 'number', 'number'], [form, annot, flags]);
+      if (isChecked() === checked) return;
+
       const onValue = readUtf16(
         m,
         () => m.ccall('FPDFAnnot_GetFormFieldExportValue', 'number', ['number', 'number', 'number', 'number'], [form, annot, 0, 0]) as number,

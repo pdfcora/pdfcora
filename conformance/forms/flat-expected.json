@@ -1,0 +1,8 @@
+[
+  { "pageIndex": 0, "kind": "text", "label": "First name", "rect": { "left": 130.1, "bottom": 698.6, "right": 313.5, "top": 712.6 } },
+  { "pageIndex": 0, "kind": "text", "label": "Last name", "rect": { "left": 179.5, "bottom": 661.5, "right": 500.5, "top": 675.5 } },
+  { "pageIndex": 0, "kind": "text", "label": "Email", "rect": { "left": 179.5, "bottom": 621.5, "right": 500.5, "top": 642.5 } },
+  { "pageIndex": 0, "kind": "text", "label": "City", "rect": { "left": 179.5, "bottom": 585.5, "right": 500.5, "top": 606.5 } },
+  { "pageIndex": 0, "kind": "checkBox", "label": "Send me the newsletter", "rect": { "left": 71.5, "bottom": 547.5, "right": 84.5, "top": 560.5 } },
+  { "pageIndex": 0, "kind": "checkBox", "label": "I agree to the terms", "rect": { "left": 71.5, "bottom": 517.5, "right": 84.5, "top": 530.5 } }
+]

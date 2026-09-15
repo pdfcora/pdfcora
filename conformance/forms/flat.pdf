@@ -1,0 +1,45 @@
+%PDF-1.7
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [4 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 5 0 R >>
+endobj
+5 0 obj
+<< /Length 521 >>
+stream
+BT /F1 11 Tf 72 700 Td (First name: ______________________________) Tj ET
+BT /F1 11 Tf 72 664 Td (Last name) Tj ET
+0.5 w 180 662 m 500 662 l S
+BT /F1 11 Tf 72 628 Td (Email) Tj ET
+0.5 w 180 622 320 20 re S
+BT /F1 11 Tf 72 592 Td (City) Tj ET
+0.5 w 180 586 320 20 re S
+0.5 w 186 589 m 494 589 l S
+0.5 w 72 548 12 12 re S
+BT /F1 11 Tf 90 550 Td (Send me the newsletter) Tj ET
+0.5 w 72 518 12 12 re S
+BT /F1 11 Tf 90 520 Td (I agree to the terms) Tj ET
+0.5 w 72 470 228 30 re S
+BT /F1 11 Tf 80 482 Td (Office use only) Tj ET
+endstream
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000212 00000 n 
+0000000338 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+910
+%%EOF

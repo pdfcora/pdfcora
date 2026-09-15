@@ -13,7 +13,7 @@
 import { appendUpdate } from '../writer/incremental.js';
 import { scanTrailer, nextObjectNumber } from '../writer/scan.js';
 import { buildXref, type XrefMap } from '../writer/xref.js';
-import { listPages, readObject, readCatalog, refNumber } from '../writer/read.js';
+import { acroFormOf, annotsOf, listPages, readObject, readCatalog } from '../writer/read.js';
 import { entryOf, name, raw, ref, type PdfValue } from '../writer/values.js';
 
 export interface AddSignatureFieldOptions {
@@ -156,42 +156,13 @@ function pdfDate(date: Date): string {
     + `${two(date.getUTCHours())}${two(date.getUTCMinutes())}${two(date.getUTCSeconds())}+00'00'`;
 }
 
-const asDictionary = (value: PdfValue): Record<string, PdfValue> =>
-  value !== null && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, PdfValue>)
-    : {};
-
-/** `/AcroForm` may be an inline dictionary or a reference; real files use both. */
-async function acroFormOf(
-  bytes: Uint8Array,
-  xref: XrefMap,
-  catalog: PdfValue,
-): Promise<Record<string, PdfValue> | undefined> {
-  const number = refNumber(catalog, 'AcroForm');
-  if (number !== undefined) {
-    const value = await readObject(bytes, xref, number);
-    return value ? asDictionary(value) : undefined;
-  }
-  const inline = entryOf(catalog, 'AcroForm');
-  return inline ? asDictionary(inline) : undefined;
-}
-
 function fieldsOf(acroForm: Record<string, PdfValue> | undefined): PdfValue[] | undefined {
   const fields = acroForm?.Fields;
   return Array.isArray(fields) ? [...fields] : undefined;
 }
 
-/** `/Annots` may likewise be inline or a reference. */
-async function annotsOf(
-  bytes: Uint8Array,
-  xref: XrefMap,
-  page: PdfValue,
-): Promise<PdfValue[] | undefined> {
-  const inline = entryOf(page, 'Annots');
-  if (Array.isArray(inline)) return [...inline];
+const asDictionary = (value: PdfValue): Record<string, PdfValue> =>
+  value !== null && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, PdfValue>)
+    : {};
 
-  const number = refNumber(page, 'Annots');
-  if (number === undefined) return undefined;
-  const value = await readObject(bytes, xref, number);
-  return Array.isArray(value) ? [...value] : undefined;
-}

@@ -9,8 +9,9 @@ import type {
   PdfAttachment, PdfMetadata, PdfOutlineItem, PdfPermissions, PdfSaveMode, PdfSize,
   PdfPageRotation,
   PdfSignature, PdfSignatureValidity, PdfVerifyOptions,
-  PdfRedactionReport, PdfRedactionTarget, PdfFigureEdit, PdfTagBlock, PdfTagOptions,
+  PdfRedactionReport, PdfRedactionTarget, PdfFigureEdit, PdfTagBlock, PdfTagOptions, PdfNewFormField,
 } from './types.js';
+import { writeFormFields } from './writer/formFields.js';
 import { markArtifacts, markTags } from './structure.js';
 import { writeTagTree } from './writer/tagging.js';
 import { readCatalog } from './writer/read.js';
@@ -399,6 +400,34 @@ export class PdfDocument {
     }
 
     return toReport(counts);
+  }
+
+  /**
+   * Creates text fields and checkboxes, returning a new document; this document is unchanged.
+   * Rejects with `invalidOperation`, writing nothing, when a name is empty or already used.
+   * Appended as an incremental update, so earlier signatures keep verifying their ranges.
+   */
+  async addFormFields(fields: readonly PdfNewFormField[]): Promise<PdfDocument> {
+    this.use('forms');
+    const pageCount = await this.pageCount();
+    const names = new Set<string>();
+    for (let pageIndex = 0; pageIndex < pageCount; pageIndex++) {
+      for (const field of await (await this.page(pageIndex)).formFields()) if (field.name) names.add(field.name);
+    }
+    for (const field of fields) {
+      if (field.pageIndex < 0 || field.pageIndex >= pageCount) throw PdfError.pageOutOfRange(field.pageIndex, pageCount);
+      if (!field.name.trim()) throw PdfError.invalidOperation('a form field needs a name');
+      if (names.has(field.name)) throw PdfError.invalidOperation(`a field named "${field.name}" already exists`);
+      names.add(field.name);
+    }
+    const base = await this.run((h, m) => {
+      const form = this.form;
+      if (form) m.ccall('FORM_ForceToKillFocus', 'number', ['number'], [form]);
+      return saveHandle(m, h, 1);
+    });
+    const updated = await PdfDocument.open(await writeFormFields(base, fields));
+    if (this.marked) updated.marked = true;
+    return updated;
   }
 
   /** True when the document declares itself tagged (`/MarkInfo /Marked`). */

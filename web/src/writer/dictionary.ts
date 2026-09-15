@@ -12,6 +12,12 @@ import { hexString, name, raw, ref } from './values.js';
 
 export type Dictionary = Record<string, PdfValue>;
 
+/** Reads the array (`[`) or dictionary (`<<`) beginning at `start`. */
+export function parseContainerAt(text: string, start: number): PdfValue {
+  if (text[start] === '[') return parseValue(text, start)[0];
+  return parseDictionaryAt(text, start) as PdfValue;
+}
+
 /** Reads the dictionary beginning at `start`, which must be a `<<`. */
 export function parseDictionaryAt(text: string, start: number): Dictionary {
   if (start < 0) throw new Error('dictionary: no `<<` found');

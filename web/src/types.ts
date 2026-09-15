@@ -439,3 +439,14 @@ export interface PdfAccessibleNode {
   readonly bounds?: PdfRect;
   readonly children: readonly PdfAccessibleNode[];
 }
+
+/** A form field to create, for {@link PdfDocument.addFormFields}. */
+export interface PdfNewFormField {
+  readonly pageIndex: number;
+  readonly kind: 'text' | 'checkBox';
+  readonly rect: PdfRect;
+  /** The field name (`/T`); must be unique in the document. */
+  readonly name: string;
+  /** Shown to users and screen readers (`/TU`). */
+  readonly tooltip?: string;
+}

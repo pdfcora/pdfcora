@@ -80,6 +80,9 @@ describe('form fields', () => {
     const updated = (await page.formFields()).find((f) => f.annotationIndex === target.annotationIndex);
     assert.ok(updated?.kind === 'checkBox');
     assert.notEqual(updated.isChecked, before, 'checkbox state did not change');
+    // The state is a name, as the PDF spec requires; other viewers ignore a string /AS.
+    const saved = new TextDecoder('latin1').decode(await document.toBytes('full'));
+    assert.doesNotMatch(saved, /\/AS\s*\(/);
     await document.close();
   });
 });
