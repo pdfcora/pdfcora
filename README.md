@@ -92,39 +92,49 @@ on. Adding it does not raise your minimum OS.
 
 ## Feature coverage
 
-Every row is exercised by the shared conformance suite on every platform that claims it.
+✅ means built and covered by tests on that platform; rows marked *untested* are built but
+have no test yet. The core rows also run through the shared conformance suite, which asserts the
+same results on all three platforms.
 
 | | iOS | Android | Web |
 |---|---|---|---|
 | Open from bytes / file, password | ✅ | ✅ | ✅ |
 | Page count, size, rotation | ✅ | ✅ | ✅ |
 | Render (scaled or exact pixels) | ✅ | ✅ | ✅ |
-| Cancellable progressive render | ⚠️ | — | — |
-| Recoverable from an engine hang | — | — | ✅ (Worker) |
+| Cancellable progressive render | ⚠️ *untested* | — | — |
+| A hung render does not take the app down | ⚠️ watchdog | ⚠️ watchdog | ✅ Worker |
 | Text extraction, char count | ✅ | ✅ | ✅ |
 | Text hash-verified vs reference engine | ✅ | ✅ | ✅ |
 | Search with rects | ✅ | ✅ | ✅ |
 | Character bounding boxes | ✅ | ✅ | ✅ |
+| Page objects (text, path, image…) | ✅ | ✅ | ✅ |
 | Annotations: read (15 kinds) | ✅ | ✅ | ✅ |
 | Annotations: ink, note, remove | ✅ | ✅ | ✅ |
-| Annotations: highlight/underline/strikeout | ✅ | — | — |
+| Annotations: highlight, underline, strikeout | ✅ | ✅ | ✅ |
 | Form fields: read (8 kinds) | ✅ | ✅ | ✅ |
 | Form fields: set text, checkbox, option | ✅ | ✅ | ✅ |
 | Outline / bookmarks | ✅ | ✅ | ✅ |
 | Links | ✅ | ✅ | ✅ |
 | Metadata, permissions | ✅ | ✅ | ✅ |
-| Attachments: list | ✅ | ✅ | ✅ |
-| Attachments: extract bytes | ✅ | ✅ | ✅ |
+| Attachments: list, extract bytes | ✅ | ✅ | ✅ |
 | Save (full / incremental) | ✅ | ✅ | ✅ |
-| Raw PDFium escape hatch | ✅ | — | — |
+| Signatures: read and verify | ✅ | ✅ | ✅ |
+| Signing (PAdES B-B), cross-checked with `pdfsig` | ✅ | ✅ | ✅ bring a CMS signer |
+| Signature timestamps (PAdES B-T) | ⚠️ *untested* | ⚠️ *untested* | ✅ |
+| Redaction, checked in the saved bytes | ✅ | ✅ | ✅ |
+| Viewer: state, zoom, events, sync, editing | ✅ | ✅ | ✅ |
+| UI component with configurable toolbar | ✅ SwiftUI | ✅ Compose | ✅ DOM element |
+| License keys and trial watermark | ✅ | ✅ | ✅ |
+| Raw PDFium escape hatch | ✅ *untested* | — | — |
 
 ⚠️ iOS rendering is cancellable *between* progressive steps, which covers a slow
-render. It cannot interrupt a render that hangs *inside* a single PDFium call — see
-Known limits.
+render. It cannot interrupt a render that hangs *inside* a single PDFium call. On iOS and
+Android a watchdog makes the calls queued behind such a render fail fast with
+`engineUnresponsive`, but the stuck call keeps running; on web, a `PdfWorker` can be
+terminated. See Known limits.
 
-Gaps are real and deliberate, not oversights — the object model, threading, error
-model, and conformance harness came first on all three platforms, and the remaining
-rows are mechanical additions along paths that already exist.
+The AI features — grounded answers and summaries — are in the separate `pdfiumkit-ai`
+packages and are described in `docs/superpowers/specs/2026-09-13-pdfiumkit-ai-requirements.md`.
 
 ## Engine
 

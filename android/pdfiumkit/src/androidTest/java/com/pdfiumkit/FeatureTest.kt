@@ -134,6 +134,23 @@ class FeatureTest {
     }
 
     @Test
+    fun addedMarkupSurvivesASave() = runTest {
+        val saved = open("hello_world.pdf").use { document ->
+            val page = document.page(0)
+            val quad = PdfQuad(PdfPoint(10f, 60f), PdfPoint(90f, 60f), PdfPoint(10f, 50f), PdfPoint(90f, 50f))
+            page.addHighlight(listOf(quad))
+            page.addUnderline(listOf(quad))
+            page.addStrikeout(listOf(quad))
+            document.toByteArray()
+        }
+        PdfDocument.open(saved).use { document ->
+            val last = document.page(0).annotations().takeLast(3)
+            assertTrue("got $last", last[0] is PdfAnnotation.Highlight && last[1] is PdfAnnotation.Underline &&
+                last[2] is PdfAnnotation.Strikeout)
+        }
+    }
+
+    @Test
     fun addedNoteCarriesItsContents() = runTest {
         open("hello_world.pdf").use { document ->
             val page = document.page(0)

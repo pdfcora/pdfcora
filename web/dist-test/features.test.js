@@ -92,6 +92,19 @@ describe('annotations', () => {
         assert.deepEqual(ink.rect, { left: 10, bottom: 10, right: 90, top: 80 });
         await document.close();
     });
+    test('added highlight, underline and strikeout survive a save', async () => {
+        const document = await open('hello_world.pdf');
+        const page = await document.page(0);
+        const quad = { p1: { x: 10, y: 60 }, p2: { x: 90, y: 60 }, p3: { x: 10, y: 50 }, p4: { x: 90, y: 50 } };
+        await page.addHighlight([quad]);
+        await page.addUnderline([quad]);
+        await page.addStrikeout([quad]);
+        const reopened = await PdfDocument.open(await document.toBytes());
+        const kinds = (await (await reopened.page(0)).annotations()).map((a) => a.kind);
+        assert.deepEqual(kinds.slice(-3), ['highlight', 'underline', 'strikeout']);
+        await reopened.close();
+        await document.close();
+    });
     test('added note carries its contents', async () => {
         const document = await open('hello_world.pdf');
         const page = await document.page(0);

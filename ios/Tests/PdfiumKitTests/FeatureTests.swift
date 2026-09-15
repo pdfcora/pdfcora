@@ -167,6 +167,21 @@ final class FeatureTests: LicensedTestCase {
         await doc.close()
     }
 
+    func testAddedMarkupSurvivesASave() async throws {
+        let doc = try await open("hello_world.pdf")
+        let page = try await doc.page(0)
+        let quad = PdfQuad(p1: PdfPoint(x: 10, y: 60), p2: PdfPoint(x: 90, y: 60),
+                           p3: PdfPoint(x: 10, y: 50), p4: PdfPoint(x: 90, y: 50))
+        try await page.addHighlight(quads: [quad])
+        try await page.addUnderline(quads: [quad])
+        try await page.addStrikeout(quads: [quad])
+
+        let reopened = try await PdfDocument(data: try await doc.data())
+        let names = try await reopened.page(0).annotations().suffix(3).map(\.caseName)
+        XCTAssertEqual(names, ["highlight", "underline", "strikeout"])
+        await doc.close()
+    }
+
     func testAddedNoteCarriesItsContents() async throws {
         let doc = try await open("hello_world.pdf")
         let page = try await doc.page(0)
