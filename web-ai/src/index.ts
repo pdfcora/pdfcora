@@ -189,7 +189,7 @@ export class PdfiumAI {
 
       return resolve<PdfSummary>({
         onDevice: async () => {
-          const summarizer = await openChromeSummarizer(style, options.language);
+          const summarizer = await openChromeSummarizer(style, options.language, texts.join('\n'));
           if (!summarizer) return null;
           try {
             return { text: trialText(await summariseInWindows(texts, summarizer.limitChars, summarizer.summarise)), pagesWithoutText };

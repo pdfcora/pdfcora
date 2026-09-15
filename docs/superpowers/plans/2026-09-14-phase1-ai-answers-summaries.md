@@ -123,6 +123,23 @@ payable every month" as `wordingOnly`, 30 → 60 days as `meaningChanged` with t
 notice period is now 60 days instead of 30 days." About 5 s per run for the two calls. Two pairs
 are a small sample; a longer document with subtler rewording is unmeasured.
 
+### Chrome's built-in Summarizer
+
+On 2026-09-15, Chrome 152 on an Apple M3 Max, headless, in its own profile
+(`node web-ai/scripts/measure-chrome-summarizer.mjs`). The model downloaded in about 2.5 minutes
+after one `create()` with a user gesture. Available for English, German and Japanese.
+
+- `conformance/fixtures/contract.pdf`: a paragraph in 4.3 s and five key points in 2.6 s, both
+  grounded in the text (parties, Annex A, two-year term from 1 March 2026, renewal, three-month
+  notice in writing).
+- The German page of `conformance/redaction/pii.pdf`, asked for as German: a German summary in 4.0 s.
+- **Input quota 9216 tokens, and the SDK's limit was wrong.** Measured with `measureInputUsage`,
+  text full of numbers and emails costs 1.71 characters per token plus about 440 tokens of fixed
+  overhead; the SDK assumed 3 characters per token, and a 30-page dense document failed its
+  first call with `QuotaExceededError`. The limit is now measured on the document's own text, each
+  call is checked, and an over-quota input is summarised in halves: the same document now summarises
+  in 3 calls and 19 s.
+
 ### ML Kit on a real phone
 
 On 2026-09-15, a Samsung SM-F971B on Android 17 with Google AICore

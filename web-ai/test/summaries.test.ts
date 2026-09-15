@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { PdfDocument } from '@pdfiumkit/web';
 import { PdfiumAI } from '../dist/index.js';
 import { summariseInWindows } from '../dist/summaries.js';
+import { openChromeSummarizer } from '../dist/chrome.js';
 
 const FIXTURES = new URL('../../conformance/fixtures/', import.meta.url).pathname;
 const contract = () => PdfDocument.open(new Uint8Array(readFileSync(`${FIXTURES}contract.pdf`)));
@@ -172,5 +173,25 @@ describe('summaries', () => {
     assert.equal(created, 1);
     assert.deepEqual(progress, [0.5, 1]);
     await document.close();
+  });
+
+  test('the input limit is measured with Chrome\'s token counter, and an input over quota is halved', async () => {
+    // Two characters per token and 100 tokens of overhead, as Chrome's counter would report.
+    const inputs: string[] = [];
+    installChrome('available', { inputQuota: 1000, inputs });
+    const summarizer = (globalThis as unknown as { Summarizer: { create: (o?: unknown) => Promise<Record<string, unknown>> } }).Summarizer;
+    const create = summarizer.create;
+    summarizer.create = async (o) => ({ ...(await create(o)), measureInputUsage: async (text: string) => 100 + Math.ceil(text.length / 2) });
+
+    const opened = await openChromeSummarizer('paragraph', undefined, 'x'.repeat(3000));
+    assert.equal(opened!.limitChars, Math.floor((1000 - 100) * 2 * 0.8));
+    await opened!.summarise('word '.repeat(500));
+    assert.ok(inputs.length >= 2 && inputs.every((i) => 100 + Math.ceil(i.length / 2) <= 1000), inputs.map((i) => i.length).join(','));
+  });
+
+  test('without a token counter the limit is conservative', async () => {
+    installChrome('available', { inputQuota: 9216 });
+    const opened = await openChromeSummarizer('paragraph', undefined, 'some text');
+    assert.equal(opened!.limitChars, Math.floor((9216 - 600) * 1.5 * 0.8));
   });
 });

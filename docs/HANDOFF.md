@@ -153,7 +153,7 @@ Latin-1 byte. Web and Android index bytes and were never affected.
 
 ## 4. Open
 
-**`pdfiumkit-ai` has not run on Chrome.** The iOS simulator reaches the Mac's
+**`pdfiumkit-ai` on real models.** The iOS simulator reaches the Mac's
 own Apple Intelligence model, and on the contract it grounds 30 of 30 answers — after two
 fixes the real model forced (it misnames passage ids, and says "not mentioned" instead of
 replying empty). ML Kit GenAI summarises accurately on a real phone (Samsung SM-F971B, Android 17) — but
@@ -198,8 +198,9 @@ Kotlin plugin; the AI module no longer skips the metadata version check ML Kit's
 needed). AGP 8.7 uninstalls test APKs after a run, so `scripts/test-android.sh` passes
 `android.injected.androidTest.leaveApksInstalledAfterRun=true` for the cross-checks to pull files.
 
-**Parked on 2026-09-15, to do later:** Chrome's Summarizer is untested (it needs a
-multi-gigabyte model in a Chrome profile). A real custom provider
+**Chrome's Summarizer has run for real** (2026-09-15, Chrome 152): summaries on the contract and a
+German page are grounded, and a quota bug it exposed is fixed. `node web-ai/scripts/measure-chrome-summarizer.mjs`
+reruns it (the model stays in `~/.cache/pdfiumkit/chrome-ai-profile`). A real custom provider
 has run: Llama 3.2 3B through Ollama grounds 25 of 30 answers (`web-ai/test/ollama.test.ts`).
 
 **The code is on GitHub** at `github.com/indaos/PdfiumKit-v2`, a **private** repository,
