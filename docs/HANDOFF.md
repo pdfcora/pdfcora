@@ -49,6 +49,12 @@ ANDROID_SERIAL=emulator-5554 ./scripts/test-android.sh
 ./scripts/check-core-deps.sh             # the core must gain no AI dependency
 ```
 
+**CI on GitHub** runs web, web-ai, conformance, core-deps, the Android JVM tests and build,
+and the iOS SDK and AI suites. The Android emulator suite and the iOS demo UI tests stay
+local (the gates above). The PDFium binaries come from the release `vendor-chromium-7243`,
+downloaded by `.github/actions/fetch-vendor`; a new PDFium build needs a new release
+archive in the layout `scripts/fetch-vendor.sh` reads (`out/…` and `src-android/…`).
+
 **Give the Android emulator 4GB.** At the default 2GB the suite is killed part-way by
 the low-memory killer, and whichever test was in flight is reported as failed with an
 empty message — which reads exactly like a flaky test and is not one.
