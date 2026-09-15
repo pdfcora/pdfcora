@@ -15,6 +15,8 @@ export interface InitRequest {
   glueUrl: string;
   /** Resolved URL of `pdfium.wasm`. */
   wasmUrl: string;
+  /** The main thread's key and hostname; the check runs here, against the page's host. */
+  license?: { key: string | null; host: string | null };
 }
 
 export interface OpenRequest {

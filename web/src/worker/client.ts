@@ -14,6 +14,7 @@ import type {
   PdfSearchOptions, PdfSize, PdfTextMatch,
 } from '../types.js';
 import type { RenderResult, UnsentRequest, WorkerRequest, WorkerResponse } from './protocol.js';
+import { currentKey } from '../license/state.js';
 
 export interface PdfWorkerOptions {
   /** URL of the bundled worker entry point. */
@@ -60,6 +61,7 @@ export class PdfWorker {
       op: 'init',
       glueUrl: String(options.glueUrl),
       wasmUrl: String(options.wasmUrl),
+      license: { key: currentKey(), host: typeof location === 'undefined' ? null : location.hostname },
     }) as Promise<void>;
   }
 
