@@ -26,6 +26,8 @@ import { suggestRedactions, type PdfRedactionOptions, type PdfRedactionReview } 
 import { proposeFormValues, type PdfFormProposals, type PdfProfile } from './forms/propose.js';
 import { detectFields, type PdfDetectedFields } from './forms/detect.js';
 export type { PdfDetectedField, PdfDetectedFields } from './forms/detect.js';
+export { agentTools, PdfAgentError, PdfAgentSession, type PdfAgentTool } from './agent/tools.js';
+export { registerWebMcpTools } from './agent/webmcp.js';
 import { suggestAltText, type PdfAltTextReview } from './alt-text/suggest.js';
 import { proposeRemediation, type PdfRemediationReview } from './remediation/propose.js';
 import { compareDocuments, type PdfDiff, type PdfDiffOptions } from './diff/compare.js';
