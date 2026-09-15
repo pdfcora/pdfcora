@@ -13,3 +13,6 @@ adb shell am start -n com.pdfiumkit.samples.basicviewer/.MainActivity
 
 The PDFium libraries must be in `vendor/` first (`./scripts/fetch-vendor.sh` from the repo
 root).
+
+Pages show a "PdfiumKit trial" watermark: the sample runs without a license key. The
+commented line in `MainActivity.kt` shows where a key issued for this app goes.

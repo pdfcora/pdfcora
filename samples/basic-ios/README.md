@@ -13,3 +13,6 @@ open BasicViewer.xcodeproj
 ```
 
 The PDFium binary must be in `vendor/` first (`./scripts/fetch-vendor.sh` from the repo root).
+
+Pages show a "PdfiumKit trial" watermark: the sample runs without a license key. The
+commented line in `Sources/BasicViewerApp.swift` shows where a key issued for this app goes.
