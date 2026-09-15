@@ -3,6 +3,12 @@ package com.pdfiumkit.ui
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.IntOffset
+import com.pdfiumkit.view.PdfMark
+import com.pdfiumkit.view.PdfMarkState
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -39,6 +45,7 @@ fun PdfViewerView(
     modifier: Modifier = Modifier,
     toolbar: PdfToolbarConfiguration = PdfToolbarConfiguration.Default,
     theme: PdfViewerTheme = PdfViewerTheme.Light,
+    review: PdfReviewConfiguration? = null,
     onSave: ((ByteArray) -> Unit)? = null,
 ) {
     val scope = rememberCoroutineScope()
@@ -50,6 +57,7 @@ fun PdfViewerView(
     var created by remember { mutableIntStateOf(0) }
     var status by remember { mutableStateOf<String?>(null) }
     var viewportPx by remember { mutableStateOf(IntSizeZero) }
+    var marks by remember { mutableStateOf(emptyList<PdfMark>()) }
 
     suspend fun refresh() {
         bitmap = viewer?.render()
@@ -63,6 +71,7 @@ fun PdfViewerView(
         try {
             if (viewer == null) {
                 viewer = PdfViewer.open(document, port)
+                review?.let { viewer?.setMarks(it.marks); marks = viewer?.marks.orEmpty() }
             } else {
                 viewer?.setViewport(port)
             }
@@ -73,7 +82,7 @@ fun PdfViewerView(
     }
 
     Column(modifier.background(theme.background)) {
-        PdfToolbar(toolbar.items, theme, tool, canUndo = created > 0) { item ->
+        PdfToolbar(toolbar.items, theme, tool, canUndo = created > 0, reviewing = review != null) { item ->
             scope.launch {
                 val v = viewer ?: return@launch
                 when (item) {
@@ -127,7 +136,8 @@ fun PdfViewerView(
                                     val from = start
                                     val to = last
                                     start = null
-                                    if (from != null && to != null) {
+                                    // While reviewing, a tap is about a mark; editing tools stay out of the way.
+                                if (from != null && to != null && review == null) {
                                         scope.launch {
                                             status = handleDrag(viewer, tool, from, to) { created += 1 }
                                             refresh()
@@ -137,7 +147,35 @@ fun PdfViewerView(
                             ) { change, _ -> last = change.position }
                         },
                 )
+                val v = viewer
+                if (v != null) {
+                    val transform = v.transform()
+                    marks.filter { it.pageIndex == v.state.pageIndex }.forEach { mark ->
+                        mark.rects.forEach { rect ->
+                            val box = transform.toView(rect)
+                            val (fill, border) = when (mark.state) {
+                                PdfMarkState.PENDING -> Color(0x2EFF9500) to Color(0xFFFF9500)
+                                PdfMarkState.ACCEPTED -> theme.redactionFill to Color(0xFF1D1D1F)
+                                PdfMarkState.REJECTED -> Color.Transparent to Color(0xFF8E8E93)
+                            }
+                            Box(Modifier
+                                .offset { IntOffset(box.left.toInt(), box.top.toInt()) }
+                                .size(with(density) { box.width().toDp() }, with(density) { box.height().toDp() })
+                                .background(fill)
+                                .border(if (mark.state == PdfMarkState.REJECTED) 1.dp else 2.dp, border)
+                                .semantics { contentDescription = "mark-${mark.id}" }
+                                .clickable {
+                                    v.tapMark(mark.pageIndex, transform.toPdf(box.centerX(), box.centerY()))
+                                    marks = v.marks
+                                })
+                        }
+                    }
+                }
             }
+        }
+
+        review?.let {
+            PdfReviewBar(it, marks, theme) { state -> viewer?.setAllMarks(state); marks = viewer?.marks.orEmpty() }
         }
 
         status?.let {
@@ -212,6 +250,7 @@ private fun PdfToolbar(
     theme: PdfViewerTheme,
     tool: PdfTool,
     canUndo: Boolean,
+    reviewing: Boolean,
     onItem: (PdfToolbarItem) -> Unit,
 ) {
     Row(
@@ -233,7 +272,7 @@ private fun PdfToolbar(
                     val active = item is PdfToolbarItem.Tool && item.tool == tool
                     IconButton(
                         onClick = { onItem(item) },
-                        enabled = item != PdfToolbarItem.Undo || canUndo,
+                        enabled = (item != PdfToolbarItem.Undo || canUndo) && !(reviewing && item is PdfToolbarItem.Tool),
                         modifier = Modifier
                             .size(36.dp)
                             .clip(RoundedCornerShape(theme.cornerRadius))

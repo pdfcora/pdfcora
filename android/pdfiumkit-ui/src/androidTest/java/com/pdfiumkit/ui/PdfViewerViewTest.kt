@@ -15,6 +15,10 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.pdfiumkit.PdfDocument
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertEquals
+import androidx.compose.ui.test.performClick
+import com.pdfiumkit.PdfRect
+import com.pdfiumkit.view.PdfMark
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -85,5 +89,29 @@ class PdfViewerViewTest {
         compose.waitUntil(timeoutMillis = 5_000) {
             compose.onAllNodesWithText("closed", substring = true).fetchSemanticsNodes().isNotEmpty()
         }
+    }
+
+    /** Review mode: a mark over the page, tapped once to accept, then applied. */
+    @Test
+    fun aTappedMarkIsAcceptedAndApplyHandsOverItsId() {
+        val document = document()
+        var applied: List<String>? = null
+        compose.setContent {
+            PdfViewerView(document, Modifier.fillMaxSize(), review = PdfReviewConfiguration(
+                marks = listOf(PdfMark("m1", 0, listOf(PdfRect(0f, 0f, 612f, 792f)))),
+                notice = "Suggestions may be incomplete. Review the whole document.",
+                onApply = { applied = it },
+            ))
+        }
+        waitForPage()
+        compose.onNodeWithContentDescription("review-notice").assertIsDisplayed()
+        compose.onNodeWithContentDescription("mark-m1").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodesWithText("1 accepted", substring = true).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithContentDescription("review-apply").performClick()
+        compose.waitUntil(5_000) { applied != null }
+        assertEquals(listOf("m1"), applied)
+        document.close()
     }
 }
