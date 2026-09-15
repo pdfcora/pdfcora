@@ -1,0 +1,20 @@
+[
+  {
+    "kind": "modified",
+    "original": "The tenant shall pay the rent monthly in advance.",
+    "revised": "Rent is payable by the tenant every month in advance."
+  },
+  {
+    "kind": "removed",
+    "original": "Pets are not allowed in the flat."
+  },
+  {
+    "kind": "modified",
+    "original": "The notice period is 30 days.",
+    "revised": "The notice period is 60 days."
+  },
+  {
+    "kind": "added",
+    "revised": "The tenant may sublet one room with written consent."
+  }
+]

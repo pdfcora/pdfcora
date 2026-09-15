@@ -26,6 +26,8 @@ import { suggestRedactions, type PdfRedactionOptions, type PdfRedactionReview } 
 import { proposeFormValues, type PdfFormProposals, type PdfProfile } from './forms/propose.js';
 import { suggestAltText, type PdfAltTextReview } from './alt-text/suggest.js';
 import { proposeRemediation, type PdfRemediationReview } from './remediation/propose.js';
+import { compareDocuments, type PdfDiff, type PdfDiffOptions } from './diff/compare.js';
+export type { PdfDiff, PdfDiffChange, PdfDiffOptions, PdfDiffSide } from './diff/compare.js';
 export type { PdfRemediationBlock, PdfRemediationOptions, PdfRemediationReview } from './remediation/propose.js';
 export type { PdfAltTextDecision, PdfAltTextProposal, PdfAltTextReview } from './alt-text/suggest.js';
 import type { PdfPageRange as FormPageRange } from './text.js';
@@ -138,6 +140,15 @@ export class PdfiumAI {
   readonly remediation = {
     suggest: (options?: { pages?: FormPageRange }): Promise<PdfRemediationReview> =>
       proposeRemediation(this.document, options),
+  };
+
+  /**
+   * Compares this document (the original) with a revised version: sentences aligned without a
+   * model, and each reworded pair labelled as a change in meaning or wording by the custom provider.
+   */
+  readonly diff = {
+    compare: (revised: PdfDocument, options?: PdfDiffOptions): Promise<PdfDiff> =>
+      compareDocuments(this.document, revised, this.options.provider, options),
   };
 
   /** Summarises the document or a page range (SUM). */

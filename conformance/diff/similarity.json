@@ -1,0 +1,8 @@
+[
+  { "a": "The notice period is 30 days.", "b": "The notice period is 60 days.", "atLeast": 0.3 },
+  { "a": "The tenant shall pay the rent monthly in advance.", "b": "Rent is payable by the tenant every month in advance.", "atLeast": 0.3 },
+  { "a": "Pets are not allowed in the flat.", "b": "The notice period is 60 days.", "below": 0.3 },
+  { "a": "abc", "b": "abc", "exactly": 1 },
+  { "a": "", "b": "", "exactly": 0 },
+  { "a": "ab", "b": "ab", "exactly": 0 }
+]
