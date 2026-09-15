@@ -138,6 +138,22 @@ try {
     check('mounting a closed document rejects with closed', error?.code === 'closed', String(error));
   }
 
+  // WCAG 2.1 A and AA rules from axe-core over every component mounted above (A11Y-1).
+  await new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = '../node_modules/axe-core/axe.min.js';
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.append(script);
+  });
+  const audit = await globalThis.axe.run(document, {
+    runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] },
+    exclude: [['#result']],
+  });
+  check('axe finds no WCAG 2.1 A/AA violations in the components', audit.violations.length === 0,
+    audit.violations.map((v) => `${v.id} (${v.impact}): ${v.nodes.slice(0, 3).map((n) => n.target.join(' ')).join('; ')}`).join(' | '));
+  window.__axe = audit.violations;
+
   // WebMCP (Chrome behind --enable-blink-features=WebMCP): the agent tools are registered and run.
   check('the browser has WebMCP', Boolean(document.modelContext));
   if (document.modelContext) {

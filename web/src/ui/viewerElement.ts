@@ -367,7 +367,8 @@ export class PdfViewerElement {
         case 'figure': {
           const e = make('div', '');
           e.setAttribute('role', 'img');
-          e.setAttribute('aria-label', node.text);
+          // An image must have a name; one the document leaves undescribed says so.
+          e.setAttribute('aria-label', node.text || 'Figure without a description');
           return e;
         }
         case 'formField': {
