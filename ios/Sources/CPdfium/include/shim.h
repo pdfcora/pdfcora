@@ -12,3 +12,5 @@
 #include "public/fpdf_searchex.h"
 #include "public/fpdf_progressive.h"
 #include "public/fpdf_transformpage.h"
+#include "public/fpdf_structtree.h"
+#include "public/fpdf_catalog.h"

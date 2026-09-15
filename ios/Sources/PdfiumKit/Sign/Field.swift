@@ -47,7 +47,8 @@ enum SignatureField {
         let first = info.nextObjectNumber
         let signatureNumber = first, widgetNumber = first + 1, acroFormNumber = first + 2
 
-        let pageNumber = findPage(bytes, xref, catalog, options.pageIndex)
+        let pages = PdfReader.pages(bytes, xref, catalog)
+        let pageNumber = pages.indices.contains(options.pageIndex) ? pages[options.pageIndex] : nil
         let page = pageNumber.flatMap { PdfReader.object(bytes, xref, $0) }
 
         var objects: [Int: PdfValue] = [:]
@@ -175,30 +176,5 @@ enum SignatureField {
         guard let number = PdfReader.reference(page, "Annots"),
               case .array(let items)? = PdfReader.object(bytes, xref, number) else { return [] }
         return items
-    }
-
-    /// Walks `/Pages` to the requested leaf, descending through intermediate nodes.
-    private static func findPage(
-        _ bytes: [UInt8], _ xref: [Int: Xref.Entry], _ catalog: PdfValue, _ wanted: Int
-    ) -> Int? {
-        guard let root = PdfReader.reference(catalog, "Pages") else { return nil }
-        var seen = 0
-
-        func visit(_ number: Int, _ depth: Int) -> Int? {
-            if depth > 32 { return nil }                  // malformed trees can cycle
-            guard let node = PdfReader.object(bytes, xref, number) else { return nil }
-
-            if let type = PdfReader.entry(node, "Type"), PdfReader.isName(type, "Page") {
-                defer { seen += 1 }
-                return seen == wanted ? number : nil
-            }
-            guard case .array(let kids)? = PdfReader.entry(node, "Kids") else { return nil }
-            for kid in kids {
-                guard case .reference(let kidNumber, _) = kid else { continue }
-                if let found = visit(kidNumber, depth + 1) { return found }
-            }
-            return nil
-        }
-        return visit(root, 0)
     }
 }

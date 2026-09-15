@@ -37,7 +37,11 @@ enum PdfReader {
             return nil
         }
 
-        guard let at = text.range(of: "<<") else { return nil }
+        // Only dictionaries are modelled; an array or number here must not be mistaken for
+        // the next object's dictionary.
+        guard let headerEnd = Range(header.range, in: text)?.upperBound,
+              let at = text.range(of: "<<", range: headerEnd..<text.endIndex),
+              text[headerEnd..<at.lowerBound].allSatisfy(\.isWhitespace) else { return nil }
         return (try? PdfDictionaryReader(text).read(from: at.lowerBound))
             .map { .dictionary($0.map { ($0.key, $0.value) }) }
     }
@@ -67,7 +71,7 @@ enum PdfReader {
         guard start < data.count else { return nil }
 
         let body = latin1(data[start...])
-        guard let at = body.range(of: "<<") else { return nil }
+        guard let at = body.range(of: "<<"), body[..<at.lowerBound].allSatisfy(\.isWhitespace) else { return nil }
         return (try? PdfDictionaryReader(body).read(from: at.lowerBound))
             .map { .dictionary($0.map { ($0.key, $0.value) }) }
     }
@@ -102,6 +106,21 @@ enum PdfReader {
             }
         }
         return nil
+    }
+
+    /// The object numbers of the document's pages, in page order.
+    static func pages(_ bytes: [UInt8], _ xref: [Int: Xref.Entry], _ catalog: PdfValue) -> [Int] {
+        var pages: [Int] = []
+        var seen = Set<Int>()
+        func visit(_ number: Int, _ depth: Int) {
+            guard depth <= 32, seen.insert(number).inserted,        // malformed trees can cycle
+                  let node = object(bytes, xref, number) else { return }
+            if let type = entry(node, "Type"), isName(type, "Page") { pages.append(number); return }
+            guard case .array(let kids)? = entry(node, "Kids") else { return }
+            for case .reference(let kid, _) in kids { visit(kid, depth + 1) }
+        }
+        if let root = reference(catalog, "Pages") { visit(root, 0) }
+        return pages
     }
 
     /// The object number a dictionary's `key` refers to, when it is a reference.

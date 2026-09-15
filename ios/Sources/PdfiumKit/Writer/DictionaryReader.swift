@@ -77,7 +77,10 @@ struct PdfDictionaryReader {
                 else if characters[j] == ")" { depth -= 1; if depth == 0 { j += 1; break } }
                 j += 1
             }
-            return (.string(String(characters[(i + 1)..<max(i + 1, j - 1)])), j)
+            // Kept as written, escapes and all: decoding and re-encoding would change the
+            // bytes of any string a rewritten object carries forward.
+            let end = min(j, characters.count)
+            return (.raw(Data(characters[i..<end].map { UInt8(truncatingIfNeeded: $0.unicodeScalars.first!.value) })), end)
         case "/":
             let end = endOfToken(i + 1)
             return (.name(decodeName(String(characters[(i + 1)..<end]))), end)
