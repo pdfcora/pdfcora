@@ -1,12 +1,13 @@
 import { readUtf16, withBuffer, withUtf16, type PdfiumModule } from './engine.js';
 import { PdfError } from './errors.js';
 import { readPageObjects } from './pageObjects.js';
+import { readStructure } from './structure.js';
 import type { PdfDocument } from './document.js';
 import type {
   PdfAnnotation, PdfAnnotationBase, PdfColor, PdfFormField, PdfFormFieldBase,
   PdfLink, PdfLinkTarget, PdfPoint, PdfQuad, PdfRect, PdfRenderOptions,
   PdfSearchOptions, PdfSize, PdfTextMatch,
-  PdfPageObject,
+  PdfPageObject, PdfStructureElement,
 } from './types.js';
 
 // PDFium annotation subtypes (fpdf_annot.h)
@@ -62,6 +63,14 @@ export class PdfPage {
         if (textPage) m.ccall('FPDFText_ClosePage', null, ['number'], [textPage]);
       }
     });
+  }
+
+  /**
+   * The page's structure tree: the elements of a tagged PDF that have content on this page.
+   * Empty for an untagged document.
+   */
+  structure(): Promise<PdfStructureElement[]> {
+    return this.document.withPage(this.index, (page, m) => readStructure(m, page));
   }
 
   get text(): PdfTextPage {

@@ -13,8 +13,8 @@
 import { appendUpdate } from '../writer/incremental.js';
 import { scanTrailer, nextObjectNumber } from '../writer/scan.js';
 import { buildXref, type XrefMap } from '../writer/xref.js';
-import { readObject, readCatalog, refNumber } from '../writer/read.js';
-import { asName, asRef, entryOf, name, raw, ref, type PdfValue } from '../writer/values.js';
+import { listPages, readObject, readCatalog, refNumber } from '../writer/read.js';
+import { entryOf, name, raw, ref, type PdfValue } from '../writer/values.js';
 
 export interface AddSignatureFieldOptions {
   /** Bytes reserved for the signature itself. 8192 fits RSA-2048 with a timestamp. */
@@ -64,7 +64,7 @@ export async function addSignatureField(
   const widgetNumber = first + 1;
   const acroFormNumber = first + 2;
 
-  const pageNumber = await findPage(base, xref, catalog, options.pageIndex ?? 0);
+  const pageNumber = (await listPages(base, xref, catalog))[options.pageIndex ?? 0];
   const page = pageNumber === undefined ? undefined : await readObject(base, xref, pageNumber);
 
   const objects = new Map<number, PdfValue>();
@@ -194,38 +194,4 @@ async function annotsOf(
   if (number === undefined) return undefined;
   const value = await readObject(bytes, xref, number);
   return Array.isArray(value) ? [...value] : undefined;
-}
-
-/** Walks `/Pages` to the requested leaf, descending through intermediate nodes. */
-async function findPage(
-  bytes: Uint8Array,
-  xref: XrefMap,
-  catalog: PdfValue,
-  wanted: number,
-): Promise<number | undefined> {
-  const rootNumber = refNumber(catalog, 'Pages');
-  if (rootNumber === undefined) return undefined;
-
-  let seen = 0;
-  const visit = async (number: number, depth: number): Promise<number | undefined> => {
-    if (depth > 32) return undefined;                 // malformed trees can cycle
-    const node = await readObject(bytes, xref, number);
-    if (!node) return undefined;
-
-    if (asName(entryOf(node, 'Type') ?? null) === 'Page') {
-      return seen++ === wanted ? number : undefined;
-    }
-    const kids = entryOf(node, 'Kids');
-    if (!Array.isArray(kids)) return undefined;
-
-    for (const kid of kids) {
-      const kidNumber = asRef(kid)?.[0];
-      if (kidNumber === undefined) continue;
-      const found = await visit(kidNumber, depth + 1);
-      if (found !== undefined) return found;
-    }
-    return undefined;
-  };
-
-  return visit(rootNumber, 0);
 }

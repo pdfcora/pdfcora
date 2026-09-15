@@ -387,3 +387,23 @@ export interface PdfRedactionReport {
   readonly metadataKeys: readonly string[];
   readonly attachments: readonly string[];
 }
+
+/** An element of a tagged PDF's structure tree, as seen from one page. */
+export interface PdfStructureElement {
+  /** The structure type as written (`/S`), such as `P`, `H1` or `Figure`; role maps are not applied. */
+  readonly type: string;
+  readonly altText?: string;
+  readonly actualText?: string;
+  readonly title?: string;
+  readonly language?: string;
+  /** Marked-content ids of this element's own content on the page. */
+  readonly markedContentIds: readonly number[];
+  /** Union of the page objects carrying this element's or its descendants' content. */
+  readonly bounds?: PdfRect;
+  readonly children: readonly PdfStructureElement[];
+}
+
+/** A figure, named by its page and marked-content ids, and what to write for it. */
+export type PdfFigureEdit =
+  | { readonly pageIndex: number; readonly markedContentIds: readonly number[]; readonly altText: string }
+  | { readonly pageIndex: number; readonly markedContentIds: readonly number[]; readonly decorative: true };

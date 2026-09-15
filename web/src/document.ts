@@ -9,8 +9,10 @@ import type {
   PdfAttachment, PdfMetadata, PdfOutlineItem, PdfPermissions, PdfSaveMode, PdfSize,
   PdfPageRotation,
   PdfSignature, PdfSignatureValidity, PdfVerifyOptions,
-  PdfRedactionReport, PdfRedactionTarget,
+  PdfRedactionReport, PdfRedactionTarget, PdfFigureEdit,
 } from './types.js';
+import { markArtifacts } from './structure.js';
+import { FigureNotFoundError, findFigures, writeFigures } from './writer/structure.js';
 import { PdfPage } from './page.js';
 import { licenseReady, noteWatermark, PdfLicense } from './license/state.js';
 import type { PdfLicenseModule } from './license/key.js';
@@ -394,6 +396,61 @@ export class PdfDocument {
     }
 
     return toReport(counts);
+  }
+
+  /** True when the document declares itself tagged (`/MarkInfo /Marked`). */
+  isTagged(): Promise<boolean> {
+    return this.run((h, m) => (m.ccall('FPDFCatalog_IsTagged', 'number', ['number'], [h]) as number) !== 0);
+  }
+
+  /**
+   * Writes alternate text for figures, or marks them decorative, returning a new document.
+   * This document is left unchanged.
+   *
+   * A figure is named by its page and marked-content ids, as {@link PdfPage.structure} reports
+   * them. Every edit is checked first; one that matches no figure, or several, rejects with
+   * `invalidOperation` and nothing is written. Decorative figures have their content re-marked
+   * as an artifact and are removed from the structure tree; that regenerates the page, so the
+   * result is saved in full and earlier signatures stop verifying. Description-only edits are
+   * appended as an incremental update.
+   */
+  async updateFigures(edits: readonly PdfFigureEdit[]): Promise<PdfDocument> {
+    this.use('editing');
+    const pageCount = await this.pageCount();
+    for (const edit of edits) {
+      if (edit.pageIndex < 0 || edit.pageIndex >= pageCount) throw PdfError.pageOutOfRange(edit.pageIndex, pageCount);
+    }
+    const decorative = edits.filter((edit) => 'decorative' in edit && edit.decorative);
+    const figureEdits = edits.map((edit) => ({
+      pageIndex: edit.pageIndex,
+      markedContentIds: edit.markedContentIds,
+      ...('decorative' in edit ? { decorative: true } : { altText: edit.altText }),
+    }));
+
+    try {
+      let base = await this.run((h, m) => saveHandle(m, h, decorative.length > 0 ? 2 : 1));
+      await findFigures(base, figureEdits);
+
+      if (decorative.length > 0) {
+        const scratch = await PdfDocument.open(base);
+        try {
+          for (const pageIndex of new Set(decorative.map((edit) => edit.pageIndex))) {
+            const ids = new Set(decorative.filter((e) => e.pageIndex === pageIndex).flatMap((e) => e.markedContentIds));
+            await scratch.withPage(pageIndex, (page, m) => markArtifacts(m, page, ids));
+          }
+          base = await scratch.run((h, m) => saveHandle(m, h, 2));
+        } finally {
+          await scratch.close();
+        }
+      }
+
+      const updated = await PdfDocument.open(await writeFigures(base, figureEdits));
+      if (this.marked) updated.marked = true;
+      return updated;
+    } catch (error) {
+      if (error instanceof FigureNotFoundError) throw PdfError.invalidOperation(error.message);
+      throw error;
+    }
   }
 
   /** The document outline, or an empty array when there is none. */

@@ -42,7 +42,9 @@ function readAtOffset(bytes: Uint8Array, offset: number, number: number): PdfVal
   if (!header || Number(header[1]) !== number) return undefined;
 
   const at = window.indexOf('<<', header[0].length);
-  if (at < 0) return undefined;
+  // Only dictionaries are modelled; an array or number here must not be mistaken for the
+  // next object's dictionary.
+  if (at < 0 || window.slice(header[0].length, at).trim() !== '') return undefined;
   return parseDictionaryAt(window, at) as PdfValue;
 }
 
@@ -87,7 +89,7 @@ async function readFromObjectStream(
 
   const body = decoder.decode(data.subarray(first + offset));
   const at = body.indexOf('<<');
-  if (at < 0) return undefined;
+  if (at < 0 || body.slice(0, at).trim() !== '') return undefined;
   return parseDictionaryAt(body, at) as PdfValue;
 }
 
@@ -138,3 +140,25 @@ export function refNumber(value: PdfValue, key: string): number | undefined {
 
 const numberOf = (value: PdfValue | undefined): number | undefined =>
   typeof value === 'number' ? value : undefined;
+
+/** The object numbers of the document's pages, in page order. */
+export async function listPages(bytes: Uint8Array, xref: XrefMap, catalog: PdfValue): Promise<number[]> {
+  const pages: number[] = [];
+  const seen = new Set<number>();
+  const visit = async (number: number, depth: number): Promise<void> => {
+    if (depth > 32 || seen.has(number)) return;       // malformed trees can cycle
+    seen.add(number);
+    const node = await readObject(bytes, xref, number);
+    if (!node) return;
+    if (asName(entryOf(node, 'Type') ?? null) === 'Page') { pages.push(number); return; }
+    const kids = entryOf(node, 'Kids');
+    if (!Array.isArray(kids)) return;
+    for (const kid of kids) {
+      const kidNumber = asRef(kid)?.[0];
+      if (kidNumber !== undefined) await visit(kidNumber, depth + 1);
+    }
+  };
+  const root = refNumber(catalog, 'Pages');
+  if (root !== undefined) await visit(root, 0);
+  return pages;
+}
