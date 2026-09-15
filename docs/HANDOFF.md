@@ -160,8 +160,10 @@ Kotlin 2.1 metadata and the project builds with 1.9. Upgrading Kotlin removes th
 
 **Parked on 2026-09-15, to do later:** Apple's model returns window summaries with "- - "
 bullets; Chrome's Summarizer and a real custom provider are untested (each needs a
-multi-gigabyte download); the three decisions above; the Kotlin upgrade; and the commits
-have never been pushed — **the repository has no remote**.
+multi-gigabyte download); the three decisions above; and the Kotlin upgrade.
+
+**The code is on GitHub** at `github.com/indaos/PdfiumKit-v2`, a **private** repository,
+first pushed on 2026-09-15. Keep it private: the SDK's source includes the license check.
 
 **The PDFium corpus sweep** (293 test resources) runs on all three platforms:
 `node conformance/robustness.mjs`, `scripts/sweep-ios.sh`, and
