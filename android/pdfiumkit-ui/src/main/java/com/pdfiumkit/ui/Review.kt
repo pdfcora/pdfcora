@@ -24,6 +24,7 @@ class PdfReviewConfiguration(
     val onCancel: (() -> Unit)? = null,
 )
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun PdfReviewBar(
     configuration: PdfReviewConfiguration,
@@ -34,11 +35,14 @@ internal fun PdfReviewBar(
     Column(Modifier.fillMaxWidth().background(theme.toolbarBackground).padding(8.dp)) {
         Text(configuration.notice, style = MaterialTheme.typography.bodySmall,
              modifier = Modifier.semantics { contentDescription = "review-notice" })
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        // Wraps rather than squeezing: at large font scales a single row pushed the counts to zero
+        // width and Cancel off the edge.
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalArrangement = Arrangement.Center) {
             val accepted = marks.count { it.state == PdfMarkState.ACCEPTED }
             val pending = marks.count { it.state == PdfMarkState.PENDING }
             Text("$accepted accepted · $pending pending", style = MaterialTheme.typography.bodySmall,
-                 modifier = Modifier.weight(1f).semantics { contentDescription = "review-counts" })
+                 modifier = Modifier.align(Alignment.CenterVertically).padding(end = 8.dp)
+                     .semantics { contentDescription = "review-counts" })
             TextButton({ setAll(PdfMarkState.ACCEPTED) }, Modifier.semantics { contentDescription = "review-accept-all" }) { Text("Accept all") }
             TextButton({ setAll(PdfMarkState.REJECTED) }, Modifier.semantics { contentDescription = "review-reject-all" }) { Text("Reject all") }
             TextButton({ configuration.onApply(marks.filter { it.state == PdfMarkState.ACCEPTED }.map { it.id }) },

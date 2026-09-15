@@ -397,8 +397,10 @@ exposed by the web element (semantic HTML), the SwiftUI view (VoiceOver elements
 view (TalkBack semantics), each asserted by its UI test. Design: `2026-09-15-accessible-content-design.md`.
 A11Y-1 and A11Y-4 need an independent audit. A11Y-3 is partly done (2026-09-15): on the web
 every toolbar control and review mark is a button with a visible focus indicator, and the focused
-page zooms with + and − and turns with Page Up and Page Down. The SDK has no macOS target, and
-text scaling of the component's own labels is not done.
+page zooms with + and − and turns with Page Up and Page Down. Text scaling is done on all three:
+the web component sizes its text in `rem` and its toolbar grows, the SwiftUI toolbar scales with
+Dynamic Type and the review buttons stack at accessibility sizes, and the Compose review bar wraps
+at large font scales (it squeezed its counts to nothing before). The SDK has no macOS target.
 
 ## 14. Later and side bets
 

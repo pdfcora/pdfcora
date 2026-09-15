@@ -446,7 +446,9 @@ announced as one paragraph of its text; remediate it first for structure.
 
 On the web the component also works from the keyboard: toolbar controls and review marks are
 buttons with a visible focus ring, and the focused page zooms with + and − and turns with
-Page Up and Page Down.
+Page Up and Page Down. On every platform the component follows the reader's text size: the web
+toolbar is sized in `rem`, the SwiftUI toolbar scales with Dynamic Type, and the review bar
+reflows at large text on iOS and Android.
 
 ## License keys
 

@@ -26,6 +26,10 @@ import org.junit.Assert.assertEquals
 import androidx.compose.ui.test.performClick
 import com.pdfiumkit.PdfRect
 import com.pdfiumkit.view.PdfMark
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.dp
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -136,6 +140,27 @@ class PdfViewerViewTest {
         compose.onNodeWithContentDescription("review-apply").performClick()
         compose.waitUntil(5_000) { applied != null }
         assertEquals(listOf("m1"), applied)
+        document.close()
+    }
+
+    /** A11Y-3: at twice the text size the review buttons wrap instead of running off the edge. */
+    @Test
+    fun reviewButtonsStayOnScreenAtLargeText() {
+        val document = document()
+        compose.setContent {
+            val density = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = 2f)) {
+                PdfViewerView(document, Modifier.fillMaxSize(), review = PdfReviewConfiguration(
+                    marks = emptyList(), notice = "Suggestions may be incomplete.", onApply = {}, onCancel = {}))
+            }
+        }
+        waitForPage()
+        val width = compose.onRoot().fetchSemanticsNode().size.width
+        val minimum = with(compose.density) { 48.dp.toPx() }
+        for (id in listOf("review-counts", "review-accept-all", "review-reject-all", "review-apply", "review-cancel")) {
+            val bounds = compose.onNodeWithContentDescription(id).fetchSemanticsNode().boundsInRoot
+            assertTrue("$id is $bounds in a $width px view", bounds.left >= 0f && bounds.right <= width + 1 && bounds.width >= minimum)
+        }
         document.close()
     }
 }
