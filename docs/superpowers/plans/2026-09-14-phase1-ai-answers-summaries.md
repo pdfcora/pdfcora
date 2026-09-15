@@ -6,8 +6,8 @@ summaries of a document or page range, on iOS, Android and Web.
 **Spec:** `docs/superpowers/specs/2026-09-13-pdfiumkit-ai-requirements.md` §§8, 10, 15
 
 **Status:** built on all three platforms. Apple's on-device model has been run for real
-(see "Measured against a real model"). ML Kit was tried on a real phone and fails inside
-AICore; Chrome's summariser has not been run.
+(see "Measured against a real model"). ML Kit summarises on a real phone when called from
+a foreground app, and not from the background; Chrome's summariser has not been run.
 
 ## What was checked before building on it
 
@@ -78,13 +78,16 @@ key-points summary was accurate, in 2.8 s. Answers took about 1.5 s each.
 
 On 2026-09-15, a Samsung SM-F971B on Android 17 with Google AICore
 (`prod_aicore_20260723`). ML Kit reports summarisation available, with base model
-`nano-v4-fast`, and `prepare()` completes. **Every inference then fails inside AICore**
-with `INFERENCE_ERROR`, code `30-UNKNOWN`; even `prepareInferenceEngine()` fails the same
-way, before any text is involved. The reason AICore logs is `(REDACTED) %s due to %s`.
-Not the input (clean article text fails too), not the app being in the background (a
-foreground activity changes nothing), and not a missing warm-up. Untested explanations:
-ML Kit `1.0.0-beta1` (the only release) against this newer AICore or this Samsung build,
-or a restriction on debug or test apps.
+`nano-v4-fast`, and `prepare()` completes.
+
+**AICore blocks inference from an app that is not in the foreground.** Every call from
+the test process failed with `INFERENCE_ERROR`, code 30 — `BACKGROUND_USE_BLOCKED`, which
+ML Kit `1.0.0-beta1` does not name and prints as "30-UNKNOWN". A first attempt with an
+activity started from the test thread did not help, and was wrongly read as ruling the
+background out. Calling from the activity's own `onResume`, with the process at
+importance 100 (foreground), succeeded: a direct call summarised an article in 2.6 s, and
+the SDK's `summaries.summarize()` on the contract returned accurate results from
+`ON_DEVICE` — one bullet for paragraph style, three for key points.
 
 Two things the phone did show, both fixed on every platform they apply to:
 
@@ -97,8 +100,10 @@ Two things the phone did show, both fixed on every platform they apply to:
 
 ## Not verified
 
-- **ML Kit has never produced a summary, and Chrome's summariser has never run.** Node has
-  no `Summarizer`. Neither has a custom provider been used for real.
+- **Chrome's summariser has never run.** Node has no `Summarizer`. Neither has a custom
+  provider been used for real.
+- **ML Kit on long documents.** Only the short contract has been summarised on the phone;
+  the 9,000-character part size against the model's real input limit is unmeasured.
 - **One document.** The contract is short and clean; a real model on long or messy text,
   or in another language, is unmeasured.
 - **ML Kit's input limit** is taken as three quarters of the documented ~4,000 tokens.

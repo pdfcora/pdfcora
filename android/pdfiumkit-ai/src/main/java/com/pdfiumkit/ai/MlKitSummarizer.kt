@@ -21,6 +21,11 @@ import kotlin.coroutines.resumeWithException
  * the core's 23, so every call is guarded), it summarises English, Japanese and Korean
  * only, and it produces one to three bullets — there is no paragraph output, so a
  * paragraph request gets one bullet.
+ *
+ * AICore refuses inference from an app that is not in the foreground: status 30,
+ * BACKGROUND_USE_BLOCKED, which this ML Kit release does not name and reports as
+ * "30-UNKNOWN". Measured on a phone: the same call fails from a test process and succeeds
+ * from a resumed activity.
  */
 internal object MlKitSummarizer {
     /**

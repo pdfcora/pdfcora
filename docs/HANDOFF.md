@@ -93,9 +93,10 @@ Breaking for web and Android and for the sync wire, accepted pre-release.
 **`pdfiumkit-ai` has run against Apple's model only.** The iOS simulator reaches the Mac's
 own Apple Intelligence model, and on the contract it grounds 30 of 30 answers — after two
 fixes the real model forced (it misnames passage ids, and says "not mentioned" instead of
-replying empty). ML Kit GenAI was tried on a real phone (Samsung SM-F971B, Android 17):
-AICore reports the model available and then fails every inference with code 30 and a
-redacted reason — see the Phase 1 plan. Chrome's Summarizer needs desktop Chrome and has
+replying empty). ML Kit GenAI summarises accurately on a real phone (Samsung SM-F971B, Android 17) — but
+**only from a foreground app**: AICore returns code 30, `BACKGROUND_USE_BLOCKED`, otherwise,
+and ML Kit beta1 prints that as "30-UNKNOWN". Test processes count as background; probe
+from a resumed activity. Chrome's Summarizer needs desktop Chrome and has
 not run.
 `docs/superpowers/plans/2026-09-14-phase1-ai-answers-summaries.md` lists the other
 unmeasured numbers (ML Kit's input limit, characters per token) and what is not built

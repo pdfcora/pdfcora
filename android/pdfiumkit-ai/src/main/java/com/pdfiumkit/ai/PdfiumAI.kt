@@ -101,6 +101,10 @@ class PdfiumAI(
             return availability()
         }
 
+        /**
+         * Call while the app is in the foreground. AICore blocks on-device inference from the
+         * background, and the result is then [PdfAiUnavailableReason.REQUEST_FAILED].
+         */
         suspend fun summarize(
             pages: IntRange? = null,
             style: PdfSummaryStyle = PdfSummaryStyle.PARAGRAPH,
