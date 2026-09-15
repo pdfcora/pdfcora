@@ -83,6 +83,17 @@ class PdfiumAI(
      */
     val remediation = Remediation()
 
+    /**
+     * Compares this document (the original) with a revised version: sentences aligned without a
+     * model, and each reworded pair labelled as a change in meaning or wording by the custom provider.
+     */
+    val diff = Diff()
+
+    inner class Diff {
+        suspend fun compare(revised: PdfDocument, pages: IntRange? = null, revisedPages: IntRange? = null): com.pdfiumkit.ai.diff.PdfDiff =
+            com.pdfiumkit.ai.diff.compareDocuments(this@PdfiumAI, revised, pages, revisedPages)
+    }
+
     inner class Remediation {
         suspend fun suggest(pages: IntRange? = null): com.pdfiumkit.ai.remediation.PdfRemediationReview =
             com.pdfiumkit.ai.remediation.suggestRemediation(this@PdfiumAI, pages)

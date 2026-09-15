@@ -39,6 +39,7 @@ android {
         rootProject.projectDir.parentFile.resolve("conformance/forms"),
         rootProject.projectDir.parentFile.resolve("conformance/alt-text"),
         rootProject.projectDir.parentFile.resolve("conformance/remediation"),
+        rootProject.projectDir.parentFile.resolve("conformance/diff"),
     )
 }
 

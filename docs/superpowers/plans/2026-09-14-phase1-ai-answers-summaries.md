@@ -115,6 +115,14 @@ names that say nothing ("Feld9" → iban), or echoed the field name as the key. 
 "unknown" unless a field names the detail, and not to go by position, did not fix it. Form
 filling therefore does not use the on-device model; the synonym list and a custom provider do.
 
+### Semantic diff with Apple's model
+
+On 2026-09-15, through the iOS simulator (`DiffMeasurementTests`), on `conformance/diff/`, three
+runs: both reworded pairs labelled correctly every time — "shall pay the rent monthly" → "rent is
+payable every month" as `wordingOnly`, 30 → 60 days as `meaningChanged` with the summary "The
+notice period is now 60 days instead of 30 days." About 5 s per run for the two calls. Two pairs
+are a small sample; a longer document with subtler rewording is unmeasured.
+
 ### ML Kit on a real phone
 
 On 2026-09-15, a Samsung SM-F971B on Android 17 with Google AICore

@@ -399,6 +399,10 @@ A11Y-1 and A11Y-4 need an independent audit; A11Y-3 (keyboard and text scaling) 
 
 ## 14. Later and side bets
 
+**Semantic diff implemented 2026-09-15** on all three platforms: deterministic sentence alignment,
+meaning/wording labels from Apple's model (iOS) or the custom provider. Design:
+`2026-09-15-semantic-diff-design.md`. MCP / WebMCP tools remain a side bet, not built.
+
 **Semantic document diff — later.** Match up sections across two versions by their text.
 The model then labels each changed pair (*meaning changed* or *wording only*) and
 summarizes the changes in meaning, with both versions highlighted using character

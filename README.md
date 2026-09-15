@@ -131,6 +131,7 @@ same results on all three platforms.
 | Alt text proposals for figures | ✅ provider | ✅ ML Kit, provider | ✅ provider |
 | Remediation: tag untagged content, rule-based proposals, checked with veraPDF | ✅ | ✅ | ✅ |
 | Tagged content exposed to screen readers in the viewer component | ✅ VoiceOver | ✅ TalkBack | ✅ semantic HTML |
+| Semantic diff of two versions, meaning vs wording | ✅ Apple model, provider | ✅ provider | ✅ provider |
 | Raw PDFium escape hatch | ✅ *untested* | — | — |
 
 ⚠️ iOS rendering is cancellable *between* progressive steps, which covers a slow
@@ -417,6 +418,21 @@ const tagged = await review.apply({ language: 'en-GB', types: { [captionId]: 'P'
 Tables are proposed as paragraphs, vector graphics as artifacts, and reading order follows the
 content stream, so multi-column layouts may need the reviewer's attention. Annotations and form
 fields are not tagged, and a document without embedded fonts cannot pass PDF/UA whatever its tags.
+
+## Semantic diff
+
+`ai.diff.compare(revised)` aligns the sentences of two versions of a document without a model
+(longest common subsequence, then similarity pairing for the rest) and reports each change as
+modified, added or removed, with character ranges and rectangles in both documents. A reworded
+pair is labelled `meaningChanged` (with a one-sentence summary) or `wordingOnly` by Apple's
+on-device model or your custom provider; without one it stays `unclassified`.
+
+```ts
+const diff = await new PdfiumAI(original, { provider }).diff.compare(revised);
+// diff.changes: [{ kind: 'modified', label: 'meaningChanged', summary, original, revised }, …]
+```
+
+Apple's model labelled both reworded pairs of the test documents correctly in three of three runs.
 
 ## Screen readers
 
