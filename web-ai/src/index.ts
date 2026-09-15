@@ -17,6 +17,10 @@ export type { PdfAnswer, PdfCitation } from './answers.js';
 export type { PdfSummary, PdfSummaryStyle } from './summaries.js';
 export type { PdfPageRange } from './text.js';
 export { locateQuote } from './quote.js';
+export type {
+  PdfRedactionApplied, PdfRedactionCategory, PdfRedactionOptions, PdfRedactionReview, PdfRedactionSuggestion,
+} from './redaction/suggest.js';
+import { suggestRedactions, type PdfRedactionOptions, type PdfRedactionReview } from './redaction/suggest.js';
 
 export interface PdfiumAIOptions {
   readonly provider?: PdfAiProvider;
@@ -86,6 +90,16 @@ export class PdfiumAI {
         },
       });
     },
+  };
+
+  /**
+   * Suggests likely personal data to redact (RED). Patterns run on every device; the custom
+   * provider, when configured, adds names, addresses, dates of birth and ID numbers. Nothing
+   * is written until `apply`.
+   */
+  readonly redactions = {
+    suggest: (options?: PdfRedactionOptions): Promise<PdfRedactionReview> =>
+      suggestRedactions(this.document, this.options.provider, this.options.providerContextTokens ?? 4096, options),
   };
 
   /** Summarises the document or a page range (SUM). */
