@@ -67,7 +67,7 @@ internal object SignatureField {
         val widgetNumber = first + 1
         val acroFormNumber = first + 2
 
-        val pageNumber = findPage(base, xref, catalog, options.pageIndex)
+        val pageNumber = PdfReader.pages(base, xref, catalog).getOrNull(options.pageIndex)
         val page = pageNumber?.let { PdfReader.obj(base, xref, it) }
 
         val objects = mutableMapOf<Int, PdfValue>()
@@ -192,32 +192,5 @@ internal object SignatureField {
         (PdfReader.entry(page, "Annots") as? PdfValue.Array)?.let { return it.items }
         val number = PdfReader.reference(page, "Annots") ?: return emptyList()
         return (PdfReader.obj(bytes, xref, number) as? PdfValue.Array)?.items ?: emptyList()
-    }
-
-    /** Walks /Pages to the requested leaf, descending through intermediate nodes. */
-    private fun findPage(
-        bytes: ByteArray,
-        xref: Map<Int, Xref.Entry>,
-        catalog: PdfValue,
-        wanted: Int,
-    ): Int? {
-        val root = PdfReader.reference(catalog, "Pages") ?: return null
-        var seen = 0
-
-        fun visit(number: Int, depth: Int): Int? {
-            if (depth > 32) return null                  // malformed trees can cycle
-            val node = PdfReader.obj(bytes, xref, number) ?: return null
-
-            if (PdfReader.isName(PdfReader.entry(node, "Type"), "Page")) {
-                return if (seen++ == wanted) number else null
-            }
-            val kids = (PdfReader.entry(node, "Kids") as? PdfValue.Array)?.items ?: return null
-            for (kid in kids) {
-                val kidNumber = (kid as? PdfValue.Reference)?.number ?: continue
-                visit(kidNumber, depth + 1)?.let { return it }
-            }
-            return null
-        }
-        return visit(root, 0)
     }
 }

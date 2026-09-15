@@ -98,7 +98,10 @@ internal class PdfDictionaryReader(private val text: String) {
             }
             j++
         }
-        return PdfValue.Text(text.substring(start + 1, maxOf(start + 1, j - 1))) to j
+        // Kept as written, escapes and all: decoding and re-encoding would change the bytes
+        // of any string a rewritten object carries forward.
+        val end = minOf(j, text.length)
+        return PdfValue.Raw(text.substring(start, end).toByteArray(Charsets.ISO_8859_1)) to end
     }
 
     private fun at(index: Int): Char? = text.getOrNull(index)

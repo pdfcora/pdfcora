@@ -87,4 +87,10 @@ internal object Native {
     @JvmStatic external fun redactPage(handle: Long, pageIndex: Int, regions: FloatArray): IntArray
     @JvmStatic external fun redactedFieldNames(handle: Long, pageIndex: Int): Array<String>
     @JvmStatic external fun scrubAttachments(handle: Long, needles: Array<String>): Array<String>
+
+    @JvmStatic external fun isTagged(handle: Long): Boolean
+    /** `[IntArray, Array<String>]`: see pdfiumkit_jni.cpp for the pre-order layout. */
+    @JvmStatic external fun structure(handle: Long, pageIndex: Int): Array<Any>
+    @JvmStatic external fun pageObjectMarkedContentIds(handle: Long, pageIndex: Int): IntArray
+    @JvmStatic external fun markArtifacts(handle: Long, pageIndex: Int, ids: IntArray): Int
 }

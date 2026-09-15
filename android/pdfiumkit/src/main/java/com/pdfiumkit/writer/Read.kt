@@ -34,8 +34,10 @@ internal object PdfReader {
         // right: a caller that then wrote a replacement would corrupt the file.
         if (header.range.first != 0 || header.groupValues[1].toIntOrNull() != number) return null
 
-        val at = text.indexOf("<<")
-        if (at < 0) return null
+        val at = text.indexOf("<<", header.range.last + 1)
+        // Only dictionaries are modelled; an array or number here must not be mistaken for
+        // the next object's dictionary.
+        if (at < 0 || text.substring(header.range.last + 1, at).isNotBlank()) return null
         return runCatching { PdfDictionaryReader(text).read(at) }
             .map { PdfValue.Dictionary(it.toList()) }
             .getOrNull()
@@ -76,7 +78,7 @@ internal object PdfReader {
 
         val body = data.copyOfRange(start, data.size).toString(Charsets.ISO_8859_1)
         val at = body.indexOf("<<")
-        if (at < 0) return null
+        if (at < 0 || body.substring(0, at).isNotBlank()) return null
         return runCatching { PdfDictionaryReader(body).read(at) }
             .map { PdfValue.Dictionary(it.toList()) }
             .getOrNull()
@@ -102,6 +104,21 @@ internal object PdfReader {
         return xref.keys.sorted().firstOrNull { number ->
             isName(entry(obj(bytes, xref, number), "Type"), "Catalog")
         }
+    }
+
+    /** The object numbers of the document's pages, in page order. */
+    fun pages(bytes: ByteArray, xref: Map<Int, Xref.Entry>, catalog: PdfValue): List<Int> {
+        val pages = mutableListOf<Int>()
+        val seen = mutableSetOf<Int>()
+        fun visit(number: Int, depth: Int) {
+            if (depth > 32 || !seen.add(number)) return          // malformed trees can cycle
+            val node = obj(bytes, xref, number) ?: return
+            if (isName(entry(node, "Type"), "Page")) { pages += number; return }
+            val kids = (entry(node, "Kids") as? PdfValue.Array)?.items ?: return
+            for (kid in kids) (kid as? PdfValue.Reference)?.let { visit(it.number, depth + 1) }
+        }
+        reference(catalog, "Pages")?.let { visit(it, 0) }
+        return pages
     }
 
     /** The object number a dictionary's [key] refers to, when it is a reference. */

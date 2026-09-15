@@ -23,6 +23,8 @@
 #include "public/fpdf_save.h"
 #include "public/fpdf_attachment.h"
 #include "public/fpdf_signature.h"
+#include "public/fpdf_structtree.h"
+#include "public/fpdf_catalog.h"
 
 #include "watermark.h"
 
@@ -1445,3 +1447,125 @@ Java_com_pdfiumkit_Native_pageObjectFontSize(
     float size = 0;
     return FPDFTextObj_GetFontSize(object, &size) ? size : 0;
 }
+
+// MARK: - Structure tree
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_pdfiumkit_Native_isTagged(JNIEnv*, jclass, jlong handle) {
+    auto* d = asDoc(handle);
+    return d && d->doc && FPDFCatalog_IsTagged(d->doc) ? JNI_TRUE : JNI_FALSE;
+}
+
+namespace {
+const int kMaxStructureDepth = 64;
+
+void collectStructure(JNIEnv* env, FPDF_STRUCTELEMENT element, int depth,
+                      std::vector<jint>& numbers, std::vector<jstring>& strings) {
+    numbers.push_back(depth);
+    int count = FPDF_StructElement_GetMarkedContentIdCount(element);
+    std::vector<jint> ids;
+    for (int i = 0; i < count; i++) {
+        int id = FPDF_StructElement_GetMarkedContentIdAtIndex(element, i);
+        if (id >= 0) ids.push_back(id);
+    }
+    numbers.push_back(static_cast<jint>(ids.size()));
+    numbers.insert(numbers.end(), ids.begin(), ids.end());
+
+    auto text = [&](unsigned long (*getter)(FPDF_STRUCTELEMENT, void*, unsigned long)) {
+        return utf16String(env, [&](unsigned short* buf, unsigned long size) { return getter(element, buf, size); });
+    };
+    strings.push_back(text(FPDF_StructElement_GetType));
+    strings.push_back(text(FPDF_StructElement_GetAltText));
+    strings.push_back(text(FPDF_StructElement_GetActualText));
+    strings.push_back(text(FPDF_StructElement_GetTitle));
+    strings.push_back(text(FPDF_StructElement_GetLang));
+
+    if (depth >= kMaxStructureDepth) return;
+    int children = FPDF_StructElement_CountChildren(element);
+    for (int i = 0; i < children; i++) {
+        FPDF_STRUCTELEMENT child = FPDF_StructElement_GetChildAtIndex(element, i);
+        if (child) collectStructure(env, child, depth + 1, numbers, strings);
+    }
+}
+}  // namespace
+
+/// Pre-order: per element [depth, idCount, ids...] in the int array, and
+/// [type, alt, actual, title, lang] in the string array. The last int array holds nothing else.
+extern "C" JNIEXPORT jobjectArray JNICALL
+Java_com_pdfiumkit_Native_structure(JNIEnv* env, jclass, jlong handle, jint pageIndex) {
+    std::vector<jint> numbers;
+    std::vector<jstring> strings;
+    auto* d = asDoc(handle);
+    FPDF_PAGE page = d ? loadPage(d, pageIndex) : nullptr;
+    FPDF_STRUCTTREE tree = page ? FPDF_StructTree_GetForPage(page) : nullptr;
+    if (tree) {
+        int count = FPDF_StructTree_CountChildren(tree);
+        for (int i = 0; i < count; i++) {
+            FPDF_STRUCTELEMENT element = FPDF_StructTree_GetChildAtIndex(tree, i);
+            if (element) collectStructure(env, element, 0, numbers, strings);
+        }
+        FPDF_StructTree_Close(tree);
+    }
+
+    jclass objectClass = env->FindClass("java/lang/Object");
+    jobjectArray out = env->NewObjectArray(2, objectClass, nullptr);
+    jintArray ints = env->NewIntArray(static_cast<jsize>(numbers.size()));
+    if (!numbers.empty()) env->SetIntArrayRegion(ints, 0, static_cast<jsize>(numbers.size()), numbers.data());
+    jobjectArray texts = env->NewObjectArray(static_cast<jsize>(strings.size()), env->FindClass("java/lang/String"), nullptr);
+    for (size_t i = 0; i < strings.size(); i++) {
+        env->SetObjectArrayElement(texts, static_cast<jsize>(i), strings[i]);
+        env->DeleteLocalRef(strings[i]);
+    }
+    env->SetObjectArrayElement(out, 0, ints);
+    env->SetObjectArrayElement(out, 1, texts);
+    return out;
+}
+
+/// The marked-content id of every top-level page object, -1 where there is none.
+extern "C" JNIEXPORT jintArray JNICALL
+Java_com_pdfiumkit_Native_pageObjectMarkedContentIds(JNIEnv* env, jclass, jlong handle, jint pageIndex) {
+    auto* d = asDoc(handle);
+    FPDF_PAGE page = d ? loadPage(d, pageIndex) : nullptr;
+    int count = page ? FPDFPage_CountObjects(page) : 0;
+    std::vector<jint> ids(std::max(0, count), -1);
+    for (int i = 0; i < count; i++) {
+        FPDF_PAGEOBJECT object = FPDFPage_GetObject(page, i);
+        if (object) ids[i] = FPDFPageObj_GetMarkedContentID(object);
+    }
+    jintArray out = env->NewIntArray(static_cast<jsize>(ids.size()));
+    if (!ids.empty()) env->SetIntArrayRegion(out, 0, static_cast<jsize>(ids.size()), ids.data());
+    return out;
+}
+
+/// Re-marks every top-level object whose marked content has one of `ids` as an artifact
+/// and regenerates the page. Returns how many objects changed.
+extern "C" JNIEXPORT jint JNICALL
+Java_com_pdfiumkit_Native_markArtifacts(JNIEnv* env, jclass, jlong handle, jint pageIndex, jintArray idArray) {
+    auto* d = asDoc(handle);
+    FPDF_PAGE page = d ? loadPage(d, pageIndex) : nullptr;
+    if (!page) return 0;
+    std::set<int> ids;
+    jsize length = env->GetArrayLength(idArray);
+    jint* raw = env->GetIntArrayElements(idArray, nullptr);
+    for (jsize i = 0; i < length; i++) ids.insert(raw[i]);
+    env->ReleaseIntArrayElements(idArray, raw, JNI_ABORT);
+
+    int changed = 0;
+    int count = FPDFPage_CountObjects(page);
+    for (int i = 0; i < count; i++) {
+        FPDF_PAGEOBJECT object = FPDFPage_GetObject(page, i);
+        if (!object) continue;
+        for (int k = FPDFPageObj_CountMarks(object) - 1; k >= 0; k--) {
+            FPDF_PAGEOBJECTMARK mark = FPDFPageObj_GetMark(object, k);
+            int id = -1;
+            if (!mark || !FPDFPageObjMark_GetParamIntValue(mark, "MCID", &id) || !ids.count(id)) continue;
+            FPDFPageObj_RemoveMark(object, mark);
+            FPDFPageObj_AddMark(object, "Artifact");
+            changed++;
+            break;
+        }
+    }
+    if (changed > 0) FPDFPage_GenerateContent(page);
+    return changed;
+}
+
