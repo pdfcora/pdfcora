@@ -39,6 +39,9 @@ public enum PdfViewerRole: Sendable { case presenter, follower }
 /// An `actor` because ``PdfDocument`` is one. It never holds its own executor while
 /// awaiting the document's.
 public actor PdfViewer {
+    /// See `Marks.swift`.
+    public internal(set) var marks: [PdfMark] = []
+
     public private(set) var state: PdfViewState
     public private(set) var selection: PdfSelection?
     public private(set) var tool: PdfTool = .select

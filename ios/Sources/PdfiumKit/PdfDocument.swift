@@ -44,7 +44,7 @@ public actor PdfDocument {
     private var cachedFingerprint: String?
 
     /// Set at open in trial mode, or by ``use(_:)`` when a feature is not licensed.
-    private(set) var needsWatermark = PdfLicense.status.isTrial
+    var needsWatermark = PdfLicense.status.isTrial
 
     /// A stable identifier for the bytes this document was opened from.
     ///
