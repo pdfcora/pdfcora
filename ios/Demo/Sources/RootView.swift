@@ -101,7 +101,7 @@ struct RootView: View {
                 Section("\(store.title) — \(store.pageCount) page\(store.pageCount == 1 ? "" : "s")") {
                     ForEach(Demo.allCases) { demo in
                         NavigationLink {
-                            screen(for: demo)
+                            Self.screen(for: demo)
                         } label: {
                             Label {
                                 VStack(alignment: .leading, spacing: 2) {
@@ -138,7 +138,7 @@ struct RootView: View {
     }
 
     @ViewBuilder
-    private func screen(for demo: Demo) -> some View {
+    static func screen(for demo: Demo) -> some View {
         switch demo {
         case .editor:      EditorScreen()
         case .viewer:      ViewerScreen()

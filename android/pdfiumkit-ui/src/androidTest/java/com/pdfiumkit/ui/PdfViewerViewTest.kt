@@ -30,6 +30,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.ViewRootForTest
+import com.google.android.apps.common.testing.accessibility.framework.AccessibilityCheckResult.AccessibilityCheckResultType
+import com.google.android.apps.common.testing.accessibility.framework.integrations.espresso.AccessibilityValidator
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -161,6 +164,46 @@ class PdfViewerViewTest {
             val bounds = compose.onNodeWithContentDescription(id).fetchSemanticsNode().boundsInRoot
             assertTrue("$id is $bounds in a $width px view", bounds.left >= 0f && bounds.right <= width + 1 && bounds.width >= minimum)
         }
+        document.close()
+    }
+
+    /**
+     * A11Y-1: the Accessibility Test Framework's checks over the component, reviewing and showing a
+     * tagged document.
+     *
+     * Two limits, both recorded in docs/accessibility/ACR-android.md. The framework walks *views*,
+     * and a Compose UI is one view whose content is virtual nodes, so only the host view is checked
+     * here — it is reported as unlabelled, which is what a Compose host always looks like.
+     * Compose 1.8's own `enableAccessibilityChecks` does walk the nodes and found two figures with no
+     * description (fixed), but its test APIs crash this suite, so the project stays on Compose 1.6.
+     */
+    @Test
+    fun theComponentPassesTheAccessibilityChecks() {
+        val bytes = InstrumentationRegistry.getInstrumentation().context.assets.open("tagged.pdf").use { it.readBytes() }
+        val document = runBlocking { PdfDocument.open(bytes) }
+        compose.setContent {
+            PdfViewerView(document, Modifier.fillMaxSize(), review = PdfReviewConfiguration(
+                marks = listOf(PdfMark("m1", 0, listOf(PdfRect(72f, 700f, 400f, 740f)), label = "Anna")),
+                notice = "Suggestions may be incomplete.", onApply = {}, onCancel = {}))
+        }
+        compose.waitUntil(timeoutMillis = 10_000) {
+            compose.onAllNodes(hasContentDescription("Annual report 2026")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.waitForIdle()
+
+        val root = compose.onRoot().fetchSemanticsNode().root as ViewRootForTest
+        // Collected rather than thrown, so every result can be judged and printed.
+        val results = AccessibilityValidator().setRunChecksFromRootView(true).setThrowExceptionFor(null)
+            .checkAndReturnResults(root.view)
+        // Touch targets: marks and the invisible text elements sit on lines of page text at the
+        // page's own size. WCAG 2.1 AA has no target-size criterion and WCAG 2.2's 2.5.8 exempts
+        // targets constrained by line height; zooming enlarges them. Recorded in docs/accessibility.
+        val errors = results.filter {
+            it.type == AccessibilityCheckResultType.ERROR &&
+                it.accessibilityHierarchyCheck?.simpleName != "TouchTargetSizeCheck" &&
+                it.view?.javaClass?.simpleName != "AndroidComposeView"
+        }.map { "${it.accessibilityHierarchyCheck?.simpleName}: ${it.message} — ${it.view}" }
+        assertEquals(emptyList<String>(), errors)
         document.close()
     }
 }

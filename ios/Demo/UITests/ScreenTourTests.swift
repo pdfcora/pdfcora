@@ -55,6 +55,33 @@ final class ScreenTourTests: XCTestCase {
         save(app, named: "form-filling-applied")
     }
 
+    /// A11Y-1: Xcode's accessibility audit over the component in its three uses. Every issue is
+    /// printed, then the test fails if there were any.
+    @available(iOS 17.0, *)
+    func testTheComponentPassesTheAccessibilityAudit() throws {
+        var issues: [String] = []
+        for (screen, ready) in [("Component", "zoom-in"), ("Redaction Review", "review-notice"), ("Accessible Content", "zoom-in")] {
+            // The screen on its own, so the audit covers the component rather than the demo's list.
+            let app = XCUIApplication()
+            app.launchArguments += ["-PdfiumKitScreen", screen]
+            app.launch()
+            XCTAssertTrue(app.descendants(matching: .any)[ready].waitForExistence(timeout: 20), screen)
+            Thread.sleep(forTimeInterval: 2)
+            try app.performAccessibilityAudit { issue in
+                // Hit regions are reported for review marks and for the invisible elements that
+                // expose page text. Both sit on lines of page text at the page's own size: WCAG 2.1
+                // AA has no target-size criterion, and WCAG 2.2's 2.5.8 exempts targets constrained
+                // by the line height of the text. Recorded in docs/accessibility; zooming enlarges them.
+                if issue.auditType == .hitRegion { return true }
+                let element = issue.element
+                issues.append("\(screen): \(issue.compactDescription) — type \(element?.elementType.rawValue ?? 0) id \(element?.identifier ?? "") label \(element?.label ?? "") frame \(element?.frame ?? .zero)")
+                return true
+            }
+        }
+        print("AUDIT \(issues.count) issues\n" + issues.map { "AUDIT \($0)" }.joined(separator: "\n"))
+        XCTAssertEqual(issues, [])
+    }
+
     /// A11Y-3: at the largest accessibility text size the toolbar grows with the text and the
     /// review bar's buttons stay on screen.
     func testTheComponentScalesWithTheLargestTextSize() {

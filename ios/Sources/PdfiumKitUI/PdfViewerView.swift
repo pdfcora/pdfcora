@@ -121,6 +121,7 @@ public struct PdfViewerView: View {
                         .frame(width: box.width, height: box.height)
                         .offset(x: box.minX, y: box.minY)
                         .accessibilityElement()
+                        .accessibilityLabel("\(mark.label ?? "Suggestion"), \(Self.stateName(mark.state))")
                         .accessibilityIdentifier("mark-\(mark.id)")
                         .accessibilityAddTraits(.isButton)
                         .onTapGesture { Task { await tap(mark: mark, at: CGPoint(x: box.midX, y: box.midY)) } }
@@ -150,11 +151,20 @@ public struct PdfViewerView: View {
                     .offset(x: box.minX, y: box.minY)
                     .allowsHitTesting(false)
                     .accessibilityElement()
-                    .accessibilityLabel(node.text)
+                    // An image must have a name; one the document leaves undescribed says so.
+                    .accessibilityLabel(node.text.isEmpty && node.role == .figure ? "Figure without a description" : node.text)
                     .accessibilityAddTraits(node.role == .heading ? .isHeader : node.role == .figure ? .isImage : [])
                     .accessibilityHint(Self.hint(node.role))
                     .accessibilitySortPriority(Double(accessible.leaves.count - index))
             }
+        }
+    }
+
+    private static func stateName(_ state: PdfMarkState) -> String {
+        switch state {
+        case .pending: "pending"
+        case .accepted: "accepted"
+        case .rejected: "rejected"
         }
     }
 

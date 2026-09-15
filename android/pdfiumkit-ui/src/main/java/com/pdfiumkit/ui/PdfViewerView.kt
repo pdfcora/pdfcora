@@ -170,7 +170,10 @@ fun PdfViewerView(
                             .offset { IntOffset(box.left.toInt(), box.top.toInt()) }
                             .size(with(density) { maxOf(1f, box.width()).toDp() }, with(density) { maxOf(1f, box.height()).toDp() })
                             .semantics {
-                                contentDescription = node.text
+                                // An image must have a name; one the document leaves undescribed says so.
+                                contentDescription = node.text.ifEmpty {
+                                    if (node.role == PdfAccessibleNode.Role.FIGURE) "Figure without a description" else node.text
+                                }
                                 traversalIndex = order.toFloat()
                                 when (node.role) {
                                     PdfAccessibleNode.Role.HEADING -> heading()

@@ -29,7 +29,8 @@ struct PdfReviewBar: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(configuration.notice).font(.caption).accessibilityIdentifier("review-notice")
+            Text(configuration.notice).font(.caption).fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("review-notice")
             // At accessibility text sizes the buttons stack under the counts rather than run off the edge.
             Group {
                 if dynamicTypeSize.isAccessibilitySize {
@@ -46,6 +47,8 @@ struct PdfReviewBar: View {
                 }
             }
             .font(.caption)
+            // The system tint on the toolbar background is under 4.5:1 at this size.
+            .foregroundColor(theme.toolbarForeground)
         }
         .padding(8)
         .background(theme.toolbarBackground)
@@ -58,13 +61,13 @@ struct PdfReviewBar: View {
 
     @ViewBuilder
     private var buttonList: some View {
-        Button("Accept all") { setAll(.accepted) }.accessibilityIdentifier("review-accept-all")
-        Button("Reject all") { setAll(.rejected) }.accessibilityIdentifier("review-reject-all")
+        Button("Accept all") { setAll(.accepted) }.font(.caption.weight(.semibold)).accessibilityIdentifier("review-accept-all")
+        Button("Reject all") { setAll(.rejected) }.font(.caption.weight(.semibold)).accessibilityIdentifier("review-reject-all")
         Button(configuration.applyLabel) {
             configuration.onApply(marks.filter { $0.state == .accepted }.map(\.id))
-        }.accessibilityIdentifier("review-apply")
+        }.font(.caption.weight(.semibold)).accessibilityIdentifier("review-apply")
         if let cancel = configuration.onCancel {
-            Button("Cancel", action: cancel).accessibilityIdentifier("review-cancel")
+            Button("Cancel", action: cancel).font(.caption.weight(.semibold)).accessibilityIdentifier("review-cancel")
         }
     }
 }
