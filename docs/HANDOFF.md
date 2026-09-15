@@ -36,11 +36,11 @@ because each lesson generalises. §4 lists what is open and what was parked.
 | Core structure tree read; figure alt text and decorative writes | Done, three platforms; written documents pass veraPDF PDF/UA-1 (`scripts/verapdf-ua1.sh`) |
 | `pdfiumkit-ai` Phase 3a: alt text proposals for figures in tagged PDFs | Done, three platforms, shared document in `conformance/alt-text/`; ML Kit image description route on Android not run on a real device |
 
-Test counts at the time of writing (2026-09-15): web 284, web-ai 107, browser viewer 20,
-license tool 1, iOS 174 (sweep skipped) + hung-render pass + demo UI 11 + AI 60 (two Apple
-measurements skipped), Android 147 instrumented (sweep skipped) + UI 4 + hung-render pass + 16
-JVM, AI 32 JVM + 19 instrumented. pdfsig accepts both the licensed and the trial-signed
-document on iOS and Android.
+Test counts at the time of writing (2026-09-15): web 297, web-ai 116 (one Ollama test skipped),
+browser viewer 20, license tool 1, iOS 182 (sweep skipped) + hung-render pass + demo UI 11 + AI 66
+(two Apple measurements skipped), Android 156 instrumented (sweep skipped) + UI 4 + hung-render
+pass + 16 JVM, AI 32 JVM + 25 instrumented. pdfsig accepts both the licensed and the
+trial-signed document on iOS and Android; veraPDF passes the alt text output on all three.
 
 ## 2. Running things
 
