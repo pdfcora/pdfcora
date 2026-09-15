@@ -28,8 +28,7 @@ function findPdfs(dir) {
 
 /** Exercises the whole API surface against one file, in this process. */
 async function exerciseOne(path) {
-  const { PdfDocument } = await import('../web/dist/src/index.js');
-  const { PdfError } = await import('../web/dist/src/errors.js');
+  const { PdfDocument, PdfError } = await import('../web/dist/index.js');
 
   const bytes = new Uint8Array(readFileSync(path));
   let document;

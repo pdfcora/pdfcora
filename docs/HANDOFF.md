@@ -136,7 +136,14 @@ bullets; Chrome's Summarizer and a real custom provider are untested (each needs
 multi-gigabyte download); the three decisions above; the Kotlin upgrade; and the commits
 have never been pushed — **the repository has no remote**.
 
-**Not yet tested:** the PDFium corpus sweep has only run through the web build. The iOS
+**The PDFium corpus sweep** (293 test resources) runs on all three platforms:
+`node conformance/robustness.mjs`, `scripts/sweep-ios.sh`, and
+`ANDROID_SERIAL=<device> scripts/sweep-android.sh`. On 2026-09-15 all three agreed file by
+file: 265 ok, 23 rejected, 4 typed errors, no crashes, no untyped throws, and one timeout
+(`bug_451265.pdf`, a render that hangs inside PDFium). The native sweeps are not part of
+the gates; their tests skip without a corpus.
+
+**Not yet tested:** the iOS
 viewer component is tested only end to end through the demo app's UI tests, which the iOS
 gate runs.
 

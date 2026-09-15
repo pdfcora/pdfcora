@@ -1,0 +1,1479 @@
+{
+  "corpus": "/Users/daos/Projects/Lab/pdfiumkit/src/pdfium/testing/resources",
+  "ran": 293,
+  "tally": {
+    "ok": 265,
+    "rejected": 23,
+    "typed-error": 4,
+    "untyped-throw": 0,
+    "crash": 0,
+    "timeout": 1
+  },
+  "results": [
+    {
+      "file": "344775293.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "363015187.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "about_blank.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "annot_javascript.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "annotation_fileattachment.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "annotation_highlight_long_content.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "annotation_highlight_rollover_ap.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "annotation_highlight_square_with_ap.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "annotation_ink_multiple.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "annotation_markup_multiline_no_ap.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "annotation_stamp_with_ap.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "annotiter.pdf",
+      "outcome": "ok",
+      "pageCount": 3
+    },
+    {
+      "file": "annots.pdf",
+      "outcome": "ok",
+      "pageCount": 2
+    },
+    {
+      "file": "annots_action_handling.pdf",
+      "outcome": "ok",
+      "pageCount": 2
+    },
+    {
+      "file": "bad_annots_entry.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bad_dict_keys.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bad_page_type.pdf",
+      "outcome": "ok",
+      "pageCount": 2
+    },
+    {
+      "file": "bigtable_mini.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "black.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bookmarks.pdf",
+      "outcome": "ok",
+      "pageCount": 2
+    },
+    {
+      "file": "bookmarks_circular.pdf",
+      "outcome": "ok",
+      "pageCount": 2
+    },
+    {
+      "file": "bug_1029.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_1055869.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_1058653.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "code": "passwordRequired",
+      "file": "bug_1124998.pdf",
+      "outcome": "rejected"
+    },
+    {
+      "file": "bug_113.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_1139.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_1206.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_1229106.pdf",
+      "outcome": "ok",
+      "pageCount": 4
+    },
+    {
+      "file": "bug_1265.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_1296920.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_1301.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_1302355.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_1302455.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "code": "corrupt",
+      "file": "bug_1324189.pdf",
+      "outcome": "rejected"
+    },
+    {
+      "code": "corrupt",
+      "file": "bug_1324503.pdf",
+      "outcome": "rejected"
+    },
+    {
+      "file": "bug_1327884.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_1328389.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_1333298.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_1388_2.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_1396264.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_1399.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_1477093.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_1506.pdf",
+      "outcome": "ok",
+      "pageCount": 4
+    },
+    {
+      "file": "bug_1549.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_1558.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_1574.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_1591.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_1646.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_1658.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_1768.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_1769.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_182.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_1893.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_1919.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_2034.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_213.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_2132.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_216.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "code": "corrupt",
+      "file": "bug_298.pdf",
+      "outcome": "rejected"
+    },
+    {
+      "file": "bug_306123.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "code": "corrupt",
+      "file": "bug_325_a.pdf",
+      "outcome": "rejected"
+    },
+    {
+      "code": "corrupt",
+      "file": "bug_325_b.pdf",
+      "outcome": "rejected"
+    },
+    {
+      "code": "corrupt",
+      "file": "bug_343.pdf",
+      "outcome": "rejected"
+    },
+    {
+      "file": "bug_343075986.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "code": "corrupt",
+      "file": "bug_344.pdf",
+      "outcome": "rejected"
+    },
+    {
+      "code": "corrupt",
+      "file": "bug_355.pdf",
+      "outcome": "rejected"
+    },
+    {
+      "code": "corrupt",
+      "file": "bug_360.pdf",
+      "outcome": "rejected"
+    },
+    {
+      "file": "bug_378120423.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_384770169.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_399689604.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_420508260.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_42270471.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_42271133.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "code": "20s",
+      "file": "bug_451265.pdf",
+      "outcome": "timeout"
+    },
+    {
+      "code": "corrupt",
+      "file": "bug_451830.pdf",
+      "outcome": "rejected"
+    },
+    {
+      "file": "bug_452455.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "code": "corrupt",
+      "file": "bug_454695.pdf",
+      "outcome": "rejected"
+    },
+    {
+      "file": "bug_455199.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_459580.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_481363.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_487928.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_507316.pdf",
+      "outcome": "ok",
+      "pageCount": 3
+    },
+    {
+      "code": "corrupt",
+      "file": "bug_544880.pdf",
+      "outcome": "typed-error"
+    },
+    {
+      "file": "bug_547706.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_551248.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_551460.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_552046.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_555784.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_57.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_572871.pdf",
+      "outcome": "ok",
+      "pageCount": 3
+    },
+    {
+      "file": "bug_583.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_601362.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_602650.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_620428.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_631912.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_634394.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_634716.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_642.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "code": "passwordRequired",
+      "file": "bug_644.pdf",
+      "outcome": "rejected"
+    },
+    {
+      "file": "bug_650.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_664284.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_674771.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_679649.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_680376.pdf",
+      "outcome": "ok",
+      "pageCount": 4
+    },
+    {
+      "file": "bug_707673.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_709793.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_713197.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_717.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_750568.pdf",
+      "outcome": "ok",
+      "pageCount": 4
+    },
+    {
+      "file": "bug_757705.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_765384.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_773229.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_779.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_781804.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_782596.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_821454.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_828049.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_861842.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_889099.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_890322.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_896366.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_900552.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_901654.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_901654_2.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_905142.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_921.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_925981.pdf",
+      "outcome": "ok",
+      "pageCount": 2
+    },
+    {
+      "file": "bug_972518.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "bug_xrefv4_loop.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "calculate.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "circular_viewer_ref.pdf",
+      "outcome": "ok",
+      "pageCount": 0
+    },
+    {
+      "file": "click_form.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "clip_path.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "combobox_form.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "control_characters.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "cropped_text.pdf",
+      "outcome": "ok",
+      "pageCount": 4
+    },
+    {
+      "file": "dashed_lines.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "docmdp.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "code": "corrupt",
+      "file": "document_aactions.pdf",
+      "outcome": "typed-error"
+    },
+    {
+      "file": "embedded_attachments.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "embedded_attachments_invalid_data.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "embedded_attachments_invalid_types.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "embedded_images.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "empty_xref.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "code": "passwordRequired",
+      "file": "encrypted.pdf",
+      "outcome": "rejected"
+    },
+    {
+      "code": "passwordRequired",
+      "file": "encrypted_hello_world_r2.pdf",
+      "outcome": "rejected"
+    },
+    {
+      "code": "passwordRequired",
+      "file": "encrypted_hello_world_r2_bad_okey.pdf",
+      "outcome": "rejected"
+    },
+    {
+      "code": "passwordRequired",
+      "file": "encrypted_hello_world_r3.pdf",
+      "outcome": "rejected"
+    },
+    {
+      "code": "passwordRequired",
+      "file": "encrypted_hello_world_r3_bad_okey.pdf",
+      "outcome": "rejected"
+    },
+    {
+      "code": "passwordRequired",
+      "file": "encrypted_hello_world_r5.pdf",
+      "outcome": "rejected"
+    },
+    {
+      "code": "passwordRequired",
+      "file": "encrypted_hello_world_r6.pdf",
+      "outcome": "rejected"
+    },
+    {
+      "file": "feature_linearized_loading.pdf",
+      "outcome": "ok",
+      "pageCount": 2
+    },
+    {
+      "file": "find_text_consecutive.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "font_matrix.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "font_weight.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "form_object.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "form_object_with_image.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "form_object_with_path.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "form_object_with_text.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "freetext_annotation_without_da.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "get_page_aaction.pdf",
+      "outcome": "ok",
+      "pageCount": 2
+    },
+    {
+      "file": "goto_action.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "gotoe_action.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "hebrew_mirrored.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "hello_world.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "hello_world_2_pages.pdf",
+      "outcome": "ok",
+      "pageCount": 2
+    },
+    {
+      "file": "hello_world_2_pages_custom_object.pdf",
+      "outcome": "ok",
+      "pageCount": 2
+    },
+    {
+      "file": "hello_world_2_pages_shared_resources_dict.pdf",
+      "outcome": "ok",
+      "pageCount": 2
+    },
+    {
+      "file": "hello_world_2_pages_split_streams.pdf",
+      "outcome": "ok",
+      "pageCount": 2
+    },
+    {
+      "file": "hello_world_compressed_stream.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "hello_world_split_streams.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "ink_annot.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "javascript/xfa_specific/bug_1042915.pdf",
+      "outcome": "ok",
+      "pageCount": 0
+    },
+    {
+      "file": "javascript/xfa_specific/bug_1042956.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "javascript/xfa_specific/bug_1043510.pdf",
+      "outcome": "ok",
+      "pageCount": 0
+    },
+    {
+      "file": "javascript/xfa_specific/bug_1238_2.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "javascript/xfa_specific/resolve_nodes_1.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "javascript/xfa_specific/resolve_nodes_2.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "jpx_lzw.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "js.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "latin_extended.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "launch_action.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "line_annot.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "linearized.pdf",
+      "outcome": "ok",
+      "pageCount": 3
+    },
+    {
+      "file": "linearized_bug_1055.pdf",
+      "outcome": "ok",
+      "pageCount": 3
+    },
+    {
+      "file": "links_highlights_annots.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "listbox_form.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "many_rectangles.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "marked_content_id.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "matte.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "multiple_form_types.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "multiple_graphics_states.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "named_dests.pdf",
+      "outcome": "ok",
+      "pageCount": 2
+    },
+    {
+      "code": "corrupt",
+      "file": "named_dests_old_style.pdf",
+      "outcome": "typed-error"
+    },
+    {
+      "file": "no_page_count.pdf",
+      "outcome": "ok",
+      "pageCount": 6
+    },
+    {
+      "file": "non_hex_file_id.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "nonesuch_action.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "page_labels.pdf",
+      "outcome": "ok",
+      "pageCount": 7
+    },
+    {
+      "file": "page_tree_empty_node.pdf",
+      "outcome": "ok",
+      "pageCount": 2
+    },
+    {
+      "file": "parser_rebuildxref_correct.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "code": "corrupt",
+      "file": "parser_rebuildxref_error_notrailer.pdf",
+      "outcome": "rejected"
+    },
+    {
+      "file": "pixel/bug_1087.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "pixel/bug_1287409.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "pixel/bug_1308.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "pixel/bug_1484283.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "pixel/bug_2001.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "pixel/bug_2122.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "pixel/bug_2123.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "pixel/bug_2152.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "pixel/bug_304.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "pixel/bug_332462378.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "pixel/bug_335309995.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "pixel/bug_345274934.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "pixel/bug_349972030.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "pixel/bug_512557.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "pixel/bug_603518.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "pixel/bug_828206.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "pixel/bug_830221.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "pixel/bug_867501.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "pixel/bug_925736.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "pixel/direct_content_stream.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "pixel/freetext_annotation_without_da.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "pixel/generation_numbers1.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "pixel/generation_numbers2.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "pixel/xfa_specific/barcode_test.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "pixel/xfa_specific/dynamic_list_box_allow_multiple_selection.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "pixel/xfa_specific/dynamic_password_field_background_fill.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "pixel/xfa_specific/dynamic_table_color_and_width.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "pixel/xfa_specific/resolve_nodes_0.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "pixel/xfa_specific/standard_symbols.pdf",
+      "outcome": "ok",
+      "pageCount": 2
+    },
+    {
+      "file": "pixel/xfa_specific/static_list_box_caption.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "pixel/xfa_specific/static_password_field_rotate.pdf",
+      "outcome": "ok",
+      "pageCount": 2
+    },
+    {
+      "file": "pixel/xfa_specific/xfa_node_caption.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "polygon_annot.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "rectangles.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "rectangles_double_flipped.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "rectangles_multi_pages.pdf",
+      "outcome": "ok",
+      "pageCount": 5
+    },
+    {
+      "file": "rectangles_object_zero.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "rectangles_with_leaky_ctm.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "redact_annot.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "redirect.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "repeat_viewer_ref.pdf",
+      "outcome": "ok",
+      "pageCount": 0
+    },
+    {
+      "file": "rotated_image.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "rotated_text.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "rotated_text_90.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "signature_no_sub_filter.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "signature_reason.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "simple_thumbnail.pdf",
+      "outcome": "ok",
+      "pageCount": 2
+    },
+    {
+      "file": "simple_xfa.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "split_streams.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "tagged_actual_text.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "tagged_alt_text.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "tagged_marked_content.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "tagged_mcr_multipage.pdf",
+      "outcome": "ok",
+      "pageCount": 2
+    },
+    {
+      "file": "tagged_mcr_objr.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "tagged_nested.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "tagged_table.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "tagged_table_bad_elem.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "tagged_table_bad_parent.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "text_color.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "text_font.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "text_form.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "text_form_color.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "text_form_multiple.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "text_form_negative_fontsize.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "text_in_page_marked.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "text_in_page_marked_indirect.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "text_render_mode.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "thumbnail_with_empty_stream.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "thumbnail_with_no_filters.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "code": "corrupt",
+      "file": "trailer_as_hexstring.pdf",
+      "outcome": "rejected"
+    },
+    {
+      "file": "trailer_end_trailing_space.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "code": "corrupt",
+      "file": "trailer_unterminated.pdf",
+      "outcome": "rejected"
+    },
+    {
+      "file": "two_signatures.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "code": "corrupt",
+      "file": "unsupported_feature.pdf",
+      "outcome": "typed-error"
+    },
+    {
+      "file": "uri_action.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "uri_action_nonascii.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "use_outlines.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "utf-8.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "version_in_catalog.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "vertical_text.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "viewer_pref_types.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "viewer_ref.pdf",
+      "outcome": "ok",
+      "pageCount": 5
+    },
+    {
+      "file": "weblinks.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "weblinks_across_lines.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "xfa/email_recommended.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "xfa/xfa_break_before_after.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "xfa/xfa_combobox.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "xfa/xfa_date_time_edit.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "xfa/xfa_image_edit.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "xfa/xfa_multiline_textfield.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    },
+    {
+      "file": "zero_length_stream.pdf",
+      "outcome": "ok",
+      "pageCount": 1
+    }
+  ]
+}
