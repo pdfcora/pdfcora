@@ -135,13 +135,13 @@ public struct PdfiumAI: Sendable {
 
             return await resolveRoutes(
                 onDevice: appleTokens.map { tokens in {
-                    let text = try await SummaryText.summarise(texts, limit: limit(tokens)) { part in
+                    let text = try await SummaryText.summariseInWindows(texts, limit: limit(tokens)) { part in
                         try await AppleModel.respond(to: SummaryText.prompt(part, style: style)) ?? ""
                     }
                     return PdfSummary(text: text, pagesWithoutText: pagesWithoutText)
                 } },
                 customProvider: provider.map { provider in {
-                    let text = try await SummaryText.summarise(texts, limit: limit(providerTokens)) { part in
+                    let text = try await SummaryText.summariseInWindows(texts, limit: limit(providerTokens)) { part in
                         try await provider.generate(PdfAiRequest(prompt: SummaryText.prompt(part, style: style)))
                             .text.trimmingCharacters(in: .whitespacesAndNewlines)
                     }

@@ -6,7 +6,7 @@ import {
 import { type PdfAiAvailability, unavailable } from './availability.js';
 import { chromeSummarizerAvailability, openChromeSummarizer, prepareChromeSummarizer } from './chrome.js';
 import { type PdfAiProvider, type PdfAiResult, resolve } from './provider.js';
-import { type PdfSummary, type PdfSummaryStyle, summariseWithin, summaryPrompt } from './summaries.js';
+import { type PdfSummary, type PdfSummaryStyle, summariseInWindows, summaryPrompt } from './summaries.js';
 import { type PdfPageRange, type PdfTextIndex, indexDocument, readPages } from './text.js';
 
 export * from './availability.js';
@@ -121,7 +121,7 @@ export class PdfiumAI {
           const summarizer = await openChromeSummarizer(style, options.language);
           if (!summarizer) return null;
           try {
-            return { text: await summariseWithin(texts, summarizer.limitChars, summarizer.summarise), pagesWithoutText };
+            return { text: await summariseInWindows(texts, summarizer.limitChars, summarizer.summarise), pagesWithoutText };
           } finally {
             summarizer.close();
           }
@@ -129,7 +129,7 @@ export class PdfiumAI {
         customProvider: provider
           ? async () => {
               const limitChars = Math.floor((this.options.providerContextTokens ?? 4096) * 3 * 0.6);
-              const text = await summariseWithin(texts, limitChars, async (part) =>
+              const text = await summariseInWindows(texts, limitChars, async (part) =>
                 (await provider.generate({ prompt: summaryPrompt(part, style) })).text.trim());
               return { text, pagesWithoutText };
             }

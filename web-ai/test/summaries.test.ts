@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 
 import { PdfDocument } from '@pdfiumkit/web';
 import { PdfiumAI } from '../dist/index.js';
-import { summariseWithin } from '../dist/summaries.js';
+import { summariseInWindows } from '../dist/summaries.js';
 
 const FIXTURES = new URL('../../conformance/fixtures/', import.meta.url).pathname;
 const contract = () => PdfDocument.open(new Uint8Array(readFileSync(`${FIXTURES}contract.pdf`)));
@@ -38,24 +38,62 @@ function installChrome(state: 'available' | 'downloadable' | 'unavailable', opti
 describe('summaries', () => {
   afterEach(() => { delete (globalThis as { Summarizer?: unknown }).Summarizer; });
 
-  test('long text is split so no call exceeds the limit, then combined (SUM-2)', async () => {
-    const pages = Array.from({ length: 50 }, (_, i) => `Page ${i}. ` + 'Clause text goes here. '.repeat(40));
-    const inputs: string[] = [];
-    const limit = 2_000;
-    const result = await summariseWithin(pages, limit, async (text) => {
-      inputs.push(text);
-      return `S${inputs.length}: ${text.slice(0, 40)}`;
-    });
+  // Long documents are read in windows: each call carries the summary so far and the next
+  // stretch of text, so later parts are summarised knowing what came before (SUM-2).
+  const pages = Array.from({ length: 30 }, (_, i) => `Marker${i} opens this page. ` + 'Clause text goes here. '.repeat(40));
+  const NEXT = 'Next part:\n';
 
-    assert.ok(inputs.length > 1, 'fifty long pages cannot fit one call');
-    for (const input of inputs) assert.ok(input.length <= limit, `a call received ${input.length} characters`);
-    assert.ok(result.startsWith('S'), 'the result is the final combined summary');
+  /** The page markers in the document text of each call, leaving out the summary it carries. */
+  const markers = (inputs: readonly string[]) => inputs
+    .map((input) => input.includes(NEXT) ? input.slice(input.indexOf(NEXT) + NEXT.length) : input)
+    .flatMap((text) => [...text.matchAll(/Marker(\d+)/g)].map((m) => Number(m[1])));
+
+  async function windows(limit: number, reply: (input: string, call: number) => string) {
+    const inputs: string[] = [];
+    const outputs: string[] = [];
+    const result = await summariseInWindows(pages, limit, async (input: string) => {
+      inputs.push(input);
+      outputs.push(reply(input, inputs.length));
+      return outputs[outputs.length - 1]!;
+    });
+    return { inputs, outputs, result };
+  }
+
+  test('every call stays within the limit and the last summary is the result', async () => {
+    const { inputs, outputs, result } = await windows(2_000, (_, call) => `S${call}`);
+    assert.ok(inputs.length > 1, 'thirty long pages cannot fit one window');
+    for (const input of inputs) assert.ok(input.length <= 2_000, `a call received ${input.length} characters`);
+    assert.equal(result, outputs[outputs.length - 1]);
   });
 
-  test('a single page longer than the limit is split at sentences', async () => {
+  test('each window after the first carries the summary of everything before it', async () => {
+    const { inputs, outputs } = await windows(2_000, (_, call) => `S${call}`);
+    assert.ok(!inputs[0]!.includes(NEXT), 'the first window is plain text');
+    for (let i = 1; i < inputs.length; i++) {
+      assert.ok(inputs[i]!.startsWith(`Summary of the earlier parts:\n${outputs[i - 1]}\n\n${NEXT}`), `call ${i + 1}`);
+    }
+  });
+
+  test('every page is read exactly once, in order', async () => {
+    const { inputs } = await windows(2_000, (_, call) => `S${call}`);
+    assert.deepEqual(markers(inputs), pages.map((_, i) => i));
+  });
+
+  test('a summary that grows too long is condensed before it crowds out the text', async () => {
+    const limit = 2_000;
+    // A summariser that keeps almost everything, so the summary soon fills the window.
+    const { inputs, result } = await windows(limit, (input) => 'kept. '.repeat(Math.floor(input.length / 7)));
+    for (const input of inputs) assert.ok(input.length <= limit, `a call received ${input.length} characters`);
+    assert.ok(inputs.some((input) => !input.includes(NEXT) && input.startsWith('kept.')), 'the summary was condensed');
+    assert.deepEqual(markers(inputs), pages.map((_, i) => i), 'no page is lost to condensing');
+    assert.ok(result.length > 0);
+  });
+
+  test('a document that fits one window is one call with the plain text', async () => {
     const inputs: string[] = [];
-    await summariseWithin(['First sentence here. '.repeat(200)], 300, async (t) => { inputs.push(t); return 'ok'; });
-    for (const input of inputs) assert.ok(input.length <= 300);
+    const result = await summariseInWindows(['A short page.', 'Another page.'], 2_000, async (t: string) => { inputs.push(t); return 'ok'; });
+    assert.deepEqual(inputs, ['A short page.\n\nAnother page.']);
+    assert.equal(result, 'ok');
   });
 
   test('on desktop Chrome the on-device summariser is used and named', async () => {

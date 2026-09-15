@@ -120,16 +120,16 @@ class PdfiumAI(
             return resolveRoutes(
                 onDevice = {
                     MlKitSummarizer.open(options.context, style, language)?.let { summarise ->
-                        SummaryText.summariseAtLeast(texts, MlKitSummarizer.LIMIT_CHARS, MlKitSummarizer.MINIMUM_CHARS, summarise)
+                        SummaryText.summariseInWindows(texts, MlKitSummarizer.LIMIT_CHARS, MlKitSummarizer.MINIMUM_CHARS, summarise)
                             ?.let { PdfSummary(it, pagesWithoutText) }
                     }
                 },
                 customProvider = provider?.let {
                     {
                         val limit = (options.providerContextTokens * GroundedAnswers.CHARS_PER_TOKEN * 0.6).toInt()
-                        PdfSummary(SummaryText.summarise(texts, limit) { part ->
+                        PdfSummary(SummaryText.summariseInWindows(texts, limit) { part ->
                             provider.generate(PdfAiRequest(SummaryText.prompt(part, style))).text.trim()
-                        }, pagesWithoutText)
+                        }!!, pagesWithoutText)
                     }
                 },
             )

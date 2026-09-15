@@ -10,42 +10,46 @@ public struct PdfSummary: Sendable, Equatable {
 }
 
 enum SummaryText {
+    private static let earlier = "Summary of the earlier parts:\n"
+    private static let next = "\n\nNext part:\n"
+
     /// Summarises text of any length with a summariser that accepts at most `limit` UTF-16
-    /// units at a time (SUM-2). Pages are packed into parts that fit, each part is
-    /// summarised, and the summaries are combined the same way until one call covers
-    /// everything.
-    static func summarise(_ pages: [String], limit: Int,
-                          _ summarise: (String) async throws -> String) async throws -> String {
-        var parts = pack(pages.flatMap { split($0, limit: limit) }, limit: limit)
-        guard !parts.isEmpty else { return "" }
-        while parts.count > 1 {
-            var summaries: [String] = []
-            for part in parts { summaries.append(try await summarise(part)) }
-            let next = pack(summaries.flatMap { split($0, limit: limit) }, limit: limit)
-            // Summaries that no longer shrink would loop forever.
-            if next.joined().utf16.count >= parts.joined().utf16.count {
-                parts = [String(next.joined(separator: "\n\n").utf16.prefix(limit)) ?? ""]
-                break
+    /// units at a time (SUM-2), reading it in windows.
+    ///
+    /// The first window is plain text. Each later window carries the summary so far followed
+    /// by the next stretch of text, so each part is summarised knowing what came before, and
+    /// the last summary covers the whole document. Text is split at sentences into pieces of
+    /// at most a quarter of the limit, and a summary that would leave no room for a piece is
+    /// condensed first — and cut, if condensing does not shrink it enough.
+    static func summariseInWindows(_ pages: [String], limit: Int,
+                                   _ summarise: (String) async throws -> String) async throws -> String {
+        let pieceLength = max(1, limit / 4)
+        let pieces = pages.flatMap { split($0, limit: pieceLength) }
+        let labels = earlier.utf16.count + next.utf16.count
+        var summary: String?
+        var index = 0
+
+        while index < pieces.count {
+            if let current = summary, labels + current.utf16.count + pieceLength > limit {
+                let condensed = try await summarise(prefix(current, limit))
+                summary = prefix(condensed, max(0, limit - labels - pieceLength))
             }
-            parts = next
+            let room = limit - (summary.map { labels + $0.utf16.count } ?? 0)
+            var window = ""
+            while index < pieces.count {
+                let joined = window.isEmpty ? pieces[index] : window + "\n\n" + pieces[index]
+                if joined.utf16.count > room { break }
+                window = joined
+                index += 1
+            }
+            summary = try await summarise(summary.map { earlier + $0 + next + window } ?? window)
         }
-        return try await summarise(parts[0])
+        return summary ?? ""
     }
 
-    private static func pack(_ pieces: [String], limit: Int) -> [String] {
-        var parts: [String] = []
-        var current = ""
-        for piece in pieces {
-            let joined = current.isEmpty ? piece : current + "\n\n" + piece
-            if joined.utf16.count <= limit {
-                current = joined
-            } else {
-                if !current.isEmpty { parts.append(current) }
-                current = piece
-            }
-        }
-        if !current.isEmpty { parts.append(current) }
-        return parts
+    private static func prefix(_ text: String, _ length: Int) -> String {
+        let units = NSString(string: text)
+        return units.length <= length ? text : units.substring(to: length)
     }
 
     private static func split(_ text: String, limit: Int) -> [String] {

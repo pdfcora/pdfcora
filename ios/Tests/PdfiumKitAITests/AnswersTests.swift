@@ -237,17 +237,73 @@ final class AnswersTests: XCTestCase {
 
     // MARK: - Summaries
 
-    func testLongTextIsSplitSoNoCallExceedsTheLimit() async throws {
-        let pages = (0..<50).map { "Page \($0). " + String(repeating: "Clause text goes here. ", count: 40) }
-        let inputs = Recorder()
-        let result = try await SummaryText.summarise(pages, limit: 2_000) { text in
-            await inputs.add(text)
-            return "S: " + String(text.prefix(40))
+    // Long documents are read in windows: each call carries the summary so far and the next
+    // stretch of text, so later parts are summarised knowing what came before (SUM-2).
+    private static let pages = (0..<30).map { "Marker\($0) opens this page. " + String(repeating: "Clause text goes here. ", count: 40) }
+    private static let next = "Next part:\n"
+
+    private func windows(_ limit: Int, reply: @escaping @Sendable (String, Int) -> String) async throws
+        -> (inputs: [String], outputs: [String], result: String) {
+        let calls = Recorder()
+        let outputs = Recorder()
+        let result = try await SummaryText.summariseInWindows(Self.pages, limit: limit) { input in
+            await calls.add(input)
+            let output = reply(input, await calls.calls.count)
+            await outputs.add(output)
+            return output
         }
-        let seen = await inputs.calls
-        XCTAssertGreaterThan(seen.count, 1)
-        for input in seen { XCTAssertLessThanOrEqual(input.utf16.count, 2_000) }
-        XCTAssertTrue(result.hasPrefix("S"))
+        return (await calls.calls, await outputs.calls, result)
+    }
+
+    /// The page markers in the document text of each call, leaving out the summary it carries.
+    private static func markers(_ inputs: [String]) -> [Int] {
+        inputs.map { input in input.range(of: next).map { String(input[$0.upperBound...]) } ?? input }
+            .flatMap { text in
+                let regex = try! NSRegularExpression(pattern: "Marker(\\d+)")
+                return regex.matches(in: text, range: NSRange(text.startIndex..., in: text))
+                    .map { Int((text as NSString).substring(with: $0.range(at: 1)))! }
+            }
+    }
+
+    func testEveryWindowStaysWithinTheLimitAndTheLastSummaryIsTheResult() async throws {
+        let (inputs, outputs, result) = try await windows(2_000) { _, call in "S\(call)" }
+        XCTAssertGreaterThan(inputs.count, 1, "thirty long pages cannot fit one window")
+        for input in inputs { XCTAssertLessThanOrEqual(input.utf16.count, 2_000) }
+        XCTAssertEqual(result, outputs.last)
+    }
+
+    func testEachWindowAfterTheFirstCarriesTheSummaryOfEverythingBeforeIt() async throws {
+        let (inputs, outputs, _) = try await windows(2_000) { _, call in "S\(call)" }
+        XCTAssertFalse(inputs[0].contains(Self.next), "the first window is plain text")
+        for i in 1..<inputs.count {
+            XCTAssertTrue(inputs[i].hasPrefix("Summary of the earlier parts:\n\(outputs[i - 1])\n\n\(Self.next)"), "call \(i + 1)")
+        }
+    }
+
+    func testEveryPageIsReadExactlyOnceInOrder() async throws {
+        let (inputs, _, _) = try await windows(2_000) { _, call in "S\(call)" }
+        XCTAssertEqual(Self.markers(inputs), Array(0..<Self.pages.count))
+    }
+
+    func testASummaryThatGrowsTooLongIsCondensedBeforeItCrowdsOutTheText() async throws {
+        let (inputs, _, result) = try await windows(2_000) { input, _ in
+            String(repeating: "kept. ", count: input.utf16.count / 7)
+        }
+        for input in inputs { XCTAssertLessThanOrEqual(input.utf16.count, 2_000) }
+        XCTAssertTrue(inputs.contains { !$0.contains(Self.next) && $0.hasPrefix("kept.") }, "the summary was condensed")
+        XCTAssertEqual(Self.markers(inputs), Array(0..<Self.pages.count), "no page is lost to condensing")
+        XCTAssertFalse(result.isEmpty)
+    }
+
+    func testADocumentThatFitsOneWindowIsOneCallWithThePlainText() async throws {
+        let calls = Recorder()
+        let result = try await SummaryText.summariseInWindows(["A short page.", "Another page."], limit: 2_000) {
+            await calls.add($0)
+            return "ok"
+        }
+        let seen = await calls.calls
+        XCTAssertEqual(seen, ["A short page.\n\nAnother page."])
+        XCTAssertEqual(result, "ok")
     }
 
     func testAProviderSummarisesAPageRange() async throws {

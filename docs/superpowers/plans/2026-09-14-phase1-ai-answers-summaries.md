@@ -36,8 +36,11 @@ become rectangles from the core's per-character boxes, one per line (ANS-5). Pag
 no text layer are reported (ANS-6).
 
 **Summaries (SUM).** Whole document or page range, paragraph or key points (SUM-1). Long
-input is packed into parts under the summariser's limit, summarised, and combined until
-one call covers everything (SUM-2). An unsupported language is
+input is read in windows (SUM-2): the first window is plain text, and each later one
+carries the summary so far plus the next stretch of text, so the last summary covers the
+whole document and each part is summarised knowing what came before. A summary that would
+crowd out the text is condensed first. This replaced summarising parts separately and then
+combining their summaries. An unsupported language is
 `unavailable(languageNotSupported)` when the host names the language (SUM-3).
 
 | Route | iOS | Android | Web |
@@ -93,7 +96,13 @@ the SDK's `summaries.summarize()` on the contract returned accurate results from
 input (`REQUEST_TOO_LARGE`). The SDK had assumed 9,000 from the documented token count; it
 now uses 7,860. On the phone, 7,860 characters summarise and 7,861 are refused, and a
 40,000-character, 20-page text went through the SDK's splitting and combining in 14 s:
-eight calls, every one between 400 and 7,860 characters.
+eight calls, every one between 400 and 7,860 characters. (That run predates windows; the
+windowed path has not yet been run on the phone.)
+
+Windows against Apple's real model: a 36,000-character, 30-page text of ten repeating
+topics went through three windows of 14,286, 14,031 and 9,137 characters (limit 14,745) in
+22 s, and the summary named all ten topics, early pages and late. Its bullets came back as
+"- - ": the model re-bullets the summary it was given.
 
 Code 30 now surfaces as a new reason on every platform, `backgroundUseBlocked`, through a
 `PdfAiUnavailableError` a route can throw to name why it failed; a later route that answers
@@ -104,7 +113,8 @@ Two things the phone did show, both fixed on every platform they apply to:
 
 - **ML Kit refuses article input under 400 characters.** Text that short is no longer
   sent: the on-device route steps aside for the next one, and a short part of a longer
-  document — a short page, or summaries being combined — passes through as it is.
+  document — a window that would be that short — is not sent, and its text is kept after the
+  summary as it is.
 - **A route that throws was reported as `noProvider`**, telling the integrator to
   configure something that was not missing. When a route throws and nothing else
   answers, the reason is now `requestFailed`.

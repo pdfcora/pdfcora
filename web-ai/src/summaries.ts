@@ -7,50 +7,45 @@ export interface PdfSummary {
   readonly pagesWithoutText: readonly number[];
 }
 
+const EARLIER = 'Summary of the earlier parts:\n';
+const NEXT = '\n\nNext part:\n';
+
 /**
  * Summarises text of any length with a summariser that accepts at most `limitChars` at a
- * time (SUM-2).
+ * time (SUM-2), reading it in windows.
  *
- * Pages are packed into parts that fit, each part is summarised, and the summaries are
- * combined the same way until one call covers everything. A single page too long for
- * the limit is split at sentence boundaries, and a sentence too long at the limit itself.
+ * The first window is plain text. Each later window carries the summary so far followed by
+ * the next stretch of text, so each part is summarised knowing what came before, and the
+ * last summary covers the whole document. Text is split at sentences into pieces of at most
+ * a quarter of the limit, and a summary that would leave no room for a piece is condensed
+ * first — and cut, if condensing does not shrink it enough.
  */
-export async function summariseWithin(
+export async function summariseInWindows(
   pages: readonly string[],
   limitChars: number,
   summarise: (text: string) => Promise<string>,
 ): Promise<string> {
-  let parts = pack(pages.flatMap((page) => split(page, limitChars)), limitChars);
-  if (parts.length === 0) return '';
-  while (parts.length > 1) {
-    const summaries: string[] = [];
-    for (const part of parts) summaries.push(await summarise(part));
-    const next = pack(summaries.flatMap((s) => split(s, limitChars)), limitChars);
-    // Summaries that no longer shrink would loop forever; a summariser that returns its
-    // input is broken, and the best available answer is to stop.
-    if (next.join('').length >= parts.join('').length) {
-      parts = [next.join('\n\n').slice(0, limitChars)];
-      break;
-    }
-    parts = next;
-  }
-  return summarise(parts[0]!);
-}
+  const pieceChars = Math.max(1, Math.floor(limitChars / 4));
+  const pieces = pages.flatMap((page) => split(page, pieceChars));
+  let summary: string | null = null;
+  let next = 0;
 
-function pack(pieces: readonly string[], limitChars: number): string[] {
-  const parts: string[] = [];
-  let current = '';
-  for (const piece of pieces) {
-    const joined = current ? `${current}\n\n${piece}` : piece;
-    if (joined.length <= limitChars) {
-      current = joined;
-    } else {
-      if (current) parts.push(current);
-      current = piece;
+  while (next < pieces.length) {
+    if (summary !== null && EARLIER.length + summary.length + NEXT.length + pieceChars > limitChars) {
+      summary = await summarise(summary.slice(0, limitChars));
+      summary = summary.slice(0, Math.max(0, limitChars - EARLIER.length - NEXT.length - pieceChars));
     }
+    const room = limitChars - (summary === null ? 0 : EARLIER.length + summary.length + NEXT.length);
+    let window = '';
+    while (next < pieces.length) {
+      const joined = window ? `${window}\n\n${pieces[next]}` : pieces[next]!;
+      if (joined.length > room) break;
+      window = joined;
+      next++;
+    }
+    summary = await summarise(summary === null ? window : `${EARLIER}${summary}${NEXT}${window}`);
   }
-  if (current) parts.push(current);
-  return parts;
+  return summary ?? '';
 }
 
 function split(text: string, limitChars: number): string[] {

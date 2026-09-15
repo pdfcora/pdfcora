@@ -93,47 +93,91 @@ class AnswersLogicTest {
 
     // MARK: - Summaries
 
-    @Test
-    fun longTextIsSplitSoNoCallExceedsTheLimit() = runTest {
-        val pages = (0 until 50).map { "Page $it. " + "Clause text goes here. ".repeat(40) }
+    // Long documents are read in windows: each call carries the summary so far and the next
+    // stretch of text, so later parts are summarised knowing what came before (SUM-2).
+    private val pages = (0 until 30).map { "Marker$it opens this page. " + "Clause text goes here. ".repeat(40) }
+    private val next = "Next part:\n"
+
+    private fun markers(inputs: List<String>): List<Int> = inputs
+        .map { if (it.contains(next)) it.substringAfter(next) else it }
+        .flatMap { text -> Regex("""Marker(\d+)""").findAll(text).map { it.groupValues[1].toInt() } }
+
+    private suspend fun windows(limit: Int, reply: (String, Int) -> String): Triple<List<String>, List<String>, String?> {
         val inputs = mutableListOf<String>()
-        val result = SummaryText.summarise(pages, 2_000) { text ->
-            inputs += text
-            "S${inputs.size}: ${text.take(40)}"
+        val outputs = mutableListOf<String>()
+        val result = SummaryText.summariseInWindows(pages, limit) { input ->
+            inputs += input
+            reply(input, inputs.size).also { outputs += it }
         }
-        assertTrue(inputs.size > 1)
+        return Triple(inputs, outputs, result)
+    }
+
+    @Test
+    fun everyWindowStaysWithinTheLimitAndTheLastSummaryIsTheResult() = runTest {
+        val (inputs, outputs, result) = windows(2_000) { _, call -> "S$call" }
+        assertTrue("thirty long pages cannot fit one window", inputs.size > 1)
         for (input in inputs) assertTrue("a call received ${input.length} characters", input.length <= 2_000)
-        assertTrue(result.startsWith("S"))
+        assertEquals(outputs.last(), result)
+    }
+
+    @Test
+    fun eachWindowAfterTheFirstCarriesTheSummaryOfEverythingBeforeIt() = runTest {
+        val (inputs, outputs, _) = windows(2_000) { _, call -> "S$call" }
+        assertFalse("the first window is plain text", inputs[0].contains(next))
+        for (i in 1 until inputs.size) {
+            assertTrue("call ${i + 1}", inputs[i].startsWith("Summary of the earlier parts:\n${outputs[i - 1]}\n\n$next"))
+        }
+    }
+
+    @Test
+    fun everyPageIsReadExactlyOnceInOrder() = runTest {
+        val (inputs, _, _) = windows(2_000) { _, call -> "S$call" }
+        assertEquals(pages.indices.toList(), markers(inputs))
+    }
+
+    @Test
+    fun aSummaryThatGrowsTooLongIsCondensedBeforeItCrowdsOutTheText() = runTest {
+        val (inputs, _, result) = windows(2_000) { input, _ -> "kept. ".repeat(input.length / 7) }
+        for (input in inputs) assertTrue("a call received ${input.length} characters", input.length <= 2_000)
+        assertTrue("the summary was condensed", inputs.any { !it.contains(next) && it.startsWith("kept.") })
+        assertEquals("no page is lost to condensing", pages.indices.toList(), markers(inputs))
+        assertFalse(result.isNullOrEmpty())
+    }
+
+    @Test
+    fun aDocumentThatFitsOneWindowIsOneCallWithThePlainText() = runTest {
+        val inputs = mutableListOf<String>()
+        val result = SummaryText.summariseInWindows(listOf("A short page.", "Another page."), 2_000) { inputs += it; "ok" }
+        assertEquals(listOf("A short page.\n\nAnother page."), inputs)
+        assertEquals("ok", result)
     }
 
     /** ML Kit refuses article input under 400 characters, measured on a phone. */
     private suspend fun mlKitLike(text: String): String {
         if (text.length < 400) throw IllegalArgumentException("Input text length is smaller than the minimum of 400")
-        return "- summary of ${text.length} characters"
+        return "S"
     }
 
     @Test
     fun textShorterThanTheMinimumIsNotSentAndTheRouteStepsAside() = runTest {
         var calls = 0
-        val result = SummaryText.summariseAtLeast(listOf("A short page."), 9_000, 400) { calls++; mlKitLike(it) }
+        val result = SummaryText.summariseInWindows(listOf("A short page."), 7_860, minimum = 400) { calls++; mlKitLike(it) }
         assertNull(result)
         assertEquals(0, calls)
     }
 
     @Test
-    fun shortPartsOfALongDocumentPassThroughInsteadOfFailing() = runTest {
-        // Long pages, whose short bullet summaries are then combined: the combining call
-        // is well under 400 characters and would be refused.
-        val pages = (0 until 6).map { "Page $it. " + "Clause text goes here. ".repeat(60) }
-        val result = SummaryText.summariseAtLeast(pages + "A short last page.", 2_000, 400, ::mlKitLike)
-        assertNotNull(result)
-        assertTrue(result!!.contains("summary of"))
-    }
-
-    @Test
-    fun aSinglePageLongerThanTheLimitIsSplitAtSentences() = runTest {
+    fun aWindowUnderTheMinimumIsNotSentAndItsTextIsKept() = runTest {
+        // Four pages fill the first window; the fifth, with a one-letter summary, makes a
+        // second window far under 400 characters.
+        val long = (0 until 4).map { "Page $it. " + "Clause text goes here. ".repeat(20) }
+        val limit = long.joinToString("\n\n").length
         val inputs = mutableListOf<String>()
-        SummaryText.summarise(listOf("First sentence here. ".repeat(200)), 300) { inputs += it; "ok" }
-        for (input in inputs) assertTrue(input.length <= 300)
+        val result = SummaryText.summariseInWindows(long + "Marker99 is short.", limit, minimum = 400) {
+            inputs += it
+            mlKitLike(it)
+        }
+        assertEquals(1, inputs.size)
+        assertEquals("S\n\nMarker99 is short.", result)
     }
 }
