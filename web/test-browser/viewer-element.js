@@ -137,6 +137,20 @@ try {
   } catch (error) {
     check('mounting a closed document rejects with closed', error?.code === 'closed', String(error));
   }
+
+  // WebMCP (Chrome behind --enable-blink-features=WebMCP): the agent tools are registered and run.
+  check('the browser has WebMCP', Boolean(document.modelContext));
+  if (document.modelContext) {
+    const ai = await import('../../web-ai/dist/index.js');
+    const unregister = ai.registerWebMcpTools(new ai.PdfAgentSession(await open()));
+    const tools = await document.modelContext.getTools();
+    const info = tools.find((t) => t.name === 'pdf_document_info');
+    check('the agent tools are registered with WebMCP', tools.length === ai.agentTools.length && info, tools.map((t) => t.name).join(','));
+    const answer = info ? JSON.parse(JSON.parse(await document.modelContext.executeTool(info, '{}')).content[0].text) : null;
+    check('a WebMCP call runs a tool on the document', answer?.pageCount === 1, JSON.stringify(answer));
+    unregister();
+    check('unregistering removes the tools', (await document.modelContext.getTools()).length === 0);
+  }
 } catch (error) {
   check('the tests ran to the end', false, String(error?.stack ?? error));
 }

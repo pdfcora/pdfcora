@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Runs the web tests that need a real browser — the viewer component draws on a canvas
 # and lays out a toolbar, and Node has no DOM — in headless Chrome at a device pixel ratio
-# of 2. Build web/dist first (cd web && npm run build).
+# of 2. Build web/dist and web-ai/dist first (npm run build in each). WebMCP is a Blink
+# feature behind a flag, enabled here so the agent tools can be registered for real.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -30,7 +31,7 @@ trap 'kill $server 2>/dev/null; wait $server 2>/dev/null || true; pkill -f "user
 for _ in $(seq 1 20); do [ -s "$work/port" ] && break; sleep 0.2; done
 
 # The page posts its report when it finishes. Headless Chrome is not relied on to exit.
-"$CHROME" --headless=new --disable-gpu --user-data-dir="$work/profile" --force-device-scale-factor=2 \
+"$CHROME" --headless=new --disable-gpu --enable-blink-features=WebMCP --user-data-dir="$work/profile" --force-device-scale-factor=2 \
     --window-size=800,800 "http://127.0.0.1:$(cat "$work/port")/web/test-browser/viewer-element.html" \
     > /dev/null 2>&1 &
 # The first run after a rebuild has twice produced no result within 60 s; 120 s has not failed.
