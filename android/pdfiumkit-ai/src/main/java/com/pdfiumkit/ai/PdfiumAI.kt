@@ -61,6 +61,20 @@ class PdfiumAI(
      */
     val redactions = Redactions()
 
+    /**
+     * Proposes values for the document's form fields from a profile the host passes in (FORM).
+     * The synonym list runs on every device; the custom provider matches fields it cannot.
+     * The profile is not stored. Nothing is written until apply.
+     */
+    val forms = Forms()
+
+    inner class Forms {
+        suspend fun propose(
+            profile: Map<com.pdfiumkit.ai.forms.PdfProfileKey, String>,
+            pages: IntRange? = null,
+        ): com.pdfiumkit.ai.forms.PdfFormProposals = com.pdfiumkit.ai.forms.proposeFormValues(this@PdfiumAI, profile, pages)
+    }
+
     inner class Redactions {
         suspend fun suggest(pages: IntRange? = null, categories: Set<PdfRedactionCategory>? = null): PdfRedactionReview =
             suggestRedactions(this@PdfiumAI, pages, categories)

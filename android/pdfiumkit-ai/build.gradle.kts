@@ -36,6 +36,7 @@ android {
     sourceSets["androidTest"].assets.srcDirs(
         rootProject.projectDir.parentFile.resolve("conformance/fixtures"),
         rootProject.projectDir.parentFile.resolve("conformance/redaction"),
+        rootProject.projectDir.parentFile.resolve("conformance/forms"),
     )
 }
 
