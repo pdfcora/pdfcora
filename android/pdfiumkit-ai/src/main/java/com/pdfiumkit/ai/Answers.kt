@@ -93,20 +93,24 @@ internal object GroundedAnswers {
     ): PdfAnswer {
         if (reply.citations.isEmpty()) return PdfAnswer.NotFound(index.pagesWithoutText)
         val citations = mutableListOf<PdfCitation>()
+        var verified = 0
         for (cited in reply.citations) {
             val candidates = passages.filter { it.id == cited.passage } + passages.filter { it.id != cited.passage }
             val (passage, found) = candidates.firstNotNullOfOrNull { candidate ->
                 locateQuote(candidate.text, cited.quote)?.let { candidate to it }
             } ?: continue
+            verified++
             val start = passage.start + found.first
             val end = passage.start + found.last + 1
+            // A model may cite one sentence several times; it is one highlight.
+            if (citations.any { it.pageIndex == passage.pageIndex && it.start == start && it.end == end }) continue
             val page = index.pages.first { it.pageIndex == passage.pageIndex }
             citations += PdfCitation(passage.pageIndex, start, end,
                                      TextLayer.rects(document, passage.pageIndex, start, end),
                                      page.text.substring(start, end))
         }
         return PdfAnswer.Answered(reply.answer, citations,
-                                  citations.isNotEmpty() && citations.size == reply.citations.size,
+                                  verified == reply.citations.size,
                                   index.pagesWithoutText)
     }
 }

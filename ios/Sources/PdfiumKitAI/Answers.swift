@@ -94,13 +94,17 @@ enum GroundedAnswers {
             return .notFound(pagesWithoutText: index.pagesWithoutText)
         }
         var citations: [PdfCitation] = []
+        var verified = 0
         for cited in reply.citations {
             let candidates = passages.filter { $0.id == cited.passage } + passages.filter { $0.id != cited.passage }
             guard let (passage, found) = candidates.lazy
                 .compactMap({ candidate in locateQuote(in: candidate.text, cited.quote).map { (candidate, $0) } })
                 .first
             else { continue }
+            verified += 1
             let range = (passage.range.lowerBound + found.lowerBound)..<(passage.range.lowerBound + found.upperBound)
+            // A model may cite one sentence several times; it is one highlight.
+            if citations.contains(where: { $0.pageIndex == passage.pageIndex && $0.range == range }) { continue }
             let page = index.pages.first { $0.pageIndex == passage.pageIndex }!
             citations.append(PdfCitation(
                 pageIndex: passage.pageIndex, range: range,
@@ -108,7 +112,7 @@ enum GroundedAnswers {
                 quote: NSString(string: page.text).substring(with: NSRange(location: range.lowerBound, length: range.count))))
         }
         return .answered(text: reply.answer, citations: citations,
-                         grounded: !citations.isEmpty && citations.count == reply.citations.count,
+                         grounded: verified == reply.citations.count,
                          pagesWithoutText: index.pagesWithoutText)
     }
 }

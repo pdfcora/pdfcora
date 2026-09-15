@@ -48,6 +48,22 @@ final class AnswersTests: LicensedTestCase {
         return (text, citations, grounded, pagesWithoutText, result.source)
     }
 
+    /// Llama 3.2 3B, through Ollama, cited the same sentence three times in one reply.
+    func testASentenceCitedTwiceIsHighlightedOnceAndStillGrounded() async throws {
+        let document = try await contract()
+        let notice = self.notice
+        let model = Model { prompt in
+            let id = Self.passageId(prompt, notice)
+            let object: [String: Any] = ["answer": "Three months.",
+                                         "citations": [["passage": id, "quote": notice], ["passage": id, "quote": notice]]]
+            return String(data: try! JSONSerialization.data(withJSONObject: object), encoding: .utf8)!
+        }
+        guard let answer = answered(await ai(document, model).answers.ask("What is the notice period?")) else { return }
+        XCTAssertEqual(answer.citations.count, 1)
+        XCTAssertTrue(answer.grounded)
+        await document.close()
+    }
+
     func testTheNoticePeriodQuestionHighlightsExactlyThatSentence() async throws {
         let document = try await contract()
         let notice = self.notice

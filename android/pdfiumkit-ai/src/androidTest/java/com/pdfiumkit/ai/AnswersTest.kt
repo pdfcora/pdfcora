@@ -45,6 +45,20 @@ class AnswersTest {
         return value to result.source
     }
 
+    /** Llama 3.2 3B, through Ollama, cited the same sentence three times in one reply. */
+    @Test
+    fun aSentenceCitedTwiceIsHighlightedOnceAndStillGrounded() = runTest {
+        val document = contract()
+        val model = Model {
+            val citation = JSONObject().put("passage", passageId(it, notice)).put("quote", notice)
+            JSONObject().put("answer", "Three months.").put("citations", JSONArray().put(citation).put(citation)).toString()
+        }
+        val (answer, _) = answered(PdfiumAI(document, PdfiumAIOptions(model)).answers.ask("What is the notice period?"))
+        assertEquals(1, answer.citations.size)
+        assertTrue(answer.grounded)
+        document.close()
+    }
+
     @Test
     fun theNoticePeriodQuestionHighlightsExactlyThatSentence() = runTest {
         val document = contract()

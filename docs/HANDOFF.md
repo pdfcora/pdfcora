@@ -165,8 +165,9 @@ provider interface. The engine timeout stays 30 s on every platform.
 **The Android AI module skips Kotlin's metadata version check**, because ML Kit ships
 Kotlin 2.1 metadata and the project builds with 1.9. Upgrading Kotlin removes the need.
 
-**Parked on 2026-09-15, to do later:** Chrome's Summarizer and a real custom provider are untested (each needs a
-multi-gigabyte download); and the Kotlin upgrade.
+**Parked on 2026-09-15, to do later:** Chrome's Summarizer is untested (it needs a
+multi-gigabyte model in a Chrome profile), and the Kotlin upgrade. A real custom provider
+has run: Llama 3.2 3B through Ollama grounds 25 of 30 answers (`web-ai/test/ollama.test.ts`).
 
 **The code is on GitHub** at `github.com/indaos/PdfiumKit-v2`, a **private** repository,
 first pushed on 2026-09-15. Keep it private: the SDK's source includes the license check.

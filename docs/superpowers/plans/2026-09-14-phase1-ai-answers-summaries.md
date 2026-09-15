@@ -77,6 +77,21 @@ citations is `notFound`. After them: **30 of 30** answers grounded on the expect
 sentence across six questions, and the unanswerable question `notFound` **5 of 5**. The
 key-points summary was accurate, in 2.8 s. Answers took about 1.5 s each.
 
+### A custom provider: Llama 3.2 3B through Ollama
+
+On 2026-09-15, `llama3.2:3b` in Ollama 0.32 on the Mac, behind the custom provider interface
+(`web-ai/test/ollama.test.ts`, opt-in with `OLLAMA_MODEL`; the provider is 20 lines, with the
+answer schema passed as Ollama's `format`). **25 of 30** answers grounded on the expected
+sentence across six questions, and the unanswerable question `notFound` **5 of 5**, at 0.6
+to 1.4 s an answer. All five misses were one question, "Who are the parties?": the answer
+text was right but the model cited two other sentences, so the SDK reported
+`grounded: false` — which is the point of verifying quotes. Both summaries were accurate;
+the key-points one opened with a line of preamble before the bullets.
+
+It also cited one sentence three times in a reply, and the SDK returned three identical
+citations. A repeated citation now counts as verified but is kept once, on all three
+platforms.
+
 ### ML Kit on a real phone
 
 On 2026-09-15, a Samsung SM-F971B on Android 17 with Google AICore

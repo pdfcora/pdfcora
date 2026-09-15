@@ -38,6 +38,19 @@ function answered(result: unknown): Extract<PdfAnswer, { kind: 'answered' }> {
 }
 
 describe('grounded answers', () => {
+  // Llama 3.2 3B, through Ollama, cited the same sentence three times in one reply.
+  test('a sentence cited twice is highlighted once and still grounded', async () => {
+    const document = await contract();
+    const model = provider((prompt) => ({
+      answer: 'Three months.',
+      citations: [{ passage: passageId(prompt, NOTICE), quote: NOTICE }, { passage: passageId(prompt, NOTICE), quote: NOTICE }],
+    }));
+    const answer = answered(await new PdfiumAI(document, { provider: model }).answers.ask('What is the notice period?'));
+    assert.equal(answer.citations.length, 1);
+    assert.equal(answer.grounded, true);
+    await document.close();
+  });
+
   test('the notice-period question highlights exactly that sentence and nothing else', async () => {
     const document = await contract();
     const model = provider((prompt) => ({

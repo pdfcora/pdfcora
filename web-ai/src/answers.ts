@@ -118,6 +118,7 @@ export async function verifyReply(
   }
 
   const citations: PdfCitation[] = [];
+  let verified = 0;
   for (const cited of reply.citations) {
     const named = passages.filter((p) => p.id === cited.passage);
     let passage: PdfPassage | undefined;
@@ -127,8 +128,11 @@ export async function verifyReply(
       if (found) { passage = candidate; break; }
     }
     if (!passage || !found) continue;
+    verified++;
     const start = passage.start + found.start;
     const end = passage.start + found.end;
+    // A model may cite one sentence several times; it is one highlight.
+    if (citations.some((c) => c.pageIndex === passage!.pageIndex && c.start === start && c.end === end)) continue;
     const page = index.pages.find((p) => p.pageIndex === passage.pageIndex)!;
     citations.push({
       pageIndex: passage.pageIndex,
@@ -143,7 +147,7 @@ export async function verifyReply(
     kind: 'answered',
     text: trialText(reply.answer),
     citations,
-    grounded: citations.length > 0 && citations.length === reply.citations.length,
+    grounded: verified === reply.citations.length,
     pagesWithoutText: index.pagesWithoutText,
   };
 }
