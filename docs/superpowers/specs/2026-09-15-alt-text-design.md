@@ -132,8 +132,8 @@ are ordered by page, then by the figure's top edge from the top of the page, the
 For each page in scope: `structure()`, flattened; figures per §2 with bounds.
 
 - **Decorative by rules** (§2): `kind: 'decorative'`, `source: 'rules'`, no model call.
-- **Context**: the page's characters whose box centre lies inside the figure's rectangle
-  grown by 48 pt on every side, in text order, whitespace collapsed, at most 500 characters.
+- **Context**: the page's characters whose box centre lies between 48 pt below the figure's
+  bottom and 48 pt above its top, across the page width, in text order, whitespace collapsed, at most 500 characters.
 - **Image**: the page rendered so the figure's longer side is at most 512 px (scale capped at
   4), cropped to the figure, PNG-encoded.
 - **Routes**, in order, until one answers:
@@ -173,8 +173,8 @@ accepted ids. Editing a description is the host's UI; the SDK takes the edited t
 - **Structure read** on every platform: the page 0 tree (Document → H1, P, Figure…) with ids,
   alt text and bounds inside the drawn rectangles.
 - **Writer** unit tests on web: an element with a literal string holding escapes and a hex
-  string survives a rewrite byte-identical in those values; an element in an object stream is
-  found and rewritten; an ambiguous or missing match throws.
+  string survives a rewrite byte-identical in those values; an element in an object stream (the signed
+  `signed_unh_iol.pdf`) is found and rewritten and the signature still verifies; an ambiguous or missing match throws.
 - **updateFigures** on every platform: after writing descriptions for both photo figures and
   decorative for the rule, `structure()` on the result shows the alt texts and no rule figure,
   the rule's page object carries an `Artifact` mark, and the original document is unchanged.

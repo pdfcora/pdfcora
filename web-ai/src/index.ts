@@ -24,6 +24,8 @@ export type { PdfFormApplied, PdfFormProposal, PdfFormProposals, PdfProfile } fr
 export type { PdfProfileKey } from './forms/synonyms.js';
 import { suggestRedactions, type PdfRedactionOptions, type PdfRedactionReview } from './redaction/suggest.js';
 import { proposeFormValues, type PdfFormProposals, type PdfProfile } from './forms/propose.js';
+import { suggestAltText, type PdfAltTextReview } from './alt-text/suggest.js';
+export type { PdfAltTextDecision, PdfAltTextProposal, PdfAltTextReview } from './alt-text/suggest.js';
 import type { PdfPageRange as FormPageRange } from './text.js';
 
 export interface PdfiumAIOptions {
@@ -114,6 +116,16 @@ export class PdfiumAI {
   readonly redactions = {
     suggest: (options?: PdfRedactionOptions): Promise<PdfRedactionReview> =>
       suggestRedactions(this.document, this.options.provider, this.options.providerContextTokens ?? 4096, options),
+  };
+
+  /**
+   * Lists figures in a tagged document that have no alternate text and proposes a description,
+   * or decorative marking, for each (ALT). Descriptions need the custom provider. Nothing is
+   * written until `apply`, which returns a new document.
+   */
+  readonly altText = {
+    suggest: (options?: { pages?: FormPageRange }): Promise<PdfAltTextReview> =>
+      suggestAltText(this.document, this.options.provider, options),
   };
 
   /** Summarises the document or a page range (SUM). */
