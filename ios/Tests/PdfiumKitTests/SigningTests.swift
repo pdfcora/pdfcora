@@ -173,6 +173,21 @@ final class SigningTests: LicensedTestCase {
         guard case .valid = verdict else { return XCTFail("expected valid, got \(verdict)") }
     }
 
+    /// PDFium's own saves end lines with CRLF. Offsets counted in Swift Characters, which
+    /// join "\r\n" into one, put the byte range and the signature in the wrong place.
+    func testSignsADocumentPdfiumSaved() async throws {
+        let saved = try await PdfDocument(data: try read("hello_world.pdf")).data()
+        XCTAssertNotNil(saved.range(of: Data("\r\n".utf8)), "the premise: PDFium writes CRLF")
+        let signed = try await PdfDocument(data: saved).sign(PdfSignOptions(signer: try signer()))
+
+        let document = try await PdfDocument(data: signed)
+        let signatures = try await document.signatures()
+        let signature = try XCTUnwrap(signatures.first)
+        XCTAssertTrue(signature.coversWholeDocument)
+        let verdict = await document.verify(signature, options: PdfVerifyOptions(trustAnchors: [try anchor]))
+        guard case .valid = verdict else { return XCTFail("expected valid, got \(verdict)") }
+    }
+
     /// The real gate is `pdfsig`, but an iOS test cannot spawn a process — Foundation's
     /// Process is macOS-only. So the signed document is written where the host can reach
     /// it, and `scripts/test-ios.sh` runs pdfsig over it after the suite. A test that

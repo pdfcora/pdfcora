@@ -91,6 +91,16 @@ final class TrailerScanTests: LicensedTestCase {
         XCTAssertGreaterThan(info.nextObjectNumber, 6, "must not reuse a live object number")
     }
 
+    /// PDFium's own saves end lines with CRLF. Swift counts "\r\n" as one Character, and a
+    /// reader that mixed Character offsets with UTF-16 offsets misread "1 0 R" after one.
+    func testReadsReferencesAfterCRLFLineEnds() throws {
+        let text = "xref\r\n0 2\r\n0000000000 65535 f\r\n0000000017 00000 n\r\ntrailer\r\n<</Root 1 0 R /Size 2>>"
+        let dictionary = try PdfDictionaryReader(text).read(from: text.range(of: "<<")!.lowerBound)
+        guard case .reference(1, _)? = dictionary["Root"] else {
+            return XCTFail("expected /Root 1 0 R, got \(String(describing: dictionary["Root"]))")
+        }
+    }
+
     func testRefusesAnEncryptedDocument() throws {
         XCTAssertThrowsError(try TrailerInfo.scan(read("encrypted_hello_world_r2.pdf")))
     }

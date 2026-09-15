@@ -9,13 +9,16 @@ struct PdfDictionaryReader {
     private let text: String
     private let characters: [Character]
 
+    /// One element per Unicode scalar, not per Character: Swift joins "\r\n" into a single
+    /// Character, and positions here are also used as UTF-16 offsets for the reference
+    /// pattern. The text is Latin-1, so a scalar and a UTF-16 unit are the same length.
     init(_ text: String) {
         self.text = text
-        self.characters = Array(text)
+        self.characters = text.unicodeScalars.map(Character.init)
     }
 
     func read(from index: String.Index) throws -> [String: PdfValue] {
-        let start = text.distance(from: text.startIndex, to: index)
+        let start = text.unicodeScalars.distance(from: text.unicodeScalars.startIndex, to: index)
         return try readDictionary(at: start).value
     }
 

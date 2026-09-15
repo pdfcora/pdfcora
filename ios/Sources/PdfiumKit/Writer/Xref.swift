@@ -44,14 +44,15 @@ enum Xref {
         var skipped = 0
 
         // startxref is not always exact; the writer tolerates the same slippage. Latin-1
-        // gives one character per byte, so a character offset is a byte offset.
+        // gives one Unicode scalar per byte, so a scalar offset is a byte offset. Not a
+        // Character offset: Swift joins "\r\n" into one Character.
         if !starts(text, with: "xref") && !starts(text, with: "<<") && !startsWithObject(text) {
             let probe = String(text.prefix(512))
             guard let at = firstSectionStart(probe) else {
                 throw Der.Failure(reason: "xref: nothing recognisable at \(offset)")
             }
-            skipped = probe.distance(from: probe.startIndex, to: at)
-            text = String(text.dropFirst(skipped))
+            skipped = probe.unicodeScalars.distance(from: probe.unicodeScalars.startIndex, to: at)
+            text = String(text.unicodeScalars.dropFirst(skipped))
         }
 
         return starts(text, with: "xref")
@@ -188,7 +189,7 @@ enum Xref {
         guard let keyword = text.range(of: "stream") else {
             throw Der.Failure(reason: "xref: object is not a stream")
         }
-        var start = offset + text.distance(from: text.startIndex, to: keyword.upperBound)
+        var start = offset + text.unicodeScalars.distance(from: text.unicodeScalars.startIndex, to: keyword.upperBound)
         if start < bytes.count && bytes[start] == 0x0d { start += 1 }
         if start < bytes.count && bytes[start] == 0x0a { start += 1 }
 
@@ -199,7 +200,7 @@ enum Xref {
             // No /Length: scan for the terminator rather than guessing.
             let body = latin1(bytes[start..<min(bytes.count, start + (1 << 22))])
             if let stop = body.range(of: "endstream") {
-                end = start + body.distance(from: body.startIndex, to: stop.lowerBound)
+                end = start + body.unicodeScalars.distance(from: body.unicodeScalars.startIndex, to: stop.lowerBound)
             }
         }
         guard start <= end else { throw Der.Failure(reason: "xref: negative stream length") }

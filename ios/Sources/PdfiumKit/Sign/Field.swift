@@ -112,7 +112,9 @@ enum SignatureField {
             throw Der.Failure(reason: "sign: the byte range went missing")
         }
 
-        let contentsAt = text.distance(from: text.startIndex, to: contentsRange.lowerBound)
+        // Byte offsets: one Unicode scalar per Latin-1 byte. A Character count would be short
+        // by one for every "\r\n" before the placeholder, which PDFium's own saves contain.
+        let contentsAt = text.unicodeScalars.distance(from: text.unicodeScalars.startIndex, to: contentsRange.lowerBound)
             + "/Contents ".count
         let contentsLength = reservedBytes * 2 + 2
         let byteRange = [
@@ -122,7 +124,8 @@ enum SignatureField {
         ]
 
         var out = bytes
-        let at = text.distance(from: text.startIndex, to: rangeRange.lowerBound) + "/ByteRange ".count
+        let at = text.unicodeScalars.distance(from: text.unicodeScalars.startIndex, to: rangeRange.lowerBound)
+            + "/ByteRange ".count
         let written = Array("[\(byteRange.map(pad).joined(separator: " "))]".utf8)
         out.replaceSubrange(at..<(at + written.count), with: written)
 
