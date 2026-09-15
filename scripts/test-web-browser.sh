@@ -24,7 +24,7 @@ server.serve_forever()
 PY
 python3 "$work/server.py" "$work/result" > "$work/port" &
 server=$!
-trap 'kill $server 2>/dev/null; wait $server 2>/dev/null; pkill -f "user-data-dir=$work/profile" 2>/dev/null; rm -rf "$work"' EXIT
+trap 'kill $server 2>/dev/null; wait $server 2>/dev/null || true; pkill -f "user-data-dir=$work/profile" 2>/dev/null; rm -rf "$work"' EXIT
 for _ in $(seq 1 20); do [ -s "$work/port" ] && break; sleep 0.2; done
 
 # The page posts its report when it finishes. Headless Chrome is not relied on to exit.

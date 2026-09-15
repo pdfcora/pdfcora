@@ -30,10 +30,13 @@ because each lesson generalises. §4 lists what is open and what was parked.
 | Engine watchdog: calls behind a hung PDFium call fail fast | Done, three platforms |
 | `pdfiumkit-ai` Phase 1: grounded answers, summaries | Built, three platforms; real-model tested on Apple and on an Android phone |
 | Basic samples: one screen, bundled PDF in the viewer component | iOS, Android, web — `samples/` |
+| License keys: offline, per module, trial watermark | Done, three platforms, shared cases in `conformance/license/` |
 
-Test counts at the time of writing: web 248, web-ai 41, iOS 158 + hung-render pass + AI
-42, Android 133 instrumented + UI 1 + hung-render pass + 16 JVM, AI 27 JVM + 9
-instrumented.
+Test counts at the time of writing (2026-09-15): web 278, web-ai 42, browser viewer 15,
+license tool 1, iOS 169 (sweep skipped) + hung-render pass + demo UI 9 + AI 43, Android
+142 instrumented (sweep skipped) + UI 3 + hung-render pass + 16 JVM, AI 28 JVM + 9
+instrumented. pdfsig accepts both the licensed and the trial-signed document on iOS and
+Android.
 
 ## 2. Running things
 
@@ -58,6 +61,16 @@ The extra flags are from a bad evening on a loaded Mac: a windowed emulator repe
 stopped answering `adb shell` while still listed as `device`, Gradle then read its API
 level as 1 and refused to install, and a crashed emulator's relaunch sat on an invisible
 crash-report consent dialog. Headless with software GPU stayed responsive.
+
+**License keys.** Keys are issued with `node tools/license/issue.mjs sign --private-key
+~/.pdfiumkit-license/license-private.pem …`; that private key was generated on
+2026-09-15, lives only on this Mac, and must be backed up somewhere safe — losing it means
+every issued key has to be reissued against a new public key. The public key is in
+`LicenseBuild` on each platform. Before each release run
+`./scripts/set-release-date.sh YYYY-MM-DD`: a key covers every SDK released on or before
+its expiry. Every test suite installs a test key from `conformance/license/cases.json`;
+`node conformance/license/make-cases.mjs` regenerates it. The design is
+`docs/superpowers/specs/2026-09-15-licensing-design.md`.
 
 **Set `ANDROID_SERIAL` whenever more than one device is attached.** Gradle honours it;
 so does the gate now. They used to disagree, and the signing cross-check pulled the
@@ -109,6 +122,13 @@ a quote is now matched in any passage the model was shown; a reply with no citat
 `notFound`. A failing route reports `requestFailed`, or `backgroundUseBlocked` when AICore
 refuses a background app. ML Kit's limits are 400 to 7,860 characters per call. Long
 documents are summarised in windows that carry the summary so far.
+
+**iOS could not sign a document PDFium had saved**, found while adding license keys. The
+writer and the signer counted Swift `Character`s and used the counts as byte offsets, but
+Swift joins `\r\n` into one Character, and PDFium's saves use CRLF. The trailer's
+`/Root 1 0 R` misread as a number, and once that was fixed the byte range and signature
+were written short of their placeholders. Offsets now count Unicode scalars, one per
+Latin-1 byte. Web and Android index bytes and were never affected.
 
 ## 4. Open
 

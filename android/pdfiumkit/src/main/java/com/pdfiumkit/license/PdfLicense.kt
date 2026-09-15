@@ -6,7 +6,7 @@ import android.util.Log
 /** Set at release by scripts/set-release-date.sh. The private key is held outside this repository. */
 internal object LicenseBuild {
     const val RELEASE_DATE = "2026-09-15"
-    const val PUBLIC_KEY = "REPLACED_IN_TASK_12"
+    const val PUBLIC_KEY = "BP4TsodWBykQxZzmAYu-OckkjD2s9a4QXlG_kCjIUsdjRdIetrVP_Zu3nJ2RS7IIooaqHpjlFgu0gGRxPg-s6cg"
     val REVOKED: Set<String> = emptySet()
 }
 

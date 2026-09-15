@@ -1,7 +1,7 @@
 # PdfiumKit — Licensing Design
 
 Date: 2026-09-15
-Status: Draft, pending review
+Status: Implemented 2026-09-15
 Extends: `2026-09-12-pdfiumkit-sdk-design.md`
 
 ## 1. Purpose
@@ -23,8 +23,8 @@ Success criteria:
 **What this protects against.** Honest customers exceeding what they bought. It does not
 stop someone determined to patch the check out — trivially on web, with effort on native.
 It is a meaningful deterrent only when the SDK ships as binaries (an XCFramework, the AAR,
-minified JavaScript); today the Swift and web packages ship as source. Binary packaging is
-separate work (§10).
+minified JavaScript); `scripts/package-all.sh` builds those, and the source packages give
+no protection.
 
 ## 2. Decisions
 
@@ -61,8 +61,8 @@ Editing through the viewer calls the same document methods, so it is gated as `e
 pk1.<base64url payload>.<base64url signature>
 ```
 
-The signature is ECDSA P-256 with SHA-256 over the payload's bytes as they appear in the
-key, in raw 64-byte `r‖s` form. WebCrypto verifies that form directly; iOS (CryptoKit
+The signature is ECDSA P-256 with SHA-256 over the decoded payload bytes (the UTF-8
+JSON), in raw 64-byte `r‖s` form. WebCrypto verifies that form directly; iOS (CryptoKit
 `P256.Signing`) and Android (`SHA256withECDSA`, after conversion to DER) convert. ECDSA
 P-256 because every platform already verifies it for signatures, with no new dependency;
 Ed25519 is unavailable on Android below API 33.
@@ -88,7 +88,9 @@ SDK. Missing platform lists mean the key does not cover that platform.
 
 ### Checks, in order
 
-The first failure decides the reason reported.
+The first failure decides the reason reported. Each has a code that the shared fixture
+compares on every platform: `noKey`, `malformed`, `badSignature`, `unsupportedVersion`,
+`revoked`, `expired`, `wrongApp`.
 
 1. The key has three parts, and the payload is JSON of the shape above.
 2. The signature verifies against the public key built into the SDK.
@@ -121,7 +123,7 @@ PdfLicense.status   // PdfLicenseStatus.Licensed(customer, modules) / Trial(reas
 
 ```ts
 import { PdfLicense } from '@pdfiumkit/web';
-PdfLicense.setKey('pk1.…');
+await PdfLicense.setKey('pk1.…');
 PdfLicense.status;  // { kind: 'licensed', customer, modules } / { kind: 'trial', reason }
 ```
 
@@ -132,6 +134,8 @@ PdfLicense.status;  // { kind: 'licensed', customer, modules } / { kind: 'trial'
 - The first time the SDK watermarks anything, it logs one warning with the reason
   (`os_log`, `Log.w`, `console.warn`).
 - `PdfWorker` sends the key and the page's hostname to its worker, where the check runs.
+- On web, verification uses WebCrypto, which is asynchronous: `setKey` returns a promise,
+  and opening a document waits for a pending check.
 
 ## 6. Marking
 

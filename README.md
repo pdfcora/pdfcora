@@ -317,6 +317,33 @@ Full-corpus results, most recent run:
 - **Unknown kinds.** Every sealed hierarchy carries an `unknown` case, so annotation
   and field types this SDK does not model are surfaced rather than dropped.
 
+## License keys
+
+Without a license key every feature works, and rendered pages, saved files and AI output
+carry a "PdfiumKit trial" watermark. A key unlocks the modules it lists — `editing`,
+`forms`, `signing`, `redaction`, `ai` — for the app IDs and web hosts it names. Viewing,
+text, search, verifying signatures, the viewer and sync need only a valid key.
+
+```swift
+PdfLicense.setKey("pk1.…")                  // iOS, before opening documents
+```
+```kotlin
+PdfLicense.setKey(context, "pk1.…")         // Android, in Application.onCreate
+```
+```ts
+await PdfLicense.setKey('pk1.…');           // web, before opening documents or creating a PdfWorker
+```
+
+`PdfLicense.status` says whether the key is valid, which modules it covers, and why a key
+was rejected. A key never makes the SDK throw.
+
+While a document needs the watermark it is always saved in full, even when an incremental
+save is requested, and signing it rewrites the file first — so signatures already in that
+file no longer verify. A licensed document keeps incremental saves and earlier signatures.
+
+Keys are checked offline. The check deters use beyond a license; it is not copy protection.
+Keys are issued with `tools/license/issue.mjs`; see `docs/superpowers/specs/2026-09-15-licensing-design.md`.
+
 ## Licensing
 
 PdfiumKit is distributed as a binary that statically links PDFium and six bundled
