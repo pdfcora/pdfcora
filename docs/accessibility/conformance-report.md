@@ -20,7 +20,7 @@ chapters 9 (web), 11 (software) and 5 (generic).
 | Web | Text scaling: root font size 32 px — controls grow, nothing clips, review buttons wrap | same file |
 | iOS | `XCUIApplication.performAccessibilityAudit()` (contrast, element description, hit region, clipped text, traits) on three screens, each opened on its own | `ios/Demo/UITests/ScreenTourTests.swift` |
 | iOS | Dynamic Type at `AccessibilityXXXL`: toolbar grows, review buttons stay on screen | same file |
-| Android | Accessibility Test Framework checks over the component's view tree | `android/pdfiumkit-ui/src/androidTest/.../PdfViewerViewTest.kt` |
+| Android | Accessibility Test Framework checks (preset LATEST) over the platform's accessibility tree for the component, reviewing and showing a tagged document | `android/pdfiumkit-ui/src/androidTest/.../PdfViewerViewTest.kt` |
 | All | The page's content is exposed as structure (headings, lists, figures with alternate text, tables, form fields) and asserted per platform | `web/test/accessible.test.ts`, `AccessibleContentTests.swift`, `AccessibleContentTest.kt`, and the UI tests |
 
 Nobody has yet driven the components with VoiceOver, TalkBack, NVDA, JAWS or VoiceOver for macOS
@@ -30,10 +30,11 @@ by hand, and no user testing has been done. That is the gap the independent audi
 
 - axe-core checks roughly a third of WCAG's success criteria; it cannot judge reading order,
   meaningful labels or focus order beyond the mechanical.
-- The Android framework walks *views*. A Compose UI is a single view whose content is virtual
-  nodes, so only the host view is checked; Compose 1.8's own node-level checks found two figures
-  with no description (fixed on 2026-09-15) but its test APIs crash this suite, so the project
-  stays on Compose 1.6 and that pass is not part of the gates.
+- The Android checks run over the accessibility tree the platform hands a screen reader (taken
+  from `UiAutomation`), not over the view tree: a Compose UI is a single view whose content is
+  virtual nodes, and a view-tree pass sees only that host. The checks are proven to have teeth —
+  removing a figure's fallback description makes them fail on exactly the two unlabelled images
+  Compose 1.8's own checks found on 2026-09-15.
 - Target size: review marks and the invisible elements that expose page text sit on lines of page
   text, at whatever size the page is drawn. WCAG 2.1 AA has no target-size criterion; WCAG 2.2's
   2.5.8 exempts targets constrained by the line height of the text. Zooming enlarges them. The
@@ -68,7 +69,7 @@ by hand, and no user testing has been done. That is the gap the independent audi
 | 3.2.2 On input | Supports | Supports | Supports | |
 | 3.3.1 Error identification | Supports | Supports | Supports | Failures are shown as text in the component |
 | 3.3.2 Labels or instructions | Supports | Supports | Supports | The review bar carries its notice |
-| 4.1.2 Name, role, value | Supports | Supports | Partially supports | Android: checked at the node level once (found and fixed two unlabelled figures), but not in the gates — see the limits above |
+| 4.1.2 Name, role, value | Supports | Supports | Supports | Android: checked at the node level in the gates, over the platform's own accessibility tree |
 
 ## WCAG 2.1 Level AA
 
@@ -110,5 +111,5 @@ by hand, and no user testing has been done. That is the gap the independent audi
 2. Measure non-text contrast (1.4.11) and text spacing (1.4.12) on the web component.
 3. Announce review counts as a live region (4.1.3) and test hardware-keyboard support on iOS and
    Android (2.1.1, 2.1.2, 2.4.3, 2.4.7).
-4. Get Compose's node-level accessibility checks into the gates, which needs the Compose 1.8 test
-   API crash understood.
+4. Drive all three components with real screen readers; the automated passes above cannot judge
+   what a person actually hears.

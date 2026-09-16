@@ -30,9 +30,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.platform.ViewRootForTest
+import com.google.android.apps.common.testing.accessibility.framework.AccessibilityCheckPreset
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityCheckResult.AccessibilityCheckResultType
-import com.google.android.apps.common.testing.accessibility.framework.integrations.espresso.AccessibilityValidator
+import com.google.android.apps.common.testing.accessibility.framework.uielement.AccessibilityHierarchyAndroid
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -171,15 +171,19 @@ class PdfViewerViewTest {
      * A11Y-1: the Accessibility Test Framework's checks over the component, reviewing and showing a
      * tagged document.
      *
-     * Two limits, both recorded in docs/accessibility/ACR-android.md. The framework walks *views*,
-     * and a Compose UI is one view whose content is virtual nodes, so only the host view is checked
-     * here — it is reported as unlabelled, which is what a Compose host always looks like.
-     * Compose 1.8's own `enableAccessibilityChecks` does walk the nodes and found two figures with no
-     * description (fixed), but its test APIs crash this suite, so the project stays on Compose 1.6.
+     * The checks run over the accessibility tree the platform hands a screen reader, taken from
+     * `UiAutomation`, not over the view tree: a Compose UI is a single view whose content is
+     * virtual nodes, and a view-tree pass would only ever see that host. Compose's own
+     * `enableAccessibilityChecks` would do the same but needs Compose 1.8, whose test framework
+     * cannot scroll here (see docs/HANDOFF.md).
      */
     @Test
     fun theComponentPassesTheAccessibilityChecks() {
-        val bytes = InstrumentationRegistry.getInstrumentation().context.assets.open("tagged.pdf").use { it.readBytes() }
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        // Connected before the content exists: Compose only builds its semantics tree for the
+        // platform while an accessibility service is listening, which is what this connection is.
+        val automation = instrumentation.uiAutomation
+        val bytes = instrumentation.context.assets.open("tagged.pdf").use { it.readBytes() }
         val document = runBlocking { PdfDocument.open(bytes) }
         compose.setContent {
             PdfViewerView(document, Modifier.fillMaxSize(), review = PdfReviewConfiguration(
@@ -190,19 +194,31 @@ class PdfViewerViewTest {
             compose.onAllNodes(hasContentDescription("Annual report 2026")).fetchSemanticsNodes().isNotEmpty()
         }
         compose.waitForIdle()
+        automation.waitForIdle(500, 5_000)
 
-        val root = compose.onRoot().fetchSemanticsNode().root as ViewRootForTest
-        // Collected rather than thrown, so every result can be judged and printed.
-        val results = AccessibilityValidator().setRunChecksFromRootView(true).setThrowExceptionFor(null)
-            .checkAndReturnResults(root.view)
+        val deadline = System.currentTimeMillis() + 10_000
+        var node = automation.rootInActiveWindow
+        while (node == null && System.currentTimeMillis() < deadline) {
+            Thread.sleep(200)
+            node = automation.rootInActiveWindow
+        }
+        val root = requireNotNull(node) { "the platform reported no accessibility tree for the window" }
+        val hierarchy = AccessibilityHierarchyAndroid.newBuilder(root, instrumentation.targetContext).build()
+
+        // The tree must be the composition's own nodes; a host-view-only tree would pass every
+        // check while saying nothing, which is what the view-tree pass used to do.
+        val descriptions = hierarchy.activeWindow.allViews.mapNotNull { it.contentDescription?.toString() }
+        assertTrue("accessibility tree holds only $descriptions",
+                   descriptions.containsAll(listOf("zoom-in", "Bar chart of revenue by region", "mark-m1")))
+
+        val results = AccessibilityCheckPreset.getAccessibilityHierarchyChecksForPreset(AccessibilityCheckPreset.LATEST)
+            .flatMap { it.runCheckOnHierarchy(hierarchy) }
         // Touch targets: marks and the invisible text elements sit on lines of page text at the
         // page's own size. WCAG 2.1 AA has no target-size criterion and WCAG 2.2's 2.5.8 exempts
         // targets constrained by line height; zooming enlarges them. Recorded in docs/accessibility.
         val errors = results.filter {
-            it.type == AccessibilityCheckResultType.ERROR &&
-                it.accessibilityHierarchyCheck?.simpleName != "TouchTargetSizeCheck" &&
-                it.view?.javaClass?.simpleName != "AndroidComposeView"
-        }.map { "${it.accessibilityHierarchyCheck?.simpleName}: ${it.message} — ${it.view}" }
+            it.type == AccessibilityCheckResultType.ERROR && it.sourceCheckClass.simpleName != "TouchTargetSizeCheck"
+        }.map { "${it.sourceCheckClass.simpleName}: ${it.getMessage(java.util.Locale.ENGLISH)} — ${it.element}" }
         assertEquals(emptyList<String>(), errors)
         document.close()
     }

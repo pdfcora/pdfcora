@@ -50,7 +50,9 @@ dependencies {
 
     androidTestImplementation(platform("androidx.compose:compose-bom:2024.06.00"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
-    androidTestImplementation("androidx.test.espresso:espresso-accessibility:3.6.1")
+    androidTestImplementation("com.google.android.apps.common.testing.accessibility.framework:accessibility-test-framework:4.1.1")
+    // The framework declares Guava at runtime only; its result types are Guava collections.
+    androidTestImplementation("com.google.guava:guava:31.0.1-android")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test:runner:1.7.0")
     // The version the Compose BOM brings calls an InputManager method Android 16 removed.

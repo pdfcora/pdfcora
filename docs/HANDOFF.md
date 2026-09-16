@@ -191,12 +191,25 @@ since 2026-09-15. Before, `setChecked` wrote `/V` and `/AS` as strings: PDFium r
 every test passed, but poppler showed the box unchecked. Only switching a radio button *off* still
 writes strings, because no key does that.
 
-**Compose 1.8 breaks the UI test suite.** Upgrading the Compose BOM to get
-`enableAccessibilityChecks` made `performScrollTo` on the toolbar crash the instrumentation process,
-and the suite hung at 0 of 7. The upgrade is reverted (BOM 2024.06, compileSdk 34) and Android's
-audit runs through the Accessibility Test Framework instead, which only sees the Compose host view.
-Whether the crash is a defect in our toolbar or in the 1.8 test API is unknown — worth settling
-before an app on Compose 1.8 hits it.
+**Compose's test framework, from 1.8 on, cannot scroll here — and it is not our code.** Settled on
+2026-09-16. Under BOM 2025.06.01 (Compose 1.8.3) and 2025.09.01 (1.9.2), the first `performScrollTo`
+that actually scrolls never returns: Compose never reports itself idle, the main looper parks with
+no work, and ActivityManager kills the process after about 40 s, which Gradle reports as
+"Process crashed". A thread dump puts the test thread in `Espresso.onIdle` under
+`ComposeUiTest.waitForIdle`, so nothing of ours is on the stack. It reproduces with a bare
+`Column { scrollable Row of IconButtons; Box }` — no PdfiumKit code — and is unchanged by the
+Android version (36 and 35), the Espresso version (3.7.0; 3.6.1 cannot run on Android 16 at all,
+because it calls the removed `InputManager.getInstance`), disabling the 1.8 overscroll effect, or
+`kotlinx-coroutines-test` 1.8.1 against 1.10.2. Compose 1.6 (BOM 2024.06.00) with Espresso 3.7.0 is
+therefore what the module stays on; Compose 1.12 would need AGP 9.1 as well.
+
+**Android's node-level accessibility checks are in the gates** since 2026-09-16, without that
+upgrade: `PdfViewerViewTest` runs the Accessibility Test Framework's LATEST preset over the
+accessibility tree the platform gives a screen reader (`UiAutomation.rootInActiveWindow`), which
+contains Compose's virtual nodes. The test asserts the tree really is the composition's (toolbar
+ids, the figure descriptions, the review mark) so it cannot silently degrade to checking a bare
+host view, and removing a figure's fallback description makes it fail on the two unlabelled images
+— the same defect Compose 1.8's own checks found.
 
 **Remediation is rules only, and limited.** No model is used: the proposals are the same on
 every device. Tables become paragraphs, paths become artifacts (a vector chart is not announced),
