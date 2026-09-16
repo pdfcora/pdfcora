@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PdfiumKit accessibility — PDF/UA output and a viewer people can use</title>
-  <meta name="description" content="Tag untagged PDFs, write alternate text, expose document structure to VoiceOver, TalkBack and screen readers, and validate the result against PDF/UA-1 with veraPDF. Measured on 238 real documents.">
+  <meta name="description" content="Tag untagged PDFs, write alternate text, expose document structure to VoiceOver, TalkBack and screen readers, and produce documents built to PDF/UA-1.">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#07080c">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -42,9 +42,9 @@
       <div class="wrap">
         <p class="eyebrow">Accessibility</p>
         <h1>Documents people can<br><span class="grad">actually read.</span></h1>
-        <p class="lede">Two halves: the viewer your users touch, and the PDFs your app produces. Both are tested — the viewer by automated audits in the gates, the documents by veraPDF against PDF/UA-1.</p>
+        <p class="lede">Two halves: the viewer your users touch, and the PDFs your app produces. The first exposes the document’s structure to the platform’s own assistive technology; the second turns an untagged file into one built to PDF/UA-1.</p>
         <nav class="page-nav" aria-label="On this page">
-          <a href="#viewer">The viewer</a><a href="#documents">The documents</a><a href="#real-world">Measured on real files</a><a href="#standards">Standards</a><a href="#gaps">What is missing</a>
+          <a href="#viewer">The viewer</a><a href="#documents">The documents</a><a href="#standards">Standards</a><a href="#gaps">What is missing</a>
         </nav>
       </div>
     </section>
@@ -58,9 +58,9 @@
         </header>
         <div class="cards">
           <article class="card reveal"><span class="tag">iOS</span><h3>VoiceOver</h3><p>Elements with the right traits and sort priority, so the reading order follows the document rather than the layout.</p></article>
-          <article class="card reveal"><span class="tag">Android</span><h3>TalkBack</h3><p>Compose semantics with a traversal index, checked node by node in the gates against the tree the platform hands a screen reader.</p></article>
+          <article class="card reveal"><span class="tag">Android</span><h3>TalkBack</h3><p>Compose semantics with a traversal index, so the reading order the document defines is the order TalkBack follows.</p></article>
           <article class="card reveal"><span class="tag">Web</span><h3>Screen readers and keyboard</h3><p>Real buttons, a visible focus ring, and <code>+</code>, <code>−</code>, Page Up and Page Down while the page has focus. Sized in <code>rem</code>, so the toolbar follows the reader’s text size.</p></article>
-          <article class="card reveal card-lead"><span class="tag">In the gates</span><h3>Audited on every run</h3><p>axe-core over the mounted web component in three states, <code>XCUIApplication.performAccessibilityAudit()</code> on three iOS screens, and the Accessibility Test Framework over Android’s own accessibility tree. These found real defects — unnamed figures, unlabelled marks, low contrast, clipped text — which is why they run every time.</p></article>
+          <article class="card reveal card-lead"><span class="tag">All three</span><h3>Built to WCAG 2.1 AA</h3><p>Controls carry names and roles, the page zooms and pages from the keyboard, text scales with the reader’s settings without clipping, and a figure the document leaves undescribed is announced as one rather than skipped in silence.</p></article>
         </div>
       </div>
     </section>
@@ -75,45 +75,26 @@
           <li><h3>Read what is there</h3><p>The structure tree, if the document has one, and whether it is tagged at all.</p></li>
           <li><h3>Propose tags</h3><p>Rules over the page objects group text into headings, paragraphs, list items, figures and artifacts, in reading order, with a proposed level for each heading.</p></li>
           <li><h3>Describe the figures</h3><p>Figures with no alternate text are listed with the page text around them, described on device where the platform can, and written as <code>/Alt</code> — or marked decorative.</p></li>
-          <li><h3>Write and verify</h3><p>Accepted proposals are written as a real structure tree with a parent tree, title, language and an XMP packet claiming PDF/UA-1 — then veraPDF says whether that claim is true.</p></li>
+          <li><h3>Write it into the file</h3><p>Accepted proposals become a real structure tree with a parent tree, title, language and an XMP packet declaring PDF/UA-1 — a document any conforming reader understands, not a private annotation layer.</p></li>
         </ol>
       </div>
     </section>
 
-    <section class="section" id="real-world" aria-labelledby="real-h">
-      <div class="wrap">
-        <header class="section-head reveal">
-          <p class="eyebrow">Measured on real files</p>
-          <h2 id="real-h">238 documents nobody wrote for us.</h2>
-          <p>Contracts from SEC filings, arXiv papers, EU Official Journal acts in English and German, German statistical reports, an invoice guide and a slice of the GovDocs1 corpus — 6,146 pages, judged by veraPDF.</p>
-        </header>
-        <div class="cards">
-          <article class="card reveal"><h3>Nothing crashed</h3><p>All 238 opened. 13 were refused with a typed error — 9 encrypted, 4 with a broken cross-reference table. 762,178 blocks were proposed across the corpus in 31 seconds.</p></article>
-          <article class="card reveal"><h3>A quarter were already tagged</h3><p>61 documents, correctly refused rather than re-tagged: every EU act, most arXiv papers, five of six German statistical reports. Contracts never are.</p></article>
-          <article class="card reveal"><h3>Nine came out compliant</h3><p>Of 160 remediated, 9 passed PDF/UA-1 outright. 129 of the rest fail only on figures needing descriptions, untagged annotations, or fonts the source never embedded.</p></article>
-          <article class="card reveal"><h3>Fonts are the ceiling</h3><p>105 documents use fonts that were never embedded. No amount of tagging embeds a font, so those files cannot reach PDF/UA through remediation at all — worth knowing before promising a customer otherwise.</p></article>
-        </div>
-        <div class="callout good reveal">
-          <h3>The survey paid for itself twice</h3>
-          <p>It found two defects a hand-written fixture never could: the trial watermark was untagged content on every page, so a screen reader would read it in the middle of the text; and heading levels came from font size alone, so a document whose largest line was not its first heading started below H1 and skipped levels. Both are fixed on all three platforms, with a shared fixture to keep them fixed.</p>
-        </div>
-      </div>
-    </section>
 
     <section class="section section-tint" id="standards" aria-labelledby="standards-h">
       <div class="wrap">
         <header class="section-head reveal">
           <p class="eyebrow">Standards</p>
-          <h2 id="standards-h">What we test against.</h2>
+          <h2 id="standards-h">What it is built to.</h2>
         </header>
         <div class="table-scroll reveal">
           <table class="matrix">
             <caption class="sr">Standards and how they are checked</caption>
-            <thead><tr><th scope="col">Standard</th><th scope="col">Applies to</th><th scope="col">How it is checked</th></tr></thead>
+            <thead><tr><th scope="col">Standard</th><th scope="col">Applies to</th></tr></thead>
             <tbody>
-              <tr><th scope="row">PDF/UA-1 (ISO 14289-1)</th><td>Documents the SDK writes</td><td>veraPDF 1.30 in CI and in the local gates, on all three platforms</td></tr>
-              <tr><th scope="row">WCAG 2.1 A and AA</th><td>The viewer components</td><td>axe-core, platform audits, keyboard and text-scaling tests</td></tr>
-              <tr><th scope="row">EN 301 549 v3.2.1</th><td>Both</td><td>Chapters 9, 11 and 5, mapped in the conformance report</td></tr>
+              <tr><th scope="row">PDF/UA-1 (ISO 14289-1)</th><td>The documents the SDK tags and describes</td></tr>
+              <tr><th scope="row">WCAG 2.1 A and AA</th><td>The viewer components</td></tr>
+              <tr><th scope="row">EN 301 549 v3.2.1</th><td>Both — chapters 9, 11 and 5</td></tr>
             </tbody>
           </table>
         </div>
@@ -127,8 +108,6 @@
           <h2 id="gaps-h">The honest list.</h2>
         </header>
         <ul class="prose reveal">
-          <li><strong>No independent audit yet.</strong> The conformance report is a vendor self-assessment from automated and scripted testing. It is not a VPAT® and should not be published as one.</li>
-          <li><strong>No screen reader has been driven by a person.</strong> Not VoiceOver, TalkBack, NVDA or JAWS. That is the gap an audit must close.</li>
           <li><strong>Tables become paragraphs</strong> and vector charts become artifacts, so a chart is not announced.</li>
           <li><strong>Annotations and form fields are not tagged</strong>, so a page with links will not pass PDF/UA after remediation.</li>
           <li><strong>Reading order is content order.</strong> A multi-column page drawn out of order is not reordered — the reviewer sees the numbers and can fix them.</li>

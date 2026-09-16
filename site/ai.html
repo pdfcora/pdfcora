@@ -44,7 +44,7 @@
         <h1>AI that reads the document,<br><span class="grad">not your users’ data.</span></h1>
         <p class="lede">On-device models where the platform has one, your own endpoint where it does not, and nothing at all if you configure neither — the rules-only features still work. Every change is a proposal a person accepts, and every accepted change can be undone.</p>
         <nav class="page-nav" aria-label="On this page">
-          <a href="#features">What it does</a><a href="#routes">Where it runs</a><a href="#hil">Review and undo</a><a href="#measured">Measured</a><a href="#privacy">Privacy</a>
+          <a href="#features">What it does</a><a href="#routes">Where it runs</a><a href="#hil">Review and undo</a><a href="#privacy">Privacy</a>
         </nav>
       </div>
     </section>
@@ -109,24 +109,8 @@
       </div>
     </section>
 
-    <section class="section section-tint" id="measured" aria-labelledby="measured-h">
-      <div class="wrap">
-        <header class="section-head reveal">
-          <p class="eyebrow">Measured, not assumed</p>
-          <h2 id="measured-h">What the real models actually did.</h2>
-          <p>Every number here came from running the shipped code against the real model, not from a datasheet.</p>
-        </header>
-        <div class="cards">
-          <article class="card reveal"><span class="tag">Apple, iOS</span><h3>30 of 30 answers grounded</h3><p>On a contract fixture, every answer cited a passage that supported it. Redaction found 3 of 3 on the English page and 4 of 4 on the German one, in about 2.7 s per page.</p></article>
-          <article class="card reveal"><span class="tag">ML Kit, Samsung phone</span><h3>Summaries in 2.6 s</h3><p>A real device with AICore. Input is capped at 7,860 characters, which the SDK measured by being refused at 7,861, so longer documents are summarised in windows.</p></article>
-          <article class="card reveal"><span class="tag">ML Kit, Samsung phone</span><h3>Both figures described in 4.6 s</h3><p>Accurate descriptions of a chart and a photo, on device. It needs the screen on, not merely a foreground app.</p></article>
-          <article class="card reveal"><span class="tag">Chrome</span><h3>A paragraph in 4.3 s</h3><p>Key points in 2.6 s, and a German summary of a German page in 4.0 s. Its input quota is 9,216 tokens, which the SDK measures per document rather than guessing.</p></article>
-          <article class="card reveal card-lead"><span class="tag">What did not work</span><h3>Form filling is rules, because the model was worse</h3><p>Asked to match field names to profile keys with the labels removed, Apple’s on-device model got between 1 and 7 of 13 right, and its errors were not near misses — it assigned keys in the order the fields were listed. So form filling uses a synonym list and a custom provider, and the on-device model is not used for it at all.</p></article>
-        </div>
-      </div>
-    </section>
 
-    <section class="section" id="privacy" aria-labelledby="privacy-h">
+    <section class="section section-tint" id="privacy" aria-labelledby="privacy-h">
       <div class="wrap">
         <header class="section-head reveal">
           <p class="eyebrow">Privacy</p>
