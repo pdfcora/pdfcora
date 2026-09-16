@@ -59,14 +59,14 @@ public final class PdfObjects {
     return mergeInto(inner(number), additions);
   }
 
-  /** The same merge over a dictionary the caller already holds, without its `<<` and `>>`. */
+  /** The same merge over a dictionary the caller already holds, without its delimiters. */
   public static PdfValue mergeInto(String inner, String additions) {
     String merged = inner;
     for (String key : keysOf(additions)) merged = removeEntry(merged, key);
     return new PdfValue.Raw(PdfValue.ascii("<<" + merged + " " + additions + ">>"));
   }
 
-  /** Object `number`'s dictionary without its `<<` and `>>`. */
+  /** Object `number`'s dictionary, with its opening and closing delimiters stripped. */
   public String inner(int number) {
     String body = body(number).trim();
     int open = body.indexOf("<<");
