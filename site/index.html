@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PdfiumKit — One PDF SDK. Every platform.</title>
+  <title>PdfiumKit — PDFium for iOS, Android, Web, Node and Java</title>
   <meta name="description" content="PdfiumKit brings PDFium, the engine behind Chrome's PDF viewer, to iOS, Android, the Web, Node and Java with one clean API. Render, search, annotate, fill forms, sign, redact and tag — on a phone, in a browser or in a batch job.">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#07080c">
@@ -44,9 +44,9 @@
 
       <div class="wrap hero-grid">
         <div class="hero-copy">
-          <p class="pill"><span class="pill-tag">New</span>0.1.0 pre-release · five SDKs, one engine</p>
-          <h1>One PDF SDK.<br><span class="grad">Every platform.</span></h1>
-          <p class="lede"><strong>PDFium — the engine behind Chrome’s PDF viewer</strong> — behind five SDKs for iOS, Android, the Web, Node and Java. Render, search, annotate, fill forms, sign, redact and tag for accessibility, with one object model and one set of typed errors across all of them.</p>
+          <p class="pill"><span class="pill-tag">0.1.0</span>Pre-release · PDFium <code>chromium/7243</code></p>
+          <h1>One PDF engine.<br><span class="grad">Five native SDKs.</span></h1>
+          <p class="lede"><strong>PDFium — the renderer in Chrome</strong> — pinned to one revision and wrapped for Swift, Kotlin, TypeScript and Java. Render, extract, search, annotate, fill forms, sign, redact and tag for accessibility, against one object model and one closed set of typed errors on every one.</p>
           <div class="cta">
             <a class="btn btn-primary" href="demos.html">See a demo <span aria-hidden="true">→</span></a>
             <a class="btn btn-glass" href="download.html">Get the SDK</a>
@@ -94,13 +94,44 @@
 
     </section>
 
-    <!-- ============================== FOUNDATIONS ============================== -->
+    <!-- ============================== AT A GLANCE ============================== -->
+    <section class="section" id="glance" aria-labelledby="glance-h">
+      <div class="wrap">
+        <header class="section-head reveal">
+          <p class="eyebrow">At a glance</p>
+          <h2 id="glance-h">What you link against.</h2>
+          <p>One PDFium build per target, from the same pinned revision and the same build flags, carried inside the package. There is nothing else to host and no native toolchain to install.</p>
+        </header>
+
+        <div class="table-scroll reveal">
+          <table class="matrix">
+            <caption class="sr">Language, minimum version, engine artifact and distribution per SDK</caption>
+            <thead><tr><th scope="col">SDK</th><th scope="col">Language</th><th scope="col">Minimum</th><th scope="col">Engine</th><th scope="col">Distribution</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">iOS</th><td>Swift 5.9, async/await</td><td>iOS 15</td><td>Static library in an xcframework</td><td>Swift Package Manager</td></tr>
+              <tr><th scope="row">Android</th><td>Kotlin, coroutines</td><td>minSdk 23</td><td>JNI, four ABIs in the AAR</td><td>Maven</td></tr>
+              <tr><th scope="row">Web</th><td>TypeScript, ESM</td><td>WebAssembly + ES modules</td><td>WebAssembly, 1.5 MB brotli</td><td>npm</td></tr>
+              <tr><th scope="row">Node</th><td>TypeScript, ESM</td><td>Node 18</td><td>The same WebAssembly build</td><td>npm</td></tr>
+              <tr><th scope="row">Java</th><td>Java, blocking</td><td>Java 17</td><td>JNI, macOS and Linux, x86-64 and arm64</td><td>Maven</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted" style="margin-top:.9rem">Java uses <strong>JNI, not the Foreign Function API</strong>, so it runs on the JDK most teams already have rather than requiring 22+. Node is the web package with file and PNG helpers on top, not a second implementation.</p>
+
+        <div class="callout info reveal">
+          <h3>What is compiled out of the engine, and what follows from it</h3>
+          <p>The build disables <strong>V8, XFA and Skia</strong>. So a PDF’s embedded JavaScript never executes — no document can run code in your process — and XFA forms are not supported; AcroForm is. 448 of PDFium’s 460 public functions are exported, identical across the iOS static library, all four Android ABIs and the WebAssembly build; the twelve absent are the XFA, V8, Skia and Windows-HDC entry points. FreeType is bundled, so text rendering does not depend on the host’s font stack.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== DESIGN ============================== -->
     <section class="section" id="why" aria-labelledby="why-h">
       <div class="wrap">
         <header class="section-head reveal">
-          <p class="eyebrow">What you are buying</p>
-          <h2 id="why-h">One engine. Five SDKs. The same answers.</h2>
-          <p>Swift, Kotlin, TypeScript and Java, each written the way that language’s developers expect, over one pinned build of PDFium — so the choice of platform stops being a choice of PDF behaviour.</p>
+          <p class="eyebrow">Design</p>
+          <h2 id="why-h">What the SDK adds to PDFium.</h2>
+          <p>PDFium is a C++ library with a C API, no thread safety and a habit of returning null. These five things are what the SDK is responsible for on top of it.</p>
         </header>
 
         <div class="bento">
@@ -113,8 +144,8 @@
 
           <article class="tile reveal">
             <div class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.2"/><path d="M12 3.5v5.3M20.2 14.5l-4.7-1.4M4.1 14.9l4.6-1.6"/></svg></div>
-            <h3>PDFium, pinned.</h3>
-            <p>A known revision, checksummed, with the same public API compiled into every build. <code>vendor.manifest.json</code> records the SHA-256 of every artifact and the fetch refuses anything that does not match.</p>
+            <h3>A reproducible engine.</h3>
+            <p>One revision, one set of build flags, the same public API in every target. <code>vendor.manifest.json</code> records the SHA-256 of every artifact and the fetch refuses anything that does not match, so the binary you ship is the binary that was built.</p>
           </article>
 
           <article class="tile reveal">
@@ -125,7 +156,7 @@
 
           <article class="tile reveal">
             <div class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0-4-4m4 4 4-4"/><path d="M4.5 16.5v2a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-2"/></svg></div>
-            <h3>Light enough for mobile.</h3>
+            <h3>Bounded binary cost.</h3>
             <div class="sizes">
               <div><span>Web engine, brotli</span><b>1.5 MB</b><i style="--s:31%"></i></div>
               <div><span>Android arm64</span><b>4.77 MB</b><i style="--s:100%"></i></div>
@@ -159,8 +190,8 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
       <div class="wrap">
         <header class="section-head section-head-center reveal">
           <p class="eyebrow">Features</p>
-          <h2 id="features-h">Built and tested today.</h2>
-          <p>Not a roadmap. Everything below is implemented and covered by tests; where an SDK is behind, the coverage table further down says so by name.</p>
+          <h2 id="features-h">The API surface.</h2>
+          <p>Implemented, not planned. Where one SDK is behind the others, the coverage table below names it and the row.</p>
         </header>
 
         <ul class="features">
@@ -179,6 +210,19 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
           <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="6" rx="1.8"/><rect x="3.5" y="13.5" width="17" height="6" rx="1.8"/><path d="M7 7.5h.01M7 16.5h.01"/></svg></span><h3>Runs on your server</h3><p><code>@pdfiumkit/node</code> re-exports the whole web API; the Java SDK puts the native engine on the JVM for batch work.</p></li>
           <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9.5" r="5"/><path d="m9 14-1.5 6 4.5-2.4 4.5 2.4L15 14"/></svg></span><h3>Offline licensing</h3><p>Keys verified with no network, per app ID or host. Without one everything still works, watermarked. <a href="download.html">More →</a></p></li>
         </ul>
+        <div class="table-scroll reveal" style="margin-top:1.6rem">
+          <table class="matrix">
+            <caption class="sr">Standards the SDK reads and writes to</caption>
+            <thead><tr><th scope="col">Standard</th><th scope="col">Where it applies</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">PDF/UA-1 (ISO 14289-1)</th><td>Documents the SDK tags and describes. veraPDF is the judge, not us.</td></tr>
+              <tr><th scope="row">PAdES B-B and B-T</th><td>Signatures it creates. B-T adds an RFC 3161 timestamp; Java is B-B only.</td></tr>
+              <tr><th scope="row">CMS / PKCS#7, PKCS#12</th><td>The signature container, and the identity it is made with. Verification recomputes the digest over the <code>/ByteRange</code>.</td></tr>
+              <tr><th scope="row">WCAG 2.1 A and AA · EN 301 549 v3.2.1</th><td>The viewer components, on iOS, Android and the Web.</td></tr>
+              <tr><th scope="row">AcroForm</th><td>Form fields. XFA is not supported — it is compiled out of the engine.</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </section>
 
@@ -246,7 +290,7 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
       <div class="wrap">
         <header class="section-head reveal">
           <p class="eyebrow">For engineers</p>
-          <h2 id="eng-h">The details, with the caveats left in.</h2>
+          <h2 id="eng-h">Coverage and cost, measured.</h2>
           <p>What each SDK does and does not do, and what it costs to run. The sizes and timings are measured, not estimated — the method is under each table.</p>
         </header>
 
@@ -339,8 +383,8 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
       <div class="wrap">
         <header class="section-head section-head-center reveal">
           <p class="eyebrow">Where it stands</p>
-          <h2 id="roadmap-h">What we have not done.</h2>
-          <p>Kept on the front page rather than in a footnote, because finding out late is worse.</p>
+          <h2 id="roadmap-h">Known gaps.</h2>
+          <p>On the front page rather than in a footnote, because finding out late is worse.</p>
         </header>
         <ul class="roadmap">
           <li class="reveal"><span class="status">Open</span><h3>Published packages</h3><p>SPM, Maven and npm artifacts for all five SDKs, and the engine binaries as checksummed release assets. Today they are built from the repository.</p></li>
@@ -359,7 +403,7 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
           <div class="aurora aurora-final" aria-hidden="true"><span></span><span></span></div>
           <div class="final-copy">
             <p class="eyebrow">Get started</p>
-            <h2 id="start-h">Start with the demo, not the invoice.</h2>
+            <h2 id="start-h">Installing.</h2>
             <p>Every sample runs with no account and no key — output simply carries a trial watermark. Packages for Swift Package Manager, Maven and npm arrive with the first release; until then the SDK is built from the repository, which is how the samples consume it. <a href="download.html">What a trial gives you, and what a key unlocks →</a></p>
             <div class="cta" style="margin-top:1.1rem">
               <a class="btn btn-primary" href="demos.html">Run a demo <span aria-hidden="true">→</span></a>
