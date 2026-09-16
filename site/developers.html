@@ -41,11 +41,11 @@
       <div class="grid-bg" aria-hidden="true"></div>
       <div class="wrap">
         <p class="eyebrow">For engineers</p>
-        <h1>One engine.<br><span class="grad">Three idiomatic APIs.</span></h1>
-        <p class="lede">PdfiumKit is PDFium, pinned to a known revision, wrapped so that Swift, Kotlin and TypeScript each get the API their developers expect — with the same types, the same method names and the same error cases.</p>
+        <h1>One engine.<br><span class="grad">Five idiomatic APIs.</span></h1>
+        <p class="lede">PdfiumKit is PDFium, pinned to a known revision, wrapped so that Swift, Kotlin, TypeScript and Java each get the API their developers expect — with the same types, the same method names and the same error cases, on a phone, in a browser and on a server.</p>
         <nav class="page-nav" aria-label="On this page">
           <a href="#modules">Modules</a><a href="#threading">Threading</a><a href="#errors">Errors</a>
-          <a href="#coordinates">Coordinates</a><a href="#viewer">Viewer</a><a href="#limits">Limits</a>
+          <a href="#coordinates">Coordinates</a><a href="#viewer">Viewer</a><a href="#reference">Reference</a><a href="#limits">Limits</a>
         </nav>
       </div>
     </section>
@@ -84,7 +84,8 @@
           <article class="card reveal"><span class="tag">iOS</span><h3>An actor per document</h3><p>Every call hops onto the document’s actor, so concurrent calls serialise instead of corrupting memory. <code>async</code>/<code>await</code> throughout.</p></article>
           <article class="card reveal"><span class="tag">Android</span><h3>A single-threaded dispatcher</h3><p>Each document owns one dispatcher; suspending functions run there. Your coroutine scope stays yours.</p></article>
           <article class="card reveal"><span class="tag">Web</span><h3>A promise chain, or a Worker</h3><p>In-process calls queue behind one chain. <code>PdfWorker</code> runs the whole SDK in a Worker behind the same API, so a stalled render can be terminated without taking the page down.</p></article>
-          <article class="card reveal card-lead"><span class="tag">All three</span><h3>A watchdog for the calls that never return</h3><p>A malformed page can stall inside the engine where no cancellation reaches. Each document has its own executor, and a watchdog marks the engine unresponsive so later calls fail fast with a typed error rather than piling up behind it. A stalled document cannot take the others with it.</p></article>
+          <article class="card reveal"><span class="tag">Node &amp; Java</span><h3>One thread per document</h3><p>Node inherits the web SDK&rsquo;s promise chain. On Java each document owns a thread and every call runs on it, so calling from a request pool is safe &mdash; the calls serialise rather than corrupting memory.</p></article>
+          <article class="card reveal card-lead"><span class="tag">Everywhere</span><h3>A watchdog for the calls that never return</h3><p>A malformed page can stall inside the engine where no cancellation reaches. Each document has its own executor, and a watchdog marks the engine unresponsive so later calls fail fast with a typed error rather than piling up behind it. A stalled document cannot take the others with it.</p></article>
         </div>
       </div>
     </section>
@@ -153,6 +154,39 @@
       </div>
     </section>
 
+
+    <section class="section" id="reference" aria-labelledby="reference-h">
+      <div class="wrap">
+        <header class="section-head reveal">
+          <p class="eyebrow">Reference</p>
+          <h2 id="reference-h">Every public type, generated from the source.</h2>
+          <p>Each SDK&rsquo;s reference is produced by that language&rsquo;s own tool, from the code that ships &mdash; so it cannot drift from the API you call. One command builds all five, plus a quickstart page each.</p>
+        </header>
+        <div class="code-card reveal">
+          <div class="code-head"><div class="tablist"><span class="panel-label-tab">Shell</span></div><button class="copy" type="button" data-copy aria-label="Copy code">Copy</button></div>
+          <div class="panel">
+            <span class="panel-label">Build the documentation, then open it</span>
+<pre tabindex="0"><code>./scripts/make-docs.sh                 <span class="c"># builds and serves on :8080</span>
+./scripts/make-docs.sh --no-serve out  <span class="c"># files only, into out/</span></code></pre>
+          </div>
+        </div>
+        <div class="table-scroll reveal">
+          <table class="matrix">
+            <caption class="sr">API reference tool and quickstart page per SDK</caption>
+            <thead><tr><th scope="col">SDK</th><th scope="col">Reference</th><th scope="col">Where it lands</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">iOS</th><td>DocC</td><td><code>ios/api/</code></td></tr>
+              <tr><th scope="row">Android</th><td>Dokka</td><td><code>android/api/</code></td></tr>
+              <tr><th scope="row">Web</th><td>TypeDoc</td><td><code>web/api/</code></td></tr>
+              <tr><th scope="row">Node</th><td>TypeDoc</td><td><code>node/api/</code></td></tr>
+              <tr><th scope="row">Java</th><td>Javadoc</td><td><code>java/api/</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted" style="margin-top:.9rem">Serve the output rather than opening it from the filesystem: the iOS reference fetches its own content and needs a real origin. <code>serve.sh</code> is written into the output directory for that. Each SDK also carries a hand-written API table in its own <code>README.md</code>, which is the faster read when you already know what you are looking for.</p>
+        <p class="muted"><span class="todo">Todo</span> A hosted copy of the reference is not published yet.</p>
+      </div>
+    </section>
 
     <section class="section section-tint" id="limits" aria-labelledby="limits-h">
       <div class="wrap">

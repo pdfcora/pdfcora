@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PdfiumKit demos — run the SDK before you integrate it</title>
-  <meta name="description" content="Ten small sample apps, one per feature area, for iOS, Android and the web, plus two full demo apps. Each opens a bundled PDF and shows one thing, so the code reads top to bottom.">
+  <meta name="description" content="Fourteen small sample apps, one per feature area, for iOS, Android, the web, Node and Java, plus two full demo apps. Each opens a bundled PDF and shows one thing, so the code reads top to bottom.">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#07080c">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -42,7 +42,7 @@
       <div class="wrap">
         <p class="eyebrow">Demos</p>
         <h1>See it running<br><span class="grad">in ten minutes.</span></h1>
-        <p class="lede">Ten small samples, one per feature area on every platform it exists for, plus a full demo app on iOS and Android that shows everything at once. All of them run from the repository with no account and no key — output simply carries a trial watermark.</p>
+        <p class="lede">Fourteen small samples, one per feature area on every SDK it exists for, plus a full demo app on iOS and Android that shows everything at once. All of them run from the repository with no account and no key — output simply carries a trial watermark, except on Java, which has no licensing module yet.</p>
         <div class="cta">
           <a class="btn btn-primary" href="download.html">Get the SDK <span aria-hidden="true">→</span></a>
           <a class="btn btn-glass" href="#web">Run the web demos</a>
@@ -61,16 +61,17 @@
         <div class="table-scroll reveal">
           <table class="matrix">
             <caption class="sr">Samples by feature area and platform</caption>
-            <thead><tr><th scope="col">Shows</th><th scope="col">iOS</th><th scope="col">Android</th><th scope="col">Web</th></tr></thead>
+            <thead><tr><th scope="col">Shows</th><th scope="col">iOS</th><th scope="col">Android</th><th scope="col">Web</th><th scope="col">Node</th><th scope="col">Java</th></tr></thead>
             <tbody>
-              <tr><th scope="row">Core — open, text, search, form fields, render, save</th><td><code>samples/core-ios</code></td><td><code>samples/core-android</code></td><td><code>samples/core-web</code></td></tr>
-              <tr><th scope="row">AI — summarise, propose redactions, accept, undo</th><td><code>samples/ai-ios</code></td><td><code>samples/ai-android</code></td><td><code>samples/ai-web</code></td></tr>
-              <tr><th scope="row">UI — the viewer with a custom toolbar and theme</th><td><code>samples/ui-ios</code></td><td><code>samples/ui-android</code></td><td><code>samples/ui-web</code></td></tr>
-              <tr><th scope="row">Agents — an MCP client and a WebMCP page</th><td>—</td><td>—</td><td><code>samples/agents-web</code></td></tr>
+              <tr><th scope="row">Core — open, text, search, form fields, render, save</th><td><code>samples/core-ios</code></td><td><code>samples/core-android</code></td><td><code>samples/core-web</code></td><td><code>samples/core-node</code></td><td><code>samples/core-java</code></td></tr>
+              <tr><th scope="row">AI — summarise, propose redactions, accept, undo</th><td><code>samples/ai-ios</code></td><td><code>samples/ai-android</code></td><td><code>samples/ai-web</code></td><td><code>samples/ai-node</code></td><td>—</td></tr>
+              <tr><th scope="row">UI — the viewer with a custom toolbar and theme</th><td><code>samples/ui-ios</code></td><td><code>samples/ui-android</code></td><td><code>samples/ui-web</code></td><td>—</td><td>—</td></tr>
+              <tr><th scope="row">Agents — an MCP client and a WebMCP page</th><td>—</td><td>—</td><td><code>samples/agents-web</code></td><td><code>samples/agents-web</code></td><td>—</td></tr>
+              <tr><th scope="row">Pipeline — tag for accessibility, sign, countersign</th><td>—</td><td>—</td><td>—</td><td>—</td><td><code>samples/pipeline-java</code></td></tr>
             </tbody>
           </table>
         </div>
-        <p class="muted" style="margin-top:.9rem">Agents are Node and browser only: the MCP server is a Node process and WebMCP is a browser API.</p>
+        <p class="muted" style="margin-top:.9rem">A server has no screen, so there is no UI sample for Node or Java, and the Java SDK has no AI package yet. <code>agents-web</code> fills both of its columns: its MCP client is a Node process talking to the server, and the same tools reach a browser agent through WebMCP.</p>
       </div>
     </section>
 
@@ -135,6 +136,46 @@ gradle installDebug</code></pre>
         <div class="callout info reveal">
           <h3>On-device AI needs a device</h3>
           <p>The AI samples show what <code>availability()</code> reports rather than failing: a simulator says the platform is unsupported and most emulators say the device is not eligible. The pattern-based half — redaction suggestions, remediation, flat form detection — works everywhere, with no model at all.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-tint" id="server" aria-labelledby="server-h">
+      <div class="wrap">
+        <header class="section-head reveal">
+          <p class="eyebrow">Node and Java</p>
+          <h2 id="server-h">Four scripts, no screen.</h2>
+          <p>A server does not render for a person to look at. These read documents, change them under review, and produce files another system consumes.</p>
+        </header>
+        <div class="two-col reveal">
+          <div>
+            <h3 class="table-title">Node</h3>
+            <div class="code-card"><div class="code-head"><div class="tablist"><span class="panel-label-tab">Shell</span></div></div>
+            <div class="panel">
+<pre tabindex="0"><code>./scripts/fetch-vendor.sh
+(<span class="k">cd</span> web    &amp;&amp; npm install &amp;&amp; npm run build)
+(<span class="k">cd</span> node   &amp;&amp; npm install &amp;&amp; npm run build)
+(<span class="k">cd</span> samples/core-node &amp;&amp; npm install &amp;&amp; npm start)</code></pre>
+            </div></div>
+            <p class="muted">Node 18+. Nothing to compile: the WebAssembly engine ships inside the package and Node finds it itself.</p>
+          </div>
+          <div>
+            <h3 class="table-title">Java</h3>
+            <div class="code-card"><div class="code-head"><div class="tablist"><span class="panel-label-tab">Shell</span></div></div>
+            <div class="panel">
+<pre tabindex="0"><code>./scripts/fetch-vendor.sh
+./scripts/build-jni.sh                 <span class="c"># the native engine for this platform</span>
+<span class="k">cd</span> samples/core-java
+gradle run</code></pre>
+            </div></div>
+            <p class="muted">Java 17+, macOS and Linux. The SDK is resolved from the repository through an included build.</p>
+          </div>
+        </div>
+        <div class="cards">
+          <article class="card reveal"><h3>Core — Node</h3><p>Document facts, page text, a search count, form fields, page 1 written out as a PNG with no image dependency, and the saved byte size.</p></article>
+          <article class="card reveal"><h3>AI — Node</h3><p>Personal data found by patterns, a reviewer&rsquo;s accepted ids applied and nothing else, a report of what left the bytes, then undo. Patterns need no model, which is what makes them useful in a batch job.</p></article>
+          <article class="card reveal"><h3>Core — Java</h3><p>The same core API on the JVM, rendering through <code>BufferedImage</code> and <code>ImageIO</code>.</p></article>
+          <article class="card reveal"><h3>Pipeline — Java</h3><p>Tag an untagged document for accessibility, sign it, then sign it again &mdash; and watch the first signature keep verifying, because the update is appended rather than rewritten.</p></article>
         </div>
       </div>
     </section>
