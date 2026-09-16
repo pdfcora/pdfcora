@@ -7,6 +7,10 @@ group = "com.pdfiumkit"
 // PKG-1: released alongside the core with a matching version.
 version = "0.1.0"
 
+// The Maven artifactId is pdfiumkit; without this the jar is named after the Gradle
+// project instead, and the loose jar would not match the coordinates it publishes under.
+base { archivesName = "pdfiumkit" }
+
 java {
     // JNI, not the Foreign Function API, so the SDK runs on the JDK enterprises have.
     toolchain { languageVersion = JavaLanguageVersion.of(17) }
@@ -49,6 +53,13 @@ tasks.test {
 }
 
 publishing {
+    repositories {
+        // scripts/package-all.sh passes a directory to publish into, the same way the
+        // Android module does, so a release can be tried before it is uploaded.
+        providers.gradleProperty("distRepo").orNull?.let { dist ->
+            maven { name = "dist"; url = uri(dist) }
+        }
+    }
     publications {
         create<MavenPublication>("maven") {
             artifactId = "pdfiumkit"

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds the distributable artifacts for all three platforms into one directory.
+# Builds the distributable artifacts for every SDK into one directory.
 #
 #   ./scripts/package-all.sh [outdir]        (default: build/dist)
 #
@@ -9,6 +9,9 @@
 #   android/pdfiumkit-release.aar     all four ABIs
 #   android/maven/                    a repository the AAR resolves from
 #   web/pdfiumkit-web-<version>.tgz   npm tarball, wasm included
+#   node/pdfiumkit-node-<version>.tgz npm tarball, depending on the published web package
+#   java/pdfiumkit-<version>.jar      the jar, with a native library per platform
+#   java/maven/                       a repository the jar resolves from
 #   SHA256SUMS, NOTICE.md, README.md
 set -euo pipefail
 
@@ -22,7 +25,7 @@ for d in ios android web; do
 done
 
 rm -rf "$OUT"
-mkdir -p "$OUT"/{ios,android,web} "$WORK"
+mkdir -p "$OUT"/{ios,android,web,node,java} "$WORK"
 
 # --- iOS ------------------------------------------------------------------------
 # xcodebuild only emits a real framework for a dynamic product, and SPM forbids target
@@ -106,6 +109,43 @@ echo "==> Web"
 ( cd "$ROOT/web" && npm pack --pack-destination "$OUT/web" ) > "$WORK/web.log" 2>&1 \
     || { echo "npm pack failed — see $WORK/web.log" >&2; exit 1; }
 
+# --- Node -----------------------------------------------------------------------
+# Packed from a copy: the working tree depends on ../web by path, which no consumer of
+# the tarball can resolve. The copy names the published version instead.
+echo "==> Node"
+NODE_STAGE="$WORK/node-stage"
+mkdir -p "$NODE_STAGE"
+( cd "$ROOT/node" && npm run build ) > "$WORK/node-build.log" 2>&1 \
+    || { echo "node build failed — see $WORK/node-build.log" >&2; exit 1; }
+cp "$ROOT/node/package.json" "$ROOT/node/README.md" "$NODE_STAGE/"
+cp -R "$ROOT/node/dist" "$NODE_STAGE/dist"
+python3 - "$NODE_STAGE/package.json" <<'PYEOF'
+import json, sys
+package = json.load(open(sys.argv[1]))
+package["dependencies"]["@pdfiumkit/web"] = "^" + package["version"]
+# The copy has no node_modules, and dist is already in it, so the prepack build
+# would only fail.
+package.get("scripts", {}).pop("prepack", None)
+json.dump(package, open(sys.argv[1], "w"), indent=2)
+PYEOF
+( cd "$NODE_STAGE" && npm pack --pack-destination "$OUT/node" ) > "$WORK/node.log" 2>&1 \
+    || { echo "npm pack failed — see $WORK/node.log" >&2; exit 1; }
+
+# --- Java -----------------------------------------------------------------------
+echo "==> Java"
+if [ -d "$ROOT/java/src/main/resources/native" ]; then
+    ( cd "$ROOT/java" && gradle jar publishMavenPublicationToDistRepository \
+        -PdistRepo="$OUT/java/maven" --console=plain ) > "$WORK/java.log" 2>&1 \
+        || { echo "gradle failed — see $WORK/java.log" >&2; exit 1; }
+    cp "$ROOT"/java/build/libs/*.jar "$OUT/java/"
+    JAR="$(ls "$OUT"/java/*.jar | grep -v -e -sources.jar -e -javadoc.jar | head -1)"
+    echo "    platforms: $(unzip -l "$JAR" | grep -cE 'native/.*\.(so|dylib)$')"
+else
+    # A jar without an engine would look like a release and fail at the first call.
+    echo "    skipped: no native engine — run ./scripts/build-jni.sh" >&2
+    rmdir "$OUT/java"
+fi
+
 # --- Manifest -------------------------------------------------------------------
 cp "$ROOT/NOTICE.md" "$OUT/"
 cat > "$OUT/README.md" <<EOF
@@ -131,6 +171,21 @@ Or drop \`pdfiumkit-release.aar\` into \`libs/\`.
 npm install ./web/$(basename "$(ls "$OUT/web"/*.tgz)")
 \`\`\`
 The \`.wasm\` ships inside the package; serve it from the same origin.
+
+## Node
+\`\`\`
+npm install ./node/$(basename "$(ls "$OUT/node"/*.tgz)")
+\`\`\`
+It depends on \`@pdfiumkit/web\`, which resolves from the registry or from the tarball
+above.
+
+## Java
+\`\`\`kotlin
+repositories { maven { url = uri("<path to java/maven>") } }
+dependencies { implementation("com.pdfiumkit:pdfiumkit:0.1.0") }
+\`\`\`
+Or put the jar on the classpath. It carries a native library for macOS and Linux on
+x86-64 and arm64; \`-Dpdfiumkit.native.path=\` overrides which one is loaded.
 EOF
 
 ( cd "$OUT" && find . -type f ! -name SHA256SUMS ! -path "./.work/*" -print0 \
