@@ -69,6 +69,8 @@
               <button role="tab" id="d-ios" aria-controls="dp-ios" aria-selected="true">iOS</button>
               <button role="tab" id="d-android" aria-controls="dp-android" aria-selected="false" tabindex="-1">Android</button>
               <button role="tab" id="d-web" aria-controls="dp-web" aria-selected="false" tabindex="-1">Web</button>
+              <button role="tab" id="d-node" aria-controls="dp-node" aria-selected="false" tabindex="-1">Node</button>
+              <button role="tab" id="d-java" aria-controls="dp-java" aria-selected="false" tabindex="-1">Java</button>
               <button role="tab" id="d-src" aria-controls="dp-src" aria-selected="false" tabindex="-1">From source</button>
             </div>
             <button class="copy" type="button" data-copy aria-label="Copy code">Copy</button>
@@ -93,6 +95,18 @@
 npm install <span class="s">@pdfiumkit/web-ai</span>     <span class="c"># optional</span>
 npm install <span class="s">pdfiumkit-mcp</span>         <span class="c"># optional, for agents</span></code></pre>
             <p class="reqs">TypeScript · WebAssembly · ESM · Node 18+ · the .wasm ships inside the package</p>
+          </div>
+          <div role="tabpanel" id="dp-node" aria-labelledby="d-node" class="panel">
+            <span class="panel-label">Node — npm</span>
+<pre tabindex="0"><code>npm install <span class="s">@pdfiumkit/node</span>
+npm install <span class="s">@pdfiumkit/web-ai</span>     <span class="c"># optional</span>
+npm install <span class="s">pdfiumkit-mcp</span>         <span class="c"># optional, for agents</span></code></pre>
+            <p class="reqs">Node 18+ · the whole web API re-exported, plus file and PNG helpers · nothing to compile</p>
+          </div>
+          <div role="tabpanel" id="dp-java" aria-labelledby="d-java" class="panel">
+            <span class="panel-label">Java — Gradle</span>
+<pre tabindex="0"><code><span class="f">implementation</span>(<span class="s">"com.pdfiumkit:pdfiumkit:0.1.0"</span>)</code></pre>
+            <p class="reqs">Java 17+ · macOS and Linux, x86-64 and arm64 · the engine is in the jar · no AI package yet</p>
           </div>
           <div role="tabpanel" id="dp-src" aria-labelledby="d-src" class="panel">
             <span class="panel-label">From source — what the samples do today</span>

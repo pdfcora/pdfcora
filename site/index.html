@@ -97,8 +97,8 @@
       <div class="wrap">
         <header class="section-head reveal">
           <p class="eyebrow">Why PdfiumKit</p>
-          <h2 id="why-h">iOS, Android and the Web.</h2>
-          <p>One engine and one API on all three, so a feature behaves the same on an iPhone, an Android tablet and in the browser — in Swift, Kotlin and TypeScript, each written the way that language’s developers expect.</p>
+          <h2 id="why-h">iOS, Android, the Web — and your server.</h2>
+          <p>One engine and one API across all of them, so a feature behaves the same on an iPhone, an Android tablet, in the browser and in a batch job — in Swift, Kotlin, TypeScript and Java, each written the way that language’s developers expect.</p>
         </header>
 
         <div class="bento">
@@ -390,6 +390,8 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
                 <button role="tab" id="t-ios" aria-controls="p-ios" aria-selected="true">iOS</button>
                 <button role="tab" id="t-android" aria-controls="p-android" aria-selected="false" tabindex="-1">Android</button>
                 <button role="tab" id="t-web" aria-controls="p-web" aria-selected="false" tabindex="-1">Web</button>
+                <button role="tab" id="t-node" aria-controls="p-node" aria-selected="false" tabindex="-1">Node</button>
+                <button role="tab" id="t-java" aria-controls="p-java" aria-selected="false" tabindex="-1">Java</button>
               </div>
               <button class="copy" type="button" data-copy aria-label="Copy code">Copy</button>
             </div>
@@ -407,6 +409,16 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
               <span class="panel-label">Web — npm</span>
 <pre tabindex="0"><code>npm install <span class="s">@pdfiumkit/web</span></code></pre>
               <p class="reqs">TypeScript · WebAssembly · ESM · Node 18+ · the .wasm ships inside the package</p>
+            </div>
+            <div role="tabpanel" id="p-node" aria-labelledby="t-node" class="panel">
+              <span class="panel-label">Node — npm</span>
+<pre tabindex="0"><code>npm install <span class="s">@pdfiumkit/node</span></code></pre>
+              <p class="reqs">Node 18+ · the whole web API, plus file and PNG helpers · nothing to compile</p>
+            </div>
+            <div role="tabpanel" id="p-java" aria-labelledby="t-java" class="panel">
+              <span class="panel-label">Java — Gradle</span>
+<pre tabindex="0"><code><span class="f">implementation</span>(<span class="s">"com.pdfiumkit:pdfiumkit:0.1.0"</span>)</code></pre>
+              <p class="reqs">Java 17+ · macOS and Linux, x86-64 and arm64 · the engine is in the jar</p>
             </div>
           </div>
         </div>
