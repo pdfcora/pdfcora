@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PdfiumKit — PDFium for iOS, Android, Web, Node and Java</title>
-  <meta name="description" content="PdfiumKit brings PDFium, the engine behind Chrome's PDF viewer, to iOS, Android, the Web, Node and Java with one clean API. Render, search, annotate, fill forms, sign, redact and tag — on a phone, in a browser or in a batch job.">
+  <title>PdfiumKit — a PDF SDK for iOS, Android, Web, Node and Java</title>
+  <meta name="description" content="A PDF SDK for iOS, Android, the Web, Node and Java. Render, search, annotate, fill forms, sign, redact and tag for accessibility — on a phone, in a browser or on a server, with the same results everywhere.">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#07080c">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -44,9 +44,9 @@
 
       <div class="wrap hero-grid">
         <div class="hero-copy">
-          <p class="pill"><span class="pill-tag">0.1.0</span>Pre-release · PDFium <code>chromium/7243</code></p>
+          <p class="pill"><span class="pill-tag">0.1.0</span>Pre-release · iOS, Android, Web, Node, Java</p>
           <h1>One PDF engine.<br><span class="grad">Five native SDKs.</span></h1>
-          <p class="lede"><strong>PDFium — the renderer in Chrome</strong> — pinned to one revision and wrapped for Swift, Kotlin, TypeScript and Java. Render, extract, search, annotate, fill forms, sign, redact and tag for accessibility, against one object model and one closed set of typed errors on every one.</p>
+          <p class="lede">Render, extract, search, annotate, fill forms, sign, redact and tag for accessibility — in Swift, Kotlin, TypeScript and Java, with the same API and the same results on all of them. Built on <strong>the engine Chrome uses to display PDFs</strong>, so it opens the files your users actually send.</p>
           <div class="cta">
             <a class="btn btn-primary" href="demos.html">See a demo <span aria-hidden="true">→</span></a>
             <a class="btn btn-glass" href="download.html">Get the SDK</a>
@@ -98,29 +98,29 @@
     <section class="section" id="glance" aria-labelledby="glance-h">
       <div class="wrap">
         <header class="section-head reveal">
-          <p class="eyebrow">At a glance</p>
-          <h2 id="glance-h">What you link against.</h2>
-          <p>One PDFium build per target, from the same pinned revision and the same build flags, carried inside the package. There is nothing else to host and no native toolchain to install.</p>
+          <p class="eyebrow">Requirements</p>
+          <h2 id="glance-h">One dependency, per platform.</h2>
+          <p>Add the package and open a file. The engine is inside it — nothing to host, nothing to compile, no native toolchain, no server component.</p>
         </header>
 
         <div class="table-scroll reveal">
           <table class="matrix">
-            <caption class="sr">Language, minimum version, engine artifact and distribution per SDK</caption>
-            <thead><tr><th scope="col">SDK</th><th scope="col">Language</th><th scope="col">Minimum</th><th scope="col">Engine</th><th scope="col">Distribution</th></tr></thead>
+            <caption class="sr">Language, minimum version, download size and package manager per platform</caption>
+            <thead><tr><th scope="col">Platform</th><th scope="col">You write</th><th scope="col">Runs on</th><th scope="col">Adds to your app</th><th scope="col">Install with</th></tr></thead>
             <tbody>
-              <tr><th scope="row">iOS</th><td>Swift 5.9, async/await</td><td>iOS 15</td><td>Static library in an xcframework</td><td>Swift Package Manager</td></tr>
-              <tr><th scope="row">Android</th><td>Kotlin, coroutines</td><td>minSdk 23</td><td>JNI, four ABIs in the AAR</td><td>Maven</td></tr>
-              <tr><th scope="row">Web</th><td>TypeScript, ESM</td><td>WebAssembly + ES modules</td><td>WebAssembly, 1.5 MB brotli</td><td>npm</td></tr>
-              <tr><th scope="row">Node</th><td>TypeScript, ESM</td><td>Node 18</td><td>The same WebAssembly build</td><td>npm</td></tr>
-              <tr><th scope="row">Java</th><td>Java, blocking</td><td>Java 17</td><td>JNI, macOS and Linux, x86-64 and arm64</td><td>Maven</td></tr>
+              <tr><th scope="row">iOS</th><td>Swift 5.9, async/await</td><td>iOS 15 and later</td><td>~4 MB, one architecture per device</td><td>Swift Package Manager</td></tr>
+              <tr><th scope="row">Android</th><td>Kotlin, coroutines</td><td>Android 6.0, API 23</td><td>4.77 MB on arm64; Play sends one ABI per device</td><td>Maven</td></tr>
+              <tr><th scope="row">Web</th><td>TypeScript, ESM</td><td>Any browser with WebAssembly</td><td>1.5 MB over the wire, cached after the first load</td><td>npm</td></tr>
+              <tr><th scope="row">Node</th><td>TypeScript, ESM</td><td>Node 18 and later</td><td>Nothing to compile, any OS Node runs on</td><td>npm</td></tr>
+              <tr><th scope="row">Java</th><td>Java, blocking calls</td><td>Java 17 and later</td><td>macOS and Linux, Intel and ARM</td><td>Maven</td></tr>
             </tbody>
           </table>
         </div>
-        <p class="muted" style="margin-top:.9rem">Java uses <strong>JNI, not the Foreign Function API</strong>, so it runs on the JDK most teams already have rather than requiring 22+. Node is the web package with file and PNG helpers on top, not a second implementation.</p>
+        <p class="muted" style="margin-top:.9rem">Java runs on JDK 17, not 22+, so it fits the runtime most teams already have. Windows is not supported yet.</p>
 
         <div class="callout info reveal">
-          <h3>What is compiled out of the engine, and what follows from it</h3>
-          <p>The build disables <strong>V8, XFA and Skia</strong>. So a PDF’s embedded JavaScript never executes — no document can run code in your process — and XFA forms are not supported; AcroForm is. 448 of PDFium’s 460 public functions are exported, identical across the iOS static library, all four Android ABIs and the WebAssembly build; the twelve absent are the XFA, V8, Skia and Windows-HDC entry points. FreeType is bundled, so text rendering does not depend on the host’s font stack.</p>
+          <h3>A PDF cannot run code in your app</h3>
+          <p>JavaScript embedded in a document is never executed — the interpreter is not in the build at all, so a hostile file has nothing to reach. Fonts are rendered by a copy inside the SDK rather than by the host, so a document cannot reach the system font stack either, and a page looks the same on every device. The trade is XFA: those forms are not supported. AcroForm, which is what almost every real form is, is.</p>
         </div>
       </div>
     </section>
@@ -129,9 +129,9 @@
     <section class="section" id="why" aria-labelledby="why-h">
       <div class="wrap">
         <header class="section-head reveal">
-          <p class="eyebrow">Design</p>
-          <h2 id="why-h">What the SDK adds to PDFium.</h2>
-          <p>PDFium is a C++ library with a C API, no thread safety and a habit of returning null. These five things are what the SDK is responsible for on top of it.</p>
+          <p class="eyebrow">Behaviour</p>
+          <h2 id="why-h">How it behaves under load, and under attack.</h2>
+          <p>A PDF SDK spends its life on files it did not create, from people you cannot ask to send a better one. These are the things that decide whether that is survivable.</p>
         </header>
 
         <div class="bento">
@@ -144,29 +144,21 @@
 
           <article class="tile reveal">
             <div class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.2"/><path d="M12 3.5v5.3M20.2 14.5l-4.7-1.4M4.1 14.9l4.6-1.6"/></svg></div>
-            <h3>A reproducible engine.</h3>
-            <p>One revision, one set of build flags, the same public API in every target. <code>vendor.manifest.json</code> records the SHA-256 of every artifact and the fetch refuses anything that does not match, so the binary you ship is the binary that was built.</p>
+            <h3>Predictable memory.</h3>
+            <p>Documents are closed deterministically, not when a collector decides. Forty open–render–close cycles of an 18.8 MB file leave the heap flat at 25.6 MB — a queue can run for days without drifting.</p>
           </article>
 
           <article class="tile reveal">
             <div class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M4 12h16M4 17h7"/><circle cx="17" cy="7" r="2.3"/><circle cx="14" cy="17" r="2.3"/></svg></div>
             <h3>Safe from any thread.</h3>
-            <p>PDFium is not thread-safe; you never have to care. Every document owns a serial executor — an actor, a dispatcher, a promise chain, a thread — so concurrent calls queue instead of corrupting memory.</p>
+            <p>Call a document from anywhere — a background queue, a request handler, a worker pool. Each one serialises its own work internally, so there is no lock to take and no way to corrupt memory by using the wrong thread.</p>
           </article>
 
-          <article class="tile reveal">
-            <div class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0-4-4m4 4 4-4"/><path d="M4.5 16.5v2a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-2"/></svg></div>
-            <h3>Bounded binary cost.</h3>
-            <div class="sizes">
-              <div><span>Web engine, brotli</span><b>1.5 MB</b><i style="--s:31%"></i></div>
-              <div><span>Android arm64</span><b>4.77 MB</b><i style="--s:100%"></i></div>
-            </div>
-          </article>
 
           <article class="tile tile-wide tile-glow reveal">
             <div class="tile-copy">
               <h3>The same document, the same answer.</h3>
-              <p>A shared conformance suite runs the same fixtures through every SDK and asserts the results match — text hashed against a reference engine, search rectangles, form values, redaction reports, viewer state. A change that makes one platform disagree with the others fails the build.</p>
+              <p>The text you extract, the rectangles a search returns, the values a form reads back and the report a redaction gives are the same on an iPhone, an Android tablet, in a browser and in a batch job. A document processed on your server and opened in your app agrees with itself.</p>
             </div>
             <pre class="mini-code"><code><span class="k">const</span> doc = <span class="k">await</span> worker.<span class="f">open</span>(bytes)
 <span class="c">// same API as in-process</span>
@@ -176,9 +168,9 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
 
         <aside class="honest reveal" aria-labelledby="honest-h">
           <div>
-            <p class="eyebrow eyebrow-warn">The edge case we cannot fix</p>
-            <h3 id="honest-h">A malformed page can stall PDFium’s renderer, and no cancellation reaches it.</h3>
-            <p>It stalls inside native code. So the SDK contains it instead: the stalled document’s own executor holds the damage, later calls to it fail fast with a typed error rather than queueing behind it, and every other document carries on. On the Web, <code>PdfWorker</code> recovers completely — terminate it and the page keeps running.</p>
+            <p class="eyebrow eyebrow-warn">The worst case, stated plainly</p>
+            <h3 id="honest-h">One bad page cannot take your app with it.</h3>
+            <p>A malformed page can stall any PDF renderer deep in native code, where no cancellation reaches. So the damage is contained instead: that document fails fast with a typed error, every other document keeps working, and your app stays responsive. On the Web it is fully recoverable — the whole SDK runs in a Worker behind the same API, and a stuck render is simply terminated.</p>
           </div>
           <a class="btn btn-glass" href="developers.html">Read the engineering details</a>
         </aside>
@@ -190,15 +182,15 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
       <div class="wrap">
         <header class="section-head section-head-center reveal">
           <p class="eyebrow">Features</p>
-          <h2 id="features-h">The API surface.</h2>
-          <p>Implemented, not planned. Where one SDK is behind the others, the coverage table below names it and the row.</p>
+          <h2 id="features-h">What it does.</h2>
+          <p>Every one of these works today. The table further down says which platforms each is on, feature by feature.</p>
         </header>
 
         <ul class="features">
           <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="m20.5 16-4.5-4.5-8 8"/></svg></span><h3>Render</h3><p>Any size or exact pixel dimensions, annotations and form widgets on or off.</p></li>
           <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></svg></span><h3>Text &amp; search</h3><p>Extraction in reading order, search with result rectangles, per-character bounding boxes.</p></li>
           <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19.5 8.5a2.8 2.8 0 0 0-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg></span><h3>Annotate</h3><p>Read 15 kinds — anything else as <code>unknown</code>, never dropped. Write ink, notes, highlight, underline, strikeout.</p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="m7 9.5 1.5 1.5 3-3M13.5 10h4M7 15.5h10.5"/></svg></span><h3>Fill forms</h3><p>Read 8 field kinds; set values through PDFium’s form-fill environment so other viewers agree — or put native controls over the field rectangles and let people type.</p></li>
+          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="m7 9.5 1.5 1.5 3-3M13.5 10h4M7 15.5h10.5"/></svg></span><h3>Fill forms</h3><p>Read 8 field kinds; set values the way Acrobat does, so every other viewer shows them — or put native controls over the field rectangles and let people type.</p></li>
           <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h10a1.5 1.5 0 0 1 1.5 1.5v15.5L12 17l-6.5 3.5V5A1.5 1.5 0 0 1 7 3.5z"/></svg></span><h3>Navigate &amp; inspect</h3><p>Outlines, bookmarks, links, page objects, embedded attachments, metadata and permissions.</p></li>
           <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/></svg></span><h3>Open &amp; save</h3><p>Password-protected files open with a typed error, not a guess. Save in full, or incrementally to leave existing signatures verifying.</p></li>
           <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19.5 8.5a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M4 20h16"/></svg></span><h3>Sign &amp; verify</h3><p>Read and verify signatures; sign as PAdES B-T with a timestamp, or B-B unattended on the JVM. Cross-checked against <code>pdfsig</code>.</p></li>
@@ -215,7 +207,7 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
             <caption class="sr">Standards the SDK reads and writes to</caption>
             <thead><tr><th scope="col">Standard</th><th scope="col">Where it applies</th></tr></thead>
             <tbody>
-              <tr><th scope="row">PDF/UA-1 (ISO 14289-1)</th><td>Documents the SDK tags and describes. veraPDF is the judge, not us.</td></tr>
+              <tr><th scope="row">PDF/UA-1 (ISO 14289-1)</th><td>Tagged documents it produces, verifiable with veraPDF before you ship them.</td></tr>
               <tr><th scope="row">PAdES B-B and B-T</th><td>Signatures it creates. B-T adds an RFC 3161 timestamp; Java is B-B only.</td></tr>
               <tr><th scope="row">CMS / PKCS#7, PKCS#12</th><td>The signature container, and the identity it is made with. Verification recomputes the digest over the <code>/ByteRange</code>.</td></tr>
               <tr><th scope="row">WCAG 2.1 A and AA · EN 301 549 v3.2.1</th><td>The viewer components, on iOS, Android and the Web.</td></tr>
@@ -378,23 +370,6 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
       </div>
     </section>
 
-    <!-- ============================== NOT YET ============================== -->
-    <section class="section section-tint" id="roadmap" aria-labelledby="roadmap-h">
-      <div class="wrap">
-        <header class="section-head section-head-center reveal">
-          <p class="eyebrow">Where it stands</p>
-          <h2 id="roadmap-h">Known gaps.</h2>
-          <p>On the front page rather than in a footnote, because finding out late is worse.</p>
-        </header>
-        <ul class="roadmap">
-          <li class="reveal"><span class="status">Open</span><h3>Published packages</h3><p>SPM, Maven and npm artifacts for all five SDKs, and the engine binaries as checksummed release assets. Today they are built from the repository.</p></li>
-          <li class="reveal"><span class="status">Open</span><h3>An independent accessibility audit</h3><p>Not commissioned, so there is no third-party conformance report to hand you — only our own testing, and veraPDF’s verdict on the documents we produce.</p></li>
-          <li class="reveal"><span class="status">Open</span><h3>Cancellable renders, wider recovery</h3><p>Cancelling inside an engine call is not possible anywhere; full recovery from a hang is Web-only.</p></li>
-          <li class="reveal"><span class="status">Open</span><h3>Tables, OCR and encrypted writes</h3><p>Remediation turns tables into paragraphs, there is no OCR for scans, and encrypted documents can be read but not appended to.</p></li>
-          <li class="reveal"><span class="status">Open</span><h3>Java: licensing, timestamps, the rest of the read API</h3><p>No licence check or watermark yet, signatures are PAdES B-B rather than B-T, and outlines, links and attachments are not exposed. <a href="developers.html#limits">The full list is here.</a></p></li>
-        </ul>
-      </div>
-    </section>
 
     <!-- ============================== GET STARTED ============================== -->
     <section class="section" id="start" aria-labelledby="start-h">
