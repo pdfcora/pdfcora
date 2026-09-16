@@ -198,6 +198,34 @@ try {
     drawHost.querySelector('#tool-note').getAttribute('aria-pressed') === 'true',
     `note=${drawHost.querySelector('#tool-note').getAttribute('aria-pressed')}`);
 
+  // The toolbar must survive an edit: focusing the page after the note editor closes
+  // once scrolled a fixed-height host and took the toolbar off the top of it.
+  const drawBar = drawHost.querySelector('#tool-ink').parentElement;
+  check('the toolbar is still in view after a note is entered',
+    drawBar.getBoundingClientRect().top >= drawHost.getBoundingClientRect().top - 1,
+    `bar=${drawBar.getBoundingClientRect().top} host=${drawHost.getBoundingClientRect().top}`);
+
+  // Form filling: the page is drawn without its form layer and real controls sit on the
+  // field rects, so a form is filled in rather than looked at.
+  const formHost = document.createElement('div');
+  formHost.style.cssText = 'width:520px;height:600px';
+  document.body.append(formHost);
+  const formDoc = await PdfDocument.open(new Uint8Array(await (await fetch('../../conformance/forms/forms.pdf')).arrayBuffer()));
+  await PdfViewerElement.mount(formHost, formDoc);
+  const layerFields = formHost.querySelector('.pdf-form-fields');
+  for (let i = 0; i < 100 && !layerFields?.querySelector('input'); i++) await frame();
+  const textInput = layerFields?.querySelector('input[type="text"]');
+  check('a text field gets a real input on the page', Boolean(textInput),
+    `controls=${layerFields?.childElementCount}`);
+  check('a checkbox gets a real checkbox', Boolean(layerFields?.querySelector('input[type="checkbox"]')));
+
+  textInput.value = 'Jane Doe';
+  textInput.dispatchEvent(new Event('change', { bubbles: true }));
+  const named = async () => (await (await formDoc.page(0)).formFields()).some((f) => f.value === 'Jane Doe');
+  for (let i = 0; i < 100 && !(await named()); i++) await frame();
+  check('typing into it writes the value into the document', await named(),
+    JSON.stringify((await (await formDoc.page(0)).formFields()).slice(0, 3).map((f) => f.value)));
+
   const closed = await open();
   await closed.close();
   const other = document.createElement('div');

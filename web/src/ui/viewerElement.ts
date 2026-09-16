@@ -52,6 +52,8 @@ export class PdfViewerElement {
   private readonly preview = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   /** Where a note's text is typed, before the annotation exists. */
   private readonly editor = document.createElement('textarea');
+  /** Real controls over the page's form fields, so a form is filled in rather than looked at. */
+  private readonly fields = document.createElement('div');
   private readonly reviewBar = document.createElement('div');
   private readonly accessible = document.createElement('div');
   private accessiblePage = -1;
@@ -125,7 +127,10 @@ export class PdfViewerElement {
     this.editor.placeholder = 'Note…';
     this.editor.setAttribute('aria-label', 'Note text');
 
-    this.stage.append(this.canvas, this.preview, this.overlay, this.editor, this.accessible);
+    Object.assign(this.fields.style, { position: 'absolute', left: '0', top: '0' });
+    this.fields.className = 'pdf-form-fields';
+
+    this.stage.append(this.canvas, this.preview, this.fields, this.overlay, this.editor, this.accessible);
     // The page takes keyboard focus: + and - zoom, Page Up and Page Down turn pages.
     this.stage.tabIndex = 0;
     this.stage.setAttribute('role', 'group');
@@ -282,7 +287,12 @@ export class PdfViewerElement {
 
     switch (item.item.kind) {
       case 'custom': item.item.action(); return;
-      case 'tool': this.tool = item.item.tool; viewer.setTool(item.item.tool); this.renderToolbar(); return;
+      case 'tool':
+        this.tool = item.item.tool;
+        viewer.setTool(item.item.tool);
+        this.renderToolbar();
+        this.fields.style.pointerEvents = this.tool === 'select' ? 'auto' : 'none';
+        return;
       case 'undo': {
         const count = (await (await this.pdf.page(viewer.state.pageIndex)).annotations()).length;
         if (count > 0) await viewer.removeAnnotation(count - 1);
@@ -451,7 +461,7 @@ export class PdfViewerElement {
     this.editor.value = '';
     this.editor.dataset.x = String(at.x);
     this.editor.dataset.y = String(at.y);
-    this.editor.focus();
+    this.editor.focus({ preventScroll: true });
     this.status.textContent = 'Type the note, then press Enter. Escape cancels.';
 
     this.editor.onkeydown = (event) => {
@@ -464,7 +474,9 @@ export class PdfViewerElement {
     this.editor.style.display = 'none';
     this.editor.value = '';
     this.status.textContent = '';
-    this.stage.focus();
+    // preventScroll, or the browser scrolls the focused stage into view and takes the
+    // toolbar off the top of a fixed-height host, where overflow:hidden strands it.
+    this.stage.focus({ preventScroll: true });
   }
 
   private async commitNote(): Promise<void> {
@@ -488,7 +500,7 @@ export class PdfViewerElement {
     // Drawn at CSS size from a device-pixel bitmap, so text is sharp on a 2x or 3x display
     // and gestures keep working in CSS pixels.
     const ratio = globalThis.devicePixelRatio || 1;
-    const image = await viewer.render({ pixelRatio: ratio });
+    const image = await viewer.render({ pixelRatio: ratio, forms: false });
     this.canvas.width = image.width;
     this.canvas.height = image.height;
     Object.assign(this.canvas.style, {
@@ -504,7 +516,93 @@ export class PdfViewerElement {
     this.canvas.getContext('2d')?.putImageData(
       new ImageData(pixels, image.width, image.height), 0, 0);
     this.drawMarks();
+    await this.renderFields();
     await this.renderAccessible();
+  }
+
+  /**
+   * A control per form field on the page, positioned over the widget PDFium drew.
+   *
+   * Typing goes straight into the document through the form-fill environment, so the
+   * value other viewers read back is the one on screen. While reviewing, or with a tool
+   * other than select, the layer stays out of the pointer's way so drawing still works.
+   */
+  private async renderFields(): Promise<void> {
+    const viewer = this.viewer;
+    if (!viewer) return;
+    if (this.review) { this.fields.replaceChildren(); return; }
+
+    const transform = viewer.transform();
+    const page = await this.pdf.page(viewer.state.pageIndex);
+    const controls: HTMLElement[] = [];
+
+    for (const field of await page.formFields()) {
+      const box = transform.toViewRect(field.rect);
+      if (box.width < 4 || box.height < 4) continue;
+
+      let control: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+      if (field.kind === 'checkBox' || field.kind === 'radioButton') {
+        control = document.createElement('input');
+        control.type = field.kind === 'checkBox' ? 'checkbox' : 'radio';
+        control.checked = field.isChecked;
+        control.onchange = () => void this.commitField(
+          () => viewer.setFieldChecked((control as HTMLInputElement).checked, field.annotationIndex));
+      } else if (field.kind === 'comboBox' || field.kind === 'listBox') {
+        control = document.createElement('select');
+        for (const [index, option] of field.options.entries()) {
+          const choice = document.createElement('option');
+          choice.value = String(index);
+          choice.textContent = option;
+          choice.selected = field.selectedIndices.includes(index);
+          control.append(choice);
+        }
+        control.onchange = () => void this.commitField(
+          () => viewer.setFieldOption(Number((control as HTMLSelectElement).value), true, field.annotationIndex));
+      } else if (field.kind === 'text') {
+        const multiline = field.isMultiline;
+        control = document.createElement(multiline ? 'textarea' : 'input') as HTMLInputElement | HTMLTextAreaElement;
+        if (!multiline) (control as HTMLInputElement).type = field.isPassword ? 'password' : 'text';
+        control.value = field.value;
+        // On change, not on input: every keystroke would be a round trip into the engine
+        // and a re-render of the page underneath.
+        control.onchange = () => void this.commitField(
+          () => viewer.setFieldText(control.value, field.annotationIndex));
+      } else {
+        // A push button, a signature field, or a type this SDK does not model. PDFium has
+        // already drawn it; there is nothing for a control to add.
+        continue;
+      }
+
+      control.disabled = field.isReadOnly;
+      if (field.isRequired) control.required = true;
+      // The tooltip is what a form's author wrote for exactly this purpose.
+      const name = field.alternateName ?? field.name;
+      if (name) control.setAttribute('aria-label', name);
+
+      const toggle = field.kind === 'checkBox' || field.kind === 'radioButton';
+      Object.assign(control.style, {
+        position: 'absolute', left: `${box.x}px`, top: `${box.y}px`,
+        width: `${box.width}px`, height: `${box.height}px`,
+        boxSizing: 'border-box', margin: '0', padding: toggle ? '0' : '0 3px',
+        font: `${Math.max(9, Math.min(15, box.height * 0.62))}px sans-serif`,
+        border: `1px solid color-mix(in srgb, ${this.theme.accent} 45%, transparent)`,
+        borderRadius: '2px', background: `color-mix(in srgb, ${this.theme.accent} 8%, transparent)`,
+        color: '#1d1d1f', resize: 'none',
+      });
+      controls.push(control);
+    }
+
+    // Fields take the pointer only when no drawing tool is chosen, so a highlight can
+    // still be dragged across a form.
+    this.fields.style.pointerEvents = this.tool === 'select' ? 'auto' : 'none';
+    this.fields.replaceChildren(...controls);
+  }
+
+  private async commitField(write: () => Promise<void>): Promise<void> {
+    await write();
+    this.status.textContent = 'Field updated — save to write it out';
+    await this.refresh();
+    this.onChange?.();
   }
 
   /** Rebuilt when the page changes: headings, paragraphs, lists, figures, tables, form fields. */
