@@ -100,6 +100,21 @@ class PdfiumAI(
     }
 
     inner class AltText {
+        /**
+         * Whether ML Kit's on-device image description can run here (AVL-2). A custom provider is
+         * used whatever this says; without either, figures are listed with no proposed description.
+         */
+        suspend fun availability(): PdfAiAvailability = MlKitImageDescriber.availability(options.context)
+
+        /**
+         * Downloads ML Kit's image description model. AVL-4 forbids the SDK starting a download on
+         * its own, so this exists to be called by the host and nowhere else.
+         */
+        suspend fun prepare(onProgress: ((Float) -> Unit)? = null): PdfAiAvailability {
+            MlKitImageDescriber.prepare(options.context, onProgress)
+            return availability()
+        }
+
         suspend fun suggest(pages: IntRange? = null): com.pdfiumkit.ai.alttext.PdfAltTextReview =
             com.pdfiumkit.ai.alttext.suggestAltText(this@PdfiumAI, pages)
     }

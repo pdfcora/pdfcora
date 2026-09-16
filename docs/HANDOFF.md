@@ -40,7 +40,7 @@ because each lesson generalises. §4 lists what is open and what was parked.
 | Automated accessibility audits in the gates (A11Y-1) | Done, three platforms; draft report in `docs/accessibility/conformance-report.md`. A11Y-4 still needs an independent audit |
 | Accessible content (A11Y-2): tagged structure exposed to VoiceOver, TalkBack, browser screen readers | Done, three platforms, UI-tested; not yet tried with a real screen reader by a person |
 | `pdfiumkit-ai` semantic diff: sentence alignment, meaning vs wording labels | Done, three platforms, shared pair in `conformance/diff/`; Apple's model 3 of 3 runs right |
-| `pdfiumkit-ai` Phase 3a: alt text proposals for figures in tagged PDFs | Done, three platforms, shared document in `conformance/alt-text/`; ML Kit image description route on Android not run on a real device |
+| `pdfiumkit-ai` Phase 3a: alt text proposals for figures in tagged PDFs | Done, three platforms, shared document in `conformance/alt-text/`; ML Kit image description measured on a Samsung SM-F971B on 2026-09-16 |
 
 Test counts at the time of writing (2026-09-16): web 303, web-ai 128 (one Ollama test skipped),
 browser viewer 36 (includes the axe audit and WebMCP), MCP server 3, license tool 1, iOS 191 (sweep
@@ -177,9 +177,11 @@ provider interface. The engine timeout stays 30 s on every platform.
 about 7 pt tall, so a mark over it is a small target; the iOS UI test taps an IBAN mark for that
 reason. Zooming in helps. A larger touch area around marks is not built.
 
-**Alt text: what is not proven.** ML Kit's image description route is built but has not run on
-a phone (the emulator has no AICore), and no real image model has described the test figures;
-the tests use a fake provider. The writer finds a figure by page and marked-content ids, so a
+**Alt text: what is not proven.** ML Kit's image description route ran on a Samsung SM-F971B on
+2026-09-16 and described both figures of `conformance/alt-text/tagged.pdf` accurately in 4.6 s
+(see the measurements in `docs/superpowers/plans/2026-09-14-phase1-ai-answers-summaries.md`); it
+needs the screen on, not merely a resumed activity. No custom provider has described a figure for
+real; those tests use a fake. The writer finds a figure by page and marked-content ids, so a
 figure without marked content, or one whose type is role-mapped to `Figure`, is not listed.
 veraPDF (`scripts/install-verapdf.sh`, Java 11+) is the PDF/UA judge; CI runs it on the web
 output, the local gates on the iOS and Android output.

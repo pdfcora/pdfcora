@@ -6,8 +6,9 @@ summaries of a document or page range, on iOS, Android and Web.
 **Spec:** `docs/superpowers/specs/2026-09-13-pdfiumkit-ai-requirements.md` §§8, 10, 15
 
 **Status:** built on all three platforms. Apple's on-device model has been run for real
-(see "Measured against a real model"). ML Kit summarises on a real phone when called from
-a foreground app, and not from the background; Chrome's summariser has not been run.
+(see "Measured against a real model"). ML Kit summarises and describes images on a real phone
+when called from a foreground app with the screen on, and not otherwise; Chrome's summariser has
+been run for real.
 
 ## What was checked before building on it
 
@@ -184,10 +185,31 @@ Two things the phone did show, both fixed on every platform they apply to:
   configure something that was not missing. When a route throws and nothing else
   answers, the reason is now `requestFailed`.
 
+### ML Kit image description on a real phone
+
+On 2026-09-16, the same Samsung SM-F971B, on `conformance/alt-text/tagged.pdf` through the demo
+(`adb shell am start -n com.pdfiumkit.demo/.MainActivity -e measure alt-text`, results in
+`adb logcat -s MEASURE`). The feature was `DOWNLOADABLE`; `altText.prepare()` made it available in
+under a second. `altText.suggest()` then took 4.6 s for the document's three figures: the thin rule
+was called decorative by the rules, and both images were described on device
+(`source=ON_DEVICE`) — "This is a simple, minimalist graphic featuring a large yellow circle
+against a dark blue background, with a dark gray rectangle in the lower left corner." and "This is
+a solid, circular red shape made up of small, square pixels." Both are accurate; neither uses the
+page text, which the API cannot take.
+
+**A resumed activity is not enough: the screen must be on.** The first run, with the phone dozing,
+failed every inference with code 30 (`BACKGROUND_USE_BLOCKED`) even though the activity was
+resumed; waking and unlocking the device made the same code run. The SDK reports this as
+`backgroundUseBlocked` and the next route takes over, so hosts should treat on-device image
+description as unavailable while the screen is off.
+
+`availability()` and `prepare()` for image description were added for this measurement: the demo
+cannot reach ML Kit itself, and AVL-4 forbids the SDK downloading a model on its own.
+
 ## Not verified
 
-- **Chrome's summariser has never run.** Node has no `Summarizer`. Neither has a custom
-  provider been used for real.
+- **A custom provider has never been used for real** — the tests use fakes, and no hosted
+  vision or text model has been called.
 - **One document.** The contract is short and clean; a real model on long or messy text,
   or in another language, is unmeasured.
 - **Characters per token** is fixed at 3 everywhere, conservative for English and

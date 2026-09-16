@@ -36,8 +36,9 @@ enum class Demo(val title: String, val detail: String) {
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val measure = intent?.getStringExtra("measure")
         setContent {
-            MaterialTheme { App() }
+            MaterialTheme { if (measure == "alt-text") MeasureAltTextScreen() else App() }
         }
     }
 }
