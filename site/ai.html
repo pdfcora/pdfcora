@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PdfiumKit AI — on-device where it can be, a person always in the loop</title>
-  <meta name="description" content="Grounded answers, summaries, redaction and form proposals, alt text, remediation and semantic diff. On-device with Apple Intelligence, ML Kit and Chrome's Summarizer, or your own model. Every change is proposed, accepted and undoable.">
+  <meta name="description" content="Grounded answers, summaries, redaction and form proposals, alt text, remediation and semantic diff. On-device with Apple Intelligence, ML Kit and Chrome's Summarizer, your own model, or rules alone on a server. Every change is proposed, accepted and undoable.">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#07080c">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -42,7 +42,7 @@
       <div class="wrap">
         <p class="eyebrow">pdfiumkit-ai</p>
         <h1>AI that reads the document,<br><span class="grad">not your users’ data.</span></h1>
-        <p class="lede">On-device models where the platform has one, your own endpoint where it does not, and nothing at all if you configure neither — the rules-only features still work. Every change is a proposal a person accepts, and every accepted change can be undone.</p>
+        <p class="lede">On-device models where the platform has one, your own endpoint where it does not, and nothing at all if you configure neither — the rules-only features still work, which is what makes them useful in a batch job with no user and no model. Every change is a proposal a person accepts, and every accepted change can be undone.</p>
         <nav class="page-nav" aria-label="On this page">
           <a href="#features">What it does</a><a href="#routes">Where it runs</a><a href="#hil">Review and undo</a><a href="#privacy">Privacy</a>
         </nav>
@@ -83,9 +83,15 @@
               <tr><th scope="row">iOS</th><td>Apple Foundation Models</td><td>Answers, summaries, redaction suggestions, semantic diff</td></tr>
               <tr><th scope="row">Android</th><td>ML Kit GenAI on AICore</td><td>Summaries, image description for alt text</td></tr>
               <tr><th scope="row">Web</th><td>Chrome’s built-in <code>Summarizer</code></td><td>Summaries</td></tr>
+              <tr><th scope="row">Node</th><td>None on the host</td><td>Your provider, or the rules: redaction and form proposals, remediation, flat form detection</td></tr>
+              <tr><th scope="row">Java</th><td>—</td><td>No AI package yet</td></tr>
               <tr><th scope="row">Any</th><td>Your provider</td><td>Everything, including vision for alt text</td></tr>
             </tbody>
           </table>
+        </div>
+        <div class="callout info reveal">
+          <h3>On a server, rules do most of the work</h3>
+          <p>A host has no Apple Intelligence, no AICore and no browser <code>Summarizer</code>, so <code>@pdfiumkit/node</code> reports <code>unavailable</code> for the model routes rather than pretending &mdash; and runs the rest unchanged. Redaction suggestions, form proposals, flat form detection and remediation are patterns and rules: no model, no network, no per-document cost. Point a provider at a hosted model when you want the rest. The Java SDK has no AI package yet.</p>
         </div>
         <div class="callout reveal">
           <h3>The SDK never downloads a model on its own</h3>

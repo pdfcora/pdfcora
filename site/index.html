@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PdfiumKit — One PDF SDK. Every platform.</title>
-  <meta name="description" content="PdfiumKit brings PDFium, the engine behind Chrome's PDF viewer, to iOS, Android and the Web with one clean API. Render, search, annotate and fill forms with identical behaviour everywhere.">
+  <meta name="description" content="PdfiumKit brings PDFium, the engine behind Chrome's PDF viewer, to iOS, Android, the Web, Node and Java with one clean API. Render, search, annotate, fill forms, sign, redact and tag — on a phone, in a browser or in a batch job.">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#07080c">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -46,7 +46,7 @@
         <div class="hero-copy">
           <p class="pill"><span class="pill-tag">New</span>0.1.0 pre-release · iOS, Android &amp; Web</p>
           <h1>One PDF SDK.<br><span class="grad">Every platform.</span></h1>
-          <p class="lede">PdfiumKit brings <strong>PDFium — the engine behind Chrome’s PDF viewer</strong> — to iOS, Android and the Web with one clean API. Render, search, annotate, fill forms, sign, redact and tag for accessibility, with identical behaviour everywhere — plus on-device AI and tools for agents when you want them.</p>
+          <p class="lede">PdfiumKit brings <strong>PDFium — the engine behind Chrome’s PDF viewer</strong> — to iOS, Android, the Web and your server with one clean API. Render, search, annotate, fill forms, sign, redact and tag for accessibility, with identical behaviour everywhere — plus on-device AI and tools for agents when you want them.</p>
           <div class="cta">
             <a class="btn btn-primary" href="demos.html">See a demo <span aria-hidden="true">→</span></a>
             <a class="btn btn-glass" href="download.html">Get the SDK</a>
@@ -149,25 +149,26 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
         <header class="section-head section-head-center reveal">
           <p class="eyebrow">Features</p>
           <h2 id="features-h">Everything your users do with a PDF.</h2>
-          <p>Viewing, searching, marking up and filling in — available today on all three platforms.</p>
+          <p>Viewing, searching, marking up and filling in — in an app, in a browser, or with no screen at all.</p>
         </header>
 
         <ul class="features">
           <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="m20.5 16-4.5-4.5-8 8"/></svg></span><h3>View &amp; render</h3><p>Crisp pages at any size or exact pixel dimensions, with annotations and form widgets on or off.</p></li>
           <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></svg></span><h3>Search text</h3><p>Full-text search with result rectangles, text extraction and per-character bounding boxes.</p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19.5 8.5a2.8 2.8 0 0 0-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg></span><h3>Annotate</h3><p>Read 15 annotation kinds. Draw ink, add notes and remove annotations — plus highlights on iOS.</p></li>
+          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19.5 8.5a2.8 2.8 0 0 0-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg></span><h3>Annotate</h3><p>Read 15 annotation kinds, and anything else as <code>unknown</code> rather than silently dropped. Draw ink, add notes, highlight, underline, strike out and remove — on every SDK.</p></li>
           <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="m7 9.5 1.5 1.5 3-3M13.5 10h4M7 15.5h10.5"/></svg></span><h3>Fill forms</h3><p>Read 8 field kinds and set text, checkboxes and choices — or place native controls right on the page.</p></li>
           <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h10a1.5 1.5 0 0 1 1.5 1.5v15.5L12 17l-6.5 3.5V5A1.5 1.5 0 0 1 7 3.5z"/></svg></span><h3>Navigate</h3><p>Outlines, bookmarks and links, so readers can jump straight to what they need.</p></li>
           <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m20 11.5-8.2 8.2a5 5 0 0 1-7.1-7.1l8.5-8.5a3.4 3.4 0 0 1 4.8 4.8l-8.5 8.5a1.7 1.7 0 0 1-2.4-2.4l7.8-7.8"/></svg></span><h3>Attachments &amp; metadata</h3><p>List and extract embedded files, and read document metadata and permissions.</p></li>
           <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/></svg></span><h3>Save changes</h3><p>Save in full, or incrementally to keep the original bytes and existing signatures intact.</p></li>
           <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg></span><h3>Protected files</h3><p>Open password-protected documents, with a clear typed error when a password is needed.</p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19.5 8.5a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M4 20h16"/></svg></span><h3>Sign &amp; verify</h3><p>Read and verify existing signatures, and sign documents as PAdES B-T with a trusted timestamp.</p></li>
+          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19.5 8.5a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M4 20h16"/></svg></span><h3>Sign &amp; verify</h3><p>Read and verify existing signatures, and sign as PAdES B-T with a trusted timestamp — or unattended on a server, where Java builds the CMS with the JDK alone.</p></li>
           <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="6" rx="1.5"/><path d="M4 15h9M4 19h6"/></svg></span><h3>Redact for real</h3><p>Content is removed from the saved bytes, not covered with a black box that anyone can select underneath.</p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16M4 10h11M4 14.5h16M4 19h8"/></svg></span><h3>Tag for accessibility</h3><p>Read a document’s structure, write alternate text, and turn an untagged PDF into one built to PDF/UA-1. <a href="accessibility.html">More →</a></p></li>
+          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16M4 10h11M4 14.5h16M4 19h8"/></svg></span><h3>Tag for accessibility</h3><p>Read a document’s structure, write alternate text, and turn an untagged PDF into one built to PDF/UA-1 — one at a time in an app, or a backlog at a time on a server. <a href="accessibility.html">More →</a></p></li>
           <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 13.9 9l5.6 1.9-5.6 1.9L12 18.3 10.1 12.8 4.5 10.9 10.1 9z"/><path d="M18.5 16.5 19.3 19l2.2.8-2.2.8-.8 2.2"/></svg></span><h3>AI where it helps</h3><p>Grounded answers, summaries, redaction and form proposals, alt text and semantic diff — on device, or through your own model. <a href="ai.html">More →</a></p></li>
           <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="7.5" width="15" height="11" rx="2.5"/><path d="M12 7.5V4.5M8.5 12.5h.01M15.5 12.5h.01M9.5 15.5h5"/></svg></span><h3>Tools for agents</h3><p>An MCP server and WebMCP, so an agent can read a document freely and change it only through proposals a person accepts. <a href="agents.html">More →</a></p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 9h17M7 13h6"/></svg></span><h3>A viewer, included</h3><p>A component with a configurable toolbar, theme and review bar on all three platforms — or drive the state layer yourself.</p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9.5" r="5"/><path d="m9 14-1.5 6 4.5-2.4 4.5 2.4L15 14"/></svg></span><h3>Offline licensing</h3><p>Keys are verified offline and unlock modules per app ID or host. Without one everything still works, watermarked. <a href="download.html">More →</a></p></li>
+          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 9h17M7 13h6"/></svg></span><h3>A viewer, included</h3><p>A component with a configurable toolbar, theme and review bar on iOS, Android and the Web — or drive the state layer yourself, which Java has too.</p></li>
+          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="6" rx="1.8"/><rect x="3.5" y="13.5" width="17" height="6" rx="1.8"/><path d="M7 7.5h.01M7 16.5h.01"/></svg></span><h3>Runs on your server</h3><p>The same API with no screen attached: <code>@pdfiumkit/node</code> re-exports the whole web SDK and adds file and PNG helpers, and a Java SDK puts the native engine on the JVM for batch signing, redaction and accessibility work. <a href="developers.html#reference">More →</a></p></li>
+          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9.5" r="5"/><path d="m9 14-1.5 6 4.5-2.4 4.5 2.4L15 14"/></svg></span><h3>Offline licensing</h3><p>Keys are verified offline and unlock modules per app ID or host. Without one everything still works, watermarked — the Java SDK has no licensing module yet. <a href="download.html">More →</a></p></li>
         </ul>
       </div>
     </section>
@@ -180,7 +181,7 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
           <h2 id="showcase-h">Your first render in four lines.</h2>
           <p>Async from top to bottom, idiomatic in every language, and nothing to configure before you open a file.</p>
           <ul class="checks">
-            <li><code>async</code>/<code>await</code> on iOS, coroutines on Android, promises on the Web</li>
+            <li><code>async</code>/<code>await</code> on iOS, coroutines on Android, promises on the Web and Node, a thread per document on Java</li>
             <li>Typed errors instead of native crashes</li>
             <li>Explicit coordinates — no hidden Y-flip</li>
           </ul>
@@ -192,6 +193,7 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
               <button role="tab" id="t-swift" aria-controls="p-swift" aria-selected="true">Swift</button>
               <button role="tab" id="t-kotlin" aria-controls="p-kotlin" aria-selected="false" tabindex="-1">Kotlin</button>
               <button role="tab" id="t-ts" aria-controls="p-ts" aria-selected="false" tabindex="-1">TypeScript</button>
+              <button role="tab" id="t-java-lang" aria-controls="p-java-lang" aria-selected="false" tabindex="-1">Java</button>
             </div>
             <button class="copy" type="button" data-copy aria-label="Copy code">Copy</button>
           </div>
@@ -216,6 +218,14 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
 <span class="k">const</span> page = <span class="k">await</span> doc.<span class="f">page</span>(<span class="n">0</span>)
 <span class="k">const</span> img  = <span class="k">await</span> page.<span class="f">render</span>({ width: <span class="n">1200</span> })
 <span class="k">const</span> hits = <span class="k">await</span> page.text.<span class="f">search</span>(<span class="s">'invoice'</span>)</code></pre>
+          </div>
+          <div role="tabpanel" id="p-java-lang" aria-labelledby="t-java-lang" class="panel">
+            <span class="panel-label">Java</span>
+<pre tabindex="0"><code><span class="k">try</span> (<span class="t">PdfDocument</span> doc = <span class="t">PdfDocument</span>.<span class="f">open</span>(path)) {
+    <span class="t">PdfPage</span> page = doc.<span class="f">page</span>(<span class="n">0</span>);
+    <span class="t">BufferedImage</span> img = page.<span class="f">render</span>(<span class="n">1200</span>);
+    <span class="t">List</span>&lt;<span class="t">Match</span>&gt; hits = page.<span class="f">search</span>(<span class="s">"invoice"</span>);
+}</code></pre>
           </div>
           <div class="code-foot"><span class="ok-dot"></span>Page rendered at 1200px · search results with page rectangles</div>
         </div>
@@ -257,37 +267,38 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
             <div class="details-body">
               <div class="table-scroll">
                 <table class="coverage">
-                  <caption class="sr">Feature coverage by platform</caption>
-                  <thead><tr><th scope="col">Capability</th><th scope="col">iOS</th><th scope="col">Android</th><th scope="col">Web</th></tr></thead>
+                  <caption class="sr">Feature coverage by SDK</caption>
+                  <thead><tr><th scope="col">Capability</th><th scope="col">iOS</th><th scope="col">Android</th><th scope="col">Web</th><th scope="col">Node</th><th scope="col">Java</th></tr></thead>
                   <tbody>
-                    <tr><th scope="row">Open from bytes / file, password</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
-                    <tr><th scope="row">Page count, size, rotation</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
-                    <tr><th scope="row">Render (scaled or exact pixels)</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
-                    <tr><th scope="row">Cancellable progressive render</th><td class="p"><span class="sr">Partial</span></td><td class="n"><span class="sr">Not yet</span></td><td class="n"><span class="sr">Not yet</span></td></tr>
-                    <tr><th scope="row">Recoverable from an engine hang</th><td class="n"><span class="sr">Not yet</span></td><td class="n"><span class="sr">Not yet</span></td><td class="y"><span class="sr">Supported, via Worker</span></td></tr>
-                    <tr><th scope="row">Text extraction, character count</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
-                    <tr><th scope="row">Search with rects</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
-                    <tr><th scope="row">Character bounding boxes</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
-                    <tr><th scope="row">Annotations: read (15 kinds)</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
-                    <tr><th scope="row">Annotations: ink, note, remove</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
-                    <tr><th scope="row">Annotations: highlight / underline / strikeout</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
-                    <tr><th scope="row">Form fields: read (8 kinds)</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
-                    <tr><th scope="row">Form fields: set text, checkbox, option</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
-                    <tr><th scope="row">Outline / bookmarks</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
-                    <tr><th scope="row">Links</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
-                    <tr><th scope="row">Metadata, permissions</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
-                    <tr><th scope="row">Attachments: list</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
-                    <tr><th scope="row">Attachments: extract bytes</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
-                    <tr><th scope="row">Save (full / incremental)</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
-                    <tr><th scope="row">Raw PDFium escape hatch</th><td class="y"><span class="sr">Supported</span></td><td class="n"><span class="sr">Not yet</span></td><td class="n"><span class="sr">Not yet</span></td></tr>
+                    <tr><th scope="row">Open from bytes / file, password</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
+                    <tr><th scope="row">Page count, size, rotation</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="p"><span class="sr">Partial</span></td></tr>
+                    <tr><th scope="row">Render (scaled or exact pixels)</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
+                    <tr><th scope="row">Cancellable progressive render</th><td class="p"><span class="sr">Partial</span></td><td class="n"><span class="sr">Not yet</span></td><td class="n"><span class="sr">Not yet</span></td><td class="n"><span class="sr">Not yet</span></td><td class="n"><span class="sr">Not yet</span></td></tr>
+                    <tr><th scope="row">Recoverable from an engine hang</th><td class="n"><span class="sr">Not yet</span></td><td class="n"><span class="sr">Not yet</span></td><td class="y"><span class="sr">Supported, via Worker</span></td><td class="n"><span class="sr">Not yet</span></td><td class="n"><span class="sr">Not yet</span></td></tr>
+                    <tr><th scope="row">Text extraction, character count</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
+                    <tr><th scope="row">Search with rects</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="p"><span class="sr">Partial</span></td></tr>
+                    <tr><th scope="row">Character bounding boxes</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="n"><span class="sr">Not yet</span></td></tr>
+                    <tr><th scope="row">Annotations: read (15 kinds)</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
+                    <tr><th scope="row">Annotations: ink, note, remove</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
+                    <tr><th scope="row">Annotations: highlight / underline / strikeout</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
+                    <tr><th scope="row">Form fields: read (8 kinds)</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
+                    <tr><th scope="row">Form fields: set text, checkbox, option</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="p"><span class="sr">Partial</span></td></tr>
+                    <tr><th scope="row">Outline / bookmarks</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="n"><span class="sr">Not yet</span></td></tr>
+                    <tr><th scope="row">Links</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="n"><span class="sr">Not yet</span></td></tr>
+                    <tr><th scope="row">Metadata, permissions</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
+                    <tr><th scope="row">Attachments: list</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="n"><span class="sr">Not yet</span></td></tr>
+                    <tr><th scope="row">Attachments: extract bytes</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="n"><span class="sr">Not yet</span></td></tr>
+                    <tr><th scope="row">Save (full / incremental)</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="p"><span class="sr">Partial</span></td></tr>
+                    <tr><th scope="row">Raw PDFium escape hatch</th><td class="y"><span class="sr">Supported</span></td><td class="n"><span class="sr">Not yet</span></td><td class="n"><span class="sr">Not yet</span></td><td class="n"><span class="sr">Not yet</span></td><td class="n"><span class="sr">Not yet</span></td></tr>
                   </tbody>
                 </table>
               </div>
               <ul class="legend" aria-label="Legend">
                 <li><span class="mark y" aria-hidden="true"></span>Supported</li>
-                <li><span class="mark p" aria-hidden="true"></span>Partial — iOS cancels between progressive steps, not inside a single engine call</li>
+                <li><span class="mark p" aria-hidden="true"></span>Partial — see the note below the table</li>
                 <li><span class="mark n" aria-hidden="true"></span>Not yet</li>
               </ul>
+              <p class="muted">iOS cancels a render between progressive steps, not inside a single engine call. Node re-exports the web SDK, so it matches it row for row — except recovery from a hang, which needs a browser <code>Worker</code>. Java is a separate implementation over the native engine: it renders, extracts, annotates, fills, redacts, tags and signs, and does not yet read outlines, links or attachments, report page rotation, return search rectangles, or save incrementally except when appending a signature or a structure tree.</p>
             </div>
           </details>
 
@@ -334,7 +345,7 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
             <summary><span>Design decisions</span><span class="chev" aria-hidden="true"></span></summary>
             <div class="details-body principles">
               <div><h3>Thread-safe</h3><p>An <code>actor</code> on iOS, a single-threaded dispatcher on Android, a promise chain on the Web. Misuse raises <code>PdfError.closed</code> instead of corrupting memory.</p></div>
-              <div><h3>Typed errors</h3><p>A closed set of error cases, identical on all three platforms.</p></div>
+              <div><h3>Typed errors</h3><p>A closed set of error cases, with the same names on every SDK.</p></div>
               <div><h3>Explicit coordinates</h3><p><code>PdfRect</code> is always PDF space; <code>toView</code> and <code>toPdf</code> convert in each direction. No hidden Y-flip.</p></div>
               <div><h3>Nothing silently dropped</h3><p>Every sealed hierarchy has an <code>unknown</code> case, so unmodelled annotation and field types are surfaced, not lost.</p></div>
             </div>
@@ -349,19 +360,20 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
         <header class="section-head section-head-center reveal">
           <p class="eyebrow">Where it stands</p>
           <h2 id="roadmap-h">Shipped, and what is still open.</h2>
-          <p>Everything in the first list is built on all three platforms today. The second list is what we have not done — kept here rather than in a footnote.</p>
+          <p>Everything in the first list is built and tested today. The second list is what we have not done — kept here rather than in a footnote.</p>
         </header>
         <ul class="roadmap">
           <li class="reveal"><span class="status status-design">Shipped</span><h3>Digital signatures</h3><p>Read and verify existing signatures, and sign as PAdES B-T with a trusted timestamp.</p></li>
           <li class="reveal"><span class="status status-design">Shipped</span><h3>Redaction</h3><p>Content removed from the saved bytes, so it cannot be recovered from the file.</p></li>
-          <li class="reveal"><span class="status status-design">Shipped</span><h3>Text markup everywhere</h3><p>Highlight, underline and strikeout on iOS, Android and the Web.</p></li>
+          <li class="reveal"><span class="status status-design">Shipped</span><h3>Text markup everywhere</h3><p>Highlight, underline and strikeout on every SDK, Java included.</p></li>
           <li class="reveal"><span class="status status-design">Shipped</span><h3>Accessible viewer</h3><p>Document structure exposed to VoiceOver, TalkBack and screen readers, with keyboard control and text scaling.</p></li>
           <li class="reveal"><span class="status status-design">Shipped</span><h3>Accessibility remediation</h3><p>Tags, reading order and alternate text for an untagged PDF, confirmed by a person before anything is written.</p></li>
+          <li class="reveal"><span class="status status-design">Shipped</span><h3>Server-side SDKs</h3><p>Node re-exports the whole web API and adds file and PNG helpers; Java puts the native engine on the JVM, signing with a CMS the JDK builds itself.</p></li>
           <li class="reveal"><span class="status status-design">Shipped</span><h3>Bring your own model</h3><p>On-device models where the platform has one, your endpoint where it does not, patterns where neither exists.</p></li>
         </ul>
 
         <ul class="roadmap" style="margin-top:1.2rem">
-          <li class="reveal"><span class="status">Open</span><h3>Published packages</h3><p>SPM, Maven and npm artifacts, and the engine binaries as checksummed release assets. Today the SDK is built from the repository.</p></li>
+          <li class="reveal"><span class="status">Open</span><h3>Published packages</h3><p>SPM, Maven and npm artifacts for all five SDKs, and the engine binaries as checksummed release assets. Today they are built from the repository.</p></li>
           <li class="reveal"><span class="status">Open</span><h3>An independent accessibility audit</h3><p>Not yet commissioned, so there is no third-party conformance report to hand you.</p></li>
           <li class="reveal"><span class="status">Open</span><h3>Cancellable renders, wider recovery</h3><p>Cancelling inside an engine call is not possible; full recovery from a hang is Web-only.</p></li>
           <li class="reveal"><span class="status">Open</span><h3>Tables, OCR and encrypted writes</h3><p>Remediation turns tables into paragraphs, there is no OCR for scans, and encrypted documents can be read but not rewritten.</p></li>

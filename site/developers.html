@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PdfiumKit for developers — API, threading, errors, limits</title>
-  <meta name="description" content="How PdfiumKit is put together: one engine behind three idiomatic APIs, a serial executor per document, typed errors, explicit coordinates, and the limits stated up front.">
+  <meta name="description" content="How PdfiumKit is put together: one engine behind five idiomatic APIs for iOS, Android, the Web, Node and Java, a serial executor per document, typed errors, explicit coordinates, and the limits stated up front.">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#07080c">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -55,22 +55,23 @@
         <header class="section-head reveal">
           <p class="eyebrow">Modules</p>
           <h2 id="modules-h">Take the core. Add the rest when you need it.</h2>
-          <p>The core never depends on the AI or UI packages — a build check enforces it — so an app that only renders PDFs ships only the engine.</p>
+          <p>The core never depends on the AI or UI packages — a build check enforces it — so an app that only renders PDFs ships only the engine. On a server there is no UI to take.</p>
         </header>
 
         <div class="table-scroll reveal">
           <table class="matrix">
-            <caption class="sr">Modules by platform</caption>
-            <thead><tr><th scope="col">Module</th><th scope="col">iOS</th><th scope="col">Android</th><th scope="col">Web</th><th scope="col">What it gives you</th></tr></thead>
+            <caption class="sr">Modules by SDK</caption>
+            <thead><tr><th scope="col">Module</th><th scope="col">iOS</th><th scope="col">Android</th><th scope="col">Web</th><th scope="col">Node</th><th scope="col">Java</th><th scope="col">What it gives you</th></tr></thead>
             <tbody>
-              <tr><th scope="row">Core</th><td><code>PdfiumKit</code></td><td><code>com.pdfiumkit:pdfiumkit</code></td><td><code>@pdfiumkit/web</code></td><td>Render, text, search, forms, annotations, signatures, redaction, tags, save</td></tr>
-              <tr><th scope="row">AI</th><td><code>PdfiumKitAI</code></td><td><code>com.pdfiumkit:pdfiumkit-ai</code></td><td><code>@pdfiumkit/web-ai</code></td><td>Answers, summaries, redaction and form proposals, alt text, remediation, diff</td></tr>
-              <tr><th scope="row">UI</th><td><code>PdfiumKitUI</code></td><td><code>com.pdfiumkit:pdfiumkit-ui</code></td><td><code>PdfViewerElement</code></td><td>A viewer component with a configurable toolbar, theme and review bar</td></tr>
-              <tr><th scope="row">Agents</th><td>—</td><td>—</td><td><code>pdfiumkit-mcp</code></td><td>An MCP server and WebMCP registration for AI agents</td></tr>
+              <tr><th scope="row">Core</th><td><code>PdfiumKit</code></td><td><code>com.pdfiumkit:pdfiumkit</code></td><td><code>@pdfiumkit/web</code></td><td><code>@pdfiumkit/node</code></td><td><code>com.pdfiumkit:pdfiumkit</code></td><td>Render, text, search, forms, annotations, signatures, redaction, tags, save</td></tr>
+              <tr><th scope="row">AI</th><td><code>PdfiumKitAI</code></td><td><code>com.pdfiumkit:pdfiumkit-ai</code></td><td><code>@pdfiumkit/web-ai</code></td><td><code>@pdfiumkit/web-ai</code></td><td>—</td><td>Answers, summaries, redaction and form proposals, alt text, remediation, diff</td></tr>
+              <tr><th scope="row">UI</th><td><code>PdfiumKitUI</code></td><td><code>com.pdfiumkit:pdfiumkit-ui</code></td><td><code>PdfViewerElement</code></td><td>—</td><td><code>PdfViewer</code> state only</td><td>A viewer component with a configurable toolbar, theme and review bar</td></tr>
+              <tr><th scope="row">Agents</th><td>—</td><td>—</td><td><code>pdfiumkit-mcp</code></td><td><code>pdfiumkit-mcp</code></td><td>—</td><td>An MCP server and WebMCP registration for AI agents</td></tr>
             </tbody>
           </table>
         </div>
-        <p class="muted" style="margin-top:.9rem">Requirements: iOS 15+ with Swift 5.9 · Android minSdk 23 with all four ABIs · Web as ESM with the <code>.wasm</code> inside the package, Node 18+.</p>
+        <p class="muted" style="margin-top:.9rem">Requirements: iOS 15+ with Swift 5.9 · Android minSdk 23 with all four ABIs · Web and Node as ESM with the <code>.wasm</code> inside the package, Node 18+ · Java 17+ on macOS and Linux, x86-64 and arm64, with the native engine in the jar.</p>
+        <p class="muted">Node is the web package with file and PNG helpers on top, not a second implementation, so anything written against the web SDK runs there unchanged. Java is its own implementation over the native engine: it carries the document API, annotations, form filling, redaction, tagging, signing and the viewer <em>state</em> layer — there is no component to draw, and no AI package yet.</p>
       </div>
     </section>
 
@@ -95,7 +96,7 @@
         <header class="section-head reveal">
           <p class="eyebrow">Errors</p>
           <h2 id="errors-h">A closed set of errors, identical everywhere.</h2>
-          <p>No native crashes, no untyped throws. The same case names appear in Swift, Kotlin and TypeScript, so error handling ports between platforms unchanged.</p>
+          <p>No native crashes, no untyped throws. The same case names appear in Swift, Kotlin, TypeScript and Java, so error handling ports between platforms unchanged.</p>
         </header>
         <div class="table-scroll reveal">
           <table class="matrix">
@@ -197,8 +198,10 @@
         </header>
         <ul class="prose reveal">
           <li>The raw PDFium escape hatch exists on iOS only.</li>
+          <li>The Java SDK does not yet read outlines, links or attachments, report page rotation, return search rectangles, or save incrementally except when appending a signature or a structure tree — and it has no licensing module, so unlike the other four it writes unwatermarked output.</li>
+          <li>Java signs as PAdES B-B. A timestamp, which would make it B-T, needs a call to an authority and is not wired up there yet; iOS, Android and the Web take a <code>timestampUrl</code>.</li>
           <li>Cancelling a render mid-call is not possible on any platform; iOS cancels between progressive steps.</li>
-          <li>Recovering from an engine hang fully is Web-only, through <code>PdfWorker</code>; the other platforms contain it rather than recover.</li>
+          <li>Recovering from an engine hang fully is Web-only, through <code>PdfWorker</code>; the other SDKs contain it rather than recover. <code>PdfWorker</code> is re-exported on Node but needs a browser <code>Worker</code>, which Node does not have.</li>
           <li>Remediation writes tags from rules, not a model: tables become paragraphs, vector charts become artifacts, reading order is content order, and annotations and links are not tagged. <a href="accessibility.html#gaps">The full list is here.</a></li>
           <li>There is no OCR, so a scanned page has nothing to tag or search.</li>
           <li>On an encrypted document, the features that append to the file — signing, tagging, alternate text, creating form fields and incremental saves — are refused, because appended strings would have to be encrypted with the document’s own key. Reading, rendering, filling existing fields, annotating, redacting and saving all work.</li>
