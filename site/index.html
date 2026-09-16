@@ -44,9 +44,9 @@
 
       <div class="wrap hero-grid">
         <div class="hero-copy">
-          <p class="pill"><span class="pill-tag">New</span>0.1.0 pre-release · iOS, Android &amp; Web</p>
+          <p class="pill"><span class="pill-tag">New</span>0.1.0 pre-release · five SDKs, one engine</p>
           <h1>One PDF SDK.<br><span class="grad">Every platform.</span></h1>
-          <p class="lede">PdfiumKit brings <strong>PDFium — the engine behind Chrome’s PDF viewer</strong> — to iOS, Android, the Web and your server with one clean API. Render, search, annotate, fill forms, sign, redact and tag for accessibility, with identical behaviour everywhere — plus on-device AI and tools for agents when you want them.</p>
+          <p class="lede"><strong>PDFium — the engine behind Chrome’s PDF viewer</strong> — behind five SDKs for iOS, Android, the Web, Node and Java. Render, search, annotate, fill forms, sign, redact and tag for accessibility, with one object model and one set of typed errors across all of them.</p>
           <div class="cta">
             <a class="btn btn-primary" href="demos.html">See a demo <span aria-hidden="true">→</span></a>
             <a class="btn btn-glass" href="download.html">Get the SDK</a>
@@ -55,6 +55,8 @@
             <li><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>iOS · Swift</li>
             <li><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2"/><path d="M6 5.5h12M6 17.5h12"/></svg>Android · Kotlin</li>
             <li><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="4" width="19" height="16" rx="2.5"/><path d="M2.5 8.5h19M6 6.3h.01M8.5 6.3h.01"/></svg>Web · TypeScript</li>
+            <li><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="6" rx="1.8"/><rect x="3.5" y="13.5" width="17" height="6" rx="1.8"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>Node · TypeScript</li>
+            <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 19 7.5v9L12 20.5 5 16.5v-9z"/><path d="M12 12v8.5M12 12l7-4.5M12 12 5 7.5"/></svg>Java · JVM</li>
           </ul>
         </div>
 
@@ -92,83 +94,90 @@
 
     </section>
 
-    <!-- ============================== WHY ============================== -->
+    <!-- ============================== FOUNDATIONS ============================== -->
     <section class="section" id="why" aria-labelledby="why-h">
       <div class="wrap">
         <header class="section-head reveal">
-          <p class="eyebrow">Why PdfiumKit</p>
-          <h2 id="why-h">iOS, Android, the Web — and your server.</h2>
-          <p>One engine and one API across all of them, so a feature behaves the same on an iPhone, an Android tablet, in the browser and in a batch job — in Swift, Kotlin, TypeScript and Java, each written the way that language’s developers expect.</p>
+          <p class="eyebrow">What you are buying</p>
+          <h2 id="why-h">One engine. Five SDKs. The same answers.</h2>
+          <p>Swift, Kotlin, TypeScript and Java, each written the way that language’s developers expect, over one pinned build of PDFium — so the choice of platform stops being a choice of PDF behaviour.</p>
         </header>
 
         <div class="bento">
 
           <article class="tile tile-tall reveal">
             <div class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.1 8.3 7.5 9.5 4.4-1.2 7.5-4.9 7.5-9.5V6z"/><path d="m8.8 12 2.2 2.2 4.3-4.4"/></svg></div>
-            <h3>Bad files don’t crash your app.</h3>
-            <p>Malformed, truncated and password-protected documents come back as typed errors you can handle, not as a native crash somewhere inside the engine.</p>
+            <h3>Bad files arrive as errors, not crashes.</h3>
+            <p>Truncated downloads, generator bugs, decades-old scanners, files that were never valid. They come back as a closed set of typed errors with the same names on every SDK — <code>passwordRequired</code>, <code>corrupt</code>, <code>pageOutOfRange</code> — not as a native crash inside the engine.</p>
           </article>
 
           <article class="tile reveal">
             <div class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.2"/><path d="M12 3.5v5.3M20.2 14.5l-4.7-1.4M4.1 14.9l4.6-1.6"/></svg></div>
-            <h3>The engine behind Chrome.</h3>
-            <p>Built on PDFium, pinned to a known revision, with the same public API compiled into every platform’s build.</p>
+            <h3>PDFium, pinned.</h3>
+            <p>A known revision, checksummed, with the same public API compiled into every build. <code>vendor.manifest.json</code> records the SHA-256 of every artifact and the fetch refuses anything that does not match.</p>
           </article>
 
           <article class="tile reveal">
             <div class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M4 12h16M4 17h7"/><circle cx="17" cy="7" r="2.3"/><circle cx="14" cy="17" r="2.3"/></svg></div>
             <h3>Safe from any thread.</h3>
-            <p>Every document runs on its own serial executor. Call it from anywhere — you can’t corrupt memory by using the wrong thread.</p>
+            <p>PDFium is not thread-safe; you never have to care. Every document owns a serial executor — an actor, a dispatcher, a promise chain, a thread — so concurrent calls queue instead of corrupting memory.</p>
           </article>
 
           <article class="tile reveal">
             <div class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0-4-4m4 4 4-4"/><path d="M4.5 16.5v2a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-2"/></svg></div>
             <h3>Light enough for mobile.</h3>
             <div class="sizes">
-              <div><span>Web engine</span><b>1.5 MB</b><i style="--s:31%"></i></div>
+              <div><span>Web engine, brotli</span><b>1.5 MB</b><i style="--s:31%"></i></div>
               <div><span>Android arm64</span><b>4.77 MB</b><i style="--s:100%"></i></div>
             </div>
           </article>
 
           <article class="tile tile-wide tile-glow reveal">
             <div class="tile-copy">
-              <h3>Recovers when the engine can’t.</h3>
-              <p>A malformed page can stall any PDF engine. On the Web, <code>PdfWorker</code> runs the whole SDK in a Worker behind the same API — so your page stays responsive and a stuck render can simply be terminated.</p>
+              <h3>The same document, the same answer.</h3>
+              <p>A shared conformance suite runs the same fixtures through every SDK and asserts the results match — text hashed against a reference engine, search rectangles, form values, redaction reports, viewer state. A change that makes one platform disagree with the others fails the build.</p>
             </div>
             <pre class="mini-code"><code><span class="k">const</span> doc = <span class="k">await</span> worker.<span class="f">open</span>(bytes)
 <span class="c">// same API as in-process</span>
 worker.<span class="f">terminate</span>() <span class="c">// page keeps running</span></code></pre>
           </article>
         </div>
+
+        <aside class="honest reveal" aria-labelledby="honest-h">
+          <div>
+            <p class="eyebrow eyebrow-warn">The edge case we cannot fix</p>
+            <h3 id="honest-h">A malformed page can stall PDFium’s renderer, and no cancellation reaches it.</h3>
+            <p>It stalls inside native code. So the SDK contains it instead: the stalled document’s own executor holds the damage, later calls to it fail fast with a typed error rather than queueing behind it, and every other document carries on. On the Web, <code>PdfWorker</code> recovers completely — terminate it and the page keeps running.</p>
+          </div>
+          <a class="btn btn-glass" href="developers.html">Read the engineering details</a>
+        </aside>
       </div>
     </section>
 
-    <!-- ============================== FEATURES ============================== -->
+    <!-- ============================== CAPABILITIES ============================== -->
     <section class="section section-tint" id="features" aria-labelledby="features-h">
       <div class="wrap">
         <header class="section-head section-head-center reveal">
           <p class="eyebrow">Features</p>
-          <h2 id="features-h">Everything your users do with a PDF.</h2>
-          <p>Viewing, searching, marking up and filling in — in an app, in a browser, or with no screen at all.</p>
+          <h2 id="features-h">Built and tested today.</h2>
+          <p>Not a roadmap. Everything below is implemented and covered by tests; where an SDK is behind, the coverage table further down says so by name.</p>
         </header>
 
         <ul class="features">
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="m20.5 16-4.5-4.5-8 8"/></svg></span><h3>View &amp; render</h3><p>Crisp pages at any size or exact pixel dimensions, with annotations and form widgets on or off.</p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></svg></span><h3>Search text</h3><p>Full-text search with result rectangles, text extraction and per-character bounding boxes.</p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19.5 8.5a2.8 2.8 0 0 0-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg></span><h3>Annotate</h3><p>Read 15 annotation kinds, and anything else as <code>unknown</code> rather than silently dropped. Draw ink, add notes, highlight, underline, strike out and remove — on every SDK.</p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="m7 9.5 1.5 1.5 3-3M13.5 10h4M7 15.5h10.5"/></svg></span><h3>Fill forms</h3><p>Read 8 field kinds and set text, checkboxes and choices — or place native controls right on the page.</p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h10a1.5 1.5 0 0 1 1.5 1.5v15.5L12 17l-6.5 3.5V5A1.5 1.5 0 0 1 7 3.5z"/></svg></span><h3>Navigate</h3><p>Outlines, bookmarks and links, so readers can jump straight to what they need.</p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m20 11.5-8.2 8.2a5 5 0 0 1-7.1-7.1l8.5-8.5a3.4 3.4 0 0 1 4.8 4.8l-8.5 8.5a1.7 1.7 0 0 1-2.4-2.4l7.8-7.8"/></svg></span><h3>Attachments &amp; metadata</h3><p>List and extract embedded files, and read document metadata and permissions.</p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/></svg></span><h3>Save changes</h3><p>Save in full, or incrementally to keep the original bytes and existing signatures intact.</p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg></span><h3>Protected files</h3><p>Open password-protected documents, with a clear typed error when a password is needed.</p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19.5 8.5a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M4 20h16"/></svg></span><h3>Sign &amp; verify</h3><p>Read and verify existing signatures, and sign as PAdES B-T with a trusted timestamp — or unattended on a server, where Java builds the CMS with the JDK alone.</p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="6" rx="1.5"/><path d="M4 15h9M4 19h6"/></svg></span><h3>Redact for real</h3><p>Content is removed from the saved bytes, not covered with a black box that anyone can select underneath.</p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16M4 10h11M4 14.5h16M4 19h8"/></svg></span><h3>Tag for accessibility</h3><p>Read a document’s structure, write alternate text, and turn an untagged PDF into one built to PDF/UA-1 — one at a time in an app, or a backlog at a time on a server. <a href="accessibility.html">More →</a></p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 13.9 9l5.6 1.9-5.6 1.9L12 18.3 10.1 12.8 4.5 10.9 10.1 9z"/><path d="M18.5 16.5 19.3 19l2.2.8-2.2.8-.8 2.2"/></svg></span><h3>AI where it helps</h3><p>Grounded answers, summaries, redaction and form proposals, alt text and semantic diff — on device, or through your own model. <a href="ai.html">More →</a></p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="7.5" width="15" height="11" rx="2.5"/><path d="M12 7.5V4.5M8.5 12.5h.01M15.5 12.5h.01M9.5 15.5h5"/></svg></span><h3>Tools for agents</h3><p>An MCP server and WebMCP, so an agent can read a document freely and change it only through proposals a person accepts. <a href="agents.html">More →</a></p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 9h17M7 13h6"/></svg></span><h3>A viewer, included</h3><p>A component with a configurable toolbar, theme and review bar on iOS, Android and the Web — or drive the state layer yourself, which Java has too.</p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="6" rx="1.8"/><rect x="3.5" y="13.5" width="17" height="6" rx="1.8"/><path d="M7 7.5h.01M7 16.5h.01"/></svg></span><h3>Runs on your server</h3><p>The same API with no screen attached: <code>@pdfiumkit/node</code> re-exports the whole web SDK and adds file and PNG helpers, and a Java SDK puts the native engine on the JVM for batch signing, redaction and accessibility work. <a href="developers.html#reference">More →</a></p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9.5" r="5"/><path d="m9 14-1.5 6 4.5-2.4 4.5 2.4L15 14"/></svg></span><h3>Offline licensing</h3><p>Keys are verified offline and unlock modules per app ID or host. Without one everything still works, watermarked — the Java SDK has no licensing module yet. <a href="download.html">More →</a></p></li>
+          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="m20.5 16-4.5-4.5-8 8"/></svg></span><h3>Render</h3><p>Any size or exact pixel dimensions, annotations and form widgets on or off.</p></li>
+          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></svg></span><h3>Text &amp; search</h3><p>Extraction in reading order, search with result rectangles, per-character bounding boxes.</p></li>
+          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19.5 8.5a2.8 2.8 0 0 0-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg></span><h3>Annotate</h3><p>Read 15 kinds — anything else as <code>unknown</code>, never dropped. Write ink, notes, highlight, underline, strikeout.</p></li>
+          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="m7 9.5 1.5 1.5 3-3M13.5 10h4M7 15.5h10.5"/></svg></span><h3>Fill forms</h3><p>Read 8 field kinds; set values through PDFium’s form-fill environment so other viewers agree — or put native controls over the field rectangles and let people type.</p></li>
+          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h10a1.5 1.5 0 0 1 1.5 1.5v15.5L12 17l-6.5 3.5V5A1.5 1.5 0 0 1 7 3.5z"/></svg></span><h3>Navigate &amp; inspect</h3><p>Outlines, bookmarks, links, page objects, embedded attachments, metadata and permissions.</p></li>
+          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/></svg></span><h3>Open &amp; save</h3><p>Password-protected files open with a typed error, not a guess. Save in full, or incrementally to leave existing signatures verifying.</p></li>
+          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19.5 8.5a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M4 20h16"/></svg></span><h3>Sign &amp; verify</h3><p>Read and verify signatures; sign as PAdES B-T with a timestamp, or B-B unattended on the JVM. Cross-checked against <code>pdfsig</code>.</p></li>
+          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="6" rx="1.5"/><path d="M4 15h9M4 19h6"/></svg></span><h3>Redact for real</h3><p>Content leaves the saved bytes. A partly covered text run is rewritten without the covered characters — not boxed over.</p></li>
+          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16M4 10h11M4 14.5h16M4 19h8"/></svg></span><h3>Tag for accessibility</h3><p>Turn an untagged PDF into one built to PDF/UA-1 — tags, reading order and alternate text, reviewed by a person before anything is written, and veraPDF’s verdict in the gates. <a href="accessibility.html">More →</a></p></li>
+          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 13.9 9l5.6 1.9-5.6 1.9L12 18.3 10.1 12.8 4.5 10.9 10.1 9z"/><path d="M18.5 16.5 19.3 19l2.2.8-2.2.8-.8 2.2"/></svg></span><h3>AI where it helps</h3><p>Answers, summaries, redaction and form proposals, alt text, semantic diff — on device, your model, or rules alone. <a href="ai.html">More →</a></p></li>
+          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="7.5" width="15" height="11" rx="2.5"/><path d="M12 7.5V4.5M8.5 12.5h.01M15.5 12.5h.01M9.5 15.5h5"/></svg></span><h3>Tools for agents</h3><p>MCP and WebMCP. An agent reads freely and changes a document only through proposals a person accepts. <a href="agents.html">More →</a></p></li>
+          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 9h17M7 13h6"/></svg></span><h3>A viewer, included</h3><p>A component with a configurable toolbar, theme and review bar, and the page’s structure exposed to VoiceOver, TalkBack and screen readers — or drive the state layer yourself.</p></li>
+          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="6" rx="1.8"/><rect x="3.5" y="13.5" width="17" height="6" rx="1.8"/><path d="M7 7.5h.01M7 16.5h.01"/></svg></span><h3>Runs on your server</h3><p><code>@pdfiumkit/node</code> re-exports the whole web API; the Java SDK puts the native engine on the JVM for batch work.</p></li>
+          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9.5" r="5"/><path d="m9 14-1.5 6 4.5-2.4 4.5 2.4L15 14"/></svg></span><h3>Offline licensing</h3><p>Keys verified with no network, per app ID or host. Without one everything still works, watermarked. <a href="download.html">More →</a></p></li>
         </ul>
       </div>
     </section>
@@ -179,10 +188,10 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
         <header class="section-head reveal">
           <p class="eyebrow">Developer experience</p>
           <h2 id="showcase-h">Your first render in four lines.</h2>
-          <p>Async from top to bottom, idiomatic in every language, and nothing to configure before you open a file.</p>
+          <p>Nothing to configure before you open a file.</p>
           <ul class="checks">
             <li><code>async</code>/<code>await</code> on iOS, coroutines on Android, promises on the Web and Node, a thread per document on Java</li>
-            <li>Typed errors instead of native crashes</li>
+            <li>Unmodelled annotation and field types surface as <code>unknown</code> rather than vanishing</li>
             <li>Explicit coordinates — no hidden Y-flip</li>
           </ul>
         </header>
@@ -232,38 +241,18 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
       </div>
     </section>
 
-    <!-- ============================== PROOF ============================== -->
-    <section class="section section-tint" id="robust" aria-labelledby="robust-h">
-      <div class="wrap">
-        <header class="section-head section-head-center reveal">
-          <p class="eyebrow">Built for real files</p>
-          <h2 id="robust-h">The files your users send are not the files you designed for.</h2>
-          <p>Truncated downloads, generator bugs, decades-old scanners, files that were never valid. PdfiumKit is built so those arrive as errors you can handle rather than as a crash.</p>
-        </header>
-
-        <aside class="honest reveal" aria-labelledby="honest-h">
-          <div>
-            <p class="eyebrow eyebrow-warn">We tell you about the edge cases</p>
-            <h3 id="honest-h">A malformed page can stall PDFium’s renderer, and we cannot fix that.</h3>
-            <p>It stalls inside the engine, where no cancellation can reach it. So PdfiumKit contains it instead: every document has its own executor, so a stalled one cannot take the others with it, and later calls to it fail fast with a typed error rather than queueing behind it. On the Web, <code>PdfWorker</code> recovers completely.</p>
-          </div>
-          <a class="btn btn-glass" href="developers.html">Read the engineering details</a>
-        </aside>
-      </div>
-    </section>
-
     <!-- ============================== ENGINEERS ============================== -->
     <section class="section" id="engineers" aria-labelledby="eng-h">
       <div class="wrap">
         <header class="section-head reveal">
           <p class="eyebrow">For engineers</p>
           <h2 id="eng-h">The details, with the caveats left in.</h2>
-          <p>Coverage per platform, measured performance and the design decisions behind the API.</p>
+          <p>What each SDK does and does not do, and what it costs to run. The sizes and timings are measured, not estimated — the method is under each table.</p>
         </header>
 
         <div class="accordion">
           <details class="reveal" open>
-            <summary><span>Feature coverage by platform</span><span class="chev" aria-hidden="true"></span></summary>
+            <summary><span>Feature coverage by SDK</span><span class="chev" aria-hidden="true"></span></summary>
             <div class="details-body">
               <div class="table-scroll">
                 <table class="coverage">
@@ -341,42 +330,24 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
             </div>
           </details>
 
-          <details class="reveal">
-            <summary><span>Design decisions</span><span class="chev" aria-hidden="true"></span></summary>
-            <div class="details-body principles">
-              <div><h3>Thread-safe</h3><p>An <code>actor</code> on iOS, a single-threaded dispatcher on Android, a promise chain on the Web. Misuse raises <code>PdfError.closed</code> instead of corrupting memory.</p></div>
-              <div><h3>Typed errors</h3><p>A closed set of error cases, with the same names on every SDK.</p></div>
-              <div><h3>Explicit coordinates</h3><p><code>PdfRect</code> is always PDF space; <code>toView</code> and <code>toPdf</code> convert in each direction. No hidden Y-flip.</p></div>
-              <div><h3>Nothing silently dropped</h3><p>Every sealed hierarchy has an <code>unknown</code> case, so unmodelled annotation and field types are surfaced, not lost.</p></div>
-            </div>
-          </details>
         </div>
       </div>
     </section>
 
-    <!-- ============================== ROADMAP ============================== -->
+    <!-- ============================== NOT YET ============================== -->
     <section class="section section-tint" id="roadmap" aria-labelledby="roadmap-h">
       <div class="wrap">
         <header class="section-head section-head-center reveal">
           <p class="eyebrow">Where it stands</p>
-          <h2 id="roadmap-h">Shipped, and what is still open.</h2>
-          <p>Everything in the first list is built and tested today. The second list is what we have not done — kept here rather than in a footnote.</p>
+          <h2 id="roadmap-h">What we have not done.</h2>
+          <p>Kept on the front page rather than in a footnote, because finding out late is worse.</p>
         </header>
         <ul class="roadmap">
-          <li class="reveal"><span class="status status-design">Shipped</span><h3>Digital signatures</h3><p>Read and verify existing signatures, and sign as PAdES B-T with a trusted timestamp.</p></li>
-          <li class="reveal"><span class="status status-design">Shipped</span><h3>Redaction</h3><p>Content removed from the saved bytes, so it cannot be recovered from the file.</p></li>
-          <li class="reveal"><span class="status status-design">Shipped</span><h3>Text markup everywhere</h3><p>Highlight, underline and strikeout on every SDK, Java included.</p></li>
-          <li class="reveal"><span class="status status-design">Shipped</span><h3>Accessible viewer</h3><p>Document structure exposed to VoiceOver, TalkBack and screen readers, with keyboard control and text scaling.</p></li>
-          <li class="reveal"><span class="status status-design">Shipped</span><h3>Accessibility remediation</h3><p>Tags, reading order and alternate text for an untagged PDF, confirmed by a person before anything is written.</p></li>
-          <li class="reveal"><span class="status status-design">Shipped</span><h3>Server-side SDKs</h3><p>Node re-exports the whole web API and adds file and PNG helpers; Java puts the native engine on the JVM, signing with a CMS the JDK builds itself.</p></li>
-          <li class="reveal"><span class="status status-design">Shipped</span><h3>Bring your own model</h3><p>On-device models where the platform has one, your endpoint where it does not, patterns where neither exists.</p></li>
-        </ul>
-
-        <ul class="roadmap" style="margin-top:1.2rem">
           <li class="reveal"><span class="status">Open</span><h3>Published packages</h3><p>SPM, Maven and npm artifacts for all five SDKs, and the engine binaries as checksummed release assets. Today they are built from the repository.</p></li>
-          <li class="reveal"><span class="status">Open</span><h3>An independent accessibility audit</h3><p>Not yet commissioned, so there is no third-party conformance report to hand you.</p></li>
-          <li class="reveal"><span class="status">Open</span><h3>Cancellable renders, wider recovery</h3><p>Cancelling inside an engine call is not possible; full recovery from a hang is Web-only.</p></li>
-          <li class="reveal"><span class="status">Open</span><h3>Tables, OCR and encrypted writes</h3><p>Remediation turns tables into paragraphs, there is no OCR for scans, and encrypted documents can be read but not rewritten.</p></li>
+          <li class="reveal"><span class="status">Open</span><h3>An independent accessibility audit</h3><p>Not commissioned, so there is no third-party conformance report to hand you — only our own testing, and veraPDF’s verdict on the documents we produce.</p></li>
+          <li class="reveal"><span class="status">Open</span><h3>Cancellable renders, wider recovery</h3><p>Cancelling inside an engine call is not possible anywhere; full recovery from a hang is Web-only.</p></li>
+          <li class="reveal"><span class="status">Open</span><h3>Tables, OCR and encrypted writes</h3><p>Remediation turns tables into paragraphs, there is no OCR for scans, and encrypted documents can be read but not appended to.</p></li>
+          <li class="reveal"><span class="status">Open</span><h3>Java: licensing, timestamps, the rest of the read API</h3><p>No licence check or watermark yet, signatures are PAdES B-B rather than B-T, and outlines, links and attachments are not exposed. <a href="developers.html#limits">The full list is here.</a></p></li>
         </ul>
       </div>
     </section>
@@ -388,8 +359,8 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
           <div class="aurora aurora-final" aria-hidden="true"><span></span><span></span></div>
           <div class="final-copy">
             <p class="eyebrow">Get started</p>
-            <h2 id="start-h">Add PDF superpowers to your app.</h2>
-            <p>Native packages for Swift Package Manager, Maven and npm are published with the first release; until then the SDK is built from the repository, which is how the samples consume it. <a href="download.html">What a trial gives you, and what a key unlocks →</a></p>
+            <h2 id="start-h">Start with the demo, not the invoice.</h2>
+            <p>Every sample runs with no account and no key — output simply carries a trial watermark. Packages for Swift Package Manager, Maven and npm arrive with the first release; until then the SDK is built from the repository, which is how the samples consume it. <a href="download.html">What a trial gives you, and what a key unlocks →</a></p>
             <div class="cta" style="margin-top:1.1rem">
               <a class="btn btn-primary" href="demos.html">Run a demo <span aria-hidden="true">→</span></a>
               <a class="btn btn-glass" href="developers.html">Read the engineering details</a>

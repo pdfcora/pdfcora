@@ -60,7 +60,7 @@ h3 { font-size: 1.12rem; letter-spacing: -0.012em; line-height: 1.3; }
 @supports not (background-clip: text) { .grad { color: var(--orange); } }
 
 /* Grid items default to min-width: auto; a long code line would otherwise widen its track. */
-.hero-grid > *, .bento > *, .features > *, .showcase > *, .proof-grid > *, .roadmap > *, .two-col > *, .principles > *, .final > * { min-width: 0; }
+.hero-grid > *, .bento > *, .features > *, .showcase > *, .proof-grid > *, .roadmap > *, .two-col > *, .final > * { min-width: 0; }
 
 /* ---------- Buttons ---------- */
 .btn {
@@ -333,11 +333,6 @@ td.n::before, .mark.n { width: 14px; height: 2px; border-radius: 2px; background
 .data thead .muted { text-transform: none; letter-spacing: 0; }
 .table-title { font-size: 1rem; margin: .5rem 0 .9rem; }
 .note { color: var(--ink-2); font-size: .9rem; margin: .9rem 0 0; }
-.principles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.8rem 3rem; padding-top: .8rem; }
-.principles > div { padding-left: 1.1rem; border-left: 2px solid; border-image: var(--grad) 1; }
-.principles h3 { margin-bottom: .4rem; }
-.principles p { margin: 0; color: var(--ink-2); font-size: .95rem; }
-@media (max-width: 760px) { .principles { grid-template-columns: minmax(0, 1fr); } }
 
 /* Roadmap */
 .roadmap { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }

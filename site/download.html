@@ -42,7 +42,7 @@
       <div class="wrap">
         <p class="eyebrow">Get the SDK</p>
         <h1>Try everything first.<br><span class="grad">Buy a key when you ship.</span></h1>
-        <p class="lede">Every feature works without a licence key — rendered pages, saved files and AI output simply carry a “PdfiumKit trial” watermark. A key removes it and unlocks the modules it names, and it is checked offline, so nothing phones home.</p>
+        <p class="lede">Every feature works without a licence key — rendered pages, saved files and AI output simply carry a “PdfiumKit trial” watermark. A key removes it and unlocks the modules it names, and it is checked offline, so nothing phones home. The Java SDK has no licensing module yet, so it neither checks a key nor watermarks.</p>
         <div class="cta">
           <a class="btn btn-primary" href="#get">How to get it <span aria-hidden="true">→</span></a>
           <a class="btn btn-glass" href="demos.html">Run a demo first</a>
@@ -125,12 +125,13 @@ npm install <span class="s">pdfiumkit-mcp</span>         <span class="c"># optio
         <header class="section-head reveal">
           <p class="eyebrow">The trial</p>
           <h2 id="trial-h">Nothing is disabled. It is watermarked.</h2>
-          <p>You can evaluate every feature, on every platform, for as long as you like — including signing, redaction and the AI features. What you cannot do is ship the output.</p>
+          <p>You can evaluate every feature, on every SDK, for as long as you like — including signing, redaction and the AI features. What you cannot do is ship the output.</p>
         </header>
         <div class="cards">
           <article class="card reveal"><h3>What the trial marks</h3><p>Rendered pages, saved files and AI output carry “PdfiumKit trial”. The watermark is written as an artifact, so it is never read out by a screen reader — but its font is a standard one, so a watermarked file cannot claim PDF/UA.</p></article>
           <article class="card reveal"><h3>What the trial changes</h3><p>A watermarked document is always saved in full, even when you ask for an incremental save, and signing it rewrites the file first — so signatures already in that file stop verifying. With a key, incremental saves and earlier signatures are kept.</p></article>
           <article class="card reveal"><h3>What a key does not do</h3><p>It never makes the SDK throw. <code>PdfLicense.status</code> tells you whether the key is valid, which modules it covers and why one was rejected, and the SDK keeps working either way.</p></article>
+          <article class="card reveal"><h3><span class="todo">Todo</span> Java is not licensed yet</h3><p>The JVM SDK carries no licence check and writes no watermark, so its output is unmarked whether or not you hold a key. That is a gap, not a concession — it will be brought in line before 1.0.</p></article>
         </div>
       </div>
     </section>
