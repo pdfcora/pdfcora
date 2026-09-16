@@ -42,11 +42,12 @@ because each lesson generalises. §4 lists what is open and what was parked.
 | `pdfiumkit-ai` semantic diff: sentence alignment, meaning vs wording labels | Done, three platforms, shared pair in `conformance/diff/`; Apple's model 3 of 3 runs right |
 | `pdfiumkit-ai` Phase 3a: alt text proposals for figures in tagged PDFs | Done, three platforms, shared document in `conformance/alt-text/`; ML Kit image description route on Android not run on a real device |
 
-Test counts at the time of writing (2026-09-15): web 303, web-ai 122 (one Ollama test skipped),
-browser viewer 31, license tool 1, iOS 191 (sweep skipped) + hung-render pass + demo UI 13 + AI 75
-(three Apple measurements skipped), Android 165 instrumented (sweep skipped) + UI 6 + hung-render
-pass + JVM, AI JVM + 32 instrumented. pdfsig accepts both the licensed and the trial-signed
-document on iOS and Android; veraPDF passes the alt text and remediation output on all three.
+Test counts at the time of writing (2026-09-16): web 303, web-ai 128 (one Ollama test skipped),
+browser viewer 36 (includes the axe audit and WebMCP), MCP server 3, license tool 1, iOS 191 (sweep
+skipped) + hung-render pass + demo UI 14 + AI 75 (three Apple measurements skipped), Android 165
+instrumented (sweep skipped) + UI 7 + hung-render pass + JVM, AI JVM + 32 instrumented. pdfsig
+accepts both the licensed and the trial-signed document on iOS and Android; veraPDF passes the alt
+text and remediation output on all three.
 
 ## 2. Running things
 
