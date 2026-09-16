@@ -127,6 +127,77 @@ try {
     reviewButtons.map((b) => Math.round(b.getBoundingClientRect().right)).join(',') + ` host=${hostRight}`);
   document.documentElement.style.fontSize = '';
 
+  // Drawing feedback: the gesture is drawn while the pointer is down, and ink follows the
+  // path the pointer took rather than a straight line between its ends.
+  const drawHost = document.createElement('div');
+  drawHost.style.cssText = 'width:420px;height:520px';
+  document.body.append(drawHost);
+  const drawDoc = await open();
+  await PdfViewerElement.mount(drawHost, drawDoc);
+  const drawCanvas = drawHost.querySelector('canvas');
+  const preview = drawHost.querySelector('.pdf-gesture-preview');
+  const pointAt = (x, y) => {
+    const box = drawCanvas.getBoundingClientRect();
+    return { clientX: box.left + x, clientY: box.top + y, pointerId: 1, bubbles: true };
+  };
+  // Synthetic pointer events have no real capture target.
+  drawCanvas.setPointerCapture = () => {};
+
+  drawHost.querySelector('#tool-ink').click();
+  drawCanvas.dispatchEvent(new PointerEvent('pointerdown', pointAt(40, 40)));
+  for (const [x, y] of [[60, 55], [80, 44], [100, 70], [120, 52]]) {
+    drawCanvas.dispatchEvent(new PointerEvent('pointermove', pointAt(x, y)));
+  }
+  const line = preview?.querySelector('polyline');
+  check('an ink stroke is drawn while the pointer is still down',
+    Boolean(line) && line.getAttribute('points').split(' ').length >= 5,
+    `points=${line?.getAttribute('points')}`);
+
+  const inkBefore = (await (await drawDoc.page(0)).annotations()).length;
+  drawCanvas.dispatchEvent(new PointerEvent('pointerup', pointAt(120, 52)));
+  for (let i = 0; i < 100 && (await (await drawDoc.page(0)).annotations()).length === inkBefore; i++) await frame();
+  const ink = (await (await drawDoc.page(0)).annotations()).find((a) => a.kind === 'ink');
+  check('the committed ink follows the path, not a straight line',
+    ink?.strokes?.[0]?.length >= 5, `points=${ink?.strokes?.[0]?.length}`);
+  check('the preview is cleared once the stroke is committed',
+    preview.childElementCount === 0, `children=${preview.childElementCount}`);
+
+  // A highlight or redaction shows the region it will cover before it is committed.
+  drawHost.querySelector('#tool-highlight').click();
+  drawCanvas.dispatchEvent(new PointerEvent('pointerdown', pointAt(30, 200)));
+  drawCanvas.dispatchEvent(new PointerEvent('pointermove', pointAt(160, 240)));
+  const region = preview?.querySelector('rect');
+  check('a highlight shows the region it will cover',
+    Boolean(region) && Math.round(Number(region.getAttribute('width'))) === 130,
+    `rect=${region?.getAttribute('width')}x${region?.getAttribute('height')}`);
+  drawCanvas.dispatchEvent(new PointerEvent('pointercancel', pointAt(160, 240)));
+  check('cancelling the gesture clears the preview', preview.childElementCount === 0);
+
+  // A note carries text, so the text is typed before the annotation is created.
+  drawHost.querySelector('#tool-note').click();
+  drawCanvas.dispatchEvent(new PointerEvent('pointerdown', pointAt(70, 300)));
+  drawCanvas.dispatchEvent(new PointerEvent('pointerup', pointAt(70, 300)));
+  const editor = drawHost.querySelector('#note-text');
+  check('placing a note opens a text editor', editor && editor.style.display === 'block',
+    `display=${editor?.style.display}`);
+
+  const notesBefore = (await (await drawDoc.page(0)).annotations()).length;
+  editor.value = 'Check clause 4.2';
+  editor.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+  for (let i = 0; i < 100 && (await (await drawDoc.page(0)).annotations()).length === notesBefore; i++) await frame();
+  const note = (await (await drawDoc.page(0)).annotations()).find((a) => a.contents === 'Check clause 4.2');
+  check('the typed text becomes the note', Boolean(note), `contents=${note?.contents}`);
+  check('the editor closes once the note is made', editor.style.display === 'none');
+
+  // Icons: a drawing replaces the label, so the accessible name has to survive it.
+  const inkButton = drawHost.querySelector('#tool-ink');
+  check('a toolbar button is an icon with an accessible name',
+    inkButton.querySelector('svg') !== null && inkButton.getAttribute('aria-label') === 'Ink',
+    `label=${inkButton.getAttribute('aria-label')} svg=${inkButton.querySelector('svg') !== null}`);
+  check('the selected tool is announced as pressed',
+    drawHost.querySelector('#tool-note').getAttribute('aria-pressed') === 'true',
+    `note=${drawHost.querySelector('#tool-note').getAttribute('aria-pressed')}`);
+
   const closed = await open();
   await closed.close();
   const other = document.createElement('div');

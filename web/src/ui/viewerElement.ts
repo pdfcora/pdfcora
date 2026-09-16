@@ -3,6 +3,7 @@ import { PdfViewer } from '../view/viewer.js';
 import type { PdfTool } from '../view/state.js';
 import { defaultToolbar, type PdfToolbarConfiguration, type PdfToolbarItem } from './toolbar.js';
 import { lightTheme, type PdfViewerTheme } from './theme.js';
+import { icons, type PdfIconName } from './icons.js';
 import type { PdfMark, PdfMarkState } from '../view/state.js';
 import type { PdfAccessibleNode } from '../types.js';
 
@@ -19,6 +20,12 @@ export interface PdfViewerElementOptions {
   readonly toolbar?: PdfToolbarConfiguration;
   readonly theme?: PdfViewerTheme;
   readonly onSave?: (bytes: Uint8Array) => void;
+  /**
+   * Called after the component changes the document — an annotation added, one undone,
+   * a region redacted. A host that shows anything about the document (a page count, an
+   * annotation count, a dirty marker) has no other way to know it went stale.
+   */
+  readonly onChange?: () => void;
   readonly review?: PdfReviewOptions;
 }
 
@@ -41,6 +48,10 @@ export class PdfViewerElement {
   private readonly stage = document.createElement('div');
   private readonly status = document.createElement('p');
   private readonly overlay = document.createElement('div');
+  /** What the current gesture will create, drawn while the pointer is still down. */
+  private readonly preview = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  /** Where a note's text is typed, before the annotation exists. */
+  private readonly editor = document.createElement('textarea');
   private readonly reviewBar = document.createElement('div');
   private readonly accessible = document.createElement('div');
   private accessiblePage = -1;
@@ -52,12 +63,14 @@ export class PdfViewerElement {
     private readonly theme: PdfViewerTheme,
     private readonly onSave?: (bytes: Uint8Array) => void,
     private readonly review?: PdfReviewOptions,
+    private readonly onChange?: () => void,
   ) {}
 
   static async mount(host: HTMLElement, pdf: PdfDocument,
                      options: PdfViewerElementOptions = {}): Promise<PdfViewerElement> {
     const element = new PdfViewerElement(
-      host, pdf, options.toolbar ?? defaultToolbar, options.theme ?? lightTheme, options.onSave, options.review);
+      host, pdf, options.toolbar ?? defaultToolbar, options.theme ?? lightTheme,
+      options.onSave, options.review, options.onChange);
     await element.build();
     return element;
   }
@@ -94,7 +107,25 @@ export class PdfViewerElement {
       position: 'absolute', width: '1px', height: '1px', overflow: 'hidden',
       clipPath: 'inset(50%)', whiteSpace: 'nowrap',
     });
-    this.stage.append(this.canvas, this.overlay, this.accessible);
+    // The preview sits above the page and below the marks, and never takes the pointer:
+    // it is a drawing of the gesture in flight, not something to click.
+    Object.assign(this.preview.style, {
+      position: 'absolute', left: '0', top: '0', pointerEvents: 'none', overflow: 'visible',
+    });
+    this.preview.setAttribute('aria-hidden', 'true');
+    this.preview.classList.add('pdf-gesture-preview');
+
+    Object.assign(this.editor.style, {
+      position: 'absolute', display: 'none', resize: 'none', zIndex: '2',
+      font: '0.8125rem/1.35 sans-serif', padding: '5px 6px', width: '164px', height: '62px',
+      borderRadius: this.theme.cornerRadius, border: `1px solid ${this.theme.accent}`,
+      background: '#fffbe6', color: '#1d1d1f', boxShadow: `0 2px 10px ${this.theme.pageShadow}`,
+    });
+    this.editor.id = 'note-text';
+    this.editor.placeholder = 'Note…';
+    this.editor.setAttribute('aria-label', 'Note text');
+
+    this.stage.append(this.canvas, this.preview, this.overlay, this.editor, this.accessible);
     // The page takes keyboard focus: + and - zoom, Page Up and Page Down turn pages.
     this.stage.tabIndex = 0;
     this.stage.setAttribute('role', 'group');
@@ -126,14 +157,29 @@ export class PdfViewerElement {
     const button = document.createElement('button');
     button.id = item.id;
     button.setAttribute('aria-label', item.label);
-    button.textContent = item.item.kind === 'custom' ? item.item.content : item.label;
+    button.title = item.label;
+
+    // An icon where there is one, the label where there is not. `aria-label` carries the
+    // name either way, so a screen reader hears the same thing as before.
+    const icon = item.item.kind === 'tool' ? icons[item.item.tool as PdfIconName]
+      : icons[item.item.kind as PdfIconName];
+    if (item.item.kind === 'custom') button.textContent = item.item.content;
+    else if (icon) button.innerHTML = icon;
+    else button.textContent = item.label;
+
     const active = item.item.kind === 'tool' && item.item.tool === this.tool;
     Object.assign(button.style, {
       font: `${this.theme.iconSize} sans-serif`, color: 'inherit', cursor: 'pointer',
-      border: 'none', borderRadius: this.theme.cornerRadius, padding: '6px 10px',
+      border: 'none', borderRadius: this.theme.cornerRadius,
+      padding: icon ? '7px' : '6px 10px',
+      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
       background: active ? `color-mix(in srgb, ${this.theme.accent} 18%, transparent)` : 'transparent',
       flex: '0 0 auto',
     });
+    if (active) button.style.color = this.theme.accent;
+    // Only a tool is a toggle; save and zoom are actions, and announcing them as pressed
+    // would be a lie.
+    if (item.item.kind === 'tool') button.setAttribute('aria-pressed', String(active));
     button.onclick = () => { void this.perform(item); };
     if (item.item.kind === 'undo' && this.created === 0) button.disabled = true;
     if (this.review && item.item.kind === 'tool') button.disabled = true;
@@ -258,19 +304,46 @@ export class PdfViewerElement {
     }
     this.renderToolbar();
     await this.refresh();
+    if (item.item.kind === 'undo') this.onChange?.();
   }
 
   private attachGestures(): void {
     let start: { x: number; y: number } | null = null;
+    // Every point the pointer visited, so ink is the line that was drawn rather than a
+    // straight one between where it went down and where it came up.
+    let path: { x: number; y: number }[] = [];
     const local = (event: PointerEvent) => {
       const box = this.canvas.getBoundingClientRect();
       return { x: event.clientX - box.left, y: event.clientY - box.top };
     };
 
-    this.canvas.onpointerdown = (event) => { start = local(event); };
+    this.canvas.onpointerdown = (event) => {
+      if (this.editor.style.display !== 'none') { void this.commitNote(); return; }
+      start = local(event);
+      path = [start];
+      // Capture, so a stroke that leaves the page still finishes where the pointer does.
+      this.canvas.setPointerCapture(event.pointerId);
+    };
+
+    this.canvas.onpointermove = (event) => {
+      if (!start || this.review) return;
+      const to = local(event);
+      // A pointer reports sub-pixel moves; anything under a pixel is noise in the path
+      // and another node in the SVG.
+      const last = path[path.length - 1]!;
+      if (Math.abs(to.x - last.x) >= 1 || Math.abs(to.y - last.y) >= 1) path.push(to);
+      this.drawPreview(start, to, path);
+    };
+
+    const cancel = () => { start = null; path = []; this.clearPreview(); };
+    this.canvas.onpointercancel = cancel;
+
     this.canvas.onpointerup = async (event) => {
       const from = start;
+      const drawn = path;
       start = null;
+      path = [];
+      this.clearPreview();
       const viewer = this.viewer;
       if (!from || !viewer) return;
       const to = local(event);
@@ -283,11 +356,12 @@ export class PdfViewerElement {
       }
 
       if (this.tool === 'note') {
-        const point = transform.toPdf(to);
-        await viewer.addNote({ left: point.x, bottom: point.y - 24, right: point.x + 24, top: point.y }, 'Note');
-        this.created++;
+        this.openNoteEditor(to);
+        return;
       } else if (this.tool === 'ink') {
-        await viewer.addInk([[transform.toPdf(from), transform.toPdf(to)]]);
+        // A tap with the pen is not a stroke.
+        if (drawn.length < 2) return;
+        await viewer.addInk([drawn.map((point) => transform.toPdf(point))]);
         this.created++;
       } else if (this.tool === 'highlight' || this.tool === 'redact') {
         const rect = transform.toPdfRect({
@@ -312,7 +386,100 @@ export class PdfViewerElement {
       }
       this.renderToolbar();
       await this.refresh();
+      this.onChange?.();
     };
+  }
+
+  /** The gesture in flight, in the canvas's CSS pixels. */
+  private drawPreview(from: { x: number; y: number }, to: { x: number; y: number },
+                      path: readonly { x: number; y: number }[]): void {
+    const width = this.canvas.clientWidth;
+    const height = this.canvas.clientHeight;
+    this.preview.setAttribute('width', String(width));
+    this.preview.setAttribute('height', String(height));
+
+    const node = (name: string, attributes: Record<string, string>) => {
+      const e = document.createElementNS('http://www.w3.org/2000/svg', name);
+      for (const [key, value] of Object.entries(attributes)) e.setAttribute(key, value);
+      return e;
+    };
+
+    if (this.tool === 'ink') {
+      this.preview.replaceChildren(node('polyline', {
+        points: path.map((p) => `${p.x},${p.y}`).join(' '),
+        fill: 'none', stroke: this.theme.accent, 'stroke-width': '2',
+        'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+      }));
+      return;
+    }
+
+    if (this.tool === 'highlight' || this.tool === 'redact') {
+      const box = {
+        x: Math.min(from.x, to.x), y: Math.min(from.y, to.y),
+        width: Math.abs(to.x - from.x), height: Math.abs(to.y - from.y),
+      };
+      // Redaction is shown as what it will leave behind; a highlight as what it will add.
+      const redacting = this.tool === 'redact';
+      this.preview.replaceChildren(node('rect', {
+        x: String(box.x), y: String(box.y),
+        width: String(box.width), height: String(box.height),
+        fill: redacting ? this.theme.redactionFill : `color-mix(in srgb, ${this.theme.accent} 28%, transparent)`,
+        stroke: redacting ? '#1d1d1f' : this.theme.accent,
+        'stroke-width': '1.5',
+        'stroke-dasharray': redacting ? '5 3' : '',
+      }));
+      return;
+    }
+
+    this.clearPreview();
+  }
+
+  private clearPreview(): void {
+    this.preview.replaceChildren();
+  }
+
+  /**
+   * A note carries text, so the text is typed before the annotation exists rather than
+   * created empty and edited afterwards — PDFium has no editing path for one.
+   */
+  private openNoteEditor(at: { x: number; y: number }): void {
+    Object.assign(this.editor.style, {
+      display: 'block',
+      left: `${Math.min(at.x, Math.max(0, this.canvas.clientWidth - 170))}px`,
+      top: `${Math.min(at.y, Math.max(0, this.canvas.clientHeight - 68))}px`,
+    });
+    this.editor.value = '';
+    this.editor.dataset.x = String(at.x);
+    this.editor.dataset.y = String(at.y);
+    this.editor.focus();
+    this.status.textContent = 'Type the note, then press Enter. Escape cancels.';
+
+    this.editor.onkeydown = (event) => {
+      if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void this.commitNote(); }
+      if (event.key === 'Escape') { event.preventDefault(); this.closeNoteEditor(); }
+    };
+  }
+
+  private closeNoteEditor(): void {
+    this.editor.style.display = 'none';
+    this.editor.value = '';
+    this.status.textContent = '';
+    this.stage.focus();
+  }
+
+  private async commitNote(): Promise<void> {
+    const viewer = this.viewer;
+    const text = this.editor.value.trim();
+    const at = { x: Number(this.editor.dataset.x), y: Number(this.editor.dataset.y) };
+    this.closeNoteEditor();
+    if (!viewer || text.length === 0) return;
+
+    const point = viewer.transform().toPdf(at);
+    await viewer.addNote({ left: point.x, bottom: point.y - 24, right: point.x + 24, top: point.y }, text);
+    this.created++;
+    this.renderToolbar();
+    await this.refresh();
+    this.onChange?.();
   }
 
   private async refresh(): Promise<void> {

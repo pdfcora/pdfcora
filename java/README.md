@@ -213,8 +213,8 @@ follower.apply(viewer.state());                 // a fit is re-derived for the f
 
 ## Threading
 
-PDFium is not thread-safe. Every document owns one thread and every call runs on it, so
-calling from several threads is safe — the calls serialise rather than corrupting memory.
+The SDK is thread-safe. Every document owns one thread and every call runs on it, so
+calling from several threads is safe — the calls serialise.
 This mirrors the actor on iOS and the single-threaded dispatcher on Android. A test drives
 one document from eight threads and asserts they all read the same text.
 

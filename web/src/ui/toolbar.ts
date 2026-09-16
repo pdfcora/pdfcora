@@ -43,10 +43,18 @@ export interface PdfToolbarConfiguration {
   readonly items: readonly PdfToolbarItem[];
 }
 
+/**
+ * Paging first, then the tools, then zoom and save.
+ *
+ * `deleteSelection` is not here: undo covers the same ground for the common mistake, and
+ * a toolbar earns its width. Apps that want it add `toolbarItems.deleteSelection`.
+ */
 export const defaultToolbar: PdfToolbarConfiguration = {
   items: [
-    tool('select'), tool('ink'), tool('note'), tool('highlight'), tool('redact'),
-    toolbarItems.divider, toolbarItems.undo, toolbarItems.deleteSelection,
+    toolbarItems.pageBack, toolbarItems.pageForward,
+    toolbarItems.divider,
+    tool('select'), tool('ink'), tool('highlight'), tool('note'), tool('redact'),
+    toolbarItems.divider, toolbarItems.undo,
     toolbarItems.spacer,
     toolbarItems.zoomOut, toolbarItems.fitWidth, toolbarItems.zoomIn,
     toolbarItems.divider, toolbarItems.save,

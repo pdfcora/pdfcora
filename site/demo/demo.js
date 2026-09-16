@@ -1,6 +1,5 @@
 import {
-  configureEngine, darkTheme, defaultToolbar, PdfDocument, PdfError, PdfViewerElement,
-  toolbarItems,
+  configureEngine, darkTheme, PdfDocument, PdfError, PdfViewerElement,
 } from './sdk/index.js';
 
 // In a browser the page says where the engine's WebAssembly lives. Both files ship
@@ -11,15 +10,6 @@ configureEngine({
 });
 
 const el = (id) => document.getElementById(id);
-
-// The component's own toolbar, plus page navigation, which the default one leaves out
-// because most hosts scroll instead.
-const toolbar = {
-  items: [
-    toolbarItems.pageBack, toolbarItems.pageForward, toolbarItems.divider,
-    ...defaultToolbar.items,
-  ],
-};
 
 let pdf = null;
 let name = '';
@@ -47,9 +37,10 @@ async function open(bytes, from) {
   const host = el('viewer');
   host.replaceChildren();
   await PdfViewerElement.mount(host, pdf, {
-    toolbar,
     theme: darkTheme,
     onSave: (saved) => download(saved, name.replace(/\.pdf$/i, '') + '-edited.pdf'),
+    // Drawing on the page changes the document, so the panel beside it has gone stale.
+    onChange: () => { void describe(); },
   });
 
   el('query').value = '';
