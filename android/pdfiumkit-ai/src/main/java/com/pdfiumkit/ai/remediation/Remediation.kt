@@ -135,6 +135,17 @@ internal object RemediationRules {
             if (startsWithListMarker(d.text)) d.type = PdfTagType.LI
             else if (isHeading(d)) d.type = levels[minOf(5, headingSizes.indexOf(rounded(d.size)))]
         }
+
+        // PDF/UA 7.4.2: the first heading must be H1 and no level may be skipped. Sizes
+        // alone break that whenever the largest text is not the first heading — a page
+        // number set large, a table's total — which real documents do often.
+        var previous = 0
+        for (d in drafts) {
+            val rank = levels.indexOf(d.type)
+            if (rank < 0) continue
+            previous = minOf(rank + 1, previous + 1)
+            d.type = levels[previous - 1]
+        }
     }
 }
 

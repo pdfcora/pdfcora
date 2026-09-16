@@ -30,6 +30,7 @@ The owner asked for no confirmation rounds.
 | Vector graphics | Paths and shadings are artifacts. A chart drawn with paths is therefore not announced; noted in the review |
 | Figures | Images and form XObjects, except those the alt text decorative rule matches, which are artifacts. Descriptions come from the alt text feature afterwards |
 | Annotations, form fields | Not tagged. A page with annotations will not pass PDF/UA after remediation |
+| Headings | Levels come from font size, then are renumbered in reading order so the first is H1 and none is skipped (PDF/UA 7.4.2). Added 2026-09-16 after the real-world survey |
 | Already tagged | Refused: `alreadyTagged` and nothing proposed |
 | Metadata | A new XMP packet (title, `pdfuaid:part 1`) replaces any existing one |
 | Undo | `apply` returns a new document; the original is untouched |

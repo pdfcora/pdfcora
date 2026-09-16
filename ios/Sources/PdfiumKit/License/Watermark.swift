@@ -22,6 +22,9 @@ enum Watermark {
         FPDFPageObj_Transform(object, 1, 0, 0, 1, -Double(l + r) / 2, -Double(b + t) / 2)
         FPDFPageObj_Transform(object, c, s, -s, c,
                               Double(left) + Double(width) / 2, Double(bottom) + Double(height) / 2)
+        // PDF/UA: the watermark is decoration, so it is an artifact rather than untagged
+        // content (7.1-3). Without the mark, remediated trial output fails on every page.
+        FPDFPageObj_AddMark(object, "Artifact")
         FPDFPage_InsertObject(page, object)
         FPDFPage_GenerateContent(page)
     }

@@ -126,6 +126,17 @@ export function typeBlocks(drafts: Draft[]): void {
     if (LIST_MARKER.test(d.text)) d.type = 'LI';
     else if (isHeading(d)) d.type = `H${Math.min(6, headingSizes.indexOf(Math.round(d.size * 2) / 2) + 1)}` as PdfTagType;
   }
+
+  // PDF/UA 7.4.2: the first heading must be H1 and no level may be skipped. Sizes alone
+  // break that whenever the largest text is not the first heading — a page number set
+  // large, a table's total — which real documents do often.
+  let previous = 0;
+  for (const d of drafts) {
+    const match = /^H([1-6])$/.exec(d.type);
+    if (!match) continue;
+    previous = Math.min(Number(match[1]), previous + 1);
+    d.type = `H${previous}` as PdfTagType;
+  }
 }
 
 export async function proposeRemediation(

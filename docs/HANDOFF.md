@@ -214,10 +214,28 @@ host view, and removing a figure's fallback description makes it fail on the two
 
 **Remediation is rules only, and limited.** No model is used: the proposals are the same on
 every device. Tables become paragraphs, paths become artifacts (a vector chart is not announced),
-reading order is content order, and annotations and form fields are not tagged. PDF/UA has only been
-checked on the hand-written test document. Over the 293 PDFium test resources (web, 2026-09-15)
-remediation proposed and wrote a tree for all 234 untagged files that open, with no crash; the
-only errors were the typed `corrupt` errors of pages that do not load at all.
+reading order is content order, and annotations and form fields are not tagged. Over the 293 PDFium
+test resources (web, 2026-09-15) remediation proposed and wrote a tree for all 234 untagged files
+that open, with no crash; the only errors were the typed `corrupt` errors of pages that do not load.
+
+**Measured against 238 real documents on 2026-09-16** — see
+`docs/accessibility/remediation-real-world.md`, reproduced with
+`scripts/fetch-real-world-corpus.sh` and `scripts/remediation-survey.mjs`. Nothing crashed and
+nothing was slow (762,178 blocks over 6,146 pages in 31 s). 61 documents were already tagged and
+correctly refused; 13 were refused with typed errors (9 encrypted, 4 with a broken xref); 4 were
+scans with no text layer. Of the 160 remediated, 9 came out PDF/UA-1 compliant and 129 of the rest
+fail only on figures needing alt text, untagged annotations, or fonts the source never embedded —
+which tagging cannot fix. The remaining 22 are the work list; the largest group, 12 documents
+failing 7.1-1/7.1-2, is a nesting bug: the page's content stream already holds marked content and
+tagging adds its own marks around it. `FPDFPageObj_GetMarkedContentID` reports the existing id, so
+the fix is to notice it before marking.
+
+The survey found two defects that are **fixed** on all three platforms: the trial watermark was
+untagged content on every page (7.1-3) and is now an `Artifact`, and heading levels came from font
+size alone, so a document whose largest line was not its first heading started below H1 and skipped
+levels (7.4.2). Trial output still fails 7.21.4.1 because the watermark's standard font cannot be
+embedded; `scripts/verapdf-ua1.sh --allow 7.21.4.1` is how CI states that, and licensed output is
+unaffected.
 
 **Android builds with Kotlin 2.1.21 and AGP 8.7.3** since 2026-09-15 (the Compose compiler is the
 Kotlin plugin; the AI module no longer skips the metadata version check ML Kit's Kotlin 2.1 classes

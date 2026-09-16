@@ -21,6 +21,15 @@ describe('remediation proposals', () => {
     for (const block of review.blocks) assert.equal(block.id, `${block.pageIndex}:${block.objectIndices[0]}`);
   });
 
+  test('heading levels start at H1 and never skip, whatever the font sizes say', async () => {
+    // PDF/UA 7.4.2. Real documents often set a late line larger than the first heading;
+    // by size alone this document would start at H2 and skip to H3.
+    const expected = JSON.parse(readFileSync(new URL('heading-order-expected.json', DIR), 'utf8'));
+    const document = await PdfDocument.open(new Uint8Array(readFileSync(new URL('heading-order.pdf', DIR))));
+    const review = await new PdfiumAI(document).remediation.suggest();
+    assert.deepEqual(review.blocks.map((b) => b.type), expected.map((e: { type: string }) => e.type));
+  });
+
   test('apply tags the document with overrides, titled by the first H1', async () => {
     const document = await untagged();
     const review = await new PdfiumAI(document).remediation.suggest();

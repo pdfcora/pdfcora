@@ -24,6 +24,9 @@ void place(FPDF_DOCUMENT document, FPDF_PAGE page, float left, float bottom, flo
     double s = std::sin(angle) * scale;
     FPDFPageObj_Transform(object, 1, 0, 0, 1, -(l + r) / 2.0, -(b + t) / 2.0);
     FPDFPageObj_Transform(object, c, s, -s, c, left + width / 2.0, bottom + height / 2.0);
+    // PDF/UA: the watermark is decoration, so it is an artifact rather than untagged
+    // content (7.1-3). Without the mark, remediated trial output fails on every page.
+    FPDFPageObj_AddMark(object, "Artifact");
     FPDFPage_InsertObject(page, object);
     FPDFPage_GenerateContent(page);
 }

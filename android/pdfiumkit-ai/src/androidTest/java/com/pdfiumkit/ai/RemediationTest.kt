@@ -37,6 +37,18 @@ class RemediationTest {
         }
     }
 
+    /** PDF/UA 7.4.2. Real documents often set a late line larger than the first heading;
+     *  by size alone this document would start at H2 and skip to H3. */
+    @Test fun headingLevelsStartAtH1AndNeverSkip() = runBlocking {
+        val expected = JSONArray(assets.open("heading-order-expected.json").use { it.readBytes().decodeToString() })
+        val document = PdfDocument.open(assets.open("heading-order.pdf").use { it.readBytes() })
+        val review = PdfiumAI(document).remediation.suggest()
+        assertEquals(expected.length(), review.blocks.size)
+        review.blocks.forEachIndexed { i, block ->
+            assertEquals(expected.getJSONObject(i).getString("type"), block.type.tag)
+        }
+    }
+
     @Test fun applyTagsWithOverrides() = runBlocking {
         val document = untagged()
         val review = PdfiumAI(document).remediation.suggest()

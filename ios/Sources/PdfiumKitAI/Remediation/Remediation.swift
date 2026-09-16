@@ -127,6 +127,16 @@ enum RemediationRules {
             if startsWithListMarker(d.text) { d.type = .li }
             else if isHeading(d), let rank = headingSizes.firstIndex(of: rounded(d.size)) { d.type = levels[min(5, rank)] }
         }
+
+        // PDF/UA 7.4.2: the first heading must be H1 and no level may be skipped. Sizes
+        // alone break that whenever the largest text is not the first heading — a page
+        // number set large, a table's total — which real documents do often.
+        var previous = 0
+        for d in drafts {
+            guard let rank = levels.firstIndex(of: d.type) else { continue }
+            previous = min(rank + 1, previous + 1)
+            d.type = levels[previous - 1]
+        }
     }
 }
 

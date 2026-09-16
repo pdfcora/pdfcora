@@ -22,6 +22,16 @@ final class RemediationTests: LicensedTestCase {
         for block in review.blocks { XCTAssertEqual(block.id, "\(block.pageIndex):\(block.objectIndices[0])") }
     }
 
+    /// PDF/UA 7.4.2. Real documents often set a late line larger than the first heading;
+    /// by size alone this document would start at H2 and skip to H3.
+    func testHeadingLevelsStartAtH1AndNeverSkip() async throws {
+        let expected = try JSONDecoder().decode([Expected].self,
+            from: Data(contentsOf: Self.dir.appendingPathComponent("heading-order-expected.json")))
+        let document = try await PdfDocument(data: try Data(contentsOf: Self.dir.appendingPathComponent("heading-order.pdf")))
+        let review = try await PdfiumAI(document: document).remediation.suggest()
+        XCTAssertEqual(review.blocks.map { $0.type.rawValue }, expected.map(\.type))
+    }
+
     func testApplyTagsWithOverrides() async throws {
         let document = try await untagged()
         let review = try await PdfiumAI(document: document).remediation.suggest()

@@ -1,0 +1,38 @@
+[
+  {
+    "pageIndex": 0,
+    "type": "H1",
+    "objectCount": 1,
+    "text": "Department report"
+  },
+  {
+    "pageIndex": 0,
+    "type": "P",
+    "objectCount": 1,
+    "text": "This report covers the summer quarter and its three projects."
+  },
+  {
+    "pageIndex": 0,
+    "type": "H2",
+    "objectCount": 1,
+    "text": "Projects"
+  },
+  {
+    "pageIndex": 0,
+    "type": "P",
+    "objectCount": 1,
+    "text": "Each project is listed with its owner and its budget."
+  },
+  {
+    "pageIndex": 0,
+    "type": "H1",
+    "objectCount": 1,
+    "text": "Total spend"
+  },
+  {
+    "pageIndex": 0,
+    "type": "P",
+    "objectCount": 1,
+    "text": "The total is within the budget agreed in March."
+  }
+]

@@ -25,6 +25,9 @@ function placeWatermark(m: PdfiumModule, document: number, page: number,
   const matrix = ['number', 'number', 'number', 'number', 'number', 'number', 'number'];
   m.ccall('FPDFPageObj_Transform', null, matrix, [text, 1, 0, 0, 1, -(l! + r!) / 2, -(b! + t!) / 2]);
   m.ccall('FPDFPageObj_Transform', null, matrix, [text, cos, sin, -sin, cos, left + width / 2, bottom + height / 2]);
+  // PDF/UA: the watermark is decoration, so it is an artifact rather than untagged
+  // content (7.1-3). Without the mark, remediated trial output fails on every page.
+  m.ccall('FPDFPageObj_AddMark', 'number', ['number', 'string'], [text, 'Artifact']);
   m.ccall('FPDFPage_InsertObject', null, ['number', 'number'], [page, text]);
   m.ccall('FPDFPage_GenerateContent', 'number', ['number'], [page]);
 }
