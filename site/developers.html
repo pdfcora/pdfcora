@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PdfiumKit for developers — API, threading, errors, testing</title>
+  <meta name="description" content="How PdfiumKit is put together: one engine behind three idiomatic APIs, a serial executor per document, typed errors, explicit coordinates, and the test suite that keeps all three platforms honest.">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#07080c">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script>document.documentElement.classList.add('js')</script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="index.html" aria-label="PdfiumKit home">
+        <img src="favicon.svg" alt="" width="28" height="28">
+        <span>PdfiumKit</span>
+      </a>
+      <button class="nav-toggle" aria-expanded="false" aria-controls="site-nav">
+        <span class="sr">Menu</span><span class="bars" aria-hidden="true"></span>
+      </button>
+      <nav id="site-nav" class="site-nav" aria-label="Primary">
+        <a href="index.html#features">Features</a>
+        <a href="developers.html" aria-current="page">Developers</a>
+        <a href="ai.html">AI</a>
+        <a href="accessibility.html">Accessibility</a>
+        <a href="agents.html">Agents</a>
+        <a href="demos.html">Demos</a>
+        <a class="nav-cta" href="download.html">Get the SDK</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="page-hero">
+      <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="grid-bg" aria-hidden="true"></div>
+      <div class="wrap">
+        <p class="eyebrow">For engineers</p>
+        <h1>One engine.<br><span class="grad">Three idiomatic APIs.</span></h1>
+        <p class="lede">PdfiumKit is PDFium, pinned to a known revision, wrapped so that Swift, Kotlin and TypeScript each get the API their developers expect — with the same types, the same method names and the same error cases.</p>
+        <nav class="page-nav" aria-label="On this page">
+          <a href="#modules">Modules</a><a href="#threading">Threading</a><a href="#errors">Errors</a>
+          <a href="#coordinates">Coordinates</a><a href="#viewer">Viewer</a><a href="#testing">Testing</a><a href="#limits">Limits</a>
+        </nav>
+      </div>
+    </section>
+
+    <section class="section" id="modules" aria-labelledby="modules-h">
+      <div class="wrap">
+        <header class="section-head reveal">
+          <p class="eyebrow">Modules</p>
+          <h2 id="modules-h">Take the core. Add the rest when you need it.</h2>
+          <p>The core never depends on the AI or UI packages — a build check enforces it — so an app that only renders PDFs ships only the engine.</p>
+        </header>
+
+        <div class="table-scroll reveal">
+          <table class="matrix">
+            <caption class="sr">Modules by platform</caption>
+            <thead><tr><th scope="col">Module</th><th scope="col">iOS</th><th scope="col">Android</th><th scope="col">Web</th><th scope="col">What it gives you</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Core</th><td><code>PdfiumKit</code></td><td><code>com.pdfiumkit:pdfiumkit</code></td><td><code>@pdfiumkit/web</code></td><td>Render, text, search, forms, annotations, signatures, redaction, tags, save</td></tr>
+              <tr><th scope="row">AI</th><td><code>PdfiumKitAI</code></td><td><code>com.pdfiumkit:pdfiumkit-ai</code></td><td><code>@pdfiumkit/web-ai</code></td><td>Answers, summaries, redaction and form proposals, alt text, remediation, diff</td></tr>
+              <tr><th scope="row">UI</th><td><code>PdfiumKitUI</code></td><td><code>com.pdfiumkit:pdfiumkit-ui</code></td><td><code>PdfViewerElement</code></td><td>A viewer component with a configurable toolbar, theme and review bar</td></tr>
+              <tr><th scope="row">Agents</th><td>—</td><td>—</td><td><code>pdfiumkit-mcp</code></td><td>An MCP server and WebMCP registration for AI agents</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted" style="margin-top:.9rem">Requirements: iOS 15+ with Swift 5.9 · Android minSdk 23 with all four ABIs · Web as ESM with the <code>.wasm</code> inside the package, Node 18+.</p>
+      </div>
+    </section>
+
+    <section class="section section-tint" id="threading" aria-labelledby="threading-h">
+      <div class="wrap">
+        <header class="section-head reveal">
+          <p class="eyebrow">Threading</p>
+          <h2 id="threading-h">PDFium is not thread-safe. You never have to care.</h2>
+        </header>
+        <div class="cards">
+          <article class="card reveal"><span class="tag">iOS</span><h3>An actor per document</h3><p>Every call hops onto the document’s actor, so concurrent calls serialise instead of corrupting memory. <code>async</code>/<code>await</code> throughout.</p></article>
+          <article class="card reveal"><span class="tag">Android</span><h3>A single-threaded dispatcher</h3><p>Each document owns one dispatcher; suspending functions run there. Your coroutine scope stays yours.</p></article>
+          <article class="card reveal"><span class="tag">Web</span><h3>A promise chain, or a Worker</h3><p>In-process calls queue behind one chain. <code>PdfWorker</code> runs the whole SDK in a Worker behind the same API, so a stalled render can be terminated without taking the page down.</p></article>
+          <article class="card reveal card-lead"><span class="tag">All three</span><h3>A watchdog for the calls that never return</h3><p>A malformed page can stall inside the engine where no cancellation reaches. Each document has its own executor, and a watchdog marks the engine unresponsive so later calls fail fast with a typed error rather than piling up behind it. Measured with 16 simultaneous stalls on iOS and 10 on Android: everything else kept working.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="errors" aria-labelledby="errors-h">
+      <div class="wrap">
+        <header class="section-head reveal">
+          <p class="eyebrow">Errors</p>
+          <h2 id="errors-h">A closed set of errors, identical everywhere.</h2>
+          <p>No native crashes, no untyped throws. The same case names appear in Swift, Kotlin and TypeScript, so error handling ports between platforms unchanged.</p>
+        </header>
+        <div class="table-scroll reveal">
+          <table class="matrix">
+            <caption class="sr">Error cases</caption>
+            <thead><tr><th scope="col">Case</th><th scope="col">When it happens</th></tr></thead>
+            <tbody>
+              <tr><th scope="row"><code>passwordRequired</code></th><td>The document is encrypted and the password was wrong or missing</td></tr>
+              <tr><th scope="row"><code>corrupt</code></th><td>The file, or one page of it, cannot be parsed</td></tr>
+              <tr><th scope="row"><code>pageOutOfRange</code></th><td>A page index outside the document</td></tr>
+              <tr><th scope="row"><code>closed</code></th><td>The document was used after <code>close()</code> — raised instead of touching freed memory</td></tr>
+              <tr><th scope="row"><code>invalidOperation</code></th><td>The call cannot apply: tagging a tagged document, a field that is read-only, alt text on a non-figure</td></tr>
+              <tr><th scope="row"><code>unresponsive</code></th><td>The engine stalled on an earlier call and this document is no longer usable</td></tr>
+              <tr><th scope="row"><code>saveFailed</code>, <code>notLicensed</code></th><td>Writing failed, or the feature needs a licence module the key does not carry</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout info reveal">
+          <h3>Nothing is silently dropped</h3>
+          <p>Every sealed hierarchy — annotation kinds, form field kinds, structure types — has an <code>unknown</code> case carrying the raw value. An annotation PdfiumKit does not model is surfaced, not hidden.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-tint" id="coordinates" aria-labelledby="coords-h">
+      <div class="wrap">
+        <header class="section-head reveal">
+          <p class="eyebrow">Coordinates</p>
+          <h2 id="coords-h">PDF space in, view space out — explicitly.</h2>
+          <p><code>PdfRect</code> is always PDF space, with the origin bottom-left, normalised so <code>left &lt;= right</code> and <code>bottom &lt;= top</code>. The viewer’s <code>transform()</code> converts in both directions with <code>toView</code> and <code>toPdf</code>. There is no hidden Y-flip anywhere in the API.</p>
+        </header>
+        <div class="code-card reveal">
+          <div class="code-head"><div class="tablist"><span class="panel-label-tab">TypeScript</span></div></div>
+          <div class="panel">
+            <span class="panel-label">Mapping a search hit onto the screen</span>
+<pre tabindex="0"><code><span class="k">const</span> hits = <span class="k">await</span> page.text.<span class="f">search</span>(<span class="s">'invoice'</span>)
+<span class="k">const</span> box  = <span class="k">await</span> page.text.<span class="f">boundingBox</span>(hits[<span class="n">0</span>].start)
+<span class="k">const</span> view = viewer.<span class="f">transform</span>().<span class="f">toView</span>(box)  <span class="c">// pixels, origin top-left</span></code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="viewer" aria-labelledby="viewer-h">
+      <div class="wrap">
+        <header class="section-head reveal">
+          <p class="eyebrow">Viewer</p>
+          <h2 id="viewer-h">A viewer you can drop in, or drive yourself.</h2>
+          <p>The state layer — page, zoom, scroll, tool, selection — is a plain value you own, so it transfers between platforms. The UI package renders it; you can also render it yourself and keep only the logic.</p>
+        </header>
+        <div class="cards">
+          <article class="card reveal"><h3>Cross-platform state</h3><p>Zoom, scroll and page travel as data: a session started on a phone resumes in the browser at the same place.</p></article>
+          <article class="card reveal"><h3>Configurable toolbar</h3><p>Pick the items and their order, or start from the default and viewing presets. Custom buttons take an icon and an action.</p></article>
+          <article class="card reveal"><h3>Themeable</h3><p>Tokens with the same meaning on all three platforms — accent, backgrounds, corner radius, icon size, toolbar height.</p></article>
+          <article class="card reveal"><h3>Review bar</h3><p>Marks over the page with accept, reject and apply, used by every AI proposal flow. Nothing is written until someone accepts.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-tint" id="testing" aria-labelledby="testing-h">
+      <div class="wrap">
+        <header class="section-head reveal">
+          <p class="eyebrow">Testing</p>
+          <h2 id="testing-h">Three implementations, one contract.</h2>
+          <p>Shared fixtures and expectation files live in <code>conformance/</code>, and all three platforms assert against them. A change that drifts on one platform fails there.</p>
+        </header>
+        <div class="cards">
+          <article class="card reveal"><h3>Cross-checked against other engines</h3><p>Page counts against poppler, rendered colour positions against a reference, extracted text by SHA-256 on every platform, and signatures against <code>pdfsig</code>.</p></article>
+          <article class="card reveal"><h3>The whole PDFium corpus</h3><p>All 293 documents through the entire public API: no crashes, no untyped throws, and the one file that stalls the engine is contained.</p></article>
+          <article class="card reveal"><h3>PDF/UA judged by veraPDF</h3><p>Documents the SDK tags or describes are validated against PDF/UA-1 in CI and in the local gates on all three platforms.</p></article>
+          <article class="card reveal"><h3>Accessibility audits in the gates</h3><p>axe-core on the web component, <code>performAccessibilityAudit</code> on iOS, and the Accessibility Test Framework over the platform’s own accessibility tree on Android.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="limits" aria-labelledby="limits-h">
+      <div class="wrap">
+        <header class="section-head reveal">
+          <p class="eyebrow">Limits</p>
+          <h2 id="limits-h">What it does not do yet.</h2>
+          <p>Kept here rather than in a footnote, because finding out late is worse.</p>
+        </header>
+        <ul class="prose reveal">
+          <li>The raw PDFium escape hatch exists on iOS only.</li>
+          <li>Cancelling a render mid-call is not possible on any platform; iOS cancels between progressive steps.</li>
+          <li>Recovering from an engine hang fully is Web-only, through <code>PdfWorker</code>; the other platforms contain it rather than recover.</li>
+          <li>Remediation writes tags from rules, not a model: tables become paragraphs and vector charts become artifacts. <a href="accessibility.html#real-world">The real-world numbers are here.</a></li>
+          <li>There is no OCR, so a scanned page has nothing to tag or search.</li>
+          <li>Encrypted documents cannot be re-written, only read.</li>
+        </ul>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <div>
+        <a class="brand" href="index.html"><img src="favicon.svg" alt="" width="24" height="24"><span>PdfiumKit</span></a>
+        <p class="footer-tag">One PDF SDK. Every platform.</p>
+        <p class="muted">0.1.0 · Pre-release</p>
+      </div>
+      <nav class="footer-nav" aria-label="Footer">
+        <a href="index.html">Overview</a><a href="developers.html">Developers</a><a href="ai.html">AI</a><a href="accessibility.html">Accessibility</a><a href="agents.html">Agents</a><a href="demos.html">Demos</a><a href="download.html">Get the SDK</a>
+      </nav>
+      <div class="attrib">
+        <p>Built on <a href="https://pdfium.googlesource.com/pdfium/">PDFium</a> (<code>chromium/7243</code>), licensed under BSD-3-Clause.</p>
+        <p>Portions of this software are copyright © 2024 The FreeType Project (<a href="https://freetype.org">https://freetype.org</a>). All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="site.js" defer></script>
+</body>
+</html>

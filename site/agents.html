@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PdfiumKit for AI agents — MCP server and WebMCP tools</title>
+  <meta name="description" content="Give an agent PDF tools it can use safely: read text, search, list form fields and structure freely, and change documents only through proposals a person accepts, with undo and saving to a new file.">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#07080c">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script>document.documentElement.classList.add('js')</script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="index.html" aria-label="PdfiumKit home">
+        <img src="favicon.svg" alt="" width="28" height="28">
+        <span>PdfiumKit</span>
+      </a>
+      <button class="nav-toggle" aria-expanded="false" aria-controls="site-nav">
+        <span class="sr">Menu</span><span class="bars" aria-hidden="true"></span>
+      </button>
+      <nav id="site-nav" class="site-nav" aria-label="Primary">
+        <a href="index.html#features">Features</a>
+        <a href="developers.html">Developers</a>
+        <a href="ai.html">AI</a>
+        <a href="accessibility.html">Accessibility</a>
+        <a href="agents.html" aria-current="page">Agents</a>
+        <a href="demos.html">Demos</a>
+        <a class="nav-cta" href="download.html">Get the SDK</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="page-hero">
+      <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="grid-bg" aria-hidden="true"></div>
+      <div class="wrap">
+        <p class="eyebrow">Agents</p>
+        <h1>Let an agent work on a PDF —<br><span class="grad">without letting it loose.</span></h1>
+        <p class="lede">One set of tools, served two ways: an MCP server for desktop agents, and WebMCP for the browser’s own agent. Reading is free. Every change is a proposal a person accepts, it can be undone, and saving never writes over the file that was opened.</p>
+        <div class="cta">
+          <a class="btn btn-primary" href="demos.html#agents">Run the agent demo <span aria-hidden="true">→</span></a>
+          <a class="btn btn-glass" href="#tools">See the tools</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="how" aria-labelledby="how-h">
+      <div class="wrap">
+        <header class="section-head reveal">
+          <p class="eyebrow">Two ways in</p>
+          <h2 id="how-h">The same tools, wherever the agent lives.</h2>
+        </header>
+        <div class="cards">
+          <article class="card reveal"><span class="tag">Node</span><h3>An MCP server</h3><p><code>pdfiumkit-mcp</code> speaks the Model Context Protocol over stdio, so any MCP client can start it from its own configuration. It handles many documents at once, each addressed by id.</p></article>
+          <article class="card reveal"><span class="tag">Browser</span><h3>WebMCP</h3><p><code>registerWebMcpTools(session)</code> offers the same tools to the browser’s agent for the document your page already has open. Where the browser has no WebMCP it returns nothing, so your page can say so instead of breaking.</p></article>
+        </div>
+        <div class="code-card reveal" style="margin-top:1.4rem">
+          <div class="code-head"><div class="tablist"><span class="panel-label-tab">JSON</span></div></div>
+          <div class="panel">
+            <span class="panel-label">Wiring the server into an MCP client</span>
+<pre tabindex="0"><code>{ <span class="s">"mcpServers"</span>: { <span class="s">"pdfiumkit"</span>: {
+    <span class="s">"command"</span>: <span class="s">"node"</span>,
+    <span class="s">"args"</span>: [<span class="s">"/path/to/mcp/dist/main.js"</span>],
+    <span class="s">"env"</span>: { <span class="s">"PDFIUMKIT_LICENSE_KEY"</span>: <span class="s">"pk1…"</span> }
+} } }</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-tint" id="tools" aria-labelledby="tools-h">
+      <div class="wrap">
+        <header class="section-head reveal">
+          <p class="eyebrow">The tools</p>
+          <h2 id="tools-h">Read freely. Change only by proposal.</h2>
+          <p>Read-only tools are annotated as such, so a well-behaved client can use them without asking. The two that write are annotated destructive.</p>
+        </header>
+        <div class="table-scroll reveal">
+          <table class="matrix">
+            <caption class="sr">Agent tools</caption>
+            <thead><tr><th scope="col">Tool</th><th scope="col">Kind</th><th scope="col">What it does</th></tr></thead>
+            <tbody>
+              <tr><th scope="row"><code>document_info</code></th><td>Read</td><td>Pages, metadata, whether it is tagged, how many fields and signatures</td></tr>
+              <tr><th scope="row"><code>get_text</code></th><td>Read</td><td>Text of a page range, truncated at 100,000 characters</td></tr>
+              <tr><th scope="row"><code>search</code></th><td>Read</td><td>Matches with page, offset and surrounding text</td></tr>
+              <tr><th scope="row"><code>list_form_fields</code></th><td>Read</td><td>Every field with its page, name, tooltip, kind and value</td></tr>
+              <tr><th scope="row"><code>get_page_structure</code></th><td>Read</td><td>A page as a screen reader hears it</td></tr>
+              <tr><th scope="row"><code>propose_redactions</code></th><td>Proposal</td><td>Personal data to remove — changes nothing</td></tr>
+              <tr><th scope="row"><code>propose_form_values</code></th><td>Proposal</td><td>Field values from a profile — changes nothing</td></tr>
+              <tr><th scope="row"><code>detect_form_fields</code></th><td>Proposal</td><td>Fields for a flat form — changes nothing</td></tr>
+              <tr><th scope="row"><code>propose_alt_text</code></th><td>Proposal</td><td>Descriptions for undescribed figures — changes nothing</td></tr>
+              <tr><th scope="row"><code>apply_proposals</code></th><td>Destructive</td><td>Applies only the ids the user accepted; an unknown id is an error and changes nothing</td></tr>
+              <tr><th scope="row"><code>undo</code></th><td>Destructive</td><td>Restores the document as it was before the last apply</td></tr>
+              <tr><th scope="row"><code>open_document</code>, <code>close_document</code>, <code>save_document</code></th><td>Server only</td><td>Saving refuses the path it opened, and refuses an existing file unless told to overwrite</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="guardrails" aria-labelledby="guard-h">
+      <div class="wrap">
+        <header class="section-head reveal">
+          <p class="eyebrow">Guardrails</p>
+          <h2 id="guard-h">What stops an eager agent.</h2>
+        </header>
+        <ul class="prose reveal">
+          <li><strong>Proposals expire.</strong> Applying or undoing invalidates every open proposal set, because they describe a document that no longer exists. Using a stale one is an error.</li>
+          <li><strong>Only accepted ids are written.</strong> The tool description says so and the server enforces it: an id outside the set fails the call rather than writing part of it.</li>
+          <li><strong>Undo is always available</strong> for the last apply, from a snapshot taken before it.</li>
+          <li><strong>The original file is never overwritten.</strong> <code>save_document</code> refuses the path it opened.</li>
+          <li><strong>The agent is the model.</strong> The tools run patterns and rules; they call no model of their own unless your host configured a provider for the session.</li>
+        </ul>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <div>
+        <a class="brand" href="index.html"><img src="favicon.svg" alt="" width="24" height="24"><span>PdfiumKit</span></a>
+        <p class="footer-tag">One PDF SDK. Every platform.</p>
+        <p class="muted">0.1.0 · Pre-release</p>
+      </div>
+      <nav class="footer-nav" aria-label="Footer">
+        <a href="index.html">Overview</a><a href="developers.html">Developers</a><a href="ai.html">AI</a><a href="accessibility.html">Accessibility</a><a href="agents.html">Agents</a><a href="demos.html">Demos</a><a href="download.html">Get the SDK</a>
+      </nav>
+      <div class="attrib">
+        <p>Built on <a href="https://pdfium.googlesource.com/pdfium/">PDFium</a> (<code>chromium/7243</code>), licensed under BSD-3-Clause.</p>
+        <p>Portions of this software are copyright © 2024 The FreeType Project (<a href="https://freetype.org">https://freetype.org</a>). All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="site.js" defer></script>
+</body>
+</html>

@@ -24,12 +24,13 @@
         <span class="sr">Menu</span><span class="bars" aria-hidden="true"></span>
       </button>
       <nav id="site-nav" class="site-nav" aria-label="Primary">
-        <a href="#why">Why PdfiumKit</a>
         <a href="#features">Features</a>
-        <a href="#proof">Proof</a>
-        <a href="#engineers">For engineers</a>
-        <a href="#roadmap">Roadmap</a>
-        <a class="nav-cta" href="#start">Get started</a>
+        <a href="developers.html">Developers</a>
+        <a href="ai.html">AI</a>
+        <a href="accessibility.html">Accessibility</a>
+        <a href="agents.html">Agents</a>
+        <a href="demos.html">Demos</a>
+        <a class="nav-cta" href="download.html">Get the SDK</a>
       </nav>
     </div>
   </header>
@@ -45,10 +46,10 @@
         <div class="hero-copy">
           <p class="pill"><span class="pill-tag">New</span>0.1.0 pre-release · iOS, Android &amp; Web</p>
           <h1>One PDF SDK.<br><span class="grad">Every platform.</span></h1>
-          <p class="lede">PdfiumKit brings <strong>PDFium — the engine behind Chrome’s PDF viewer</strong> — to iOS, Android and the Web with one clean API. Render, search, annotate and fill forms, with identical behaviour everywhere.</p>
+          <p class="lede">PdfiumKit brings <strong>PDFium — the engine behind Chrome’s PDF viewer</strong> — to iOS, Android and the Web with one clean API. Render, search, annotate, fill forms, sign, redact and tag for accessibility, with identical behaviour everywhere — plus on-device AI and tools for agents when you want them.</p>
           <div class="cta">
-            <a class="btn btn-primary" href="#start">Get started <span aria-hidden="true">→</span></a>
-            <a class="btn btn-glass" href="#showcase">See the code</a>
+            <a class="btn btn-primary" href="demos.html">See a demo <span aria-hidden="true">→</span></a>
+            <a class="btn btn-glass" href="download.html">Get the SDK</a>
           </div>
           <ul class="platforms" aria-label="Supported platforms">
             <li><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>iOS · Swift</li>
@@ -182,6 +183,13 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
           <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m20 11.5-8.2 8.2a5 5 0 0 1-7.1-7.1l8.5-8.5a3.4 3.4 0 0 1 4.8 4.8l-8.5 8.5a1.7 1.7 0 0 1-2.4-2.4l7.8-7.8"/></svg></span><h3>Attachments &amp; metadata</h3><p>List and extract embedded files, and read document metadata and permissions.</p></li>
           <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/></svg></span><h3>Save changes</h3><p>Save in full, or incrementally to keep the original bytes and existing signatures intact.</p></li>
           <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg></span><h3>Protected files</h3><p>Open password-protected documents, with a clear typed error when a password is needed.</p></li>
+          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19.5 8.5a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M4 20h16"/></svg></span><h3>Sign &amp; verify</h3><p>Read and verify existing signatures, and sign documents as PAdES B-T with a timestamp — cross-checked against poppler’s <code>pdfsig</code>.</p></li>
+          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="6" rx="1.5"/><path d="M4 15h9M4 19h6"/></svg></span><h3>Redact for real</h3><p>Content is removed from the saved bytes, not covered with a black box, and the result is checked by searching the file again.</p></li>
+          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16M4 10h11M4 14.5h16M4 19h8"/></svg></span><h3>Tag for accessibility</h3><p>Read a document’s structure, write alternate text, and tag an untagged PDF — validated against PDF/UA-1 by veraPDF. <a href="accessibility.html">More →</a></p></li>
+          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 13.9 9l5.6 1.9-5.6 1.9L12 18.3 10.1 12.8 4.5 10.9 10.1 9z"/><path d="M18.5 16.5 19.3 19l2.2.8-2.2.8-.8 2.2"/></svg></span><h3>AI where it helps</h3><p>Grounded answers, summaries, redaction and form proposals, alt text and semantic diff — on device, or through your own model. <a href="ai.html">More →</a></p></li>
+          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="7.5" width="15" height="11" rx="2.5"/><path d="M12 7.5V4.5M8.5 12.5h.01M15.5 12.5h.01M9.5 15.5h5"/></svg></span><h3>Tools for agents</h3><p>An MCP server and WebMCP, so an agent can read a document freely and change it only through proposals a person accepts. <a href="agents.html">More →</a></p></li>
+          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 9h17M7 13h6"/></svg></span><h3>A viewer, included</h3><p>A component with a configurable toolbar, theme and review bar on all three platforms — or drive the state layer yourself.</p></li>
+          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9.5" r="5"/><path d="m9 14-1.5 6 4.5-2.4 4.5 2.4L15 14"/></svg></span><h3>Offline licensing</h3><p>Keys are verified offline and unlock modules per app ID or host. Without one everything still works, watermarked. <a href="download.html">More →</a></p></li>
         </ul>
       </div>
     </section>
@@ -211,14 +219,14 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
           </div>
           <div role="tabpanel" id="p-swift" aria-labelledby="t-swift" class="panel">
             <span class="panel-label">Swift</span>
-<pre><code><span class="k">let</span> doc  = <span class="k">try await</span> <span class="t">PdfDocument</span>(url: url)
+<pre tabindex="0"><code><span class="k">let</span> doc  = <span class="k">try await</span> <span class="t">PdfDocument</span>(url: url)
 <span class="k">let</span> page = <span class="k">try await</span> doc.<span class="f">page</span>(<span class="n">0</span>)
 <span class="k">let</span> img  = <span class="k">try await</span> page.<span class="f">render</span>(width: <span class="n">1200</span>)
 <span class="k">let</span> hits = <span class="k">try await</span> page.text.<span class="f">search</span>(<span class="s">"invoice"</span>)</code></pre>
           </div>
           <div role="tabpanel" id="p-kotlin" aria-labelledby="t-kotlin" class="panel">
             <span class="panel-label">Kotlin</span>
-<pre><code><span class="t">PdfDocument</span>.<span class="f">open</span>(file).<span class="f">use</span> { doc <span class="k">-&gt;</span>
+<pre tabindex="0"><code><span class="t">PdfDocument</span>.<span class="f">open</span>(file).<span class="f">use</span> { doc <span class="k">-&gt;</span>
     <span class="k">val</span> page = doc.<span class="f">page</span>(<span class="n">0</span>)
     <span class="k">val</span> bmp  = page.<span class="f">render</span>(width = <span class="n">1200</span>)
     <span class="k">val</span> hits = page.text.<span class="f">search</span>(<span class="s">"invoice"</span>)
@@ -226,7 +234,7 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
           </div>
           <div role="tabpanel" id="p-ts" aria-labelledby="t-ts" class="panel">
             <span class="panel-label">TypeScript</span>
-<pre><code><span class="k">const</span> doc  = <span class="k">await</span> <span class="t">PdfDocument</span>.<span class="f">open</span>(bytes)
+<pre tabindex="0"><code><span class="k">const</span> doc  = <span class="k">await</span> <span class="t">PdfDocument</span>.<span class="f">open</span>(bytes)
 <span class="k">const</span> page = <span class="k">await</span> doc.<span class="f">page</span>(<span class="n">0</span>)
 <span class="k">const</span> img  = <span class="k">await</span> page.<span class="f">render</span>({ width: <span class="n">1200</span> })
 <span class="k">const</span> hits = <span class="k">await</span> page.text.<span class="f">search</span>(<span class="s">'invoice'</span>)</code></pre>
@@ -285,7 +293,7 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
             <h3 id="honest-h">One 1,230-byte file stalls PDFium’s renderer. We measured the damage.</h3>
             <p>It stalls inside the engine, where no cancellation can reach it. So PdfiumKit contains it: every document has its own executor, and with 16 simultaneous stalls on iOS and 10 on Android, other documents kept rendering and the rest of the app kept working. On the Web, <code>PdfWorker</code> recovers completely.</p>
           </div>
-          <a class="btn btn-glass" href="#engineers">Read the engineering details</a>
+          <a class="btn btn-glass" href="developers.html">Read the engineering details</a>
         </aside>
       </div>
     </section>
@@ -319,7 +327,7 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
                     <tr><th scope="row">Character bounding boxes</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
                     <tr><th scope="row">Annotations: read (15 kinds)</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
                     <tr><th scope="row">Annotations: ink, note, remove</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
-                    <tr><th scope="row">Annotations: highlight / underline / strikeout</th><td class="y"><span class="sr">Supported</span></td><td class="n"><span class="sr">Not yet</span></td><td class="n"><span class="sr">Not yet</span></td></tr>
+                    <tr><th scope="row">Annotations: highlight / underline / strikeout</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
                     <tr><th scope="row">Form fields: read (8 kinds)</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
                     <tr><th scope="row">Form fields: set text, checkbox, option</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
                     <tr><th scope="row">Outline / bookmarks</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
@@ -396,17 +404,24 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
     <section class="section section-tint" id="roadmap" aria-labelledby="roadmap-h">
       <div class="wrap">
         <header class="section-head section-head-center reveal">
-          <p class="eyebrow">Roadmap</p>
-          <h2 id="roadmap-h">What’s coming next.</h2>
-          <p><strong>None of this is available yet</strong> — it’s where PdfiumKit is heading, not a promise of dates.</p>
+          <p class="eyebrow">Where it stands</p>
+          <h2 id="roadmap-h">Shipped, and what is still open.</h2>
+          <p>Everything in the first list is built on all three platforms and covered by the test suites. The second list is what we have not done — kept here rather than in a footnote.</p>
         </header>
         <ul class="roadmap">
-          <li class="reveal"><span class="status status-design">In design</span><h3>Digital signatures</h3><p>Read existing signatures, verify them, and sign documents.</p></li>
-          <li class="reveal"><span class="status status-design">In design</span><h3>Redaction</h3><p>Remove content so it can’t be recovered — text, annotations, form values and metadata.</p></li>
-          <li class="reveal"><span class="status">Planned</span><h3>Full coverage everywhere</h3><p>Highlight, underline and strikeout on Android and Web, and a raw engine escape hatch beyond iOS.</p></li>
-          <li class="reveal"><span class="status">Planned</span><h3>Accessible viewer</h3><p>A viewer designed to conform to EN 301 549 and WCAG 2.1 AA — keyboard navigation, screen readers, reflow.</p></li>
-          <li class="reveal"><span class="status">Planned</span><h3>Accessibility remediation</h3><p>AI-suggested tags, reading order and alt text, always confirmed by a person.</p></li>
-          <li class="reveal"><span class="status">Planned</span><h3>Bring your own model</h3><p>AI features that run locally or on your own endpoint, so documents never leave your infrastructure.</p></li>
+          <li class="reveal"><span class="status status-design">Shipped</span><h3>Digital signatures</h3><p>Read, verify and sign as PAdES B-T with a timestamp, cross-checked against <code>pdfsig</code>.</p></li>
+          <li class="reveal"><span class="status status-design">Shipped</span><h3>Redaction</h3><p>Content removed from the saved bytes, checked by searching the file afterwards.</p></li>
+          <li class="reveal"><span class="status status-design">Shipped</span><h3>Text markup everywhere</h3><p>Highlight, underline and strikeout on iOS, Android and the Web.</p></li>
+          <li class="reveal"><span class="status status-design">Shipped</span><h3>Accessible viewer</h3><p>Structure exposed to VoiceOver, TalkBack and screen readers, with audits in the gates.</p></li>
+          <li class="reveal"><span class="status status-design">Shipped</span><h3>Accessibility remediation</h3><p>Rule-based tags, reading order and alt text, confirmed by a person, validated by veraPDF.</p></li>
+          <li class="reveal"><span class="status status-design">Shipped</span><h3>Bring your own model</h3><p>On-device models where the platform has one, your endpoint where it does not, patterns where neither exists.</p></li>
+        </ul>
+
+        <ul class="roadmap" style="margin-top:1.2rem">
+          <li class="reveal"><span class="status">Open</span><h3>Published packages</h3><p>SPM, Maven and npm artifacts, and the engine binaries as checksummed release assets. Today the SDK is built from the repository.</p></li>
+          <li class="reveal"><span class="status">Open</span><h3>An independent accessibility audit</h3><p>The conformance report is a self-assessment. No screen reader has been driven by a person yet.</p></li>
+          <li class="reveal"><span class="status">Open</span><h3>Cancellable renders, wider recovery</h3><p>Cancelling inside an engine call is not possible; full recovery from a hang is Web-only.</p></li>
+          <li class="reveal"><span class="status">Open</span><h3>Tables, OCR and encrypted writes</h3><p>Remediation turns tables into paragraphs, there is no OCR for scans, and encrypted documents can be read but not rewritten.</p></li>
         </ul>
       </div>
     </section>
@@ -419,7 +434,11 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
           <div class="final-copy">
             <p class="eyebrow">Get started</p>
             <h2 id="start-h">Add PDF superpowers to your app.</h2>
-            <p>Native packages for Swift Package Manager, Maven and npm are published with the first release. Each SDK is already verified by installing it into a project outside its own repository.</p>
+            <p>Native packages for Swift Package Manager, Maven and npm are published with the first release; until then the SDK is built from the repository, which is how the samples consume it. <a href="download.html">What a trial gives you, and what a key unlocks →</a></p>
+            <div class="cta" style="margin-top:1.1rem">
+              <a class="btn btn-primary" href="demos.html">Run a demo <span aria-hidden="true">→</span></a>
+              <a class="btn btn-glass" href="developers.html">Read the engineering details</a>
+            </div>
           </div>
 
           <div class="code-card code-card-install" data-tabs>
@@ -433,17 +452,17 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
             </div>
             <div role="tabpanel" id="p-ios" aria-labelledby="t-ios" class="panel">
               <span class="panel-label">iOS — Swift Package Manager</span>
-<pre><code>.<span class="f">product</span>(name: <span class="s">"PdfiumKit"</span>, package: <span class="s">"PdfiumKit"</span>)</code></pre>
+<pre tabindex="0"><code>.<span class="f">product</span>(name: <span class="s">"PdfiumKit"</span>, package: <span class="s">"PdfiumKit"</span>)</code></pre>
               <p class="reqs">iOS 15+ · Swift 5.9 · async/await</p>
             </div>
             <div role="tabpanel" id="p-android" aria-labelledby="t-android" class="panel">
               <span class="panel-label">Android — Gradle</span>
-<pre><code><span class="f">implementation</span>(<span class="s">"com.pdfiumkit:pdfiumkit:0.1.0"</span>)</code></pre>
+<pre tabindex="0"><code><span class="f">implementation</span>(<span class="s">"com.pdfiumkit:pdfiumkit:0.1.0"</span>)</code></pre>
               <p class="reqs">minSdk 23 · Kotlin coroutines · all four ABIs</p>
             </div>
             <div role="tabpanel" id="p-web" aria-labelledby="t-web" class="panel">
               <span class="panel-label">Web — npm</span>
-<pre><code>npm install <span class="s">@pdfiumkit/web</span></code></pre>
+<pre tabindex="0"><code>npm install <span class="s">@pdfiumkit/web</span></code></pre>
               <p class="reqs">TypeScript · WebAssembly · ESM · Node 18+ · the .wasm ships inside the package</p>
             </div>
           </div>
@@ -460,7 +479,7 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
         <p class="muted">0.1.0 · Pre-release</p>
       </div>
       <nav class="footer-nav" aria-label="Footer">
-        <a href="#why">Why PdfiumKit</a><a href="#features">Features</a><a href="#proof">Proof</a><a href="#engineers">For engineers</a><a href="#roadmap">Roadmap</a><a href="#start">Get started</a>
+        <a href="#features">Features</a><a href="developers.html">Developers</a><a href="ai.html">AI</a><a href="accessibility.html">Accessibility</a><a href="agents.html">Agents</a><a href="demos.html">Demos</a><a href="download.html">Get the SDK</a>
       </nav>
       <div class="attrib">
         <p>Built on <a href="https://pdfium.googlesource.com/pdfium/">PDFium</a> (<code>chromium/7243</code>), licensed under BSD-3-Clause.</p>

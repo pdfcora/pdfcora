@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PdfiumKit demos — run the SDK before you integrate it</title>
+  <meta name="description" content="Ten small sample apps, one per feature area, for iOS, Android and the web, plus two full demo apps. Each opens a bundled PDF and shows one thing, so the code reads top to bottom.">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#07080c">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script>document.documentElement.classList.add('js')</script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="index.html" aria-label="PdfiumKit home">
+        <img src="favicon.svg" alt="" width="28" height="28">
+        <span>PdfiumKit</span>
+      </a>
+      <button class="nav-toggle" aria-expanded="false" aria-controls="site-nav">
+        <span class="sr">Menu</span><span class="bars" aria-hidden="true"></span>
+      </button>
+      <nav id="site-nav" class="site-nav" aria-label="Primary">
+        <a href="index.html#features">Features</a>
+        <a href="developers.html">Developers</a>
+        <a href="ai.html">AI</a>
+        <a href="accessibility.html">Accessibility</a>
+        <a href="agents.html">Agents</a>
+        <a href="demos.html" aria-current="page">Demos</a>
+        <a class="nav-cta" href="download.html">Get the SDK</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="page-hero">
+      <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="grid-bg" aria-hidden="true"></div>
+      <div class="wrap">
+        <p class="eyebrow">Demos</p>
+        <h1>See it running<br><span class="grad">in ten minutes.</span></h1>
+        <p class="lede">Ten small samples, one per feature area on every platform it exists for, plus a full demo app on iOS and Android that shows everything at once. All of them run from the repository with no account and no key — output simply carries a trial watermark.</p>
+        <div class="cta">
+          <a class="btn btn-primary" href="download.html">Get the SDK <span aria-hidden="true">→</span></a>
+          <a class="btn btn-glass" href="#web">Run the web demos</a>
+        </div>
+        <p class="muted" style="margin-top:1rem"><span class="todo">Todo</span> A hosted version of the web demos is not published yet. Until it is, the commands below run them locally in about a minute.</p>
+      </div>
+    </section>
+
+    <section class="section" id="samples" aria-labelledby="samples-h">
+      <div class="wrap">
+        <header class="section-head reveal">
+          <p class="eyebrow">The samples</p>
+          <h2 id="samples-h">One app per thing you might want.</h2>
+          <p>Each is a single screen in a single file, so nothing hides behind a framework.</p>
+        </header>
+        <div class="table-scroll reveal">
+          <table class="matrix">
+            <caption class="sr">Samples by feature area and platform</caption>
+            <thead><tr><th scope="col">Shows</th><th scope="col">iOS</th><th scope="col">Android</th><th scope="col">Web</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Core — open, text, search, form fields, render, save</th><td><code>samples/core-ios</code></td><td><code>samples/core-android</code></td><td><code>samples/core-web</code></td></tr>
+              <tr><th scope="row">AI — summarise, propose redactions, accept, undo</th><td><code>samples/ai-ios</code></td><td><code>samples/ai-android</code></td><td><code>samples/ai-web</code></td></tr>
+              <tr><th scope="row">UI — the viewer with a custom toolbar and theme</th><td><code>samples/ui-ios</code></td><td><code>samples/ui-android</code></td><td><code>samples/ui-web</code></td></tr>
+              <tr><th scope="row">Agents — an MCP client and a WebMCP page</th><td>—</td><td>—</td><td><code>samples/agents-web</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted" style="margin-top:.9rem">Agents are Node and browser only: the MCP server is a Node process and WebMCP is a browser API.</p>
+      </div>
+    </section>
+
+    <section class="section section-tint" id="web" aria-labelledby="web-h">
+      <div class="wrap">
+        <header class="section-head reveal">
+          <p class="eyebrow">Web</p>
+          <h2 id="web-h">Three pages and a Node script.</h2>
+        </header>
+        <div class="code-card reveal">
+          <div class="code-head"><div class="tablist"><span class="panel-label-tab">Shell</span></div><button class="copy" type="button" data-copy aria-label="Copy code">Copy</button></div>
+          <div class="panel">
+            <span class="panel-label">Build the packages, then serve the repository root</span>
+<pre tabindex="0"><code>./scripts/fetch-vendor.sh              <span class="c"># PDFium binaries, once</span>
+(<span class="k">cd</span> web    &amp;&amp; npm install &amp;&amp; npm run build)
+(<span class="k">cd</span> web-ai &amp;&amp; npm install &amp;&amp; npm run build)
+python3 -m http.server 8000
+
+<span class="c"># then open</span>
+<span class="c"># localhost:8000/samples/core-web/    localhost:8000/samples/ai-web/</span>
+<span class="c"># localhost:8000/samples/ui-web/      localhost:8000/samples/agents-web/</span></code></pre>
+          </div>
+        </div>
+        <div class="cards">
+          <article class="card reveal"><h3>Core</h3><p>Document facts, page text, a search count, form fields, page 1 rendered to a canvas and the saved byte size.</p></article>
+          <article class="card reveal"><h3>AI</h3><p>Availability, a summary through Chrome’s built-in model where the browser has it, then personal data found by patterns with tick boxes, apply and undo.</p></article>
+          <article class="card reveal"><h3>UI</h3><p>The viewer component with a hand-picked toolbar, an app accent colour and a save handler.</p></article>
+          <article class="card reveal" id="agents"><h3>Agents</h3><p>A page that offers the tools to the browser’s agent and runs two of them from buttons, plus <code>node mcp-client.mjs</code>: list tools, open, search, propose redactions, apply two, save to a new file.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="mobile" aria-labelledby="mobile-h">
+      <div class="wrap">
+        <header class="section-head reveal">
+          <p class="eyebrow">iOS and Android</p>
+          <h2 id="mobile-h">Two commands each.</h2>
+        </header>
+        <div class="two-col reveal">
+          <div>
+            <h3 class="table-title">iOS</h3>
+            <div class="code-card"><div class="code-head"><div class="tablist"><span class="panel-label-tab">Shell</span></div></div>
+            <div class="panel">
+<pre tabindex="0"><code>./scripts/fetch-vendor.sh
+brew install xcodegen
+<span class="k">cd</span> samples/core-ios
+xcodegen generate &amp;&amp; open CoreSample.xcodeproj</code></pre>
+            </div></div>
+            <p class="muted">iOS 15+. The sample uses the SDK as a local Swift package from the repository root.</p>
+          </div>
+          <div>
+            <h3 class="table-title">Android</h3>
+            <div class="code-card"><div class="code-head"><div class="tablist"><span class="panel-label-tab">Shell</span></div></div>
+            <div class="panel">
+<pre tabindex="0"><code>./scripts/fetch-vendor.sh
+<span class="k">cd</span> samples/core-android
+gradle installDebug</code></pre>
+            </div></div>
+            <p class="muted">minSdk 23. The SDK is resolved from the repository through an included build.</p>
+          </div>
+        </div>
+        <div class="callout info reveal">
+          <h3>On-device AI needs a device</h3>
+          <p>The AI samples show what <code>availability()</code> reports rather than failing: a simulator says the platform is unsupported and most emulators say the device is not eligible. The pattern-based half — redaction suggestions, remediation, flat form detection — works everywhere, with no model at all.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-tint" id="full" aria-labelledby="full-h">
+      <div class="wrap">
+        <header class="section-head reveal">
+          <p class="eyebrow">The full demo</p>
+          <h2 id="full-h">Everything at once, if you would rather browse.</h2>
+          <p><code>ios/Demo</code> and <code>android/demo</code> are complete apps with a screen per API area — editor, viewer, search, outline, thumbnails, annotations, forms, text, signatures, document info, page operations, export, AI and the SDK’s own component. They are how the SDK is exercised by hand, and they run the same way as the samples above.</p>
+        </header>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <div>
+        <a class="brand" href="index.html"><img src="favicon.svg" alt="" width="24" height="24"><span>PdfiumKit</span></a>
+        <p class="footer-tag">One PDF SDK. Every platform.</p>
+        <p class="muted">0.1.0 · Pre-release</p>
+      </div>
+      <nav class="footer-nav" aria-label="Footer">
+        <a href="index.html">Overview</a><a href="developers.html">Developers</a><a href="ai.html">AI</a><a href="accessibility.html">Accessibility</a><a href="agents.html">Agents</a><a href="demos.html">Demos</a><a href="download.html">Get the SDK</a>
+      </nav>
+      <div class="attrib">
+        <p>Built on <a href="https://pdfium.googlesource.com/pdfium/">PDFium</a> (<code>chromium/7243</code>), licensed under BSD-3-Clause.</p>
+        <p>Portions of this software are copyright © 2024 The FreeType Project (<a href="https://freetype.org">https://freetype.org</a>). All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="site.js" defer></script>
+</body>
+</html>

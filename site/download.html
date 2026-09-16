@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Get the PdfiumKit SDK — trial, licence keys and what ships</title>
+  <meta name="description" content="How to get PdfiumKit today, what a trial gives you, which modules a licence key unlocks, and the third-party licences in the binary.">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#07080c">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script>document.documentElement.classList.add('js')</script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="index.html" aria-label="PdfiumKit home">
+        <img src="favicon.svg" alt="" width="28" height="28">
+        <span>PdfiumKit</span>
+      </a>
+      <button class="nav-toggle" aria-expanded="false" aria-controls="site-nav">
+        <span class="sr">Menu</span><span class="bars" aria-hidden="true"></span>
+      </button>
+      <nav id="site-nav" class="site-nav" aria-label="Primary">
+        <a href="index.html#features">Features</a>
+        <a href="developers.html">Developers</a>
+        <a href="ai.html">AI</a>
+        <a href="accessibility.html">Accessibility</a>
+        <a href="agents.html">Agents</a>
+        <a href="demos.html">Demos</a>
+        <a class="nav-cta" href="download.html">Get the SDK</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="page-hero">
+      <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="grid-bg" aria-hidden="true"></div>
+      <div class="wrap">
+        <p class="eyebrow">Get the SDK</p>
+        <h1>Try everything first.<br><span class="grad">Buy a key when you ship.</span></h1>
+        <p class="lede">Every feature works without a licence key — rendered pages, saved files and AI output simply carry a “PdfiumKit trial” watermark. A key removes it and unlocks the modules it names, and it is checked offline, so nothing phones home.</p>
+        <div class="cta">
+          <a class="btn btn-primary" href="#get">How to get it <span aria-hidden="true">→</span></a>
+          <a class="btn btn-glass" href="demos.html">Run a demo first</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="get" aria-labelledby="get-h">
+      <div class="wrap">
+        <header class="section-head reveal">
+          <p class="eyebrow">Availability</p>
+          <h2 id="get-h">0.1.0 is pre-release.</h2>
+          <p>Packages for Swift Package Manager, Maven and npm are published with the first release. Until then the SDK is built from the repository, which is how the samples and both demo apps consume it.</p>
+        </header>
+
+        <div class="callout reveal">
+          <h3><span class="todo">Todo</span> Package coordinates are not live yet</h3>
+          <p>The names below are the intended ones and the code already uses them internally, but nothing is published to npm, Maven Central or a Swift package index at the time of writing. Build from source until the first release, or ask us for a pre-release build.</p>
+        </div>
+
+        <div class="code-card reveal" data-tabs>
+          <div class="code-head">
+            <div class="tablist" role="tablist" aria-label="Platform">
+              <button role="tab" id="d-ios" aria-controls="dp-ios" aria-selected="true">iOS</button>
+              <button role="tab" id="d-android" aria-controls="dp-android" aria-selected="false" tabindex="-1">Android</button>
+              <button role="tab" id="d-web" aria-controls="dp-web" aria-selected="false" tabindex="-1">Web</button>
+              <button role="tab" id="d-src" aria-controls="dp-src" aria-selected="false" tabindex="-1">From source</button>
+            </div>
+            <button class="copy" type="button" data-copy aria-label="Copy code">Copy</button>
+          </div>
+          <div role="tabpanel" id="dp-ios" aria-labelledby="d-ios" class="panel">
+            <span class="panel-label">iOS — Swift Package Manager</span>
+<pre tabindex="0"><code>.<span class="f">product</span>(name: <span class="s">"PdfiumKit"</span>,   package: <span class="s">"PdfiumKit"</span>)
+.<span class="f">product</span>(name: <span class="s">"PdfiumKitUI"</span>, package: <span class="s">"PdfiumKit"</span>)
+.<span class="f">product</span>(name: <span class="s">"PdfiumKitAI"</span>, package: <span class="s">"PdfiumKit"</span>)</code></pre>
+            <p class="reqs">iOS 15+ · Swift 5.9 · async/await · an xcframework with the engine inside</p>
+          </div>
+          <div role="tabpanel" id="dp-android" aria-labelledby="d-android" class="panel">
+            <span class="panel-label">Android — Gradle</span>
+<pre tabindex="0"><code><span class="f">implementation</span>(<span class="s">"com.pdfiumkit:pdfiumkit:0.1.0"</span>)
+<span class="f">implementation</span>(<span class="s">"com.pdfiumkit:pdfiumkit-ui:0.1.0"</span>)
+<span class="f">implementation</span>(<span class="s">"com.pdfiumkit:pdfiumkit-ai:0.1.0"</span>)</code></pre>
+            <p class="reqs">minSdk 23 · Kotlin coroutines · arm64-v8a, armeabi-v7a, x86, x86_64</p>
+          </div>
+          <div role="tabpanel" id="dp-web" aria-labelledby="d-web" class="panel">
+            <span class="panel-label">Web — npm</span>
+<pre tabindex="0"><code>npm install <span class="s">@pdfiumkit/web</span>
+npm install <span class="s">@pdfiumkit/web-ai</span>     <span class="c"># optional</span>
+npm install <span class="s">pdfiumkit-mcp</span>         <span class="c"># optional, for agents</span></code></pre>
+            <p class="reqs">TypeScript · WebAssembly · ESM · Node 18+ · the .wasm ships inside the package</p>
+          </div>
+          <div role="tabpanel" id="dp-src" aria-labelledby="d-src" class="panel">
+            <span class="panel-label">From source — what the samples do today</span>
+<pre tabindex="0"><code>git clone &lt;repository&gt; &amp;&amp; <span class="k">cd</span> PdfiumKit
+./scripts/fetch-vendor.sh          <span class="c"># PDFium binaries, checksummed</span>
+(<span class="k">cd</span> web &amp;&amp; npm install &amp;&amp; npm run build)
+<span class="c"># iOS: add the local package · Android: includeBuild("../../android")</span></code></pre>
+            <p class="reqs">The engine binaries are fetched, never committed; the manifest pins their checksums.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-tint" id="trial" aria-labelledby="trial-h">
+      <div class="wrap">
+        <header class="section-head reveal">
+          <p class="eyebrow">The trial</p>
+          <h2 id="trial-h">Nothing is disabled. It is watermarked.</h2>
+          <p>You can evaluate every feature, on every platform, for as long as you like — including signing, redaction and the AI features. What you cannot do is ship the output.</p>
+        </header>
+        <div class="cards">
+          <article class="card reveal"><h3>What the trial marks</h3><p>Rendered pages, saved files and AI output carry “PdfiumKit trial”. The watermark is written as an artifact, so it is never read out by a screen reader — but its font is a standard one, so a watermarked file cannot claim PDF/UA.</p></article>
+          <article class="card reveal"><h3>What the trial changes</h3><p>A watermarked document is always saved in full, even when you ask for an incremental save, and signing it rewrites the file first — so signatures already in that file stop verifying. With a key, incremental saves and earlier signatures are kept.</p></article>
+          <article class="card reveal"><h3>What a key does not do</h3><p>It never makes the SDK throw. <code>PdfLicense.status</code> tells you whether the key is valid, which modules it covers and why one was rejected, and the SDK keeps working either way.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="keys" aria-labelledby="keys-h">
+      <div class="wrap">
+        <header class="section-head reveal">
+          <p class="eyebrow">Licence keys</p>
+          <h2 id="keys-h">One key, the modules you need.</h2>
+          <p>A key names the modules it unlocks and the app IDs and web hosts it is for. Viewing, text extraction, search, verifying signatures, the viewer and cross-platform sync need only a valid key — no module at all.</p>
+        </header>
+        <div class="table-scroll reveal">
+          <table class="matrix">
+            <caption class="sr">Licence modules</caption>
+            <thead><tr><th scope="col">Module</th><th scope="col">Covers</th></tr></thead>
+            <tbody>
+              <tr><th scope="row"><code>editing</code></th><td>Annotations, page operations and saving changes</td></tr>
+              <tr><th scope="row"><code>forms</code></th><td>Filling form fields and creating them, including flat form detection</td></tr>
+              <tr><th scope="row"><code>signing</code></th><td>Signing documents — reading and verifying signatures is always included</td></tr>
+              <tr><th scope="row"><code>redaction</code></th><td>Removing content so it cannot be recovered</td></tr>
+              <tr><th scope="row"><code>ai</code></th><td>Everything in <code>pdfiumkit-ai</code>, including remediation and alt text</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="code-card reveal" data-tabs style="margin-top:1.4rem">
+          <div class="code-head">
+            <div class="tablist" role="tablist" aria-label="Platform">
+              <button role="tab" id="k-ios" aria-controls="kp-ios" aria-selected="true">Swift</button>
+              <button role="tab" id="k-kotlin" aria-controls="kp-kotlin" aria-selected="false" tabindex="-1">Kotlin</button>
+              <button role="tab" id="k-ts" aria-controls="kp-ts" aria-selected="false" tabindex="-1">TypeScript</button>
+            </div>
+            <button class="copy" type="button" data-copy aria-label="Copy code">Copy</button>
+          </div>
+          <div role="tabpanel" id="kp-ios" aria-labelledby="k-ios" class="panel">
+            <span class="panel-label">Before opening documents</span>
+<pre tabindex="0"><code><span class="t">PdfLicense</span>.<span class="f">setKey</span>(<span class="s">"pk1.…"</span>)</code></pre>
+          </div>
+          <div role="tabpanel" id="kp-kotlin" aria-labelledby="k-kotlin" class="panel">
+            <span class="panel-label">In Application.onCreate</span>
+<pre tabindex="0"><code><span class="t">PdfLicense</span>.<span class="f">setKey</span>(context, <span class="s">"pk1.…"</span>)</code></pre>
+          </div>
+          <div role="tabpanel" id="kp-ts" aria-labelledby="k-ts" class="panel">
+            <span class="panel-label">Before opening documents or creating a PdfWorker</span>
+<pre tabindex="0"><code><span class="k">await</span> <span class="t">PdfLicense</span>.<span class="f">setKey</span>(<span class="s">'pk1.…'</span>)</code></pre>
+          </div>
+        </div>
+        <p class="muted" style="margin-top:.9rem">Keys are verified offline against a public key compiled into the SDK. The check deters use beyond a licence; it is not copy protection.</p>
+        <div class="callout reveal">
+          <h3><span class="todo">Todo</span> How to actually buy one</h3>
+          <p>Pricing, the purchase route and a contact address are not decided yet. Replace this block with them before the site goes public.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-tint" id="third-party" aria-labelledby="tp-h">
+      <div class="wrap">
+        <header class="section-head reveal">
+          <p class="eyebrow">What is in the binary</p>
+          <h2 id="tp-h">Third-party licences, stated up front.</h2>
+          <p>PdfiumKit ships as a binary that statically links PDFium and six bundled libraries. The combination is permissive — the one that usually causes trouble is FreeType, and it is used under the FreeType License rather than GPLv2.</p>
+        </header>
+        <div class="table-scroll reveal">
+          <table class="matrix">
+            <caption class="sr">Bundled third-party components</caption>
+            <thead><tr><th scope="col">Component</th><th scope="col">Licence</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">PDFium (<code>chromium/7243</code>)</th><td>BSD-3-Clause</td></tr>
+              <tr><th scope="row">FreeType</th><td>FreeType License (FTL), not GPLv2</td></tr>
+              <tr><th scope="row">Skia, libjpeg-turbo, libpng, zlib, libopenjpeg</th><td>BSD-style and zlib licences</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted" style="margin-top:.9rem">The full notices ship with the SDK in <code>NOTICE.md</code>. <span class="todo">Todo</span> Legal sign-off on that file is still outstanding.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <div>
+        <a class="brand" href="index.html"><img src="favicon.svg" alt="" width="24" height="24"><span>PdfiumKit</span></a>
+        <p class="footer-tag">One PDF SDK. Every platform.</p>
+        <p class="muted">0.1.0 · Pre-release</p>
+      </div>
+      <nav class="footer-nav" aria-label="Footer">
+        <a href="index.html">Overview</a><a href="developers.html">Developers</a><a href="ai.html">AI</a><a href="accessibility.html">Accessibility</a><a href="agents.html">Agents</a><a href="demos.html">Demos</a><a href="download.html">Get the SDK</a>
+      </nav>
+      <div class="attrib">
+        <p>Built on <a href="https://pdfium.googlesource.com/pdfium/">PDFium</a> (<code>chromium/7243</code>), licensed under BSD-3-Clause.</p>
+        <p>Portions of this software are copyright © 2024 The FreeType Project (<a href="https://freetype.org">https://freetype.org</a>). All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="site.js" defer></script>
+</body>
+</html>
