@@ -55,10 +55,50 @@ try (PdfDocument document = PdfDocument.open(Path.of("contract.pdf"))) {
 | `index()` | Its position in the document |
 | `size()` | `Size(width, height)` in PDF points |
 | `render(int width)` | A `BufferedImage`; the height follows the page's aspect ratio |
-| `render(int width, int height, boolean withAnnotations)` | An exact pixel size |
+| `render(int width, int height, boolean withAnnotations)` | An exact pixel size; annotations and filled fields are drawn |
 | `text()` | The page's text in reading order |
 | `characterCount()` | How many characters that text has |
 | `search(String)`, `search(String, boolean caseSensitive)` | `Match(start, length)` offsets into `text()` |
+
+### Annotations
+
+| Member | Description |
+| --- | --- |
+| `annotations()` | Every annotation, in document order, as `PdfAnnotation(index, kind, rect, contents)` |
+| `addInk(List<List<Point>>)`, `addInk(…, red, green, blue, lineWidth)` | Freehand strokes; returns the new index |
+| `addHighlight(List<Quad>)`, `addUnderline(…)`, `addStrikeout(…)` | Text markup over quads |
+| `addMarkup(Kind, List<Quad>, red, green, blue, alpha)` | Markup with an explicit colour |
+| `addNote(float x, float y, String contents)` | A sticky note |
+| `removeAnnotation(int index)` | Removes one; later annotations shift down |
+
+`PdfAnnotation.Kind` covers PDFium's subtypes and keeps `UNKNOWN` for anything not
+modelled, so nothing is silently dropped. `Quad.of(rect)` makes the common rectangle case.
+
+```java
+PdfPage page = document.page(0);
+page.addHighlight(List.of(new PdfPage.Quad(72, 720, 300, 720, 72, 700, 300, 700)));
+page.addNote(100, 500, "Check clause 4.2");
+document.writeTo(Path.of("annotated.pdf"));
+```
+
+### Form fields
+
+| Member | Description |
+| --- | --- |
+| `formFields()` | `PdfFormField(index, kind, name, value, checked, readOnly, rect)` per widget |
+| `setFieldText(int index, String value)` | Sets a text field |
+| `setFieldChecked(int index, boolean checked)` | Checks or unchecks a checkbox or radio button |
+
+Values go through PDFium's form-fill environment, so `/V` and `/AS` are written as names
+and the appearance is regenerated — a field set any other way reads back correctly here
+and shows as empty in other viewers.
+
+```java
+for (PdfFormField field : page.formFields()) {
+    if (field.kind() == PdfFormField.Kind.TEXT_FIELD) page.setFieldText(field.index(), "Jane Doe");
+    if (field.isToggle()) page.setFieldChecked(field.index(), true);
+}
+```
 
 ### `PdfError`
 
@@ -98,7 +138,20 @@ library the SDK loads, for a build that manages its own.
 
 ## What is not here yet
 
-This is the core: open, pages, render, text, search, metadata, save. The other SDKs also
-have annotations, form filling, signatures, redaction, tagging for accessibility, the
-viewer state layer and the AI package. None of that is in the Java SDK, and the shape
-above is what it would extend.
+Present: open, pages, render, text, search, metadata, save, annotations and form filling.
+
+Not yet, and each needs work beyond binding an engine call — the other SDKs implement
+these above PDFium, so Java needs the same logic written again:
+
+- **Signatures.** Reading and verifying needs CMS parsing; signing needs incremental
+  writing too. BouncyCastle would do the cryptography.
+- **Redaction.** Removing content from the saved bytes, including rewriting text objects
+  that are only partly covered.
+- **Tagging for accessibility.** A structure tree, parent tree and XMP packet, written by
+  a byte-level PDF writer.
+- **Viewer state.** Page, zoom, scroll and tools as portable values.
+- **The AI package.** Answers, summaries, proposals; all of it sits above the core.
+
+Everything on that list exists on iOS, Android and the web today. If you need it on a
+server now, `@pdfiumkit/node` has all of it, because it is the web SDK rather than a
+second implementation.

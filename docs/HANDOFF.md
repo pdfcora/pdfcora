@@ -32,7 +32,7 @@ because each lesson generalises. §4 lists what is open and what was parked.
 | `pdfiumkit-ai` Phase 1: grounded answers, summaries | Built, three platforms; real-model tested on Apple and on an Android phone |
 | Samples: one small app per feature area (core, AI, UI, agents) | iOS, Android, web — `samples/` |
 | Node SDK (`@pdfiumkit/node`) | Done — a thin layer over the web package: whole API re-exported, plus file, PNG and env-key helpers |
-| Java SDK (`com.pdfiumkit:pdfiumkit`) | Core only — open, pages, render, text, search, metadata, save, over JNI on macOS and Linux |
+| Java SDK (`com.pdfiumkit:pdfiumkit`) | Core plus annotations and form filling, over JNI on macOS and Linux; no signatures, redaction, tagging, viewer state or AI |
 | License keys: offline, per module, trial watermark | Done, three platforms, shared cases in `conformance/license/` |
 | `pdfiumkit-ai` Phase 2a: redaction suggestions, review marks in the viewer, undo | Done, three platforms, shared cases in `conformance/redaction/` |
 | `pdfiumkit-ai` Phase 2b: smart form filling from a profile, labelled marks, undo | Done, three platforms, shared cases in `conformance/forms/`; no on-device model (measured) |
@@ -214,9 +214,11 @@ ids, the figure descriptions, the review mark) so it cannot silently degrade to 
 host view, and removing a figure's fallback description makes it fail on the two unlabelled images
 — the same defect Compose 1.8's own checks found.
 
-**The Java SDK is a fourth implementation, and only the core of one.** It has open, pages,
-render, text, search, metadata and save — no annotations, forms, signatures, redaction,
-tagging, viewer state or AI. It uses JNI rather than the Foreign Function API so it runs on
+**The Java SDK is a fourth implementation, and a partial one.** It has open, pages, render,
+text, search, metadata, save, annotations (read, ink, markup, note, remove) and form
+filling (read, text, checkbox) — no signatures, redaction, tagging, viewer state or AI.
+What is missing is what the other SDKs implement *above* PDFium rather than by calling it,
+so each one is logic to write again, not a binding to add. It uses JNI rather than the Foreign Function API so it runs on
 Java 17; FFM would need 22+, and JDK 21 only offers it as a preview. The native library is
 built by `scripts/build-jni.sh` from `vendor/desktop`, which means the Java SDK depends on
 the desktop engines, and those are optional artifacts. macOS and Linux only: there is no

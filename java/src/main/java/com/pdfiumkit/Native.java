@@ -88,4 +88,26 @@ final class Native {
   static native byte[] save(long handle);
 
   static native int permissions(long handle);
+
+  static native int annotationCount(long handle, int index);
+
+  /** Fills `out` with subtype and rect; returns the annotation's contents. */
+  static native String annotation(long handle, int index, int at, float[] out);
+
+  static native int addInk(long handle, int index, float[] points, int[] lengths,
+                           int red, int green, int blue, float lineWidth);
+
+  static native int addMarkup(long handle, int index, int subtype, float[] quads,
+                              int red, int green, int blue, int alpha);
+
+  static native int addNote(long handle, int index, float x, float y, String contents);
+
+  static native int removeAnnotation(long handle, int index, int at);
+
+  /** Fills `out` with kind, flags and checked, and `rect`; returns "name\nvalue". */
+  static native String formField(long handle, int index, int at, int[] out, float[] rect);
+
+  static native int setFieldText(long handle, int index, int at, String value);
+
+  static native int setFieldChecked(long handle, int index, int at, boolean checked);
 }
