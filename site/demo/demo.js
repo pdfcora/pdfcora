@@ -1,4 +1,7 @@
-import { configureEngine, PdfDocument, PdfError } from './sdk/index.js';
+import {
+  configureEngine, darkTheme, defaultToolbar, PdfDocument, PdfError, PdfViewerElement,
+  toolbarItems,
+} from './sdk/index.js';
 
 // In a browser the page says where the engine's WebAssembly lives. Both files ship
 // inside the npm package; an app serves them from wherever it likes.
@@ -8,13 +11,18 @@ configureEngine({
 });
 
 const el = (id) => document.getElementById(id);
-const canvas = el('page');
-const context = canvas.getContext('2d');
+
+// The component's own toolbar, plus page navigation, which the default one leaves out
+// because most hosts scroll instead.
+const toolbar = {
+  items: [
+    toolbarItems.pageBack, toolbarItems.pageForward, toolbarItems.divider,
+    ...defaultToolbar.items,
+  ],
+};
 
 let pdf = null;
-let pageIndex = 0;
-let scale = 1;
-let matches = [];
+let name = '';
 
 const status = (text, kind = '') => {
   const box = el('status');
@@ -22,135 +30,119 @@ const status = (text, kind = '') => {
   box.className = kind;
 };
 
-async function open(bytes, name) {
+async function open(bytes, from) {
+  status(`Opening ${from}…`);
   try {
     if (pdf) await pdf.close();
     pdf = await PdfDocument.open(bytes);
   } catch (error) {
     // Every failure is typed, so a bad file is a message rather than a broken page.
     pdf = null;
-    status(error instanceof PdfError
-      ? `${name}: ${error.code} — ${error.message}`
-      : `${name}: ${error}`, 'bad');
+    status(error instanceof PdfError ? `${from}: ${error.code} — ${error.message}`
+                                     : `${from}: ${error}`, 'bad');
     return;
   }
+  name = from;
 
-  pageIndex = 0;
-  matches = [];
-  el('viewer').hidden = false;
+  const host = el('viewer');
+  host.replaceChildren();
+  await PdfViewerElement.mount(host, pdf, {
+    toolbar,
+    theme: darkTheme,
+    onSave: (saved) => download(saved, name.replace(/\.pdf$/i, '') + '-edited.pdf'),
+  });
+
   el('query').value = '';
-  await describe(name);
-  await render();
+  el('hits').textContent = '';
+  el('results').replaceChildren();
+  await describe();
+  status('');
 }
 
-async function describe(name) {
+async function describe() {
   const metadata = await pdf.metadata();
-  const count = await pdf.pageCount();
+  const pages = await pdf.pageCount();
   let fields = 0;
-  for (let i = 0; i < count; i++) fields += (await (await pdf.page(i)).formFields()).length;
+  let annotations = 0;
+  for (let i = 0; i < pages; i++) {
+    const page = await pdf.page(i);
+    fields += (await page.formFields()).length;
+    annotations += (await page.annotations()).length;
+  }
 
-  el('facts').innerHTML = '';
-  const fact = (term, value) => {
-    el('facts').insertAdjacentHTML('beforeend',
-      `<div><dt>${term}</dt><dd>${value}</dd></div>`);
-  };
+  const facts = el('facts');
+  facts.replaceChildren();
+  const fact = (term, value) => facts.insertAdjacentHTML('beforeend',
+    `<div><dt>${term}</dt><dd>${value}</dd></div>`);
   fact('File', name);
-  fact('Pages', count);
+  fact('Pages', pages);
   fact('Title', metadata.title || '—');
   fact('Producer', metadata.producer || '—');
   fact('Tagged', await pdf.isTagged() ? 'yes' : 'no');
   fact('Form fields', fields);
+  fact('Annotations', annotations);
   fact('Signatures', (await pdf.signatures()).length);
-  status(`Opened ${name}.`);
 }
 
-async function render() {
-  const page = await pdf.page(pageIndex);
-  const size = await page.size();
-  const width = Math.round(Math.min(900, canvas.parentElement.clientWidth - 2) * scale);
-
-  const image = await page.render({ width });
-  canvas.width = image.width;
-  canvas.height = image.height;
-  context.putImageData(new ImageData(image.data, image.width, image.height), 0, 0);
-
-  // Search results come back in PDF space, origin bottom-left; the canvas is
-  // top-left, so the only conversion needed is the flip.
-  const factor = image.width / size.width;
-  context.strokeStyle = '#f5b301';
-  context.fillStyle = 'rgba(245, 179, 1, .22)';
-  context.lineWidth = 1;
-  for (const rect of matches.filter((m) => m.pageIndex === pageIndex)) {
-    const x = rect.left * factor;
-    const y = (size.height - rect.top) * factor;
-    const w = (rect.right - rect.left) * factor;
-    const h = (rect.top - rect.bottom) * factor;
-    context.fillRect(x, y, w, h);
-    context.strokeRect(x, y, w, h);
-  }
-
-  el('where').textContent = `Page ${pageIndex + 1} of ${await pdf.pageCount()}`;
-  el('dims').textContent = `${Math.round(size.width)} × ${Math.round(size.height)} pt`;
-}
+const escape = (s) => s.replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
 
 async function search(query) {
-  matches = [];
-  if (query.trim().length > 0) {
-    const count = await pdf.pageCount();
-    for (let i = 0; i < count; i++) {
-      const page = await pdf.page(i);
-      // A match carries its own rectangles, one per line it spans.
-      for (const hit of await page.text.search(query)) {
-        for (const rect of hit.rects) matches.push({ pageIndex: i, ...rect });
-      }
+  const results = el('results');
+  results.replaceChildren();
+  if (query.trim().length === 0) { el('hits').textContent = ''; return; }
+
+  let found = 0;
+  const pages = await pdf.pageCount();
+  for (let i = 0; i < pages; i++) {
+    const page = await pdf.page(i);
+    const text = await page.text.string();
+    for (const hit of await page.text.search(query)) {
+      found++;
+      if (found > 40) continue;
+      const context = text.slice(Math.max(0, hit.start - 30), hit.start + hit.length + 30)
+        .replace(/\s+/g, ' ').trim();
+      const item = document.createElement('li');
+      item.innerHTML = `<b>p${i + 1}</b> ${escape(context)}`;
+      results.append(item);
     }
   }
-  el('hits').textContent = query.trim() === '' ? ''
-    : `${matches.length} match${matches.length === 1 ? '' : 'es'}`;
-  if (matches.length > 0 && !matches.some((m) => m.pageIndex === pageIndex)) {
-    pageIndex = matches[0].pageIndex;
-  }
-  await render();
+  el('hits').textContent = `${found} match${found === 1 ? '' : 'es'}`
+    + (found > 40 ? ', first 40 shown' : '');
 }
+
+function download(bytes, as) {
+  const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = as;
+  link.click();
+  URL.revokeObjectURL(url);
+  status(`Saved ${as} — ${bytes.length} bytes.`);
+}
+
+async function loadSample(file) {
+  try {
+    const response = await fetch(file);
+    if (!response.ok) throw new Error(String(response.status));
+    await open(new Uint8Array(await response.arrayBuffer()), file);
+  } catch (error) {
+    status(`Could not load ${file}: ${error.message ?? error}`, 'bad');
+  }
+}
+
+el('sample').addEventListener('change', (event) => loadSample(event.target.value));
 
 el('file').addEventListener('change', async (event) => {
   const file = event.target.files[0];
-  if (!file) return;
-  status(`Opening ${file.name}…`);
-  await open(new Uint8Array(await file.arrayBuffer()), file.name);
-});
-
-el('prev').addEventListener('click', async () => {
-  if (pageIndex > 0) { pageIndex--; await render(); }
-});
-el('next').addEventListener('click', async () => {
-  if (pageIndex < await pdf.pageCount() - 1) { pageIndex++; await render(); }
-});
-el('zoomIn').addEventListener('click', async () => {
-  scale = Math.min(3, scale * 1.25); await render();
-});
-el('zoomOut').addEventListener('click', async () => {
-  scale = Math.max(0.5, scale / 1.25); await render();
+  if (file) await open(new Uint8Array(await file.arrayBuffer()), file.name);
 });
 
 let typing;
 el('query').addEventListener('input', (event) => {
   clearTimeout(typing);
   const query = event.target.value;
-  typing = setTimeout(() => search(query), 200);
+  typing = setTimeout(() => { if (pdf) search(query); }, 200);
 });
 
-async function loadSample(name) {
-  status(`Loading ${name}…`);
-  try {
-    const response = await fetch(name);
-    await open(new Uint8Array(await response.arrayBuffer()), name);
-  } catch (error) {
-    status(`Could not load ${name}: ${error}`, 'bad');
-  }
-}
-
-el('sample').addEventListener('change', (event) => loadSample(event.target.value));
-
-status('Loading the engine…');
+status('Starting the engine…');
 await loadSample('sample.pdf');

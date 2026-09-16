@@ -1,8 +1,12 @@
 # The hosted web demo
 
 A self-contained copy of the web SDK, so `site/` can be deployed as static files with no
-build step and no server. `demo.js` is the whole demo — about 150 lines using
-`PdfDocument.open`, `page.render`, `page.text.search` and the document's metadata.
+build step and no server.
+
+`demo.js` is the whole demo, and most of it is the side panel. The viewer itself is one
+call: `PdfViewerElement.mount(host, pdf, { toolbar, theme, onSave })` builds the page,
+the toolbar, the gestures and the accessible layer. The demo adds page-back and
+page-forward to the shipped `defaultToolbar`, because the default leaves them out.
 
 `sdk/` and `engine/` are **copies**, not sources. Refresh them after changing the web SDK:
 

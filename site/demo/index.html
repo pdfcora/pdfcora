@@ -4,39 +4,56 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PdfiumKit — live web demo</title>
-  <meta name="description" content="Open a PDF in your browser and render, search and inspect it with PdfiumKit. Nothing is uploaded — the engine runs as WebAssembly on this page.">
+  <meta name="description" content="The PdfiumKit viewer component running in your browser: page, zoom, annotate, highlight, redact and save. Nothing is uploaded — the engine is WebAssembly on this page.">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#07080c">
   <link rel="icon" href="../favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../styles.css">
   <style>
-    .demo-wrap { max-width: 78rem; margin: 0 auto; padding: 1.5rem 1.25rem 4rem; }
-    .demo-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: .8rem 1.4rem; margin-bottom: 1.2rem; }
-    .demo-head h1 { font-size: 1.5rem; margin: 0; }
-    .demo-head a { color: var(--ink-2); font-size: .9rem; }
-    .demo-grid { display: grid; grid-template-columns: minmax(0, 1fr) 19rem; gap: 1.4rem; align-items: start; }
-    @media (max-width: 900px) { .demo-grid { grid-template-columns: minmax(0, 1fr); } }
-    .stage { border: 1px solid var(--line-2); border-radius: var(--r); background: var(--panel); padding: 1rem; }
-    .bar { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-bottom: .9rem; }
-    .bar button { font: inherit; font-size: .88rem; color: var(--ink); background: var(--panel-2);
-                  border: 1px solid var(--line-2); border-radius: 7px; padding: .38rem .7rem; cursor: pointer; }
-    .bar button:hover { border-color: var(--line); }
-    .bar select { font: inherit; font-size: .88rem; color: var(--ink); background: var(--panel-2);
-                  border: 1px solid var(--line-2); border-radius: 7px; padding: .38rem .5rem; }
-    .bar input[type=search] { font: inherit; font-size: .88rem; color: var(--ink); background: var(--panel-2);
-                              border: 1px solid var(--line-2); border-radius: 7px; padding: .38rem .7rem; min-width: 11rem; }
-    .bar .spacer { flex: 1 }
-    .bar small { color: var(--ink-2); font-size: .82rem; }
-    #page { display: block; width: 100%; height: auto; border-radius: 6px; background: #fff; }
-    .side dl { margin: 0; }
-    .side dl > div { display: flex; justify-content: space-between; gap: 1rem; padding: .42rem 0; border-bottom: 1px solid var(--line-2); }
-    .side dt { color: var(--ink-2); font-size: .85rem; }
-    .side dd { margin: 0; font-size: .85rem; font-variant-numeric: tabular-nums; text-align: right; overflow-wrap: anywhere; }
-    #status { font-size: .85rem; color: var(--ink-2); margin: .8rem 0 0; }
+    .demo-wrap { max-width: 82rem; margin: 0 auto; padding: 1.4rem 1.25rem 3rem; }
+    .demo-head { display: flex; flex-wrap: wrap; align-items: center; gap: .7rem 1.3rem; margin-bottom: 1.1rem; }
+    .demo-head h1 { font-size: 1.35rem; margin: 0; font-weight: 600; }
+    .demo-head .grow { flex: 1 }
+    .demo-head a:not(.brand) { color: var(--ink-2); font-size: .9rem; }
+    .demo-grid { display: grid; grid-template-columns: minmax(0, 1fr) 18rem; gap: 1.2rem; align-items: start; }
+    @media (max-width: 940px) { .demo-grid { grid-template-columns: minmax(0, 1fr); } }
+
+    /* The component fills whatever box it is given, so the host is what sets its size. */
+    #viewer { height: min(76vh, 900px); min-height: 26rem; border: 1px solid var(--line-2);
+              border-radius: var(--r); overflow: hidden; background: var(--panel); }
+
+    .panel { border: 1px solid var(--line-2); border-radius: var(--r); background: var(--panel);
+             padding: .9rem 1rem; margin-bottom: 1rem; }
+    .panel h2 { font-size: .82rem; letter-spacing: .04em; text-transform: uppercase;
+                color: var(--ink-2); margin: 0 0 .6rem; font-weight: 600; }
+    .panel select, .panel input[type=search] { font: inherit; font-size: .88rem; width: 100%;
+             color: var(--ink); background: var(--panel-2); border: 1px solid var(--line-2);
+             border-radius: 7px; padding: .4rem .6rem; }
+    .panel input[type=file] { font-size: .82rem; color: var(--ink-2); max-width: 100%; margin-top: .5rem; }
+
+    #facts > div { display: flex; justify-content: space-between; gap: 1rem; padding: .36rem 0;
+                   border-bottom: 1px solid var(--line-2); }
+    #facts > div:last-child { border-bottom: 0; }
+    #facts dt { color: var(--ink-2); font-size: .84rem; }
+    #facts dd { margin: 0; font-size: .84rem; font-variant-numeric: tabular-nums;
+                text-align: right; overflow-wrap: anywhere; }
+
+    #hits { display: block; font-size: .8rem; color: var(--ink-2); margin-top: .5rem; }
+    #results { list-style: none; margin: .5rem 0 0; padding: 0; max-height: 15rem; overflow-y: auto; }
+    #results li { font-size: .8rem; color: var(--ink-2); padding: .34rem 0;
+                  border-bottom: 1px solid var(--line-2); }
+    #results b { color: var(--ink); margin-right: .4rem; font-variant-numeric: tabular-nums; }
+
+    #status { font-size: .85rem; color: var(--ink-2); margin: .7rem 0 0; min-height: 1.2em; }
     #status.bad { color: var(--warn); }
-    .drop { border: 1px dashed var(--line); border-radius: var(--r); padding: .9rem 1rem; font-size: .86rem; color: var(--ink-2); }
-    .drop input { display: block; margin-top: .5rem; font-size: .84rem; color: var(--ink-2); max-width: 100%; }
-    .privacy { font-size: .82rem; color: var(--ink-2); margin-top: 1rem; }
+    .note-sm { font-size: .8rem; color: var(--ink-2); margin: .6rem 0 0; }
+
+    #offline { display: none; border: 1px solid rgb(251 191 36 / 30%); border-left: 3px solid var(--warn);
+               border-radius: var(--r); background: rgb(251 191 36 / 7%); padding: 1rem 1.2rem; margin-bottom: 1.3rem; }
+    #offline h2 { font-size: 1.05rem; margin: 0 0 .5rem; }
+    #offline p { margin: 0 0 .6rem; font-size: .9rem; color: var(--ink-2); }
+    #offline pre { margin: 0; background: var(--panel-2); border: 1px solid var(--line-2);
+                   border-radius: 7px; padding: .7rem .9rem; font-size: .84rem; overflow-x: auto; }
   </style>
 </head>
 <body>
@@ -46,52 +63,61 @@
     <div class="demo-head">
       <a class="brand" href="../index.html"><img src="../favicon.svg" alt="" width="24" height="24"><span>PdfiumKit</span></a>
       <h1>Live web demo</h1>
-      <span class="spacer" style="flex:1"></span>
+      <span class="grow"></span>
       <a href="../demos.html">All demos</a>
+      <a href="../developers.html">Developers</a>
       <a href="../download.html">Get the SDK</a>
     </div>
 
+    <!-- A module script and fetch are both blocked on file://, so the page would fail
+         silently. This runs as a classic script, which does load there. -->
+    <div id="offline">
+      <h2>This demo needs to be served over http://</h2>
+      <p>You have opened it from the filesystem. Browsers refuse to load ES modules or fetch files
+        from <code>file://</code>, so the engine cannot start. Serve the folder and open the address it prints:</p>
+      <pre><code>cd site &amp;&amp; python3 -m http.server 8000
+# then open http://localhost:8000/demo/</code></pre>
+    </div>
+    <script>if (location.protocol === 'file:') document.getElementById('offline').style.display = 'block';</script>
+
     <div class="demo-grid">
-      <div class="stage">
-        <div class="bar">
+      <div>
+        <!-- PdfViewerElement.mount() builds the toolbar, page, gestures and review bar in here. -->
+        <div id="viewer"></div>
+        <p id="status">Starting the engine…</p>
+        <p class="note-sm">This is the SDK’s own <code>PdfViewerElement</code>, mounted in five lines with
+          the toolbar it ships. Pick a tool and draw on the page: ink, a note, a highlight, or a
+          redaction that removes the content rather than covering it. <b>Save</b> downloads the
+          edited file.</p>
+      </div>
+
+      <aside>
+        <div class="panel">
+          <h2>Document</h2>
+          <dl id="facts"></dl>
+        </div>
+
+        <div class="panel">
+          <h2>Search</h2>
+          <label class="sr" for="query">Search the document</label>
+          <input id="query" type="search" placeholder="Find text…" autocomplete="off">
+          <small id="hits"></small>
+          <ul id="results"></ul>
+        </div>
+
+        <div class="panel">
+          <h2>Open</h2>
           <label class="sr" for="sample">Sample document</label>
           <select id="sample">
             <option value="sample.pdf">Contract — 3 pages of text</option>
             <option value="forms.pdf">Form — 27 fields</option>
             <option value="signed.pdf">Signed &amp; tagged</option>
           </select>
-          <button id="prev" type="button">‹ Previous</button>
-          <button id="next" type="button">Next ›</button>
-          <button id="zoomOut" type="button" aria-label="Zoom out">−</button>
-          <button id="zoomIn" type="button" aria-label="Zoom in">+</button>
-          <span class="spacer"></span>
-          <label class="sr" for="query">Search the document</label>
-          <input id="query" type="search" placeholder="Search…" autocomplete="off">
-          <small id="hits"></small>
-        </div>
-        <div id="viewer" hidden>
-          <canvas id="page" width="900" height="1165"></canvas>
-        </div>
-        <p id="status">Loading the engine…</p>
-      </div>
-
-      <aside class="side">
-        <div class="stage">
-          <dl id="facts"></dl>
-          <p class="privacy" style="margin-top:.9rem"><small id="where"></small> · <small id="dims"></small></p>
-        </div>
-
-        <div class="stage" style="margin-top:1rem">
-          <div class="drop">
-            Open one of your own PDFs.
-            <input id="file" type="file" accept="application/pdf" aria-label="Choose a PDF">
-          </div>
-          <p class="privacy">Your file is read in this tab and never leaves it. There is no upload and no server — the engine is WebAssembly running on this page.</p>
-          <p class="privacy">Rendered pages carry the “PdfiumKit trial” watermark, because this page runs without a licence key. A key removes it.</p>
-        </div>
-
-        <div class="stage" style="margin-top:1rem">
-          <p class="privacy" style="margin:0">This page is about 120 lines, and uses only <code>PdfDocument.open</code>, <code>page.render</code>, <code>page.text.search</code> and the document’s metadata. The full source is <code>site/demo/demo.js</code>.</p>
+          <label class="sr" for="file">Choose a PDF from your computer</label>
+          <input id="file" type="file" accept="application/pdf">
+          <p class="note-sm">Your file is read in this tab and never leaves it — no upload, no server.</p>
+          <p class="note-sm">Rendered pages carry the “PdfiumKit trial” watermark; this page runs
+            without a licence key.</p>
         </div>
       </aside>
     </div>
