@@ -46,6 +46,11 @@ Building macOS needs an SDK this PDFium revision understands: macOS 26 and later
 the fortify wrappers and ship a libc++ this clang cannot parse, so the script selects an
 older Xcode when one is installed and warns when it cannot.
 
+Linking against the Linux engines requires **lld**, not GNU ld: the objects carry CREL
+relocations, and `/usr/bin/ld` rejects their `.eh_frame` sections. Chromium's own lld ships
+in the checkout at `third_party/llvm-build/Release+Asserts/bin`, and `-fuse-ld=lld` is
+enough.
+
 ## Running each platform
 
 | | Build | Test |

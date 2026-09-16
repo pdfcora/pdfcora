@@ -8,7 +8,7 @@
       "pdf_is_complete_lib=true"
     ]
   },
-  "generated": "2026-09-12T17:08:29.451Z",
+  "generated": "2026-09-16T13:25:37.121Z",
   "artifacts": {
     "web/pdfium.js": {
       "sha256": "0dd7c7f663c38633f876aa0c6537509500068231754a7ca4f90864a6664dd360",
@@ -53,6 +53,18 @@
     "android/x86_64/libpdfium.a": {
       "sha256": "16593daddadafa4522f2bea186baa744e9d211844c788bf40c8d1399a7d23397",
       "bytes": 18551890
+    },
+    "desktop/macos/libpdfium.a": {
+      "sha256": "bfa284c1dab5058e241979ad999d372f805213fa2c28c0bda2ce20a752008949",
+      "bytes": 24745656
+    },
+    "desktop/linux-x64/libpdfium.a": {
+      "sha256": "9d8d339beed0608ffebdd4b3090b5d1333c2727f85a90cfdee9a50622a64b1d9",
+      "bytes": 16017598
+    },
+    "desktop/linux-arm64/libpdfium.a": {
+      "sha256": "6bb9bfda42b32aa4334b34bfe10369916d6e78e3ba5537429687fdabd120becd",
+      "bytes": 16023330
     }
   }
 }
