@@ -29,7 +29,7 @@
         <a href="ai.html">AI</a>
         <a href="accessibility.html">Accessibility</a>
         <a href="agents.html">Agents</a>
-        <a href="demos.html">Demos</a>
+        <a href="demo/">Live demo</a><a href="demos.html">Demos</a>
         <a class="nav-cta" href="download.html">Get the SDK</a>
       </nav>
     </div>
@@ -79,13 +79,13 @@
       <div class="wrap">
         <header class="section-head reveal">
           <p class="eyebrow">Threading</p>
-          <h2 id="threading-h">PDFium is not thread-safe. You never have to care.</h2>
+          <h2 id="threading-h">Thread-safe, on every platform.</h2>
         </header>
         <div class="cards">
-          <article class="card reveal"><span class="tag">iOS</span><h3>An actor per document</h3><p>Every call hops onto the document’s actor, so concurrent calls serialise instead of corrupting memory. <code>async</code>/<code>await</code> throughout.</p></article>
+          <article class="card reveal"><span class="tag">iOS</span><h3>An actor per document</h3><p>Every call hops onto the document’s actor, so concurrent calls serialise. <code>async</code>/<code>await</code> throughout.</p></article>
           <article class="card reveal"><span class="tag">Android</span><h3>A single-threaded dispatcher</h3><p>Each document owns one dispatcher; suspending functions run there. Your coroutine scope stays yours.</p></article>
           <article class="card reveal"><span class="tag">Web</span><h3>A promise chain, or a Worker</h3><p>In-process calls queue behind one chain. <code>PdfWorker</code> runs the whole SDK in a Worker behind the same API, so a stalled render can be terminated without taking the page down.</p></article>
-          <article class="card reveal"><span class="tag">Node &amp; Java</span><h3>One thread per document</h3><p>Node inherits the web SDK&rsquo;s promise chain. On Java each document owns a thread and every call runs on it, so calling from a request pool is safe &mdash; the calls serialise rather than corrupting memory.</p></article>
+          <article class="card reveal"><span class="tag">Node &amp; Java</span><h3>One thread per document</h3><p>Node inherits the web SDK&rsquo;s promise chain. On Java each document owns a thread and every call runs on it, so a request pool can share one document and the calls simply serialise.</p></article>
           <article class="card reveal card-lead"><span class="tag">Everywhere</span><h3>A watchdog for the calls that never return</h3><p>A malformed page can stall inside the engine where no cancellation reaches. Each document has its own executor, and a watchdog marks the engine unresponsive so later calls fail fast with a typed error rather than piling up behind it. A stalled document cannot take the others with it.</p></article>
         </div>
       </div>
