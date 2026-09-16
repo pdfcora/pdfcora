@@ -31,6 +31,8 @@ because each lesson generalises. §4 lists what is open and what was parked.
 | Engine watchdog: calls behind a hung PDFium call fail fast | Done, three platforms |
 | `pdfiumkit-ai` Phase 1: grounded answers, summaries | Built, three platforms; real-model tested on Apple and on an Android phone |
 | Samples: one small app per feature area (core, AI, UI, agents) | iOS, Android, web — `samples/` |
+| Node SDK (`@pdfiumkit/node`) | Done — a thin layer over the web package: whole API re-exported, plus file, PNG and env-key helpers |
+| Java SDK (`com.pdfiumkit:pdfiumkit`) | Core only — open, pages, render, text, search, metadata, save, over JNI on macOS and Linux |
 | License keys: offline, per module, trial watermark | Done, three platforms, shared cases in `conformance/license/` |
 | `pdfiumkit-ai` Phase 2a: redaction suggestions, review marks in the viewer, undo | Done, three platforms, shared cases in `conformance/redaction/` |
 | `pdfiumkit-ai` Phase 2b: smart form filling from a profile, labelled marks, undo | Done, three platforms, shared cases in `conformance/forms/`; no on-device model (measured) |
@@ -211,6 +213,21 @@ contains Compose's virtual nodes. The test asserts the tree really is the compos
 ids, the figure descriptions, the review mark) so it cannot silently degrade to checking a bare
 host view, and removing a figure's fallback description makes it fail on the two unlabelled images
 — the same defect Compose 1.8's own checks found.
+
+**The Java SDK is a fourth implementation, and only the core of one.** It has open, pages,
+render, text, search, metadata and save — no annotations, forms, signatures, redaction,
+tagging, viewer state or AI. It uses JNI rather than the Foreign Function API so it runs on
+Java 17; FFM would need 22+, and JDK 21 only offers it as a preview. The native library is
+built by `scripts/build-jni.sh` from `vendor/desktop`, which means the Java SDK depends on
+the desktop engines, and those are optional artifacts. macOS and Linux only: there is no
+Windows engine build. Every feature added to it is a feature to add four times, which is
+the cost to weigh before extending it.
+
+**The Node SDK is not a fourth implementation**, deliberately. `@pdfiumkit/node` re-exports
+`@pdfiumkit/web` — a test asserts every export is present — and adds only `openFile`,
+`saveFile`, `renderPng`, `renderRaw` and `useLicenseFromEnvironment`. The engine is the same
+WebAssembly build. What a server does not get from it is `PdfWorker`: containing a stalled
+page needs a `worker_thread` or a child process.
 
 **Remediation is rules only, and limited.** No model is used: the proposals are the same on
 every device. Tables become paragraphs, paths become artifacts (a vector chart is not announced),

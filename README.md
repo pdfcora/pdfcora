@@ -58,6 +58,8 @@ enough.
 | iOS | `xcodebuild build -scheme PdfiumKit -destination 'platform=iOS Simulator,name=<device>'` | same with `test` |
 | Android | `cd android && gradle :pdfiumkit:assembleDebug` | `gradle :pdfiumkit:connectedDebugAndroidTest` (needs a device or emulator) |
 | Web | `cd web && npm run build` | `npm test` |
+| Node | `cd node && npm run build` | `./scripts/test-node.sh` |
+| Java | `./scripts/build-jni.sh && cd java && gradle build` | `./scripts/test-java.sh` |
 
 Demos: `ios/Demo` (SwiftUI, generate with `xcodegen`), `android/demo` (Compose),
 `web/demo` (serve the repo root and open `/web/demo/index.html`).
@@ -101,6 +103,16 @@ committed and a consumer resolving from git would otherwise get no binary:
 **Android** — Maven. `gradle :pdfiumkit:publishToMavenLocal` publishes
 `com.pdfiumkit:pdfiumkit:0.1.0`; the AAR is 9.3 MB and carries all four ABIs, of which
 Play delivers one per device.
+
+**Node** — `npm install @pdfiumkit/node`. A thin layer over the web package rather than a
+second implementation: it re-exports the whole API and adds file and PNG helpers and a
+licence key from the environment. Same WebAssembly engine, so nothing to compile. See
+`node/README.md`.
+
+**Java** — Maven, `com.pdfiumkit:pdfiumkit:0.1.0`, Java 17 or newer on macOS and Linux
+(x86-64 and arm64). This one *is* a separate implementation: a JNI layer over the native
+engine, with the core API only — open, pages, render, text, search, metadata, save.
+`./scripts/build-jni.sh` builds the native libraries the jar carries. See `java/README.md`.
 
 **AI, separately and optionally** — `pdfiumkit-ai` (npm), `PdfiumKitAI` (SPM product),
 `com.pdfiumkit:pdfiumkit-ai` (Maven). The core has no AI dependency and never gains one:

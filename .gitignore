@@ -22,6 +22,11 @@ local.properties
 # Node
 node_modules/
 
+# The JNI engine, built from vendor/ by scripts/build-jni.sh like every other binary
+java/src/main/resources/native/
+java/build/
+java/.gradle/
+
 # macOS
 .DS_Store
 xcuserdata/

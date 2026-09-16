@@ -123,6 +123,20 @@ if [ "$VERIFY_ONLY" = "0" ]; then
   fi
 fi
 
+# The desktop engines need headers too, from whichever desktop target was built.
+# Optional, like the libraries themselves.
+if [ "$VERIFY_ONLY" = "0" ] && [ -d "$VENDOR/desktop" ]; then
+  for candidate in "$SOURCE/out/macos/release/include/public" "$SOURCE/out/linux/release/include/public"; do
+    if [ -d "$candidate" ]; then
+      mkdir -p "$VENDOR/desktop/include"
+      rm -rf "$VENDOR/desktop/include/public"
+      cp -R "$candidate" "$VENDOR/desktop/include/public"
+      break
+    fi
+  done
+  [ -d "$VENDOR/desktop/include/public" ] || echo "note: desktop engines have no headers; a JNI build needs them" >&2
+fi
+
 if [ "$status" = "0" ]; then
   echo "vendor/ populated and verified against $(basename "$MANIFEST")"
 else
