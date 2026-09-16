@@ -111,7 +111,8 @@ licence key from the environment. Same WebAssembly engine, so nothing to compile
 
 **Java** — Maven, `com.pdfiumkit:pdfiumkit:0.1.0`, Java 17 or newer on macOS and Linux
 (x86-64 and arm64). This one *is* a separate implementation: a JNI layer over the native
-engine, with the core API only — open, pages, render, text, search, metadata, save.
+engine, carrying the document API — open, pages, render, text, search, metadata, save —
+plus annotations, form filling, redaction, tagging, signing and the viewer state layer.
 `./scripts/build-jni.sh` builds the native libraries the jar carries. See `java/README.md`.
 
 **AI, separately and optionally** — `pdfiumkit-ai` (npm), `PdfiumKitAI` (SPM product),

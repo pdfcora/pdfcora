@@ -29,14 +29,21 @@ public final class PdfObjects {
     return Integer.parseInt(trailer.root().split("\\s+")[0]);
   }
 
-  /** The body of object `number`, without its header and `endobj`. */
+  /**
+   * The body of object `number`, without its header and `endobj`.
+   *
+   * The last definition wins: an incremental update appends the new version of an object
+   * after the old one, so a file that has already been signed or tagged would otherwise
+   * be read back at the revision before that change.
+   */
   public String body(int number) {
     Matcher header = Pattern.compile("(?:^|[\\s>])" + number + "\\s+0\\s+obj\\b").matcher(text);
-    if (!header.find()) {
+    int start = -1;
+    while (header.find()) start = header.end();
+    if (start < 0) {
       throw new PdfError(PdfError.Code.INVALID_OPERATION,
           "object " + number + " is not written plainly; a document using object streams cannot be tagged here");
     }
-    int start = header.end();
     int end = text.indexOf("endobj", start);
     return end < 0 ? text.substring(start) : text.substring(start, end);
   }
@@ -49,15 +56,31 @@ public final class PdfObjects {
    * its /Contents, /Resources and /MediaBox, which is the whole point.
    */
   public PdfValue merged(int number, String additions) {
+    return mergeInto(inner(number), additions);
+  }
+
+  /** The same merge over a dictionary the caller already holds, without its `<<` and `>>`. */
+  public static PdfValue mergeInto(String inner, String additions) {
+    String merged = inner;
+    for (String key : keysOf(additions)) merged = removeEntry(merged, key);
+    return new PdfValue.Raw(PdfValue.ascii("<<" + merged + " " + additions + ">>"));
+  }
+
+  /** Object `number`'s dictionary without its `<<` and `>>`. */
+  public String inner(int number) {
     String body = body(number).trim();
     int open = body.indexOf("<<");
     int close = body.lastIndexOf(">>");
     if (open < 0 || close < 0) {
       throw new PdfError(PdfError.Code.INVALID_OPERATION, "object " + number + " is not a dictionary");
     }
-    String inner = body.substring(open + 2, close);
-    for (String key : keysOf(additions)) inner = removeEntry(inner, key);
-    return new PdfValue.Raw(PdfValue.ascii("<<" + inner + " " + additions + ">>"));
+    return body.substring(open + 2, close);
+  }
+
+  /** The text of one entry's value, or null when the dictionary has no such key. */
+  public static String entryOf(String dictionary, String key) {
+    int[] span = spanOf(dictionary, key);
+    return span == null ? null : dictionary.substring(span[1], span[2]).trim();
   }
 
   /** Page object numbers in document order, by walking /Pages and its /Kids. */
@@ -93,10 +116,20 @@ public final class PdfObjects {
 
   /** Drops one `/Key value` pair, so the addition replaces rather than duplicates it. */
   private static String removeEntry(String dictionary, String key) {
+    int[] span = spanOf(dictionary, key);
+    return span == null ? dictionary : dictionary.substring(0, span[0]) + dictionary.substring(span[2]);
+  }
+
+  /**
+   * Where one `/Key value` pair sits: `{ pairStart, valueStart, end }`.
+   *
+   * A dictionary or array value is followed to its matching close, counting nesting, so
+   * an entry is never cut in half.
+   */
+  private static int[] spanOf(String dictionary, String key) {
     Matcher m = Pattern.compile("/" + key + "\\s*(<<|\\[|/\\w+|\\d+\\s+\\d+\\s+R|\\d+|true|false|\\([^)]*\\))")
         .matcher(dictionary);
-    if (!m.find()) return dictionary;
-    int start = m.start();
+    if (!m.find()) return null;
     int end = m.end();
     String opener = m.group(1);
     if (opener.equals("<<") || opener.equals("[")) {
@@ -110,6 +143,6 @@ public final class PdfObjects {
       }
       end = at;
     }
-    return dictionary.substring(0, start) + dictionary.substring(end);
+    return new int[] { m.start(), m.start(1), end };
   }
 }

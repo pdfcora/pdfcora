@@ -237,6 +237,19 @@ public final class PdfDocument implements AutoCloseable {
     return PdfRedaction.apply(this, targets);
   }
 
+  /**
+   * Signs the document, returning the signed bytes; this document is untouched.
+   *
+   * The signature is appended to a full save, so everything done to the document in
+   * memory is inside it. That save rewrites the file, so a signature that was already
+   * there does not survive — to add a second signature to a signed file, sign its
+   * original bytes with {@link com.pdfiumkit.sign.PdfSigning#sign} instead, which
+   * appends without rewriting.
+   */
+  public byte[] sign(com.pdfiumkit.sign.PdfSignOptions options) {
+    return com.pdfiumkit.sign.PdfSigning.sign(toByteArray(), options);
+  }
+
   public boolean isClosed() {
     return handle == 0;
   }

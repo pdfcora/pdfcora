@@ -32,7 +32,7 @@ because each lesson generalises. §4 lists what is open and what was parked.
 | `pdfiumkit-ai` Phase 1: grounded answers, summaries | Built, three platforms; real-model tested on Apple and on an Android phone |
 | Samples: one small app per feature area (core, AI, UI, agents) | iOS, Android, web — `samples/` |
 | Node SDK (`@pdfiumkit/node`) | Done — a thin layer over the web package: whole API re-exported, plus file, PNG and env-key helpers |
-| Java SDK (`com.pdfiumkit:pdfiumkit`) | Core, annotations, form filling, redaction, tagging (veraPDF-validated), signature reading and verifying, viewer state — over JNI on macOS and Linux. No signing, no AI |
+| Java SDK (`com.pdfiumkit:pdfiumkit`) | Core, annotations, form filling, redaction, tagging (veraPDF-validated), signatures (read, verify, sign), viewer state — over JNI on macOS and Linux. No timestamping, no AI |
 | License keys: offline, per module, trial watermark | Done, three platforms, shared cases in `conformance/license/` |
 | `pdfiumkit-ai` Phase 2a: redaction suggestions, review marks in the viewer, undo | Done, three platforms, shared cases in `conformance/redaction/` |
 | `pdfiumkit-ai` Phase 2b: smart form filling from a profile, labelled marks, undo | Done, three platforms, shared cases in `conformance/forms/`; no on-device model (measured) |
@@ -48,9 +48,10 @@ because each lesson generalises. §4 lists what is open and what was parked.
 Test counts at the time of writing (2026-09-16): web 303, web-ai 128 (one Ollama test skipped),
 browser viewer 36 (includes the axe audit and WebMCP), MCP server 3, license tool 1, iOS 191 (sweep
 skipped) + hung-render pass + demo UI 14 + AI 75 (three Apple measurements skipped), Android 165
-instrumented (sweep skipped) + UI 7 + hung-render pass + JVM, AI JVM + 32 instrumented. pdfsig
-accepts both the licensed and the trial-signed document on iOS and Android; veraPDF passes the alt
-text and remediation output on all three.
+instrumented (sweep skipped) + UI 7 + hung-render pass + JVM, AI JVM + 32 instrumented, Node 7,
+Java 50. pdfsig accepts both the licensed and the trial-signed document on iOS and Android and the
+Java SDK's own; veraPDF passes the alt text and remediation output on all three, and the Java
+SDK's tagged output.
 
 ## 2. Running things
 
@@ -215,13 +216,13 @@ host view, and removing a figure's fallback description makes it fail on the two
 — the same defect Compose 1.8's own checks found.
 
 **The Java SDK is a fourth implementation**, and now covers the core plus annotations,
-form filling, redaction, tagging, signature reading and verifying, and the viewer state
-layer. Its tagged output is validated by veraPDF in `scripts/test-java.sh`, the same judge
-the other platforms answer to.
+form filling, redaction, tagging, signatures — reading, verifying and creating — and the
+viewer state layer. `scripts/test-java.sh` puts both write paths in front of outside
+judges: veraPDF for the tagged document's PDF/UA-1 claim, and poppler's `pdfsig` for the
+signed one, which reports *Signature is Valid, Total document signed*.
 
-Two things it does *not* have: **signing** (reading and verifying are there; creating a
-signature needs CMS construction and a timestamp authority) and **the AI package**. Also
-no Windows engine.
+What it does *not* have: **RFC 3161 timestamping** (a signature is PAdES B-B, not B-T),
+**the AI package**, and no Windows engine.
 
 Worth knowing for anyone extending it. The byte-level writer here is smaller than the
 web's: it reads objects by scanning for `N 0 obj` rather than parsing the cross-reference

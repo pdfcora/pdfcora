@@ -28,3 +28,16 @@ cd ..
 if [ -f build/remediation/written-java.pdf ]; then
   ./scripts/verapdf-ua1.sh build/remediation/written-java.pdf
 fi
+
+# Likewise for signing: poppler's pdfsig shares no code with this SDK, so it is the one
+# that can say the signature is sound rather than merely self-consistent.
+if [ -f build/sign/signed-java.pdf ] && command -v pdfsig >/dev/null; then
+  report="$(pdfsig build/sign/signed-java.pdf 2>/dev/null)"
+  if grep -q "Signature is Valid" <<<"$report" && grep -q "Total document signed" <<<"$report"; then
+    echo "pdfsig:     build/sign/signed-java.pdf verifies"
+  else
+    echo "$report" >&2
+    echo "pdfsig rejected the signed document" >&2
+    exit 1
+  fi
+fi

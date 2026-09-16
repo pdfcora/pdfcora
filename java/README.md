@@ -166,7 +166,36 @@ try (PdfDocument tagged = document.tagContent(blocks, "Quarterly newsletter", "e
 `verify` answers "have the signed bytes changed since signing?", which is the question
 that matters for a document arriving from outside. It does **not** build or trust a
 certificate chain: that needs a trust store and a policy, which belong to the application.
-Signing a document is not implemented.
+
+### Signing
+
+| Member | Description |
+| --- | --- |
+| `document.sign(PdfSignOptions)` | Signs a full save of the document and returns the bytes |
+| `PdfSigning.sign(byte[] base, PdfSignOptions)` | Signs bytes as they are, appending without rewriting |
+| `Pkcs12Signer(byte[] pkcs12, String password)` | The signer the SDK ships: JCA, RSA or EC, no Bouncy Castle |
+| `CmsSigner` | Implement it to sign with an HSM, a smart card or a remote service |
+
+```java
+Pkcs12Signer signer = new Pkcs12Signer(Files.readAllBytes(identity), password);
+byte[] signed = document.sign(PdfSignOptions.with(signer)
+    .reason("I approve this contract")
+    .contactInfo("signer@example.com"));
+```
+
+The signature is appended as an incremental update with a fixed-size `/Contents`
+placeholder, so the bytes underneath it are never rewritten and the `/ByteRange` keeps
+naming what it signed. `document.sign` signs a **full save**, so everything done to the
+document in memory is inside the signature — but that save rewrites the file, and a
+signature already in it does not survive. To add a second signature, pass the original
+bytes to `PdfSigning.sign`, which appends and leaves the first one verifying.
+
+`Pkcs12Signer` builds the CMS itself and adds the CAdES `signingCertificateV2` attribute,
+so the default `ETSI.CAdES.detached` sub-filter is honest about what the blob contains;
+pass `.subFilter("adbe.pkcs7.detached")` for a plain PKCS#7 signer.
+
+RFC 3161 timestamping is not here yet — iOS, Android and web take a `timestampUrl`; on
+Java a signature is PAdES B-B rather than B-T.
 
 ### The viewer
 
@@ -207,8 +236,8 @@ library the SDK loads, for a build that manages its own.
 
 ## What is not here yet
 
-- **Signing** a document. Reading and verifying are here; creating a signature needs CMS
-  construction and a timestamp authority.
+- **RFC 3161 timestamping.** Signing is here; a timestamp would raise it from PAdES B-B
+  to B-T, and needs a call to an authority.
 - **The AI package** — answers, summaries, redaction and form proposals, alt text,
   remediation, semantic diff. All of it sits above the core.
 - **Agent tools** (MCP and WebMCP), which are a Node and browser concern.
