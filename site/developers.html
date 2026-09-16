@@ -84,7 +84,7 @@
           <article class="card reveal"><span class="tag">iOS</span><h3>An actor per document</h3><p>Every call hops onto the document’s actor, so concurrent calls serialise instead of corrupting memory. <code>async</code>/<code>await</code> throughout.</p></article>
           <article class="card reveal"><span class="tag">Android</span><h3>A single-threaded dispatcher</h3><p>Each document owns one dispatcher; suspending functions run there. Your coroutine scope stays yours.</p></article>
           <article class="card reveal"><span class="tag">Web</span><h3>A promise chain, or a Worker</h3><p>In-process calls queue behind one chain. <code>PdfWorker</code> runs the whole SDK in a Worker behind the same API, so a stalled render can be terminated without taking the page down.</p></article>
-          <article class="card reveal card-lead"><span class="tag">All three</span><h3>A watchdog for the calls that never return</h3><p>A malformed page can stall inside the engine where no cancellation reaches. Each document has its own executor, and a watchdog marks the engine unresponsive so later calls fail fast with a typed error rather than piling up behind it. Measured with 16 simultaneous stalls on iOS and 10 on Android: everything else kept working.</p></article>
+          <article class="card reveal card-lead"><span class="tag">All three</span><h3>A watchdog for the calls that never return</h3><p>A malformed page can stall inside the engine where no cancellation reaches. Each document has its own executor, and a watchdog marks the engine unresponsive so later calls fail fast with a typed error rather than piling up behind it. Tested with many documents stalled at once: everything else kept working.</p></article>
         </div>
       </div>
     </section>
@@ -162,7 +162,7 @@
         </header>
         <div class="cards">
           <article class="card reveal"><h3>Cross-checked against other engines</h3><p>Page counts against poppler, rendered colour positions against a reference, extracted text by SHA-256 on every platform, and signatures against <code>pdfsig</code>.</p></article>
-          <article class="card reveal"><h3>The whole PDFium corpus</h3><p>All 293 documents through the entire public API: no crashes, no untyped throws, and the one file that stalls the engine is contained.</p></article>
+          <article class="card reveal"><h3>The whole PDFium corpus</h3><p>Every document in PDFium’s own test corpus, through the entire public API: no crashes, no untyped throws, and the one file that stalls the engine is contained.</p></article>
           <article class="card reveal"><h3>PDF/UA judged by veraPDF</h3><p>Documents the SDK tags or describes are validated against PDF/UA-1 in CI and in the local gates on all three platforms.</p></article>
           <article class="card reveal"><h3>Accessibility audits in the gates</h3><p>axe-core on the web component, <code>performAccessibilityAudit</code> on iOS, and the Accessibility Test Framework over the platform’s own accessibility tree on Android.</p></article>
         </div>

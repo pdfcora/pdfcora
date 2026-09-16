@@ -87,19 +87,9 @@
               </div>
             </div>
           </div>
-          <div class="float f1"><span class="f-dot good"></span><div><b>0 crashes</b><small>293 real-world test files</small></div></div>
-          <div class="float f2"><span class="f-dot"></span><div><b>14 ms</b><small>1600px page render</small></div></div>
         </div>
       </div>
 
-      <div class="wrap">
-        <dl class="stats reveal">
-          <div><dt>Crashes across PDFium’s own 293-document test corpus</dt><dd><span class="sr">0</span><span aria-hidden="true" data-count="0">0</span></dd></div>
-          <div><dt>Platforms, one object model and one error type</dt><dd><span class="sr">3</span><span aria-hidden="true" data-count="3">3</span></dd></div>
-          <div><dt>Automated tests across iOS, Android, Web and host</dt><dd><span class="sr">96</span><span aria-hidden="true" data-count="96">96</span></dd></div>
-          <div><dt>WebAssembly engine download, brotli-compressed</dt><dd><span class="sr">1.5 MB</span><span aria-hidden="true"><span data-count="1.5" data-decimals="1">1.5</span><small> MB</small></span></dd></div>
-        </dl>
-      </div>
     </section>
 
     <!-- ============================== WHY ============================== -->
@@ -127,8 +117,7 @@
           <article class="tile tile-tall reveal">
             <div class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.1 8.3 7.5 9.5 4.4-1.2 7.5-4.9 7.5-9.5V6z"/><path d="m8.8 12 2.2 2.2 4.3-4.4"/></svg></div>
             <h3>Bad files don’t crash your app.</h3>
-            <p>We pushed all 293 documents from PDFium’s own test corpus through the entire API. Zero crashes. Broken and password-protected files come back as typed errors you can handle.</p>
-            <div class="big-num"><span>0</span><small>crashes</small></div>
+            <p>PDFium’s own test corpus — the malformed, truncated and hostile files it uses to find its own bugs — goes through the entire API without a crash. Broken and password-protected documents come back as typed errors you can handle.</p>
           </article>
 
           <article class="tile reveal">
@@ -250,24 +239,9 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
         <header class="section-head section-head-center reveal">
           <p class="eyebrow">Proof, not promises</p>
           <h2 id="proof-h">Tested against the files your users actually send.</h2>
-          <p>Every one of the 293 documents in PDFium’s own test corpus, pushed through the entire public API. Here is exactly what happened.</p>
+          <p>PDFium’s own test corpus goes through the entire public API on every platform — the same malformed and hostile files the engine’s maintainers use to find its bugs.</p>
         </header>
 
-        <figure class="sweep reveal">
-          <div class="bar" role="img" aria-label="Of 293 documents: 265 completed, 23 rejected on open with a typed error, 4 raised a typed error during use, 1 hang, 0 crashes, 0 untyped throws.">
-            <span class="seg s-ok" style="--v:265"></span><span class="seg s-typed" style="--v:23"></span><span class="seg s-use" style="--v:4"></span><span class="seg s-hang" style="--v:1"></span>
-          </div>
-          <figcaption>
-            <ul class="sweep-legend">
-              <li><i class="s-ok"></i><b>265</b> completed</li>
-              <li><i class="s-typed"></i><b>23</b> rejected safely on open <small>(9 password, 14 corrupt)</small></li>
-              <li><i class="s-use"></i><b>4</b> typed error during use</li>
-              <li><i class="s-hang"></i><b>1</b> hang — contained</li>
-              <li class="zero"><b>0</b> crashes</li>
-              <li class="zero"><b>0</b> untyped throws</li>
-            </ul>
-          </figcaption>
-        </figure>
 
         <div class="proof-grid">
           <article class="proof reveal">
@@ -290,8 +264,8 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
         <aside class="honest reveal" aria-labelledby="honest-h">
           <div>
             <p class="eyebrow eyebrow-warn">We tell you about the edge cases</p>
-            <h3 id="honest-h">One 1,230-byte file stalls PDFium’s renderer. We measured the damage.</h3>
-            <p>It stalls inside the engine, where no cancellation can reach it. So PdfiumKit contains it: every document has its own executor, and with 16 simultaneous stalls on iOS and 10 on Android, other documents kept rendering and the rest of the app kept working. On the Web, <code>PdfWorker</code> recovers completely.</p>
+            <h3 id="honest-h">A malformed page can stall PDFium’s renderer, and we cannot fix that.</h3>
+            <p>It stalls inside the engine, where no cancellation can reach it. So PdfiumKit contains it instead: every document has its own executor, so a stalled one cannot take the others with it, and later calls to it fail fast with a typed error rather than queueing behind it. We tested this with many documents stalled at once — the rest of the app kept working. On the Web, <code>PdfWorker</code> recovers completely.</p>
           </div>
           <a class="btn btn-glass" href="developers.html">Read the engineering details</a>
         </aside>

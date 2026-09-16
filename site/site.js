@@ -66,29 +66,10 @@ const onScroll = () => header.toggleAttribute('data-scrolled', scrollY > 8);
 addEventListener('scroll', onScroll, { passive: true });
 onScroll();
 
-// Count numbers up from zero when they come into view
-const countUp = (el) => {
-  const target = parseFloat(el.dataset.count);
-  const decimals = Number(el.dataset.decimals || 0);
-  if (reduceMotion || target === 0) return;
-  const start = performance.now();
-  const duration = 1400;
-  const frame = (now) => {
-    const t = Math.min(1, (now - start) / duration);
-    const eased = 1 - Math.pow(1 - t, 3);
-    el.textContent = (target * eased).toFixed(decimals);
-    if (t < 1) requestAnimationFrame(frame);
-  };
-  el.textContent = (0).toFixed(decimals);
-  requestAnimationFrame(frame);
-};
 
 // Reveal on scroll, staggering siblings. Without IntersectionObserver, show everything.
 const reveals = [...document.querySelectorAll('.reveal')];
-const show = (el) => {
-  el.classList.add('in');
-  el.querySelectorAll('[data-count]').forEach(countUp);
-};
+const show = (el) => el.classList.add('in');
 if (!('IntersectionObserver' in window) || reduceMotion) {
   reveals.forEach((el) => el.classList.add('in'));
 } else {
