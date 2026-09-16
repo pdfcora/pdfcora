@@ -110,4 +110,27 @@ final class Native {
   static native int setFieldText(long handle, int index, int at, String value);
 
   static native int setFieldChecked(long handle, int index, int at, boolean checked);
+
+  /** Redacts one page; fills `counts` with text, split, image, path and annotation totals. */
+  static native int redactPage(long handle, int index, float[] regions, int[] counts);
+
+  /** The rectangles a match covers; returns how many were written. */
+  static native int matchRects(long handle, int index, int start, int count, float[] out);
+
+  static native int signatureCount(long handle);
+
+  static native byte[] signatureContents(long handle, int at);
+
+  static native int signatureByteRange(long handle, int at, int[] out);
+
+  /** Reason, sub-filter and time joined by newlines; the MDP permission goes in `out`. */
+  static native String signatureInfo(long handle, int at, int[] out);
+
+  static native int markPage(long handle, int index, String[] types, int[] assignments);
+
+  static native boolean isTagged(long handle);
+
+  static native int objectCount(long handle, int index);
+
+  static native int objectInfo(long handle, int index, int at, float[] out);
 }

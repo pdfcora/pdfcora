@@ -13,10 +13,12 @@
 
 #include "fpdfview.h"
 #include "fpdf_annot.h"
+#include "fpdf_catalog.h"
 #include "fpdf_doc.h"
 #include "fpdf_edit.h"
 #include "fpdf_formfill.h"
 #include "fpdf_save.h"
+#include "fpdf_signature.h"
 #include "fpdf_text.h"
 
 namespace {
@@ -553,6 +555,398 @@ JNIEXPORT jint JNICALL Java_com_pdfiumkit_Native_setFieldChecked(
   FORM_OnBeforeClosePage(page, form);
   FPDF_ClosePage(page);
   return result;
+}
+
+}  // extern "C"
+
+// ---- Redaction --------------------------------------------------------------------
+//
+// Objects a region touches are removed and the content stream regenerated, so the
+// content leaves the file rather than being covered. Drawing a black box over text is
+// the classic failure: it looks right and the words are still there. The document must
+// then be saved in full — an incremental save keeps the original stream.
+
+namespace {
+
+struct Rect { float left, bottom, right, top; };
+
+bool intersects(const Rect& a, const Rect& b) {
+  return a.left <= b.right && a.right >= b.left && a.bottom <= b.top && a.top >= b.bottom;
+}
+
+Rect charBox(FPDF_TEXTPAGE text, int index) {
+  double left = 0, right = 0, bottom = 0, top = 0;
+  FPDFText_GetCharBox(text, index, &left, &right, &bottom, &top);
+  // The out-parameters are left, right, bottom, top — not the usual rect order.
+  return Rect{ static_cast<float>(std::min(left, right)), static_cast<float>(std::min(bottom, top)),
+               static_cast<float>(std::max(left, right)), static_cast<float>(std::max(bottom, top)) };
+}
+
+struct Run { std::vector<unsigned short> text; float left; float bottom; };
+
+/**
+ * Rewrites a text object a region only partly covers: the covered characters go, the
+ * rest stay legible, positioned and in the same font. Characters are dropped on
+ * intersection, not containment — one half inside the region is still readable.
+ */
+bool replaceWithRuns(FPDF_DOCUMENT document, FPDF_PAGE page, FPDF_PAGEOBJECT original,
+                     const std::vector<Run>& runs) {
+  FPDF_FONT font = FPDFTextObj_GetFont(original);
+  float fontSize = 0;
+  if (!font || !FPDFTextObj_GetFontSize(original, &fontSize)) return false;
+
+  std::vector<FPDF_PAGEOBJECT> created;
+  for (const Run& run : runs) {
+    FPDF_PAGEOBJECT object = FPDFPageObj_CreateTextObj(document, font, fontSize);
+    if (!object) { for (auto* o : created) FPDFPageObj_Destroy(o); return false; }
+    std::vector<unsigned short> units = run.text;
+    units.push_back(0);
+    if (!FPDFText_SetText(object, reinterpret_cast<FPDF_WIDESTRING>(units.data()))) {
+      FPDFPageObj_Destroy(object);
+      for (auto* o : created) FPDFPageObj_Destroy(o);
+      return false;
+    }
+    // Identity translated to the run's origin, so the glyphs land where they were.
+    FS_MATRIX matrix{ 1, 0, 0, 1, run.left, run.bottom };
+    FPDFPageObj_SetMatrix(object, &matrix);
+    created.push_back(object);
+  }
+
+  // Only now that every run exists is the original removed, so a failure part-way
+  // through leaves the page as it was rather than half-redacted.
+  if (!FPDFPage_RemoveObject(page, original)) {
+    for (auto* o : created) FPDFPageObj_Destroy(o);
+    return false;
+  }
+  FPDFPageObj_Destroy(original);
+  for (auto* o : created) FPDFPage_InsertObject(page, o);
+  return true;
+}
+
+}  // namespace
+
+extern "C" {
+
+/**
+ * Redacts one page against rectangles given as [left, bottom, right, top] quads.
+ * Returns counts as [textObjects, textObjectsSplit, images, paths, annotations].
+ */
+JNIEXPORT jint JNICALL Java_com_pdfiumkit_Native_redactPage(
+    JNIEnv* env, jclass, jlong handle, jint index, jfloatArray regionArray, jintArray countsOut) {
+  auto* loaded = reinterpret_cast<Loaded*>(handle);
+  if (!loaded) return kCorrupt;
+
+  std::vector<jfloat> flat(env->GetArrayLength(regionArray));
+  if (flat.empty()) return kOk;
+  env->GetFloatArrayRegion(regionArray, 0, static_cast<jsize>(flat.size()), flat.data());
+  std::vector<Rect> regions;
+  for (size_t i = 0; i + 3 < flat.size(); i += 4) {
+    regions.push_back(Rect{ flat[i], flat[i + 1], flat[i + 2], flat[i + 3] });
+  }
+
+  FPDF_PAGE page = FPDF_LoadPage(loaded->document, index);
+  if (!page) return kPageOutOfRange;
+  FPDF_TEXTPAGE text = FPDFText_LoadPage(page);
+
+  jint counts[5] = { 0, 0, 0, 0, 0 };
+  std::vector<FPDF_PAGEOBJECT> handled;
+
+  // Partially covered runs first: they are rewritten rather than removed, and doing it
+  // before the whole-object pass keeps the two from fighting over the same handles.
+  if (text) {
+    std::vector<std::pair<FPDF_PAGEOBJECT, std::vector<int>>> byObject;
+    const int characters = FPDFText_CountChars(text);
+    for (int i = 0; i < characters; i++) {
+      FPDF_PAGEOBJECT object = FPDFText_GetTextObject(text, i);
+      if (!object) continue;
+      auto found = std::find_if(byObject.begin(), byObject.end(),
+                                [&](const auto& entry) { return entry.first == object; });
+      if (found == byObject.end()) byObject.push_back({ object, { i } });
+      else found->second.push_back(i);
+    }
+
+    for (auto& [object, indices] : byObject) {
+      std::vector<Rect> boxes;
+      std::vector<bool> covered;
+      size_t coveredCount = 0;
+      for (int i : indices) {
+        Rect box = charBox(text, i);
+        bool hit = std::any_of(regions.begin(), regions.end(),
+                               [&](const Rect& r) { return intersects(box, r); });
+        boxes.push_back(box);
+        covered.push_back(hit);
+        if (hit) coveredCount++;
+      }
+      // Untouched, or covered outright: neither is this path's business.
+      if (coveredCount == 0 || coveredCount == indices.size()) continue;
+
+      std::vector<Run> runs;
+      Run current{};
+      bool open = false;
+      for (size_t i = 0; i < indices.size(); i++) {
+        if (covered[i]) {
+          if (open) { runs.push_back(current); open = false; current = Run{}; }
+          continue;
+        }
+        unsigned int unicode = FPDFText_GetUnicode(text, indices[i]);
+        if (!open) { current = Run{ {}, boxes[i].left, boxes[i].bottom }; open = true; }
+        current.text.push_back(static_cast<unsigned short>(unicode));
+      }
+      if (open) runs.push_back(current);
+
+      if (replaceWithRuns(loaded->document, page, object, runs)) {
+        handled.push_back(object);
+        counts[1]++;
+      }
+    }
+  }
+
+  // Then every object a region touches, highest index first: removing one shifts every
+  // index above it, and walking upward would silently skip objects.
+  const int objectCount = FPDFPage_CountObjects(page);
+  for (int i = objectCount - 1; i >= 0; i--) {
+    FPDF_PAGEOBJECT object = FPDFPage_GetObject(page, i);
+    if (!object) continue;
+    if (std::find(handled.begin(), handled.end(), object) != handled.end()) continue;
+
+    FS_RECTF bounds{};
+    if (!FPDFPageObj_GetBounds(object, &bounds.left, &bounds.bottom, &bounds.right, &bounds.top)) continue;
+    Rect rect{ bounds.left, bounds.bottom, bounds.right, bounds.top };
+    if (!std::any_of(regions.begin(), regions.end(),
+                     [&](const Rect& r) { return intersects(rect, r); })) continue;
+
+    const int type = FPDFPageObj_GetType(object);
+    if (!FPDFPage_RemoveObject(page, object)) continue;
+    // RemoveObject detaches but does not free.
+    FPDFPageObj_Destroy(object);
+    if (type == FPDF_PAGEOBJ_TEXT) counts[0]++;
+    else if (type == FPDF_PAGEOBJ_IMAGE) counts[2]++;
+    else counts[3]++;
+  }
+
+  // Annotations a region touches go too: a comment or a filled field carries the text
+  // straight back out of the document.
+  const int annotCount = FPDFPage_GetAnnotCount(page);
+  std::vector<int> doomed;
+  for (int i = 0; i < annotCount; i++) {
+    FPDF_ANNOTATION annot = FPDFPage_GetAnnot(page, i);
+    if (!annot) continue;
+    FS_RECTF box{};
+    if (FPDFAnnot_GetRect(annot, &box)) {
+      Rect rect{ box.left, box.bottom, box.right, box.top };
+      if (std::any_of(regions.begin(), regions.end(),
+                      [&](const Rect& r) { return intersects(rect, r); })) {
+        // A field's value lives in the AcroForm dictionary, not on the page, so
+        // removing the widget alone leaves the value in the file.
+        unsigned short empty[1] = { 0 };
+        FPDFAnnot_SetStringValue(annot, "V", reinterpret_cast<FPDF_WIDESTRING>(empty));
+        doomed.push_back(i);
+      }
+    }
+    FPDFPage_CloseAnnot(annot);
+  }
+  for (auto it = doomed.rbegin(); it != doomed.rend(); ++it) {
+    if (FPDFPage_RemoveAnnot(page, *it)) counts[4]++;
+  }
+
+  const bool regenerated = FPDFPage_GenerateContent(page);
+  if (text) FPDFText_ClosePage(text);
+  FPDF_ClosePage(page);
+  if (!regenerated) return kSaveFailed;
+
+  env->SetIntArrayRegion(countsOut, 0, 5, counts);
+  return kOk;
+}
+
+/** The rectangles a search match covers, as [left, bottom, right, top] per rect. */
+JNIEXPORT jint JNICALL Java_com_pdfiumkit_Native_matchRects(
+    JNIEnv* env, jclass, jlong handle, jint index, jint start, jint count, jfloatArray out) {
+  auto* loaded = reinterpret_cast<Loaded*>(handle);
+  if (!loaded) return kCorrupt;
+  FPDF_PAGE page = FPDF_LoadPage(loaded->document, index);
+  if (!page) return kPageOutOfRange;
+  FPDF_TEXTPAGE text = FPDFText_LoadPage(page);
+  if (!text) { FPDF_ClosePage(page); return kCorrupt; }
+
+  const int rects = FPDFText_CountRects(text, start, count);
+  const int capacity = env->GetArrayLength(out) / 4;
+  std::vector<jfloat> values;
+  for (int i = 0; i < rects && i < capacity; i++) {
+    double left = 0, top = 0, right = 0, bottom = 0;
+    FPDFText_GetRect(text, i, &left, &top, &right, &bottom);
+    values.push_back(static_cast<jfloat>(std::min(left, right)));
+    values.push_back(static_cast<jfloat>(std::min(bottom, top)));
+    values.push_back(static_cast<jfloat>(std::max(left, right)));
+    values.push_back(static_cast<jfloat>(std::max(bottom, top)));
+  }
+  if (!values.empty()) env->SetFloatArrayRegion(out, 0, static_cast<jsize>(values.size()), values.data());
+
+  FPDFText_ClosePage(text);
+  FPDF_ClosePage(page);
+  return static_cast<jint>(values.size() / 4);
+}
+
+}  // extern "C"
+
+// ---- Signatures -------------------------------------------------------------------
+
+extern "C" {
+
+JNIEXPORT jint JNICALL Java_com_pdfiumkit_Native_signatureCount(JNIEnv*, jclass, jlong handle) {
+  auto* loaded = reinterpret_cast<Loaded*>(handle);
+  return loaded ? FPDF_GetSignatureCount(loaded->document) : 0;
+}
+
+/** The PKCS#7 blob of one signature, which is what a verifier checks. */
+JNIEXPORT jbyteArray JNICALL Java_com_pdfiumkit_Native_signatureContents(
+    JNIEnv* env, jclass, jlong handle, jint at) {
+  auto* loaded = reinterpret_cast<Loaded*>(handle);
+  if (!loaded) return nullptr;
+  FPDF_SIGNATURE signature = FPDF_GetSignatureObject(loaded->document, at);
+  if (!signature) return nullptr;
+
+  const unsigned long size = FPDFSignatureObj_GetContents(signature, nullptr, 0);
+  std::vector<uint8_t> bytes(size);
+  if (size) FPDFSignatureObj_GetContents(signature, bytes.data(), size);
+
+  jbyteArray out = env->NewByteArray(static_cast<jsize>(size));
+  if (size) env->SetByteArrayRegion(out, 0, static_cast<jsize>(size),
+                                    reinterpret_cast<const jbyte*>(bytes.data()));
+  return out;
+}
+
+/** The ByteRange pairs: offset, length, offset, length. */
+JNIEXPORT jint JNICALL Java_com_pdfiumkit_Native_signatureByteRange(
+    JNIEnv* env, jclass, jlong handle, jint at, jintArray out) {
+  auto* loaded = reinterpret_cast<Loaded*>(handle);
+  if (!loaded) return 0;
+  FPDF_SIGNATURE signature = FPDF_GetSignatureObject(loaded->document, at);
+  if (!signature) return 0;
+
+  const unsigned long count = FPDFSignatureObj_GetByteRange(signature, nullptr, 0);
+  std::vector<int> values(count);
+  if (count) FPDFSignatureObj_GetByteRange(signature, values.data(), count);
+  const jsize capacity = env->GetArrayLength(out);
+  const jsize written = static_cast<jsize>(std::min<unsigned long>(count, capacity));
+  if (written) env->SetIntArrayRegion(out, 0, written, values.data());
+  return written;
+}
+
+/** Reason, sub-filter and signing time, joined by newlines — three short strings. */
+JNIEXPORT jstring JNICALL Java_com_pdfiumkit_Native_signatureInfo(
+    JNIEnv* env, jclass, jlong handle, jint at, jintArray permissionOut) {
+  auto* loaded = reinterpret_cast<Loaded*>(handle);
+  if (!loaded) return nullptr;
+  FPDF_SIGNATURE signature = FPDF_GetSignatureObject(loaded->document, at);
+  if (!signature) return nullptr;
+
+  const unsigned long reasonSize = FPDFSignatureObj_GetReason(signature, nullptr, 0);
+  std::vector<unsigned short> reasonUnits(reasonSize / 2 + 1, 0);
+  if (reasonSize) FPDFSignatureObj_GetReason(signature, reasonUnits.data(), reasonSize);
+
+  const unsigned long filterSize = FPDFSignatureObj_GetSubFilter(signature, nullptr, 0);
+  std::vector<char> filter(filterSize + 1, 0);
+  if (filterSize) FPDFSignatureObj_GetSubFilter(signature, filter.data(), filterSize);
+
+  const unsigned long timeSize = FPDFSignatureObj_GetTime(signature, nullptr, 0);
+  std::vector<char> time(timeSize + 1, 0);
+  if (timeSize) FPDFSignatureObj_GetTime(signature, time.data(), timeSize);
+
+  jint permission = FPDFSignatureObj_GetDocMDPPermission(signature);
+  env->SetIntArrayRegion(permissionOut, 0, 1, &permission);
+
+  const std::string joined = utf16ToUtf8(reasonUnits) + "\n" + filter.data() + "\n" + time.data();
+  return env->NewStringUTF(joined.c_str());
+}
+
+}  // extern "C"
+
+// ---- Tagging ----------------------------------------------------------------------
+//
+// Marking is all PDFium can do for a structure tree: it puts a marked-content id on each
+// object. The tree itself — StructTreeRoot, the parent tree, the catalog entries — is
+// appended by the writer in Java, because PDFium cannot create those objects.
+
+extern "C" {
+
+/**
+ * Marks the objects of one page.
+ *
+ * `types` names each object's tag and `assignments` says which block each object belongs
+ * to, one entry per object on the page, with -1 for "no block, so an artifact". Returns
+ * the number of marked-content ids assigned.
+ */
+JNIEXPORT jint JNICALL Java_com_pdfiumkit_Native_markPage(
+    JNIEnv* env, jclass, jlong handle, jint index, jobjectArray types, jintArray assignments) {
+  auto* loaded = reinterpret_cast<Loaded*>(handle);
+  if (!loaded) return kCorrupt;
+  FPDF_PAGE page = FPDF_LoadPage(loaded->document, index);
+  if (!page) return kPageOutOfRange;
+
+  const int objectCount = FPDFPage_CountObjects(page);
+  std::vector<jint> blockOf(objectCount, -1);
+  const jsize given = env->GetArrayLength(assignments);
+  env->GetIntArrayRegion(assignments, 0, std::min<jsize>(given, objectCount), blockOf.data());
+
+  int nextMcid = 0;
+  for (int i = 0; i < objectCount; i++) {
+    FPDF_PAGEOBJECT object = FPDFPage_GetObject(page, i);
+    if (!object) continue;
+
+    const jint block = blockOf[i];
+    if (block < 0) {
+      // Objects in no block are artifacts: content a screen reader must skip rather
+      // than content it has no tag for.
+      FPDFPageObj_AddMark(object, "Artifact");
+      continue;
+    }
+    auto* typeString = static_cast<jstring>(env->GetObjectArrayElement(types, block));
+    const char* tag = env->GetStringUTFChars(typeString, nullptr);
+    FPDF_PAGEOBJECTMARK mark = FPDFPageObj_AddMark(object, tag);
+    env->ReleaseStringUTFChars(typeString, tag);
+    if (!mark) continue;
+    FPDFPageObjMark_SetIntParam(loaded->document, object, mark, "MCID", nextMcid++);
+  }
+
+  const bool regenerated = FPDFPage_GenerateContent(page);
+  FPDF_ClosePage(page);
+  return regenerated ? nextMcid : kSaveFailed;
+}
+
+/** Whether the document already has a structure tree; tagging a tagged file is refused. */
+JNIEXPORT jboolean JNICALL Java_com_pdfiumkit_Native_isTagged(JNIEnv*, jclass, jlong handle) {
+  auto* loaded = reinterpret_cast<Loaded*>(handle);
+  return loaded && FPDFCatalog_IsTagged(loaded->document) ? JNI_TRUE : JNI_FALSE;
+}
+
+/** How many objects a page has, which is what a caller addresses blocks by. */
+JNIEXPORT jint JNICALL Java_com_pdfiumkit_Native_objectCount(JNIEnv*, jclass, jlong handle, jint index) {
+  auto* loaded = reinterpret_cast<Loaded*>(handle);
+  if (!loaded) return kCorrupt;
+  FPDF_PAGE page = FPDF_LoadPage(loaded->document, index);
+  if (!page) return kPageOutOfRange;
+  const int count = FPDFPage_CountObjects(page);
+  FPDF_ClosePage(page);
+  return count;
+}
+
+/** One object's type and bounds, so a caller can decide which block it belongs to. */
+JNIEXPORT jint JNICALL Java_com_pdfiumkit_Native_objectInfo(
+    JNIEnv* env, jclass, jlong handle, jint index, jint at, jfloatArray out) {
+  auto* loaded = reinterpret_cast<Loaded*>(handle);
+  if (!loaded) return kCorrupt;
+  FPDF_PAGE page = FPDF_LoadPage(loaded->document, index);
+  if (!page) return kPageOutOfRange;
+  FPDF_PAGEOBJECT object = FPDFPage_GetObject(page, at);
+  if (!object) { FPDF_ClosePage(page); return kPageOutOfRange; }
+
+  FS_RECTF bounds{};
+  FPDFPageObj_GetBounds(object, &bounds.left, &bounds.bottom, &bounds.right, &bounds.top);
+  jfloat values[5] = { static_cast<jfloat>(FPDFPageObj_GetType(object)),
+                       bounds.left, bounds.bottom, bounds.right, bounds.top };
+  env->SetFloatArrayRegion(out, 0, 5, values);
+  FPDF_ClosePage(page);
+  return kOk;
 }
 
 }  // extern "C"

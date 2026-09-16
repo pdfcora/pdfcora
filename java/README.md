@@ -113,6 +113,75 @@ catch (PdfError e) {
 }
 ```
 
+### Redaction
+
+| Member | Description |
+| --- | --- |
+| `document.redact(List<Target>)` | Removes content and returns a `Report` |
+| `Target.Region(pageIndex, rect)` | A rectangle on one page |
+| `Target.TextMatches(query)` | Every match of a phrase, across the document |
+
+Content is removed from the saved bytes, not covered: a text object a region only partly
+covers is rewritten without the covered characters, in the same font and position, and
+annotations the region touches go with their field values. Drawing a black box is the
+classic failure — it looks right and the words are still there.
+
+```java
+PdfRedaction.Report report = document.redact(List.of(
+        new PdfRedaction.Target.TextMatches("anna.schmidt@example.com")));
+document.writeTo(Path.of("redacted.pdf"));   // always a full save, which redaction needs
+```
+
+### Tagging for accessibility
+
+| Member | Description |
+| --- | --- |
+| `document.isTagged()` | Whether a structure tree is already there |
+| `document.objectCount(pageIndex)` | The drawing objects a block addresses |
+| `document.tagContent(List<PdfTagBlock>, title, language)` | Writes the tree, returning a new document |
+
+Blocks are given in reading order with the page objects they cover; anything left out
+becomes an artifact, which is what a screen reader skips. The result carries a structure
+tree, a parent tree, `/MarkInfo`, `/Lang` and an XMP packet claiming PDF/UA-1 — and
+`scripts/test-java.sh` runs **veraPDF** over the output, which is what decides whether
+that claim is true.
+
+```java
+List<PdfTagBlock> blocks = List.of(
+    new PdfTagBlock(0, "H1", List.of(0)),
+    new PdfTagBlock(0, "P",  List.of(1, 2)),
+    new PdfTagBlock(0, "Figure", List.of(3), "The Berlin office at dusk"));
+try (PdfDocument tagged = document.tagContent(blocks, "Quarterly newsletter", "en")) {
+    tagged.writeTo(Path.of("tagged.pdf"));
+}
+```
+
+### Signatures
+
+| Member | Description |
+| --- | --- |
+| `document.signatures()` | Every signature: reason, sub-filter, time, byte range, contents, `coversWholeDocument` |
+| `signature.verify(byte[] document)` | Recomputes the digest over the signed ranges and compares it |
+
+`verify` answers "have the signed bytes changed since signing?", which is the question
+that matters for a document arriving from outside. It does **not** build or trust a
+certificate chain: that needs a trust store and a policy, which belong to the application.
+Signing a document is not implemented.
+
+### The viewer
+
+`com.pdfiumkit.view.PdfViewer` is the viewer's logic with no user interface: page, zoom,
+centre, tool and review marks. Its state is a value, so it can be sent to another device
+and adopted there — which is how the iOS, Android and web viewers stay in step.
+
+```java
+PdfViewer viewer = PdfViewer.open(document, 800, 1000);
+viewer.zoomIn();
+viewer.nextPage();
+BufferedImage image = viewer.render();          // at the zoomed size, so text stays sharp
+follower.apply(viewer.state());                 // a fit is re-derived for the follower's window
+```
+
 ## Threading
 
 PDFium is not thread-safe. Every document owns one thread and every call runs on it, so
@@ -138,20 +207,15 @@ library the SDK loads, for a build that manages its own.
 
 ## What is not here yet
 
-Present: open, pages, render, text, search, metadata, save, annotations and form filling.
+- **Signing** a document. Reading and verifying are here; creating a signature needs CMS
+  construction and a timestamp authority.
+- **The AI package** — answers, summaries, redaction and form proposals, alt text,
+  remediation, semantic diff. All of it sits above the core.
+- **Agent tools** (MCP and WebMCP), which are a Node and browser concern.
+- **Windows.** The engine is built for macOS and Linux only.
+- **Tagging a document whose objects live in object streams.** Tagging runs on a full
+  save, which PDFium writes plainly, so this is not hit in practice — but a file that
+  arrives that way is refused with a clear error rather than half-written.
 
-Not yet, and each needs work beyond binding an engine call — the other SDKs implement
-these above PDFium, so Java needs the same logic written again:
-
-- **Signatures.** Reading and verifying needs CMS parsing; signing needs incremental
-  writing too. BouncyCastle would do the cryptography.
-- **Redaction.** Removing content from the saved bytes, including rewriting text objects
-  that are only partly covered.
-- **Tagging for accessibility.** A structure tree, parent tree and XMP packet, written by
-  a byte-level PDF writer.
-- **Viewer state.** Page, zoom, scroll and tools as portable values.
-- **The AI package.** Answers, summaries, proposals; all of it sits above the core.
-
-Everything on that list exists on iOS, Android and the web today. If you need it on a
-server now, `@pdfiumkit/node` has all of it, because it is the web SDK rather than a
-second implementation.
+`@pdfiumkit/node` has the AI package and the agent tools today, because it is the web SDK
+rather than a second implementation.

@@ -21,3 +21,10 @@ fi
 
 cd java
 gradle test "$@"
+cd ..
+
+# The same judge the other platforms answer to: the suite writes a tagged document and
+# veraPDF says whether its PDF/UA-1 claim is true.
+if [ -f build/remediation/written-java.pdf ]; then
+  ./scripts/verapdf-ua1.sh build/remediation/written-java.pdf
+fi
