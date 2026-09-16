@@ -1,0 +1,7 @@
+{
+  "name": "pdfiumkit-sample-core-node",
+  "private": true,
+  "type": "module",
+  "scripts": { "start": "node main.mjs" },
+  "dependencies": { "@pdfiumkit/node": "file:../../node" }
+}

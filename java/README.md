@@ -236,6 +236,8 @@ library the SDK loads, for a build that manages its own.
 
 ## What is not here yet
 
+- **Licensing.** The other SDKs check a key and watermark trial output; this one does
+  neither yet, so everything it writes is unwatermarked.
 - **RFC 3161 timestamping.** Signing is here; a timestamp would raise it from PAdES B-B
   to B-T, and needs a call to an authority.
 - **The AI package** — answers, summaries, redaction and form proposals, alt text,

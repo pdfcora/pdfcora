@@ -1,8 +1,8 @@
 # PdfiumKit
 
-A PDF SDK for **iOS, Android, and Web**, built on PDFium. One object model, expressed
-idiomatically in Swift, Kotlin, and TypeScript; thread-safe by construction; typed
-errors instead of native crashes.
+A PDF SDK for **iOS, Android, Web and the server**, built on PDFium. One object model,
+expressed idiomatically in Swift, Kotlin, TypeScript and Java; thread-safe by
+construction; typed errors instead of native crashes.
 
 ```swift
 let doc  = try await PdfDocument(url: url)
@@ -39,8 +39,8 @@ SHA-256 of every artifact, and the fetch script refuses anything that does not m
 static library) and `linux` (x64 and arm64, in a container, against Chromium's own sysroot
 so the result runs on older glibc than the build image). Those two targets are optional
 everywhere: the manifest records them only when they exist, and `fetch-vendor.sh` skips
-them otherwise, so a mobile or web checkout is unaffected. They are what a JVM or Node
-process would link against, and nothing in the SDK uses them yet.
+them otherwise, so a mobile or web checkout is unaffected. The Java SDK links against
+them — `scripts/build-jni.sh` builds its JNI library from exactly these artifacts.
 
 Building macOS needs an SDK this PDFium revision understands: macOS 26 and later removed
 the fortify wrappers and ship a libc++ this clang cannot parse, so the script selects an
@@ -66,10 +66,11 @@ Demos: `ios/Demo` (SwiftUI, generate with `xcodegen`), `android/demo` (Compose),
 
 Samples: `samples/` holds one small app per feature area — **core** (open, text, search,
 form fields, render, save), **AI** (summarise, propose redactions a person accepts), **UI**
-(the viewer component with a custom toolbar and theme) and **agents** (MCP server and
-WebMCP). Core, AI and UI exist for iOS, Android and web; agents is Node and browser.
-Each consumes the SDK the way an app would and has a README; `samples/README.md` is the
-index.
+(the viewer component with a custom toolbar and theme), **agents** (MCP server and WebMCP)
+and **pipeline** (tag for accessibility, sign, countersign). Core exists for all five SDKs,
+AI for everything but Java, UI for iOS, Android and web, agents on Node and in the browser,
+and pipeline on Java. Each consumes the SDK the way an app would and has a README;
+`samples/README.md` is the index.
 
 All three demos have an **Editor** screen — open a file and it lands there — where
 the page behaves like a form rather than a picture of one. Every field is a live

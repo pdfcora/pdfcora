@@ -221,8 +221,10 @@ viewer state layer. `scripts/test-java.sh` puts both write paths in front of out
 judges: veraPDF for the tagged document's PDF/UA-1 claim, and poppler's `pdfsig` for the
 signed one, which reports *Signature is Valid, Total document signed*.
 
-What it does *not* have: **RFC 3161 timestamping** (a signature is PAdES B-B, not B-T),
-**the AI package**, and no Windows engine.
+What it does *not* have: **licensing** — no key check and no trial watermark, so
+everything it writes is unwatermarked, which the other four SDKs would not do —
+**RFC 3161 timestamping** (a signature is PAdES B-B, not B-T), **the AI package**, and no
+Windows engine.
 
 Worth knowing for anyone extending it. The byte-level writer here is smaller than the
 web's: it reads objects by scanning for `N 0 obj` rather than parsing the cross-reference
