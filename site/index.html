@@ -98,9 +98,8 @@
     <section class="section" id="glance" aria-labelledby="glance-h">
       <div class="wrap">
         <header class="section-head reveal">
-          <p class="eyebrow">Requirements</p>
-          <h2 id="glance-h">One dependency, per platform.</h2>
-          <p>Add the package and open a file. The engine is inside it — nothing to host, nothing to compile, no native toolchain, no server component.</p>
+          <p class="eyebrow">Platforms</p>
+          <h2 id="glance-h">Requirements, and what it costs your app.</h2>
         </header>
 
         <div class="table-scroll reveal">
@@ -125,57 +124,6 @@
       </div>
     </section>
 
-    <!-- ============================== DESIGN ============================== -->
-    <section class="section" id="why" aria-labelledby="why-h">
-      <div class="wrap">
-        <header class="section-head reveal">
-          <p class="eyebrow">Behaviour</p>
-          <h2 id="why-h">How it behaves under load, and under attack.</h2>
-          <p>A PDF SDK spends its life on files it did not create, from people you cannot ask to send a better one. These are the things that decide whether that is survivable.</p>
-        </header>
-
-        <div class="bento">
-
-          <article class="tile tile-tall reveal">
-            <div class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.1 8.3 7.5 9.5 4.4-1.2 7.5-4.9 7.5-9.5V6z"/><path d="m8.8 12 2.2 2.2 4.3-4.4"/></svg></div>
-            <h3>Bad files arrive as errors, not crashes.</h3>
-            <p>Truncated downloads, generator bugs, decades-old scanners, files that were never valid. They come back as a closed set of typed errors with the same names on every SDK — <code>passwordRequired</code>, <code>corrupt</code>, <code>pageOutOfRange</code> — not as a native crash inside the engine.</p>
-          </article>
-
-          <article class="tile reveal">
-            <div class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.2"/><path d="M12 3.5v5.3M20.2 14.5l-4.7-1.4M4.1 14.9l4.6-1.6"/></svg></div>
-            <h3>Predictable memory.</h3>
-            <p>Documents are closed deterministically, not when a collector decides. Forty open–render–close cycles of an 18.8 MB file leave the heap flat at 25.6 MB — a queue can run for days without drifting.</p>
-          </article>
-
-          <article class="tile reveal">
-            <div class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M4 12h16M4 17h7"/><circle cx="17" cy="7" r="2.3"/><circle cx="14" cy="17" r="2.3"/></svg></div>
-            <h3>Safe from any thread.</h3>
-            <p>Call a document from anywhere — a background queue, a request handler, a worker pool. Each one serialises its own work internally, so there is no lock to take and no way to corrupt memory by using the wrong thread.</p>
-          </article>
-
-
-          <article class="tile tile-wide tile-glow reveal">
-            <div class="tile-copy">
-              <h3>The same document, the same answer.</h3>
-              <p>The text you extract, the rectangles a search returns, the values a form reads back and the report a redaction gives are the same on an iPhone, an Android tablet, in a browser and in a batch job. A document processed on your server and opened in your app agrees with itself.</p>
-            </div>
-            <pre class="mini-code"><code><span class="k">const</span> doc = <span class="k">await</span> worker.<span class="f">open</span>(bytes)
-<span class="c">// same API as in-process</span>
-worker.<span class="f">terminate</span>() <span class="c">// page keeps running</span></code></pre>
-          </article>
-        </div>
-
-        <aside class="honest reveal" aria-labelledby="honest-h">
-          <div>
-            <p class="eyebrow eyebrow-warn">The worst case, stated plainly</p>
-            <h3 id="honest-h">One bad page cannot take your app with it.</h3>
-            <p>A malformed page can stall any PDF renderer deep in native code, where no cancellation reaches. So the damage is contained instead: that document fails fast with a typed error, every other document keeps working, and your app stays responsive. On the Web it is fully recoverable — the whole SDK runs in a Worker behind the same API, and a stuck render is simply terminated.</p>
-          </div>
-          <a class="btn btn-glass" href="developers.html">Read the engineering details</a>
-        </aside>
-      </div>
-    </section>
 
     <!-- ============================== CAPABILITIES ============================== -->
     <section class="section section-tint" id="features" aria-labelledby="features-h">
@@ -183,7 +131,7 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
         <header class="section-head section-head-center reveal">
           <p class="eyebrow">Features</p>
           <h2 id="features-h">What it does.</h2>
-          <p>Every one of these works today. The table further down says which platforms each is on, feature by feature.</p>
+          <p>All of it is implemented; the coverage table below breaks it down by platform.</p>
         </header>
 
         <ul class="features">
@@ -224,7 +172,6 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
         <header class="section-head reveal">
           <p class="eyebrow">Developer experience</p>
           <h2 id="showcase-h">Your first render in four lines.</h2>
-          <p>Nothing to configure before you open a file.</p>
           <ul class="checks">
             <li><code>async</code>/<code>await</code> on iOS, coroutines on Android, promises on the Web and Node, a thread per document on Java</li>
             <li>Unmodelled annotation and field types surface as <code>unknown</code> rather than vanishing</li>
@@ -278,12 +225,12 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
     </section>
 
     <!-- ============================== ENGINEERS ============================== -->
-    <section class="section" id="engineers" aria-labelledby="eng-h">
+    <section class="section section-tint" id="engineers" aria-labelledby="eng-h">
       <div class="wrap">
         <header class="section-head reveal">
           <p class="eyebrow">For engineers</p>
           <h2 id="eng-h">Coverage and cost, measured.</h2>
-          <p>What each SDK does and does not do, and what it costs to run. The sizes and timings are measured, not estimated — the method is under each table.</p>
+          <p>Sizes and timings are measured, not estimated; the method is under each table.</p>
         </header>
 
         <div class="accordion">
@@ -370,6 +317,57 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
       </div>
     </section>
 
+
+    <!-- ============================== BEHAVIOUR ============================== -->
+    <section class="section" id="why" aria-labelledby="why-h">
+      <div class="wrap">
+        <header class="section-head reveal">
+          <p class="eyebrow">Behaviour</p>
+          <h2 id="why-h">How it behaves under load, and under attack.</h2>
+        </header>
+
+        <div class="bento">
+
+          <article class="tile tile-tall reveal">
+            <div class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.1 8.3 7.5 9.5 4.4-1.2 7.5-4.9 7.5-9.5V6z"/><path d="m8.8 12 2.2 2.2 4.3-4.4"/></svg></div>
+            <h3>Bad files arrive as errors, not crashes.</h3>
+            <p>Truncated downloads, generator bugs, decades-old scanners, files that were never valid. They come back as a closed set of typed errors with the same names on every SDK — <code>passwordRequired</code>, <code>corrupt</code>, <code>pageOutOfRange</code> — not as a native crash inside the engine.</p>
+          </article>
+
+          <article class="tile reveal">
+            <div class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.2"/><path d="M12 3.5v5.3M20.2 14.5l-4.7-1.4M4.1 14.9l4.6-1.6"/></svg></div>
+            <h3>Predictable memory.</h3>
+            <p>Documents are closed deterministically, not when a collector decides. Forty open–render–close cycles of an 18.8 MB file leave the heap flat at 25.6 MB — a queue can run for days without drifting.</p>
+          </article>
+
+          <article class="tile reveal">
+            <div class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M4 12h16M4 17h7"/><circle cx="17" cy="7" r="2.3"/><circle cx="14" cy="17" r="2.3"/></svg></div>
+            <h3>Safe from any thread.</h3>
+            <p>Call a document from anywhere — a background queue, a request handler, a worker pool. Each one serialises its own work internally, so there is no lock to take and no way to corrupt memory by using the wrong thread.</p>
+          </article>
+
+
+          <article class="tile tile-wide tile-glow reveal">
+            <div class="tile-copy">
+              <h3>The same document, the same answer.</h3>
+              <p>The text you extract, the rectangles a search returns, the values a form reads back and the report a redaction gives are the same on an iPhone, an Android tablet, in a browser and in a batch job. A document processed on your server and opened in your app agrees with itself.</p>
+            </div>
+            <pre class="mini-code"><code><span class="k">const</span> doc = <span class="k">await</span> worker.<span class="f">open</span>(bytes)
+<span class="c">// same API as in-process</span>
+worker.<span class="f">terminate</span>() <span class="c">// page keeps running</span></code></pre>
+          </article>
+        </div>
+
+        <aside class="honest reveal" aria-labelledby="honest-h">
+          <div>
+            <p class="eyebrow eyebrow-warn">The worst case, stated plainly</p>
+            <h3 id="honest-h">One bad page cannot take your app with it.</h3>
+            <p>A malformed page can stall any PDF renderer deep in native code, where no cancellation reaches. So the damage is contained instead: that document fails fast with a typed error, every other document keeps working, and your app stays responsive. On the Web it is fully recoverable — the whole SDK runs in a Worker behind the same API, and a stuck render is simply terminated.</p>
+          </div>
+          <a class="btn btn-glass" href="developers.html">Read the engineering details</a>
+        </aside>
+      </div>
+    </section>
 
     <!-- ============================== GET STARTED ============================== -->
     <section class="section" id="start" aria-labelledby="start-h">
