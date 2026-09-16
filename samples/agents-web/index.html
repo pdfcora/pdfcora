@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PdfiumKit — WebMCP</title>
+  <script type="importmap">{ "imports": { "@pdfiumkit/web": "../../web/dist/index.js" } }</script>
+  <style>
+    body { margin: 0; padding: 16px; font: 14px system-ui, sans-serif; max-width: 760px; }
+    h1 { font-size: 16px; }
+    button { font: inherit; padding: 6px 12px; }
+    pre { background: #f4f4f5; padding: 8px; white-space: pre-wrap; }
+    .status { color: #52525b; }
+  </style>
+</head>
+<body>
+  <h1>PdfiumKit agent tools in the browser (WebMCP)</h1>
+  <p class="status" id="registered">…</p>
+  <p>The same tools, run by hand so the page is useful with or without WebMCP:</p>
+  <button id="info">document_info</button>
+  <button id="propose">propose_redactions</button>
+  <pre id="out">…</pre>
+  <script type="module" src="main.js"></script>
+</body>
+</html>

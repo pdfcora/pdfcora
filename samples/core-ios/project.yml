@@ -1,0 +1,27 @@
+name: CoreSample
+options:
+  bundleIdPrefix: com.pdfiumkit.samples
+  deploymentTarget:
+    iOS: "15.0"
+packages:
+  PdfiumKit:
+    path: ../..
+targets:
+  CoreSample:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+      - path: Resources
+        buildPhase: resources
+    dependencies:
+      - package: PdfiumKit
+        product: PdfiumKit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.pdfiumkit.samples.core
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_CFBundleDisplayName: PdfiumKit Core
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SWIFT_VERSION: "5.9"

@@ -10,7 +10,7 @@ web/dist/
 
 # Generated Xcode project — project.yml is the source of truth
 ios/Demo/*.xcodeproj
-samples/basic-ios/*.xcodeproj
+samples/*-ios/*.xcodeproj
 
 # Gradle
 .gradle/
@@ -29,6 +29,9 @@ xcuserdata/
 
 # Android native build intermediates
 .cxx/
+
+# Sample output
+samples/agents-web/redacted.pdf
 
 # Generated large test documents (scale testing)
 conformance/large/

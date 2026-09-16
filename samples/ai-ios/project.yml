@@ -1,0 +1,29 @@
+name: AISample
+options:
+  bundleIdPrefix: com.pdfiumkit.samples
+  deploymentTarget:
+    iOS: "15.0"
+packages:
+  PdfiumKit:
+    path: ../..
+targets:
+  AISample:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+      - path: Resources
+        buildPhase: resources
+    dependencies:
+      - package: PdfiumKit
+        product: PdfiumKit
+      - package: PdfiumKit
+        product: PdfiumKitAI
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.pdfiumkit.samples.ai
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_CFBundleDisplayName: PdfiumKit AI
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SWIFT_VERSION: "5.9"

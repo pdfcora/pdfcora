@@ -1,0 +1,72 @@
+%PDF-1.7
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [5 0 R 7 0 R] /Count 2 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Length 702 >>
+stream
+BT
+/F1 11 Tf
+15 TL
+72 740 Td
+(Customer record) Tj T*
+(Name: Anna Schmidt, born on 14 March 1985.) Tj T*
+(Address: 221B Baker Street, London NW1 6XE, United Kingdom.) Tj T*
+(Email anna.schmidt@example.com or call +44 20 7946 0958 or 020 7946 0958.) Tj T*
+(US office: \(212\) 555-0142, fax 212-555-0199.) Tj T*
+(IBAN GB29 NWBK 6016 1331 9268 19. Old IBAN GB29 NWBK 6016 1331 9268 18.) Tj T*
+(Card 4111 1111 1111 1111 is valid; 4111 1111 1111 1112 is not.) Tj T*
+(Passport number 502135326 was issued on 2019-04-02.) Tj T*
+(Portal https://portal.example.com/account and www.example.org.) Tj T*
+(Server 192.168.10.25 and 2001:db8::8a2e:370:7334.) Tj T*
+(Anna Schmidt signed on September 15, 2026.) Tj T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 4 0 R >>
+endobj
+6 0 obj
+<< /Length 607 >>
+stream
+BT
+/F1 11 Tf
+15 TL
+72 740 Td
+(Kundendaten) Tj T*
+(Name: Jonas Müller, geboren am 3. März 1990.) Tj T*
+(Anschrift: Hauptstraße 12, 10115 Berlin.) Tj T*
+(E-Mail jonas.mueller@beispiel.de, Telefon 030 12345678, mobil 0171 1234567.) Tj T*
+(Fax 030/1234567, international +49 30 12345678.) Tj T*
+(IBAN DE89 3704 0044 0532 0130 00, falsche IBAN DE89 3704 0044 0532 0130 01.) Tj T*
+(Kreditkarte 5500-0000-0000-0004.) Tj T*
+(Personalausweis L01X00T47, Steuer-ID 65929970489.) Tj T*
+(Termin am 15.09.2026, Rückruf am 16.9.26, Frist 31.02.2026 ungültig.) Tj T*
+(Jonas Müller unterschreibt am 15. Sept. 2026.) Tj T*
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 6 0 R >>
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000121 00000 n 
+0000000218 00000 n 
+0000000971 00000 n 
+0000001097 00000 n 
+0000001755 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R >>
+startxref
+1881
+%%EOF

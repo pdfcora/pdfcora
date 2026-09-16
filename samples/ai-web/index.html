@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PdfiumKit — AI</title>
+  <!-- The AI package imports the core by name. A bundler resolves that; a plain page
+       needs an import map. -->
+  <script type="importmap">{ "imports": { "@pdfiumkit/web": "../../web/dist/index.js" } }</script>
+  <style>
+    body { margin: 0; padding: 16px; font: 14px system-ui, sans-serif; max-width: 760px; }
+    h1 { font-size: 16px; }
+    button { font: inherit; padding: 6px 12px; }
+    .notice { background: #fff7ed; border: 1px solid #fdba74; padding: 8px; margin: 8px 0; }
+    .status { color: #52525b; }
+    li { margin-bottom: 4px; }
+    pre { background: #f4f4f5; padding: 8px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>PdfiumKit AI — summarise, and propose redactions a person accepts</h1>
+  <p class="status" id="availability">…</p>
+
+  <button id="summarise">Summarise</button>
+  <pre id="summary" hidden></pre>
+
+  <h2>Personal data</h2>
+  <button id="suggest">Find personal data</button>
+  <div id="review"></div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>

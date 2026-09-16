@@ -12,7 +12,8 @@ viewer with cross-platform sync and an optional UI component.
 `pdfiumkit-ai` Phase 1 — grounded answers and summaries — is built on all three platforms
 and has run against real models on Apple and on an Android phone; Chrome's has not.
 
-Minimal integration samples live in `samples/basic-{ios,android,web}`.
+Small per-feature samples live in `samples/`: core, AI and UI for iOS, Android and web,
+plus agents (MCP and WebMCP) for Node and the browser. `samples/README.md` is the index.
 
 No known defects are open. §3 records what was fixed on 2026-09-14 and 2026-09-15,
 because each lesson generalises. §4 lists what is open and what was parked.
@@ -29,7 +30,7 @@ because each lesson generalises. §4 lists what is open and what was parked.
 | UI layer: component, configurable toolbar, theme | Done, three platforms, adopted by all demos |
 | Engine watchdog: calls behind a hung PDFium call fail fast | Done, three platforms |
 | `pdfiumkit-ai` Phase 1: grounded answers, summaries | Built, three platforms; real-model tested on Apple and on an Android phone |
-| Basic samples: one screen, bundled PDF in the viewer component | iOS, Android, web — `samples/` |
+| Samples: one small app per feature area (core, AI, UI, agents) | iOS, Android, web — `samples/` |
 | License keys: offline, per module, trial watermark | Done, three platforms, shared cases in `conformance/license/` |
 | `pdfiumkit-ai` Phase 2a: redaction suggestions, review marks in the viewer, undo | Done, three platforms, shared cases in `conformance/redaction/` |
 | `pdfiumkit-ai` Phase 2b: smart form filling from a profile, labelled marks, undo | Done, three platforms, shared cases in `conformance/forms/`; no on-device model (measured) |
@@ -129,7 +130,7 @@ their own process.
 **`addInk` takes several strokes everywhere**, and the `inkAdded` event carries `strokes`.
 Breaking for web and Android and for the sync wire, accepted pre-release.
 
-On 2026-09-15, found by running the basic samples and real models:
+On 2026-09-15, found by running the samples and real models:
 
 **The viewer page was blurry on iOS, and the web lacked high-density rendering.**
 `PdfViewer.render` took no screen scale, so a 3x iPhone upscaled a 1x bitmap. It now takes

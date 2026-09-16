@@ -46,9 +46,12 @@ SHA-256 of every artifact, and the fetch script refuses anything that does not m
 Demos: `ios/Demo` (SwiftUI, generate with `xcodegen`), `android/demo` (Compose),
 `web/demo` (serve the repo root and open `/web/demo/index.html`).
 
-Basic samples: `samples/basic-ios`, `samples/basic-android` and `samples/basic-web` are the
-smallest integrations — one screen that opens a bundled PDF in the viewer component with
-its default toolbar, consuming the SDK the way an app would. Each has a README.
+Samples: `samples/` holds one small app per feature area — **core** (open, text, search,
+form fields, render, save), **AI** (summarise, propose redactions a person accepts), **UI**
+(the viewer component with a custom toolbar and theme) and **agents** (MCP server and
+WebMCP). Core, AI and UI exist for iOS, Android and web; agents is Node and browser.
+Each consumes the SDK the way an app would and has a README; `samples/README.md` is the
+index.
 
 All three demos have an **Editor** screen — open a file and it lands there — where
 the page behaves like a form rather than a picture of one. Every field is a live

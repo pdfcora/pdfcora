@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PdfiumKit — core</title>
+  <style>
+    body { margin: 0; padding: 16px; font: 14px system-ui, sans-serif; }
+    h1 { font-size: 16px; }
+    dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; }
+    dt { font-weight: 600; }
+    pre { background: #f4f4f5; padding: 8px; overflow-x: auto; white-space: pre-wrap; }
+    canvas { border: 1px solid #d4d4d8; max-width: 100%; height: auto; }
+  </style>
+</head>
+<body>
+  <h1>PdfiumKit core — no UI component, just the API</h1>
+  <dl id="facts"></dl>
+  <h2>Page 1 text</h2>
+  <pre id="text">…</pre>
+  <h2>Page 1 rendered</h2>
+  <canvas id="page"></canvas>
+  <script type="module" src="main.js"></script>
+</body>
+</html>

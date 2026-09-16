@@ -1,0 +1,7 @@
+{
+  "name": "pdfiumkit-sample-agents",
+  "private": true,
+  "type": "module",
+  "scripts": { "start": "node mcp-client.mjs" },
+  "dependencies": { "@modelcontextprotocol/sdk": "^1.30.0" }
+}
