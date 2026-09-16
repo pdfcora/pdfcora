@@ -17,9 +17,14 @@ export function hashFile(path) {
 
 export function buildManifest(sourceDir, layout) {
   const artifacts = {};
-  for (const { from, to } of layout) {
+  for (const { from, to, optional } of layout) {
     const abs = join(sourceDir, from);
-    if (!existsSync(abs)) throw new Error(`missing artifact: ${from}`);
+    // Optional entries are the desktop engines: a checkout that has not built them
+    // still produces a valid manifest for the platforms it did build.
+    if (!existsSync(abs)) {
+      if (optional) continue;
+      throw new Error(`missing artifact: ${from}`);
+    }
     artifacts[to] = { sha256: hashFile(abs), bytes: statSync(abs).size };
   }
   return {
@@ -48,6 +53,16 @@ export const LAYOUT = [
     to: 'android/x86/libpdfium.a' },
   { from: 'out/android/release/lib/x86_64/libpdfium.a',
     to: 'android/x86_64/libpdfium.a' },
+
+  // Desktop and server engines, for a JVM or Node process rather than a device.
+  // Optional: they are built by `build-pdfium.sh macos|linux`, which not every
+  // checkout runs, and the mobile and web platforms do not need them.
+  { from: 'out/macos/release/lib/libpdfium.a',
+    to: 'desktop/macos/libpdfium.a', optional: true },
+  { from: 'out/linux/release/x64/libpdfium.a',
+    to: 'desktop/linux-x64/libpdfium.a', optional: true },
+  { from: 'out/linux/release/arm64/libpdfium.a',
+    to: 'desktop/linux-arm64/libpdfium.a', optional: true },
 ];
 
 if (import.meta.url === `file://${process.argv[1]}`) {

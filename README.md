@@ -35,6 +35,17 @@ npm test                                # host suite (Node + WASM)
 `vendor/` is never committed. `vendor.manifest.json` pins the engine revision and the
 SHA-256 of every artifact, and the fetch script refuses anything that does not match.
 
+**Desktop and server engines.** `scripts/build-pdfium.sh` also builds `macos` (a universal
+static library) and `linux` (x64 and arm64, in a container, against Chromium's own sysroot
+so the result runs on older glibc than the build image). Those two targets are optional
+everywhere: the manifest records them only when they exist, and `fetch-vendor.sh` skips
+them otherwise, so a mobile or web checkout is unaffected. They are what a JVM or Node
+process would link against, and nothing in the SDK uses them yet.
+
+Building macOS needs an SDK this PDFium revision understands: macOS 26 and later removed
+the fortify wrappers and ship a libc++ this clang cannot parse, so the script selects an
+older Xcode when one is installed and warns when it cannot.
+
 ## Running each platform
 
 | | Build | Test |

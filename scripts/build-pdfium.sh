@@ -1,15 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Standalone PDFium builder (macOS, iOS, Android, WASM)
+# Standalone PDFium builder (macOS, Linux, iOS, Android, WASM)
 # Usage:
 #   ./build-pdfium.sh <platform> [release|debug]
-# Platforms: macos | ios | android | wasm
+# Platforms: macos | linux | ios | android | wasm
 #
 # Prereqs:
 # - git, curl, unzip
 # - macOS/iOS: Xcode + CLT (xcodebuild, lipo)
+# - Linux: Docker (the build runs in a container, on any host)
 # - Android: toolchains are fetched via gclient; no manual NDK needed
+#
+# This file is the source of truth; it is copied to the engine build checkout, which is
+# a separate, unversioned working directory, and run from there (ROOT is its cwd, so
+# docker/ must sit beside it).
 #
 # Notes:
 # - Builds static libs (libpdfium.a). For iOS, also produces an xcframework.
@@ -115,7 +120,12 @@ gclient_config_sync() {
   fi
 
   echo "==> gclient sync @ $PDFIUM_BRANCH..."
-  gclient sync -r "origin/$PDFIUM_BRANCH" --no-history --shallow
+  # Without this the script reported success after a failed sync, and the missing
+  # artifacts were only noticed later.
+  gclient sync -r "origin/$PDFIUM_BRANCH" --no-history --shallow || {
+    echo "gclient sync failed. A partially-deleted checkout is the usual cause: rm -rf $PDFIUM_DIR and retry." >&2
+    exit 1
+  }
 }
 
 base_args() {
@@ -135,6 +145,25 @@ EOF
 
 build_macos() {
   echo "==> Building for macOS ($CONFIG)"
+
+  # This PDFium revision predates the macOS 27 SDK, which drops the fortify wrappers
+  # (__strcat_chk and friends) and ships a libc++ whose <complex> this clang cannot
+  # parse. Build against an older Xcode when one is installed; otherwise the failure
+  # is a wall of errors inside SDK headers that says nothing about the real cause.
+  if [ -z "${DEVELOPER_DIR:-}" ]; then
+    for candidate in /Applications/Xcode_16_4.app /Applications/Xcode_16.app; do
+      if [ -d "$candidate/Contents/Developer" ]; then
+        export DEVELOPER_DIR="$candidate/Contents/Developer"
+        echo "==> Using $DEVELOPER_DIR (SDK $(xcrun --sdk macosx --show-sdk-version 2>/dev/null))"
+        break
+      fi
+    done
+  fi
+  case "$(xcrun --sdk macosx --show-sdk-version 2>/dev/null)" in
+    1[0-5].*) : ;;
+    *) echo "WARNING: building against SDK $(xcrun --sdk macosx --show-sdk-version 2>/dev/null); pdfium $PDFIUM_BRANCH wants 15.x or older. Set DEVELOPER_DIR to an older Xcode if this fails." >&2 ;;
+  esac
+
   cd "$PDFIUM_DIR"
 
   for cpu in x64 arm64; do
@@ -512,12 +541,46 @@ DISABLED_OLD_INLINE
     -w /work "$image_tag" bash /work/docker/android/build_android_inner.sh
 }
 
+build_linux_docker() {
+  command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1 || {
+    echo "Linux builds run in a container. Install Docker, or run this script on Linux." >&2
+    exit 1
+  }
+
+  local image_tag="pdfium-linux"
+  echo "==> Building Docker image ($image_tag)..."
+  tmpdir="$(mktemp -d)"
+  cat >"$tmpdir/Dockerfile" <<'EOF'
+FROM ubuntu:22.04
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get -y update && apt-get install -y git curl unzip python3 python3-pip build-essential ninja-build file ca-certificates pkg-config cmake zip lsb-release sudo --no-install-recommends && rm -rf /var/lib/apt/lists/*
+ENV DEPOT_TOOLS_UPDATE=0 DEPOT_TOOLS_WIN_TOOLCHAIN=0
+RUN git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git -b main /opt/depot-tools
+ENV PATH=/opt/depot-tools:$PATH
+WORKDIR /work
+EOF
+  # linux/amd64 so the CIPD packages depot_tools fetches resolve, whatever the host is.
+  docker build --platform linux/amd64 -t "$image_tag" "$tmpdir"
+  rm -rf "$tmpdir"
+
+  echo "==> Running Linux build in container... This can take a while."
+  docker run --platform linux/amd64 --rm \
+    -e PDFIUM_BRANCH="$PDFIUM_BRANCH" \
+    -e CONFIG="$CONFIG" \
+    -e IS_DEBUG="$is_debug" \
+    -v "$ROOT":/work \
+    -w /work "$image_tag" bash /work/docker/linux/build_linux_inner.sh
+}
+
 main() {
   case "$PLATFORM" in
     macos)
       ensure_depot_tools
       gclient_config_sync "'mac'"
       build_macos
+      ;;
+    linux)
+      build_linux_docker
       ;;
     ios)
       ensure_depot_tools
@@ -545,7 +608,7 @@ main() {
       build_wasm
       ;;
     *)
-      echo "Unknown platform: $PLATFORM (use: macos | ios | android | wasm)"; exit 1 ;;
+      echo "Unknown platform: $PLATFORM (use: macos | linux | ios | android | wasm)"; exit 1 ;;
   esac
 
   echo "==> Done."

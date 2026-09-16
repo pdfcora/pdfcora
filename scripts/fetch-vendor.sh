@@ -26,8 +26,21 @@ android/x86_64/libpdfium.a|out/android/release/lib/x86_64/libpdfium.a
 EOF
 )
 
+# Desktop and server engines. Optional, because only a checkout that ran
+# `build-pdfium.sh macos|linux` has them, and no mobile or web build needs them.
+DESKTOP_MAP=$(cat <<'EOF'
+desktop/macos/libpdfium.a|out/macos/release/lib/libpdfium.a
+desktop/linux-x64/libpdfium.a|out/linux/release/x64/libpdfium.a
+desktop/linux-arm64/libpdfium.a|out/linux/release/arm64/libpdfium.a
+EOF
+)
+
 expected_hash() {
   node -e "const m=require('$MANIFEST');const a=m.artifacts['$1'];if(!a){console.error('not in manifest: $1');process.exit(1)}console.log(a.sha256)"
+}
+
+in_manifest() {
+  node -e "const m=require('$MANIFEST');process.exit(m.artifacts['$1']?0:1)"
 }
 
 status=0
@@ -50,6 +63,28 @@ while IFS='|' read -r to from; do
     status=1
   fi
 done <<< "$MAP"
+
+while IFS='|' read -r to from; do
+  [ -z "$to" ] && continue
+  dest="$VENDOR/$to"
+  if ! in_manifest "$to"; then
+    [ -f "$SOURCE/$from" ] && echo "note: $to was built but is not in the manifest; re-run make-vendor-manifest.mjs to include it" >&2
+    continue
+  fi
+  if [ "$VERIFY_ONLY" = "0" ]; then
+    src="$SOURCE/$from"
+    if [ ! -f "$src" ]; then echo "missing source: $from" >&2; status=1; continue; fi
+    mkdir -p "$(dirname "$dest")"
+    cp "$src" "$dest"
+  fi
+  if [ ! -f "$dest" ]; then echo "missing artifact: $to" >&2; status=1; continue; fi
+  want=$(expected_hash "$to") || { status=1; continue; }
+  got=$(shasum -a 256 "$dest" | cut -d' ' -f1)
+  if [ "$want" != "$got" ]; then
+    echo "checksum mismatch: $to" >&2
+    status=1
+  fi
+done <<< "$DESKTOP_MAP"
 
 # The Emscripten glue is CommonJS, but this project declares "type": "module",
 # which would make Node parse it as ESM and export nothing. Scope it back.

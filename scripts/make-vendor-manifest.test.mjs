@@ -40,3 +40,13 @@ test('buildManifest throws a named error when a source file is missing', () => {
   );
   rmSync(dir, { recursive: true });
 });
+
+test('buildManifest skips an optional artifact that was never built', () => {
+  const dir = fixture();
+  const manifest = buildManifest(dir, [
+    { from: 'sub/a.bin', to: 'kept' },
+    { from: 'sub/never-built.a', to: 'desktop/linux-x64/libpdfium.a', optional: true },
+  ]);
+  assert.deepEqual(Object.keys(manifest.artifacts), ['kept']);
+  rmSync(dir, { recursive: true, force: true });
+});
