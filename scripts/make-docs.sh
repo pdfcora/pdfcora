@@ -59,11 +59,73 @@ for pair in "PdfiumKit:api" "PdfiumKitUI:api-ui" "PdfiumKitAI:api-ai"; do
         > "$WORK/ios-$slug-transform.log" 2>&1 \
         || { echo "docc transform failed for $scheme — see $WORK/ios-$slug-transform.log" >&2; exit 1; }
     # transform-for-static-hosting rewrites every page except the archive root, which
-    # keeps baseUrl "/" and so 404s its own assets. Redirect it to the entry point.
+    # keeps baseUrl "/" and so 404s its own assets. This page stands in for it.
+    #
+    # Unlike Dokka, TypeDoc and Javadoc, DocC writes absolute paths, so it works only
+    # when served over http from the path it was built for. A blind redirect sent a
+    # reader opening the site from disk into a directory listing, and a server rooted in
+    # the wrong folder to a blank page. This checks both and says which one it is.
+    base="${PDFIUMKIT_DOCS_BASE:-}/ios/$dir/"
     cat > "$OUT/ios/$dir/index.html" <<HTML
-<!doctype html><meta charset="utf-8">
-<meta http-equiv="refresh" content="0; url=documentation/$slug/">
-<a href="documentation/$slug/">$scheme API reference</a>
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>$scheme API reference</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font: 16px/1.6 -apple-system, system-ui, sans-serif; max-width: 42rem; margin: 3rem auto; padding: 0 1.25rem; }
+  h1 { font-size: 1.4rem; }
+  pre { background: color-mix(in srgb, currentColor 8%, transparent); padding: .8rem 1rem; border-radius: 7px; overflow-x: auto; }
+  .muted { opacity: .7; font-size: .9rem; }
+</style>
+<div id="go"><p>Opening the $scheme reference…</p></div>
+
+<div id="file" hidden>
+  <h1>The $scheme reference needs a web server</h1>
+  <p>You opened it from the filesystem. The iOS references are built with Apple's DocC,
+    which loads its pages with JavaScript from absolute paths, and browsers do not allow that
+    from <code>file://</code>. Serve the site folder and open the reference from there:</p>
+  <pre><code>cd site
+python3 -m http.server 8000
+# then open http://localhost:8000/developers.html#reference</code></pre>
+  <p class="muted">The Android, web, Node and Java references are plain pages and open from disk.</p>
+</div>
+
+<div id="root" hidden>
+  <h1>The site is being served from the wrong folder</h1>
+  <p>This reference was built to live at <code id="want"></code>, but it is being served at
+    <code id="have"></code>. DocC looks for its scripts at the first path, so they are
+    missing and the page would stay blank.</p>
+  <p>Serve the <code>site</code> folder itself, not a folder above it:</p>
+  <pre><code>cd site
+python3 -m http.server 8000</code></pre>
+  <p class="muted">Deploying under a sub-path instead? Rebuild with the path it will live at:
+    <code>PDFIUMKIT_DOCS_BASE=/your/path/api ./scripts/make-docs.sh --site</code></p>
+</div>
+
+<script>
+  var base = '$base';
+  var target = 'documentation/$slug/';
+  var show = function (id) {
+    document.getElementById('go').hidden = true;
+    document.getElementById(id).hidden = false;
+  };
+  if (location.protocol === 'file:') {
+    show('file');
+  } else if (location.pathname.indexOf(base) !== 0) {
+    document.getElementById('want').textContent = base;
+    document.getElementById('have').textContent =
+      location.pathname.replace('index.html', '');
+    show('root');
+  } else {
+    // A directory route, which is what DocC's router expects; the server supplies the
+    // index.html inside it.
+    location.replace(target);
+  }
+</script>
+<noscript><p><a href="documentation/$slug/">$scheme API reference</a> (needs JavaScript and an http server)</p></noscript>
+</html>
 HTML
 done
 

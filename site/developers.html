@@ -168,6 +168,12 @@
           <h2 id="reference-h">API documentation, per SDK.</h2>
           <p>Generated from the source by each language&rsquo;s own tool. <a href="api/index.html">All SDKs on one page →</a></p>
         </header>
+        <!-- Shown only when the page itself was opened from disk. -->
+        <div class="callout reveal" id="ref-file" hidden>
+          <h3>Opened from disk: the iOS references will not load</h3>
+          <p>They are built with Apple’s DocC, which needs a web server. The Android, web, Node and Java references open fine as they are. To read the iOS ones, serve this folder: <code>cd site &amp;&amp; python3 -m http.server 8000</code>, then open <code>http://localhost:8000/developers.html#reference</code>.</p>
+        </div>
+        <script>if (location.protocol === 'file:') document.getElementById('ref-file').hidden = false;</script>
         <div class="cards">
           <article class="card reveal">
             <span class="tag">iOS</span>
