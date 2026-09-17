@@ -1,10 +1,10 @@
-# @pdfiumkit/node
+# @pdfcora/node
 
-PdfiumKit for Node, Deno and Bun — the same PDF SDK as the browser package, with the
+PDFCora for Node, Deno and Bun — the same PDF SDK as the browser package, with the
 things a server needs and a browser does not.
 
 ```bash
-npm install @pdfiumkit/node
+npm install @pdfcora/node
 ```
 
 Requires Node 18 or newer. The engine is WebAssembly and ships inside the package, so
@@ -12,7 +12,7 @@ there is nothing to compile and no native module to match to your platform.
 
 ## What it adds
 
-`@pdfiumkit/node` re-exports **everything** from `@pdfiumkit/web` — same classes, same
+`@pdfcora/node` re-exports **everything** from `@pdfcora/web` — same classes, same
 methods, same errors — and adds five functions. Code moves between the two unchanged; a
 test asserts that every web export is present here.
 
@@ -22,12 +22,12 @@ test asserts that every web export is present here.
 | `saveFile(document, path, mode?)` | Writes the document out; `mode` is `'full'` (default) or `'incremental'` |
 | `renderPng(page, options?)` | Renders a page and encodes it as PNG |
 | `renderRaw(page, options?)` | The raw RGBA, for callers that encode it themselves |
-| `useLicenseFromEnvironment(variable?)` | Applies `PDFIUMKIT_LICENSE_KEY`, or the variable you name |
+| `useLicenseFromEnvironment(variable?)` | Applies `PDFCORA_LICENSE_KEY`, or the variable you name |
 
 ## First render
 
 ```ts
-import { openFile, renderPng, saveFile } from '@pdfiumkit/node';
+import { openFile, renderPng, saveFile } from '@pdfcora/node';
 import { writeFile } from 'node:fs/promises';
 
 const document = await openFile('contract.pdf');
@@ -48,7 +48,7 @@ and per-character boxes, search, form fields, annotations, signatures, redaction
 structure tree and tagging, page operations and saving.
 
 ```ts
-import { PdfDocument, PdfLicense } from '@pdfiumkit/node';
+import { PdfDocument, PdfLicense } from '@pdfcora/node';
 
 await PdfLicense.setKey('pk1.…');        // or useLicenseFromEnvironment()
 const document = await PdfDocument.open(bytes);
@@ -66,5 +66,5 @@ documents in a `worker_thread` or a child process you can terminate.
 **Concurrency.** Each document serialises its own calls, so sharing one across requests is
 safe. Separate documents are independent and run in parallel.
 
-**Licensing.** Without a key everything works and output carries a "PdfiumKit trial"
+**Licensing.** Without a key everything works and output carries a "PDFCora trial"
 watermark. `PdfLicense.status` says whether a key is valid and which modules it covers.

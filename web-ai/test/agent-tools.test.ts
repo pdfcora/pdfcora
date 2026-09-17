@@ -1,7 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { PdfDocument } from '@pdfiumkit/web';
+import { PdfDocument } from '@pdfcora/web';
 import { agentTools, PdfAgentSession, registerWebMcpTools } from '../dist/index.js';
 
 const read = (path: string) => new Uint8Array(readFileSync(new URL(`../../conformance/${path}`, import.meta.url)));

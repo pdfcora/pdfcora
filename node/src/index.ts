@@ -1,16 +1,16 @@
 /**
- * PdfiumKit for Node.
+ * PDFCora for Node.
  *
  * The engine, the object model and every method are the web package's: this adds only
  * what a server needs and a browser does not — reading and writing files, PNG output,
  * and a licence key from the environment. Anything not re-exported here is available
- * from `@pdfiumkit/web` directly, and behaves identically.
+ * from `@pdfcora/web` directly, and behaves identically.
  */
 
-export * from '@pdfiumkit/web';
+export * from '@pdfcora/web';
 
 import { readFile, writeFile } from 'node:fs/promises';
-import { PdfDocument, PdfLicense, type PdfImageData, type PdfPage, type PdfRenderOptions, type PdfSaveMode } from '@pdfiumkit/web';
+import { PdfDocument, PdfLicense, type PdfImageData, type PdfPage, type PdfRenderOptions, type PdfSaveMode } from '@pdfcora/web';
 import { encodePng } from './png.js';
 
 /** Opens a PDF from a path. The bytes are read into memory, as the engine needs them there. */
@@ -43,7 +43,7 @@ export async function renderRaw(page: PdfPage, options: PdfRenderOptions = {}): 
  * output carries the trial watermark. Returns whether a key was found, not whether it
  * was valid — `PdfLicense.status` answers that.
  */
-export async function useLicenseFromEnvironment(variable = 'PDFIUMKIT_LICENSE_KEY'): Promise<boolean> {
+export async function useLicenseFromEnvironment(variable = 'PDFCORA_LICENSE_KEY'): Promise<boolean> {
   const key = process.env[variable];
   if (!key) return false;
   await PdfLicense.setKey(key);

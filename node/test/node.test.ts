@@ -11,7 +11,7 @@ const FIXTURES = ROOT + 'fixtures/';
 const CORPUS = ROOT + 'corpus/';
 const contract = () => openFile(join(FIXTURES, 'contract.pdf'));
 
-describe('@pdfiumkit/node', () => {
+describe('@pdfcora/node', () => {
   test('opens a PDF from a path', async () => {
     const document = await contract();
     assert.equal(await document.pageCount(), 3);
@@ -47,7 +47,7 @@ describe('@pdfiumkit/node', () => {
 
   test('saves to a path and the file reopens', async () => {
     const document = await contract();
-    const out = join(mkdtempSync(join(tmpdir(), 'pdfiumkit-node-')), 'saved.pdf');
+    const out = join(mkdtempSync(join(tmpdir(), 'pdfcora-node-')), 'saved.pdf');
     const bytes = await saveFile(document, out);
 
     assert.equal(bytes, statSync(out).size);
@@ -58,13 +58,13 @@ describe('@pdfiumkit/node', () => {
   });
 
   test('a licence key is taken from the environment, and its absence is not an error', async () => {
-    delete process.env.PDFIUMKIT_TEST_KEY;
-    assert.equal(await useLicenseFromEnvironment('PDFIUMKIT_TEST_KEY'), false);
+    delete process.env.PDFCORA_TEST_KEY;
+    assert.equal(await useLicenseFromEnvironment('PDFCORA_TEST_KEY'), false);
   });
 
   test('the whole web API is re-exported, so code moves between the two unchanged', async () => {
-    const web = await import('@pdfiumkit/web');
+    const web = await import('@pdfcora/web');
     const node = await import('../src/index.js');
-    for (const name of Object.keys(web)) assert.ok(name in node, `${name} is missing from @pdfiumkit/node`);
+    for (const name of Object.keys(web)) assert.ok(name in node, `${name} is missing from @pdfcora/node`);
   });
 });

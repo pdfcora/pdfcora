@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PdfiumKit for developers — API, threading, errors, limits</title>
-  <meta name="description" content="How PdfiumKit is put together: one engine behind five idiomatic APIs for iOS, Android, the Web, Node and Java, a serial executor per document, typed errors, explicit coordinates, and the limits stated up front.">
+  <title>PDFCora for developers — API, threading, errors, limits</title>
+  <meta name="description" content="How PDFCora is put together: one engine behind five idiomatic APIs for iOS, Android, the Web, Node and Java, a serial executor per document, typed errors, explicit coordinates, and the limits stated up front.">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#07080c">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -21,9 +21,9 @@
 
   <header class="site-header">
     <div class="wrap header-inner">
-      <a class="brand" href="index.html" aria-label="PdfiumKit home">
+      <a class="brand" href="index.html" aria-label="PDFCora home">
         <img src="favicon.svg" alt="" width="28" height="28">
-        <span>PdfiumKit</span>
+        <span>PDFCora</span>
       </a>
       <button class="nav-toggle" aria-expanded="false" aria-controls="site-nav">
         <span class="sr">Menu</span><span class="bars" aria-hidden="true"></span>
@@ -47,7 +47,7 @@
       <div class="wrap">
         <p class="eyebrow">For engineers</p>
         <h1>One engine.<br><span class="grad">Five idiomatic APIs.</span></h1>
-        <p class="lede">PdfiumKit is PDFium, pinned to a known revision, wrapped so that Swift, Kotlin, TypeScript and Java each get the API their developers expect — with the same types, the same method names and the same error cases, on a phone, in a browser and on a server.</p>
+        <p class="lede">PDFCora is PDFium, pinned to a known revision, wrapped so that Swift, Kotlin, TypeScript and Java each get the API their developers expect — with the same types, the same method names and the same error cases, on a phone, in a browser and on a server.</p>
         <nav class="page-nav" aria-label="On this page">
           <a href="#modules">Modules</a><a href="#threading">Threading</a><a href="#errors">Errors</a>
           <a href="#coordinates">Coordinates</a><a href="#viewer">Viewer</a><a href="#reference">Reference</a><a href="#limits">Limits</a>
@@ -68,10 +68,10 @@
             <caption class="sr">Modules by SDK</caption>
             <thead><tr><th scope="col">Module</th><th scope="col">iOS</th><th scope="col">Android</th><th scope="col">Web</th><th scope="col">Node</th><th scope="col">Java</th><th scope="col">What it gives you</th></tr></thead>
             <tbody>
-              <tr><th scope="row">Core</th><td><code>PdfiumKit</code></td><td><code>com.pdfiumkit:pdfiumkit</code></td><td><code>@pdfiumkit/web</code></td><td><code>@pdfiumkit/node</code></td><td><code>com.pdfiumkit:pdfiumkit</code></td><td>Render, text, search, forms, annotations, signatures, redaction, tags, save</td></tr>
-              <tr><th scope="row">AI</th><td><code>PdfiumKitAI</code></td><td><code>com.pdfiumkit:pdfiumkit-ai</code></td><td><code>@pdfiumkit/web-ai</code></td><td><code>@pdfiumkit/web-ai</code></td><td>—</td><td>Answers, summaries, redaction and form proposals, alt text, remediation, diff</td></tr>
-              <tr><th scope="row">UI</th><td><code>PdfiumKitUI</code></td><td><code>com.pdfiumkit:pdfiumkit-ui</code></td><td><code>PdfViewerElement</code></td><td>—</td><td><code>PdfViewer</code> state only</td><td>A viewer component with a configurable toolbar, theme and review bar</td></tr>
-              <tr><th scope="row">Agents</th><td>—</td><td>—</td><td><code>pdfiumkit-mcp</code></td><td><code>pdfiumkit-mcp</code></td><td>—</td><td>An MCP server and WebMCP registration for AI agents</td></tr>
+              <tr><th scope="row">Core</th><td><code>PDFCora</code></td><td><code>com.pdfcora:pdfcora</code></td><td><code>@pdfcora/web</code></td><td><code>@pdfcora/node</code></td><td><code>com.pdfcora:pdfcora</code></td><td>Render, text, search, forms, annotations, signatures, redaction, tags, save</td></tr>
+              <tr><th scope="row">AI</th><td><code>PDFCoraAI</code></td><td><code>com.pdfcora:pdfcora-ai</code></td><td><code>@pdfcora/web-ai</code></td><td><code>@pdfcora/web-ai</code></td><td>—</td><td>Answers, summaries, redaction and form proposals, alt text, remediation, diff</td></tr>
+              <tr><th scope="row">UI</th><td><code>PDFCoraUI</code></td><td><code>com.pdfcora:pdfcora-ui</code></td><td><code>PdfViewerElement</code></td><td>—</td><td><code>PdfViewer</code> state only</td><td>A viewer component with a configurable toolbar, theme and review bar</td></tr>
+              <tr><th scope="row">Agents</th><td>—</td><td>—</td><td><code>pdfcora-mcp</code></td><td><code>pdfcora-mcp</code></td><td>—</td><td>An MCP server and WebMCP registration for AI agents</td></tr>
             </tbody>
           </table>
         </div>
@@ -120,7 +120,7 @@
         </div>
         <div class="callout info reveal">
           <h3>Nothing is silently dropped</h3>
-          <p>Every sealed hierarchy — annotation kinds, form field kinds, structure types — has an <code>unknown</code> case carrying the raw value. An annotation PdfiumKit does not model is surfaced, not hidden.</p>
+          <p>Every sealed hierarchy — annotation kinds, form field kinds, structure types — has an <code>unknown</code> case carrying the raw value. An annotation PDFCora does not model is surfaced, not hidden.</p>
         </div>
       </div>
     </section>
@@ -179,9 +179,9 @@
             <span class="tag">iOS</span>
             <h3>Swift · DocC</h3>
             <ul class="ref-links">
-              <li><a href="api/ios/api/index.html"><code>PdfiumKit</code></a></li>
-              <li><a href="api/ios/api-ui/index.html"><code>PdfiumKitUI</code></a></li>
-              <li><a href="api/ios/api-ai/index.html"><code>PdfiumKitAI</code></a></li>
+              <li><a href="api/ios/api/index.html"><code>PDFCora</code></a></li>
+              <li><a href="api/ios/api-ui/index.html"><code>PDFCoraUI</code></a></li>
+              <li><a href="api/ios/api-ai/index.html"><code>PDFCoraAI</code></a></li>
             </ul>
             <p class="ref-quick"><a href="api/ios/index.html">Quickstart →</a></p>
           </article>
@@ -189,9 +189,9 @@
             <span class="tag">Android</span>
             <h3>Kotlin · Dokka</h3>
             <ul class="ref-links">
-              <li><a href="api/android/api/index.html"><code>pdfiumkit</code></a></li>
-              <li><a href="api/android/api-ui/index.html"><code>pdfiumkit-ui</code></a></li>
-              <li><a href="api/android/api-ai/index.html"><code>pdfiumkit-ai</code></a></li>
+              <li><a href="api/android/api/index.html"><code>pdfcora</code></a></li>
+              <li><a href="api/android/api-ui/index.html"><code>pdfcora-ui</code></a></li>
+              <li><a href="api/android/api-ai/index.html"><code>pdfcora-ai</code></a></li>
             </ul>
             <p class="ref-quick"><a href="api/android/index.html">Quickstart →</a></p>
           </article>
@@ -199,8 +199,8 @@
             <span class="tag">Web</span>
             <h3>TypeScript · TypeDoc</h3>
             <ul class="ref-links">
-              <li><a href="api/web/api/index.html"><code>@pdfiumkit/web</code></a></li>
-              <li><a href="api/web/api-ai/index.html"><code>@pdfiumkit/web-ai</code></a></li>
+              <li><a href="api/web/api/index.html"><code>@pdfcora/web</code></a></li>
+              <li><a href="api/web/api-ai/index.html"><code>@pdfcora/web-ai</code></a></li>
             </ul>
             <p class="ref-quick"><a href="api/web/index.html">Quickstart →</a></p>
           </article>
@@ -208,8 +208,8 @@
             <span class="tag">Node</span>
             <h3>TypeScript · TypeDoc</h3>
             <ul class="ref-links">
-              <li><a href="api/node/api/index.html"><code>@pdfiumkit/node</code></a></li>
-              <li><a href="api/web/api-ai/index.html"><code>@pdfiumkit/web-ai</code></a></li>
+              <li><a href="api/node/api/index.html"><code>@pdfcora/node</code></a></li>
+              <li><a href="api/web/api-ai/index.html"><code>@pdfcora/web-ai</code></a></li>
             </ul>
             <p class="ref-quick"><a href="api/node/index.html">Quickstart →</a></p>
           </article>
@@ -217,7 +217,7 @@
             <span class="tag">Java</span>
             <h3>Java · Javadoc</h3>
             <ul class="ref-links">
-              <li><a href="api/java/api/index.html"><code>com.pdfiumkit</code></a></li>
+              <li><a href="api/java/api/index.html"><code>com.pdfcora</code></a></li>
             </ul>
             <p class="ref-quick"><a href="api/java/index.html">Quickstart →</a></p>
           </article>
@@ -251,7 +251,7 @@
   <footer class="site-footer">
     <div class="wrap footer-inner">
       <div>
-        <a class="brand" href="index.html"><img src="favicon.svg" alt="" width="24" height="24"><span>PdfiumKit</span></a>
+        <a class="brand" href="index.html"><img src="favicon.svg" alt="" width="24" height="24"><span>PDFCora</span></a>
         <p class="footer-tag">One PDF SDK. Every platform.</p>
         <p class="muted">0.1.0 · Pre-release</p>
       </div>

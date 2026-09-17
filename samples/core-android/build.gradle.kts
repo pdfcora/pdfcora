@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.pdfiumkit.samples.core"
+    namespace = "com.pdfcora.samples.core"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.pdfiumkit.samples.core"
+        applicationId = "com.pdfcora.samples.core"
         minSdk = 23
         targetSdk = 34
         versionCode = 1
@@ -27,7 +27,7 @@ android {
 
 dependencies {
     // The core alone: no UI component, no AI.
-    implementation("com.pdfiumkit:pdfiumkit:0.1.0")
+    implementation("com.pdfcora:pdfcora:0.1.0")
     implementation("androidx.activity:activity-compose:1.9.0")
     implementation(platform("androidx.compose:compose-bom:2024.06.00"))
     implementation("androidx.compose.ui:ui")

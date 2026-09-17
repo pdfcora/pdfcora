@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.pdfiumkit.demo"
+    namespace = "com.pdfcora.demo"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.pdfiumkit.demo"
+        applicationId = "com.pdfcora.demo"
         minSdk = 23
         targetSdk = 34
         versionCode = 1
@@ -28,9 +28,9 @@ android {
 }
 
 dependencies {
-    implementation(project(":pdfiumkit"))
-    implementation(project(":pdfiumkit-ai"))
-    implementation(project(":pdfiumkit-ui"))
+    implementation(project(":pdfcora"))
+    implementation(project(":pdfcora-ai"))
+    implementation(project(":pdfcora-ui"))
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.activity:activity-compose:1.9.0")
     implementation(platform("androidx.compose:compose-bom:2024.06.00"))

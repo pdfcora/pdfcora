@@ -234,7 +234,7 @@ test('an existing AcroForm is extended, not replaced', async () => {
 - Create: `web/src/sign/sign.ts`
 - Modify: `web/src/types.ts`, `web/src/document.ts`
 - Test: `web/test/sign.test.ts`
-- Fixture: `conformance/fixtures/test-signer.p12` (self-signed, password `pdfiumkit`)
+- Fixture: `conformance/fixtures/test-signer.p12` (self-signed, password `pdfcora`)
 
 **Interfaces:**
 - Produces: `PdfDocument.sign(options: PdfSignOptions): Promise<Uint8Array>` with
@@ -249,7 +249,7 @@ implements it with `node:crypto`, which is a test dependency and not a shipped o
 ```ts
 test('a signed document verifies with our own verifier', async () => {
   const signed = await (await PdfDocument.open(read('hello_world.pdf')))
-    .sign({ signer: nodeSigner(P12, 'pdfiumkit'), reason: 'Approved' });
+    .sign({ signer: nodeSigner(P12, 'pdfcora'), reason: 'Approved' });
 
   const doc = await PdfDocument.open(signed);
   const [signature] = await doc.signatures();
@@ -265,7 +265,7 @@ test('a signed document verifies with our own verifier', async () => {
  */
 test('a signed document verifies with pdfsig', async () => {
   const signed = await (await PdfDocument.open(read('hello_world.pdf')))
-    .sign({ signer: nodeSigner(P12, 'pdfiumkit') });
+    .sign({ signer: nodeSigner(P12, 'pdfcora') });
   writeFileSync(tmp, signed);
 
   const out = execFileSync('pdfsig', [tmp], { encoding: 'utf8' });
@@ -275,7 +275,7 @@ test('a signed document verifies with pdfsig', async () => {
 
 test('tampering with a document we signed is detected', async () => {
   const signed = await (await PdfDocument.open(read('hello_world.pdf')))
-    .sign({ signer: nodeSigner(P12, 'pdfiumkit') });
+    .sign({ signer: nodeSigner(P12, 'pdfcora') });
   signed[100] ^= 0xff;
 
   const doc = await PdfDocument.open(signed);
@@ -285,7 +285,7 @@ test('tampering with a document we signed is detected', async () => {
 
 test('the reason is carried into the signature', async () => {
   const signed = await (await PdfDocument.open(read('hello_world.pdf')))
-    .sign({ signer: nodeSigner(P12, 'pdfiumkit'), reason: 'Approved by finance' });
+    .sign({ signer: nodeSigner(P12, 'pdfcora'), reason: 'Approved by finance' });
   const [signature] = await (await PdfDocument.open(signed)).signatures();
   assert.equal(signature!.reason, 'Approved by finance');
 });
@@ -294,15 +294,15 @@ test('the reason is carried into the signature', async () => {
 test('a signature that will not fit is refused', async () => {
   await assert.rejects(
     () => (await PdfDocument.open(read('hello_world.pdf')))
-      .sign({ signer: nodeSigner(P12, 'pdfiumkit'), reservedBytes: 64 }),
+      .sign({ signer: nodeSigner(P12, 'pdfcora'), reservedBytes: 64 }),
     /reserved|too large/i);
 });
 
 test('signing twice leaves the first signature intact', async () => {
   const once = await (await PdfDocument.open(read('hello_world.pdf')))
-    .sign({ signer: nodeSigner(P12, 'pdfiumkit') });
+    .sign({ signer: nodeSigner(P12, 'pdfcora') });
   const twice = await (await PdfDocument.open(once))
-    .sign({ signer: nodeSigner(P12, 'pdfiumkit') });
+    .sign({ signer: nodeSigner(P12, 'pdfcora') });
 
   const signatures = await (await PdfDocument.open(twice)).signatures();
   assert.equal(signatures.length, 2);
@@ -317,9 +317,9 @@ test('signing twice leaves the first signature intact', async () => {
 
 ```bash
 openssl req -x509 -newkey rsa:2048 -keyout k.pem -out c.pem -days 3650 -nodes \
-  -subj "/CN=PdfiumKit Test Signer/O=PdfiumKit/C=GB"
+  -subj "/CN=PDFCora Test Signer/O=PDFCora/C=GB"
 openssl pkcs12 -export -out conformance/fixtures/test-signer.p12 \
-  -inkey k.pem -in c.pem -passout pass:pdfiumkit
+  -inkey k.pem -in c.pem -passout pass:pdfcora
 ```
 
 - [ ] **Step 4: Implement.** Place the field, compute the byte range, digest it, build

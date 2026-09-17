@@ -60,7 +60,7 @@ export function setKeyForHost(value: string | null, host: string | null): Promis
 export function noteWatermark(detail: string): void {
   if (warned) return;
   warned = true;
-  console.warn(`PdfiumKit: output is watermarked — ${detail}`);
+  console.warn(`PDFCora: output is watermarked — ${detail}`);
 }
 
 /** @internal Test hook. Not exported from the package entry point. */

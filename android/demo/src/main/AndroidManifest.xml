@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="PdfiumKit"
-        android:theme="@style/Theme.PdfiumKitDemo"
+        android:label="PDFCora"
+        android:theme="@style/Theme.PDFCoraDemo"
         android:allowBackup="true">
         <activity
             android:name=".MainActivity"

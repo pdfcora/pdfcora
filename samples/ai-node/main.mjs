@@ -5,16 +5,16 @@
  *
  *   node main.mjs
  */
-import { openFile, saveFile } from '@pdfiumkit/node';
-import { PdfiumAI } from '@pdfiumkit/web-ai';
+import { openFile, saveFile } from '@pdfcora/node';
+import { PdfAI } from '@pdfcora/web-ai';
 
 let pdf = await openFile('sample.pdf');
 
 // No provider is configured, so only the routes that need no model run: the redaction
 // patterns below, and the rules behind form and alt-text proposals. An app with a
-// hosted model passes `new PdfiumAI(pdf, { provider })`, and document text reaches that
+// hosted model passes `new PdfAI(pdf, { provider })`, and document text reaches that
 // provider only because the app said so.
-let ai = new PdfiumAI(pdf);
+let ai = new PdfAI(pdf);
 
 // A summary needs a model. On a server there is no browser to supply one, so this says
 // so rather than pretending — and the SDK never downloads one by itself.
@@ -46,7 +46,7 @@ console.log('  wrote        ', `${await saveFile(pdf, 'redacted.pdf')} bytes to 
 
 // Every change can be undone, which reopens the document as it was.
 pdf = await applied.undo();
-ai = new PdfiumAI(pdf);
+ai = new PdfAI(pdf);
 console.log('\nUndone; the original document is open again,',
   (await (await pdf.page(0)).text.string()).length, 'characters on page 1.');
 

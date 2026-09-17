@@ -1,8 +1,8 @@
-// Runs pdfiumkit-ai's summaries through Chrome's built-in Summarizer on the shared documents and
+// Runs pdfcora-ai's summaries through Chrome's built-in Summarizer on the shared documents and
 // reports what came back. Driven by scripts/measure-chrome-summarizer.mjs in a real Chrome profile
 // that has the model; the page exposes window.measure for the runner.
 import { configureEngine, PdfDocument } from '/web/dist/index.js';
-import { PdfiumAI } from '/web-ai/dist/index.js';
+import { PdfAI } from '/web-ai/dist/index.js';
 
 configureEngine({
   factory: async (options) => (await import('/web/vendor/pdfium.esm.js')).default(options),
@@ -15,7 +15,7 @@ window.measure = async () => {
   const report = { chrome: navigator.userAgent.match(/Chrome\/[\d.]+/)?.[0] };
   report.globalPresent = typeof Summarizer !== 'undefined';
   const contract = await open('/conformance/fixtures/contract.pdf');
-  const ai = new PdfiumAI(contract);
+  const ai = new PdfAI(contract);
   report.availability = await ai.summaries.availability();
   report.availabilityGerman = await ai.summaries.availability('de');
   report.availabilityJapanese = await ai.summaries.availability('ja');
@@ -43,7 +43,7 @@ window.measure = async () => {
   }
   const german = await open('/conformance/redaction/pii.pdf');
   const started = performance.now();
-  const result = await new PdfiumAI(german).summaries.summarize({ pages: { from: 1, to: 1 }, language: 'de' });
+  const result = await new PdfAI(german).summaries.summarize({ pages: { from: 1, to: 1 }, language: 'de' });
   report.germanPage = { ms: Math.round(performance.now() - started), source: result.source, kind: result.kind, reason: result.reason, text: result.value?.text };
   return report;
 };

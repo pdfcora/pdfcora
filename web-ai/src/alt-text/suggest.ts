@@ -1,4 +1,4 @@
-import type { PdfDocument, PdfRect, PdfStructureElement } from '@pdfiumkit/web';
+import type { PdfDocument, PdfRect, PdfStructureElement } from '@pdfcora/web';
 import { encodePng } from './png.js';
 import type { PdfPageRange } from '../text.js';
 import { resolve, type PdfAiProvider, type PdfAiSource } from '../provider.js';

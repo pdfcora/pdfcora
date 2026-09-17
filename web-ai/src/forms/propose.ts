@@ -1,4 +1,4 @@
-import type { PdfDocument, PdfFormField, PdfRect } from '@pdfiumkit/web';
+import type { PdfDocument, PdfFormField, PdfRect } from '@pdfcora/web';
 import { describeFields, type PdfFieldDescription } from './describe.js';
 import { formatHintOf, matchField, normalise, PROFILE_KEYS, type PdfProfileKey } from './synonyms.js';
 import type { PdfPageRange } from '../text.js';

@@ -1,5 +1,5 @@
 import SwiftUI
-import PdfiumKit
+import PDFCora
 
 @main
 struct CoreApp: App {

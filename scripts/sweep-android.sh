@@ -12,15 +12,15 @@ cd "$(dirname "$0")/.."
 
 CORPUS="${1:-/Users/daos/Projects/Lab/pdfiumkit/src/pdfium/testing/resources}"
 ON_DEVICE=/data/local/tmp/pdfium-corpus
-PACKAGE=com.pdfiumkit.test
+PACKAGE=com.pdfcora.test
 work=$(mktemp -d)
 total=$(find "$CORPUS" -name '*.pdf' | wc -l | tr -d ' ')
 echo "sweeping $total documents from $CORPUS"
 
 # Installed by hand: the test APK targets minSdk, which Android 15+ refuses without the bypass.
-(cd android && gradle :pdfiumkit:assembleDebugAndroidTest --console=plain -q)
+(cd android && gradle :pdfcora:assembleDebugAndroidTest --console=plain -q)
 adb install -r -t --bypass-low-target-sdk-block \
-    android/pdfiumkit/build/outputs/apk/androidTest/debug/pdfiumkit-debug-androidTest.apk > /dev/null
+    android/pdfcora/build/outputs/apk/androidTest/debug/pdfcora-debug-androidTest.apk > /dev/null
 adb shell rm -rf "$ON_DEVICE"
 adb push "$CORPUS" "$ON_DEVICE" > /dev/null
 adb shell run-as "$PACKAGE" rm -f files/sweep.jsonl files/sweep.started
@@ -32,8 +32,8 @@ device_cat() { adb exec-out run-as "$PACKAGE" sh -c "cat $1 2>/dev/null" || true
 
 start=0
 while [ "$start" -lt "$total" ]; do
-    adb shell am instrument -w -e class com.pdfiumkit.CorpusSweepTest -e sweepCorpus "$ON_DEVICE" \
-        -e sweepStart "$start" "$PACKAGE/com.pdfiumkit.LicensedTestRunner" > "$work/run.log" 2>&1 || true
+    adb shell am instrument -w -e class com.pdfcora.CorpusSweepTest -e sweepCorpus "$ON_DEVICE" \
+        -e sweepStart "$start" "$PACKAGE/com.pdfcora.LicensedTestRunner" > "$work/run.log" 2>&1 || true
     device_cat files/sweep.jsonl > "$work/results.jsonl"
     started=$(device_cat files/sweep.started)
     # A run that never reached the test is a broken setup, not a crash in a document.

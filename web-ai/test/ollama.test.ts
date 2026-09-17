@@ -2,8 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { PdfDocument } from '@pdfiumkit/web';
-import { type PdfAiProvider, PdfiumAI } from '../dist/index.js';
+import { PdfDocument } from '@pdfcora/web';
+import { type PdfAiProvider, PdfAI } from '../dist/index.js';
 
 /**
  * The grounded-answer contract against a real model behind the custom provider interface.
@@ -48,7 +48,7 @@ const QUESTIONS: ReadonlyArray<readonly [string, string]> = [
 
 test(`grounded answers from ${MODEL ?? 'a real model'} through the custom provider`, { skip: !MODEL }, async () => {
   const document = await PdfDocument.open(new Uint8Array(readFileSync(`${FIXTURES}contract.pdf`)));
-  const ai = new PdfiumAI(document, { provider: ollama(MODEL!) });
+  const ai = new PdfAI(document, { provider: ollama(MODEL!) });
   const report: string[] = [];
   let grounded = 0;
   let asked = 0;

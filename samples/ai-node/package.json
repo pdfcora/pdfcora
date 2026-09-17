@@ -1,10 +1,10 @@
 {
-  "name": "pdfiumkit-sample-ai-node",
+  "name": "pdfcora-sample-ai-node",
   "private": true,
   "type": "module",
   "scripts": { "start": "node main.mjs" },
   "dependencies": {
-    "@pdfiumkit/node": "file:../../node",
-    "@pdfiumkit/web-ai": "file:../../web-ai"
+    "@pdfcora/node": "file:../../node",
+    "@pdfcora/web-ai": "file:../../web-ai"
   }
 }

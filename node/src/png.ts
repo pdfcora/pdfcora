@@ -4,7 +4,7 @@
  * file or an HTTP response, so this encodes them with Node's own zlib.
  */
 import { deflateSync } from 'node:zlib';
-import type { PdfImageData } from '@pdfiumkit/web';
+import type { PdfImageData } from '@pdfcora/web';
 
 const CRC_TABLE = (() => {
   const table = new Uint32Array(256);

@@ -22,5 +22,5 @@ jobs:
       - name: Build and run JVM tests
         run: |
           cd android
-          gradle :pdfiumkit:assembleDebug :pdfiumkit:testDebugUnitTest \
-            :pdfiumkit-ai:testDebugUnitTest --console=plain
+          gradle :pdfcora:assembleDebug :pdfcora:testDebugUnitTest \
+            :pdfcora-ai:testDebugUnitTest --console=plain

@@ -21,6 +21,6 @@ The three steps, and why each is worth seeing:
    bytes the first one covered are untouched and it keeps verifying — it simply no longer
    reaches the end of the file, which the sample prints.
 
-`identity.p12` is the repository's self-signed test identity, password `pdfiumkit`. It
+`identity.p12` is the repository's self-signed test identity, password `pdfcora`. It
 signs nothing outside these samples; a real service holds its key in an HSM or a signing
 service and implements `CmsSigner` instead.

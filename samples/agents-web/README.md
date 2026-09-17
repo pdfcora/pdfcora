@@ -1,6 +1,6 @@
 # Agents — MCP and WebMCP
 
-Two ways an AI agent uses PdfiumKit. Reading is free; every change is a proposal the user
+Two ways an AI agent uses PDFCora. Reading is free; every change is a proposal the user
 accepts, and it can be undone.
 
 ## An MCP client (Node)
@@ -19,7 +19,7 @@ npm install && node mcp-client.mjs
 To wire the server into a real client instead:
 
 ```json
-{ "mcpServers": { "pdfiumkit": { "command": "node", "args": ["/path/to/mcp/dist/main.js" ] } } }
+{ "mcpServers": { "pdfcora": { "command": "node", "args": ["/path/to/mcp/dist/main.js" ] } } }
 ```
 
 ## WebMCP (browser)

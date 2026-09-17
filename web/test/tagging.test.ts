@@ -78,7 +78,7 @@ describe('tagging content', () => {
         { pageIndex: 0, markedContentIds: [8], altText: 'The Berlin office at dusk' }]);
       const bytes = await described.toBytes();
       const saved = await PdfDocument.open(bytes);
-      assert.equal((await (await saved.page(0)).text.string()).split('PdfiumKit trial').length - 1, 1);
+      assert.equal((await (await saved.page(0)).text.string()).split('PDFCora trial').length - 1, 1);
       // Checked by veraPDF in CI: the watermark must be an artifact, or it is untagged
       // content on every page (7.1-3). Its standard font is never embedded, so 7.21.4.1
       // is allowed there and nothing else is.

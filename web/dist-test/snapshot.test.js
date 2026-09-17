@@ -23,7 +23,7 @@ test('a snapshot of a watermarked document reopens watermarked, and stamps once'
         assert.equal(copy.needsWatermark, true);
         const saved = await PdfDocument.open(await copy.toBytes());
         const text = await (await saved.page(0)).text.string();
-        assert.equal(text.split('PdfiumKit trial').length - 1, 1);
+        assert.equal(text.split('PDFCora trial').length - 1, 1);
     }
     finally {
         await configureLicenseForTesting({ key: FIXTURE.fullKey, host: null });

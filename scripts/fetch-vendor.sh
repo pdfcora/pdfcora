@@ -4,7 +4,7 @@ set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 MANIFEST="$ROOT/vendor.manifest.json"
 VENDOR="$ROOT/vendor"
-SOURCE="${PDFIUMKIT_ARTIFACTS:-/Users/daos/Projects/Lab/pdfiumkit}"
+SOURCE="${PDFCORA_ARTIFACTS:-/Users/daos/Projects/Lab/pdfiumkit}"
 VERIFY_ONLY=0
 [ "${1:-}" = "--verify-only" ] && VERIFY_ONLY=1
 

@@ -4,7 +4,7 @@
 
 **Goal:** Propose values for a PDF form's fields from a host-supplied profile, matched by a multilingual synonym list (and a model for what it cannot match), reviewed as labelled marks, applied with undo.
 
-**Architecture:** `pdfiumkit-ai` describes each field (name, tooltip, nearby label, kind, options), matches it to a profile key (synonyms first, model second), formats the value for the field, and returns proposals whose `apply` writes through the core form setters after a snapshot. The core viewer marks gain an optional `label`. Behaviour is pinned across platforms by `conformance/forms/matching.json` and `forms-expected.json`; the web implementation is the reference the Swift and Kotlin ports follow function for function.
+**Architecture:** `pdfcora-ai` describes each field (name, tooltip, nearby label, kind, options), matches it to a profile key (synonyms first, model second), formats the value for the field, and returns proposals whose `apply` writes through the core form setters after a snapshot. The core viewer marks gain an optional `label`. Behaviour is pinned across platforms by `conformance/forms/matching.json` and `forms-expected.json`; the web implementation is the reference the Swift and Kotlin ports follow function for function.
 
 **Tech Stack:** TypeScript, Swift 5.9 / SwiftUI, Kotlin 1.9 / Compose, PDFium.
 
@@ -49,19 +49,19 @@
 
 ### Task 4: Core marks label (web, iOS, Android)
 
-**Files:** web `view/state.ts` + `ui/viewerElement.ts`; iOS `View/Marks.swift` + `PdfiumKitUI/PdfViewerView.swift`; Android `view/Marks.kt` + `pdfiumkit-ui/PdfViewerView.kt`.
+**Files:** web `view/state.ts` + `ui/viewerElement.ts`; iOS `View/Marks.swift` + `PDFCoraUI/PdfViewerView.swift`; Android `view/Marks.kt` + `pdfcora-ui/PdfViewerView.kt`.
 
 - [ ] `PdfMark` gains optional `label`; components draw it inside the mark (small text, clipped). Browser test asserts the label text is in the DOM; existing UI tests still pass. Commit.
 
 ### Task 5: iOS — port of Tasks 2 and 3
 
-**Files:** `ios/Sources/PdfiumKitAI/Forms/{Synonyms,Describe,Propose}.swift`; tests `ios/Tests/PdfiumKitAITests/{FormMatchingTests,FormProposeTests}.swift`.
+**Files:** `ios/Sources/PDFCoraAI/Forms/{Synonyms,Describe,Propose}.swift`; tests `ios/Tests/PDFCoraAITests/{FormMatchingTests,FormProposeTests}.swift`.
 
 - [ ] Same tests against the same fixtures; model route adds Apple on-device before the provider. Run AI suite; commit.
 
 ### Task 6: Android — port of Tasks 2 and 3
 
-**Files:** `android/pdfiumkit-ai/src/main/java/com/pdfiumkit/ai/forms/{Synonyms,Describe,Propose}.kt`; JVM test for matching, instrumented test for proposals (fixtures as androidTest assets).
+**Files:** `android/pdfcora-ai/src/main/java/com/pdfcora/ai/forms/{Synonyms,Describe,Propose}.kt`; JVM test for matching, instrumented test for proposals (fixtures as androidTest assets).
 
 - [ ] Same tests; provider route only. Run; commit.
 

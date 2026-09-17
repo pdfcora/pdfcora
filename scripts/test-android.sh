@@ -30,7 +30,7 @@ run() {
         echo >&2
         echo "The instrumentation process died — the test named above was merely the one" >&2
         echo "running at the time, and its failure is an artefact. Cause:" >&2
-        if adb logcat -b all -d 2>/dev/null | grep -m3 "lowmemorykiller.*com.pdfiumkit"; then
+        if adb logcat -b all -d 2>/dev/null | grep -m3 "lowmemorykiller.*com.pdfcora"; then
             echo >&2
             echo "The device ran out of memory. Give the emulator more RAM, or close things" >&2
             echo "on the host — an emulator swapping against a loaded host triggers this." >&2
@@ -45,19 +45,19 @@ run() {
 
 # The view model is pure logic and runs on the JVM — no device, and not hostage to an
 # emulator that this project has watched die twice.
-run :pdfiumkit:testDebugUnitTest "$@"
+run :pdfcora:testDebugUnitTest "$@"
 
-run :pdfiumkit:connectedDebugAndroidTest "$@"
-run :pdfiumkit-ui:connectedDebugAndroidTest "$@"
+run :pdfcora:connectedDebugAndroidTest "$@"
+run :pdfcora-ui:connectedDebugAndroidTest "$@"
 
-run :pdfiumkit:connectedDebugAndroidTest \
-  -Pandroid.testInstrumentationRunnerArguments.annotation=com.pdfiumkit.LeaksNativeThreads \
+run :pdfcora:connectedDebugAndroidTest \
+  -Pandroid.testInstrumentationRunnerArguments.annotation=com.pdfcora.LeaksNativeThreads \
   -Pandroid.testInstrumentationRunnerArguments.notAnnotation= "$@"
 
 # The AI module: its pure logic on the JVM, and answers against the shared contract
 # document on the device, since those need the engine.
-run :pdfiumkit-ai:testDebugUnitTest "$@"
-run :pdfiumkit-ai:connectedDebugAndroidTest "$@"
+run :pdfcora-ai:testDebugUnitTest "$@"
+run :pdfcora-ai:connectedDebugAndroidTest "$@"
 
 # The signing cross-check. An instrumented test cannot run pdfsig — the device has no
 # poppler — so the suite writes a signed document and the gate runs here. Our own
@@ -96,9 +96,9 @@ if command -v pdfsig > /dev/null; then
 
     # The second file is signed without a signing license, so it is watermarked first.
     for name in signed trial-signed; do
-        file="/tmp/pdfiumkit-android-$name.pdf"
-        adb -s "$device" exec-out run-as com.pdfiumkit.test \
-            cat "files/pdfiumkit-android-$name.pdf" > "$file" 2>/dev/null
+        file="/tmp/pdfcora-android-$name.pdf"
+        adb -s "$device" exec-out run-as com.pdfcora.test \
+            cat "files/pdfcora-android-$name.pdf" > "$file" 2>/dev/null
         [ -s "$file" ] || { echo "cross-check: could not pull $file" >&2; exit 1; }
         check_pdfsig "$file" "Android-$name"
     done
@@ -111,10 +111,10 @@ fi
 if [ -x "${VERAPDF:-$HOME/.cache/verapdf/app/verapdf}" ] || command -v verapdf > /dev/null; then
     device="${ANDROID_SERIAL:-$(adb devices | awk '/device$/{print $1; exit}')}"
     for name in alt-text remediation; do
-        adb -s "$device" exec-out run-as com.pdfiumkit.test cat "files/pdfiumkit-android-$name.pdf" \
-            > "/tmp/pdfiumkit-android-$name.pdf" 2>/dev/null
+        adb -s "$device" exec-out run-as com.pdfcora.test cat "files/pdfcora-android-$name.pdf" \
+            > "/tmp/pdfcora-android-$name.pdf" 2>/dev/null
     done
-    ../scripts/verapdf-ua1.sh /tmp/pdfiumkit-android-alt-text.pdf /tmp/pdfiumkit-android-remediation.pdf
+    ../scripts/verapdf-ua1.sh /tmp/pdfcora-android-alt-text.pdf /tmp/pdfcora-android-remediation.pdf
 else
     echo "PDF/UA-1:   skipped, veraPDF is not installed (scripts/install-verapdf.sh)" >&2
 fi

@@ -1,8 +1,8 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { PdfDocument } from '@pdfiumkit/web';
-import { PdfiumAI, type PdfAiRequest } from '../dist/index.js';
+import { PdfDocument } from '@pdfcora/web';
+import { PdfAI, type PdfAiRequest } from '../dist/index.js';
 
 const ROOT = new URL('../../conformance/redaction/', import.meta.url);
 const EXPECTED = JSON.parse(readFileSync(new URL('pii-expected.json', ROOT), 'utf8'));
@@ -17,7 +17,7 @@ const model = (items: (prompt: string) => { category: string; quote: string }[])
 
 describe('redaction suggestions', () => {
   test('without a model, the patterns alone find exactly the expected items', async () => {
-    const review = await new PdfiumAI(await pii()).redactions.suggest();
+    const review = await new PdfAI(await pii()).redactions.suggest();
     assert.equal(review.modelUsed, false);
     assert.match(review.notice, /Suggestions may be incomplete\. Review the whole document\./);
     assert.deepEqual(review.suggestions.map((s) => ({ pageIndex: s.pageIndex, category: s.category, text: s.text })), EXPECTED);
@@ -36,7 +36,7 @@ describe('redaction suggestions', () => {
       { category: 'idNumber', quote: 'Li' },
       { category: 'bankBalance', quote: 'Customer record' },
     ]);
-    const review = await new PdfiumAI(await pii(), { provider }).redactions.suggest({ pages: { from: 0, to: 0 } });
+    const review = await new PdfAI(await pii(), { provider }).redactions.suggest({ pages: { from: 0, to: 0 } });
     assert.equal(review.modelUsed, true);
     const fromModel = review.suggestions.filter((s) => s.source === 'customProvider');
     assert.deepEqual(fromModel.map((s) => [s.category, s.text]), [['personName', 'Anna Schmidt'], ['personName', 'Anna Schmidt']]);
@@ -45,19 +45,19 @@ describe('redaction suggestions', () => {
 
   test('a failing model leaves the pattern suggestions', async () => {
     const provider = { generate: async () => { throw new Error('offline'); } };
-    const review = await new PdfiumAI(await pii(), { provider }).redactions.suggest();
+    const review = await new PdfAI(await pii(), { provider }).redactions.suggest();
     assert.equal(review.modelUsed, false);
     assert.equal(review.suggestions.length, EXPECTED.length);
   });
 
   test('categories restrict both patterns and the model', async () => {
-    const review = await new PdfiumAI(await pii()).redactions.suggest({ categories: ['iban'] });
+    const review = await new PdfAI(await pii()).redactions.suggest({ categories: ['iban'] });
     assert.deepEqual(review.suggestions.map((s) => s.text), ['GB29 NWBK 6016 1331 9268 19', 'DE89 3704 0044 0532 0130 00']);
   });
 
   test('apply removes accepted text, keeps rejected text, and undo restores it', async () => {
     const document = await pii();
-    const review = await new PdfiumAI(document).redactions.suggest({ pages: { from: 0, to: 0 } });
+    const review = await new PdfAI(document).redactions.suggest({ pages: { from: 0, to: 0 } });
     const email = review.suggestions.find((s) => s.category === 'email')!;
     const iban = review.suggestions.find((s) => s.category === 'iban')!;
 
@@ -75,7 +75,7 @@ describe('redaction suggestions', () => {
 
   test('an unknown id writes nothing', async () => {
     const document = await pii();
-    const review = await new PdfiumAI(document).redactions.suggest();
+    const review = await new PdfAI(document).redactions.suggest();
     await assert.rejects(review.apply([review.suggestions[0]!.id, 'nope']), /unknown suggestion: nope/);
     assert.ok((await (await document.page(0)).text.string()).includes(review.suggestions[0]!.text));
   });

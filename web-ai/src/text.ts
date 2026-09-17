@@ -1,4 +1,4 @@
-import type { PdfDocument, PdfRect } from '@pdfiumkit/web';
+import type { PdfDocument, PdfRect } from '@pdfcora/web';
 
 /** One page's text layer, with the characters' positions available through the core. */
 export interface PdfPageText {

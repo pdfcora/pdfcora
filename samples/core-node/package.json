@@ -1,7 +1,7 @@
 {
-  "name": "pdfiumkit-sample-core-node",
+  "name": "pdfcora-sample-core-node",
   "private": true,
   "type": "module",
   "scripts": { "start": "node main.mjs" },
-  "dependencies": { "@pdfiumkit/node": "file:../../node" }
+  "dependencies": { "@pdfcora/node": "file:../../node" }
 }

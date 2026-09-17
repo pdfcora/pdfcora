@@ -1,4 +1,4 @@
-import type { PdfDocument, PdfRect } from '@pdfiumkit/web';
+import type { PdfDocument, PdfRect } from '@pdfcora/web';
 import { resolve, type PdfAiProvider, type PdfAiSource } from '../provider.js';
 import { readPages, rectsForRange, sentencesOf, type PdfPageRange } from '../text.js';
 import { trialText } from '../trial.js';

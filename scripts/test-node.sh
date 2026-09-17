@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs the Node SDK's tests. The web package is built first, because @pdfiumkit/node is
+# Runs the Node SDK's tests. The web package is built first, because @pdfcora/node is
 # a thin layer over it and a stale dist would test the wrong code.
 set -euo pipefail
 cd "$(dirname "$0")/.."

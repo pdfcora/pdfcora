@@ -273,8 +273,8 @@ test('a malformed PKCS#7 is reported, not thrown', async () => {
 ## Task 5: Port to iOS
 
 **Files:**
-- Create: `ios/Sources/PdfiumKit/Cms/{Der,SignedData,Verify}.swift`
-- Test: `ios/Tests/PdfiumKitTests/VerificationTests.swift`
+- Create: `ios/Sources/PDFCora/Cms/{Der,SignedData,Verify}.swift`
+- Test: `ios/Tests/PDFCoraTests/VerificationTests.swift`
 
 - [ ] **Step 1: Port the tests first**, assertion for assertion from Tasks 1-4.
 - [ ] **Step 2: Run them, confirm they fail.**
@@ -288,8 +288,8 @@ test('a malformed PKCS#7 is reported, not thrown', async () => {
 ## Task 6: Port to Android
 
 **Files:**
-- Create: `android/pdfiumkit/src/main/java/com/pdfiumkit/cms/{Der,SignedData,Verify}.kt`
-- Test: `android/pdfiumkit/src/androidTest/java/com/pdfiumkit/VerificationTest.kt`
+- Create: `android/pdfcora/src/main/java/com/pdfcora/cms/{Der,SignedData,Verify}.kt`
+- Test: `android/pdfcora/src/androidTest/java/com/pdfcora/VerificationTest.kt`
 
 - [ ] **Step 1: Port the tests first.**
 - [ ] **Step 2: Run them, confirm they fail.**

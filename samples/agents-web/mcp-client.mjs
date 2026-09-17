@@ -12,7 +12,7 @@ const server = fileURLToPath(new URL('../../mcp/dist/main.js', import.meta.url))
 const pdf = fileURLToPath(new URL('sample.pdf', import.meta.url));
 const out = fileURLToPath(new URL('redacted.pdf', import.meta.url));
 
-const agent = new Client({ name: 'pdfiumkit-sample', version: '0' });
+const agent = new Client({ name: 'pdfcora-sample', version: '0' });
 // A real client starts the server the same way, from its own configuration file.
 await agent.connect(new StdioClientTransport({ command: process.execPath, args: [server] }));
 

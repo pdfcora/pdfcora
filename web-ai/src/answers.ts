@@ -1,4 +1,4 @@
-import type { PdfDocument, PdfRect } from '@pdfiumkit/web';
+import type { PdfDocument, PdfRect } from '@pdfcora/web';
 
 import { locateQuote } from './quote.js';
 import { retrieve } from './retrieval.js';

@@ -1,5 +1,5 @@
 import SwiftUI
-import PdfiumKit
+import PDFCora
 
 struct ExportScreen: View {
     @EnvironmentObject private var store: DocumentStore
@@ -43,7 +43,7 @@ struct ExportScreen: View {
         do {
             let bytes = try await document.data(mode: mode)
             let url = FileManager.default.temporaryDirectory
-                .appendingPathComponent("pdfiumkit-export.pdf")
+                .appendingPathComponent("pdfcora-export.pdf")
             try bytes.write(to: url, options: .atomic)
             exportedURL = url
             status = "Exported \(ByteCountFormatter.string(fromByteCount: Int64(bytes.count), countStyle: .file)) to \(url.lastPathComponent)"

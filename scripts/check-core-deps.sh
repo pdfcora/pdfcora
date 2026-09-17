@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The core must not depend on any AI runtime. pdfiumkit-ai may; pdfiumkit may not.
+# The core must not depend on any AI runtime. pdfcora-ai may; pdfcora may not.
 #
 # The check is on the *resolved* graph, not the declared one: a transitive pull-in is
 # exactly the failure this exists to catch.
@@ -25,7 +25,7 @@ if [ "$web" != "{}" ]; then
 fi
 
 # Android: the resolved runtime classpath.
-android=$( (cd android && gradle -q :pdfiumkit:dependencies \
+android=$( (cd android && gradle -q :pdfcora:dependencies \
              --configuration releaseRuntimeClasspath --console=plain 2>/dev/null) \
            | grep -Ei "$BANNED" || true)
 if [ -n "$android" ]; then
@@ -39,14 +39,14 @@ fi
 core_web=$(node -p 'require("./web/package.json").version')
 ai_web=$(node -p 'require("./web-ai/package.json").version')
 if [ "$core_web" != "$ai_web" ]; then
-  echo "version drift: @pdfiumkit/web $core_web vs pdfiumkit-ai $ai_web"
+  echo "version drift: @pdfcora/web $core_web vs @pdfcora/web-ai $ai_web"
   fail=1
 fi
 
-core_android=$(grep -m1 '^version = ' android/pdfiumkit/build.gradle.kts | cut -d'"' -f2)
-ai_android=$(grep -m1 '^version = ' android/pdfiumkit-ai/build.gradle.kts | cut -d'"' -f2)
+core_android=$(grep -m1 '^version = ' android/pdfcora/build.gradle.kts | cut -d'"' -f2)
+ai_android=$(grep -m1 '^version = ' android/pdfcora-ai/build.gradle.kts | cut -d'"' -f2)
 if [ "$core_android" != "$ai_android" ]; then
-  echo "version drift: pdfiumkit $core_android vs pdfiumkit-ai $ai_android"
+  echo "version drift: pdfcora $core_android vs pdfcora-ai $ai_android"
   fail=1
 fi
 

@@ -1,6 +1,6 @@
 import SwiftUI
-import PdfiumKit
-import PdfiumKitAI
+import PDFCora
+import PDFCoraAI
 
 /// Grounded answers and summaries, and what a user sees when they cannot run — which on
 /// many devices today is what they will see.
@@ -118,8 +118,8 @@ struct AIScreen: View {
         .onAppear { reading = AppleModel.read() }
     }
 
-    private var ai: PdfiumAI? {
-        store.document.map { PdfiumAI(document: $0, options: .init(provider: provider)) }
+    private var ai: PdfAI? {
+        store.document.map { PdfAI(document: $0, options: .init(provider: provider)) }
     }
 
     /// `LabeledContent` is iOS 16+, and this demo holds the iOS 15 floor the package

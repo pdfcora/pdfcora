@@ -206,9 +206,9 @@ test('a signature that stops short of EOF is not reported as covering it', async
 ## Task 5: Port to iOS
 
 **Files:**
-- Create: `ios/Sources/PdfiumKit/Writer/{Values,Scan,Incremental}.swift`,
-  `ios/Sources/PdfiumKit/PdfSignature.swift`
-- Test: `ios/Tests/PdfiumKitTests/WriterTests.swift`, `SignatureTests.swift`
+- Create: `ios/Sources/PDFCora/Writer/{Values,Scan,Incremental}.swift`,
+  `ios/Sources/PDFCora/PdfSignature.swift`
+- Test: `ios/Tests/PDFCoraTests/WriterTests.swift`, `SignatureTests.swift`
 
 - [ ] **Step 1: Port the tests first**, assertion for assertion, from Tasks 1-4.
 - [ ] **Step 2: Run them, confirm they fail.**
@@ -221,13 +221,13 @@ test('a signature that stops short of EOF is not reported as covering it', async
 ## Task 6: Port to Android
 
 **Files:**
-- Create: `android/pdfiumkit/src/main/java/com/pdfiumkit/writer/{Values,Scan,Incremental}.kt`,
+- Create: `android/pdfcora/src/main/java/com/pdfcora/writer/{Values,Scan,Incremental}.kt`,
   `PdfSignature.kt`; JNI bindings for the eight signature calls
-- Test: `android/pdfiumkit/src/androidTest/java/com/pdfiumkit/{WriterTest,SignatureTest}.kt`
+- Test: `android/pdfcora/src/androidTest/java/com/pdfcora/{WriterTest,SignatureTest}.kt`
 
 - [ ] **Step 1: Port the tests first.**
 - [ ] **Step 2: Run them, confirm they fail.**
-- [ ] **Step 3: Port the implementation**, including `pdfiumkit_jni.cpp` bindings.
+- [ ] **Step 3: Port the implementation**, including `pdfcora_jni.cpp` bindings.
 - [ ] **Step 4: Run `./scripts/test-android.sh`, confirm green.**
 - [ ] **Step 5: Checkpoint.**
 

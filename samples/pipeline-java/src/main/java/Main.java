@@ -1,9 +1,9 @@
-import com.pdfiumkit.PdfDocument;
-import com.pdfiumkit.PdfSignature;
-import com.pdfiumkit.PdfTagBlock;
-import com.pdfiumkit.sign.PdfSignOptions;
-import com.pdfiumkit.sign.PdfSigning;
-import com.pdfiumkit.sign.Pkcs12Signer;
+import com.pdfcora.PdfDocument;
+import com.pdfcora.PdfSignature;
+import com.pdfcora.PdfTagBlock;
+import com.pdfcora.sign.PdfSignOptions;
+import com.pdfcora.sign.PdfSigning;
+import com.pdfcora.sign.Pkcs12Signer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -17,7 +17,7 @@ import java.util.List;
  */
 public final class Main {
   public static void main(String[] args) throws Exception {
-    Pkcs12Signer signer = new Pkcs12Signer(Files.readAllBytes(Path.of("identity.p12")), "pdfiumkit");
+    Pkcs12Signer signer = new Pkcs12Signer(Files.readAllBytes(Path.of("identity.p12")), "pdfcora");
 
     byte[] tagged = tag();
     byte[] signed = sign(tagged, signer);

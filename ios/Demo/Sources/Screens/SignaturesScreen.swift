@@ -1,5 +1,5 @@
 import SwiftUI
-import PdfiumKit
+import PDFCora
 
 /// Lists the signatures a document carries.
 ///
@@ -150,11 +150,11 @@ struct SignaturesScreen: View {
                 status = "the test identity is missing from the bundle"
                 return
             }
-            let signer = try Pkcs12Signer(pkcs12: try Data(contentsOf: url), password: "pdfiumkit")
+            let signer = try Pkcs12Signer(pkcs12: try Data(contentsOf: url), password: "pdfcora")
             let signed = try await document.sign(PdfSignOptions(signer: signer, reason: "Demo"))
 
             let out = FileManager.default.temporaryDirectory
-                .appendingPathComponent("pdfiumkit-signed.pdf")
+                .appendingPathComponent("pdfcora-signed.pdf")
             try signed.write(to: out, options: .atomic)
             await store.load(url: out, title: "Signed")
             status = "Signed — \(ByteCountFormatter.string(fromByteCount: Int64(signed.count), countStyle: .file))"

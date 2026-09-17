@@ -1,4 +1,4 @@
-import type { PdfDocument, PdfRect, PdfRedactionReport } from '@pdfiumkit/web';
+import type { PdfDocument, PdfRect, PdfRedactionReport } from '@pdfcora/web';
 import { findPatterns, PATTERN_CATEGORIES, type PdfPatternCategory } from './patterns.js';
 import { locateQuote } from '../quote.js';
 import { readPages, rectsForRange, sentencesOf, type PdfPageRange, type PdfPageText } from '../text.js';

@@ -13,4 +13,4 @@ runs:
         gh release download vendor-chromium-7243 --repo "$GITHUB_REPOSITORY" \
           --pattern pdfium-artifacts.tar.gz --dir "$RUNNER_TEMP" --clobber
         tar xzf "$RUNNER_TEMP/pdfium-artifacts.tar.gz" -C "$RUNNER_TEMP/pdfium-artifacts"
-        PDFIUMKIT_ARTIFACTS="$RUNNER_TEMP/pdfium-artifacts" ./scripts/fetch-vendor.sh
+        PDFCORA_ARTIFACTS="$RUNNER_TEMP/pdfium-artifacts" ./scripts/fetch-vendor.sh

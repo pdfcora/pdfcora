@@ -1,11 +1,11 @@
 import SwiftUI
-import PdfiumKit
-import PdfiumKitUI
+import PDFCora
+import PDFCoraUI
 
 @main
 struct ViewerApp: App {
     init() {
-        // Without a license key the SDK works fully, but pages carry a "PdfiumKit trial"
+        // Without a license key the SDK works fully, but pages carry a "PDFCora trial"
         // watermark. With a key issued for this app's bundle ID, set it before opening
         // documents:
         // PdfLicense.setKey("pk1.…")

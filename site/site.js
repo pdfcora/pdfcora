@@ -1,4 +1,4 @@
-// PdfiumKit site: tabs, copy buttons, navigation, scroll effects. No dependencies.
+// PDFCora site: tabs, copy buttons, navigation, scroll effects. No dependencies.
 
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 

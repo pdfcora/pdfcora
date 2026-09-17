@@ -1,8 +1,8 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { PdfDocument } from '@pdfiumkit/web';
-import { PdfiumAI, type PdfAiRequest } from '../dist/index.js';
+import { PdfDocument } from '@pdfcora/web';
+import { PdfAI, type PdfAiRequest } from '../dist/index.js';
 import { similarity } from '../dist/diff/compare.js';
 
 const DIR = new URL('../../conformance/diff/', import.meta.url);
@@ -20,7 +20,7 @@ describe('semantic diff', () => {
   });
 
   test('without a model, sentences align exactly as expected, with rectangles', async () => {
-    const diff = await new PdfiumAI(await open('original.pdf')).diff.compare(await open('revised.pdf'));
+    const diff = await new PdfAI(await open('original.pdf')).diff.compare(await open('revised.pdf'));
     assert.equal(diff.modelUsed, false);
     assert.match(diff.notice, /Check the differences against both documents\./);
     assert.deepEqual(diff.changes.map((c) => ({
@@ -45,7 +45,7 @@ describe('semantic diff', () => {
         return { text: '{"label": "wordingOnly", "summary": ""}' };
       },
     };
-    const diff = await new PdfiumAI(await open('original.pdf'), { provider }).diff.compare(await open('revised.pdf'));
+    const diff = await new PdfAI(await open('original.pdf'), { provider }).diff.compare(await open('revised.pdf'));
     assert.equal(requests.length, 2, 'added and removed sentences need no model');
     assert.equal(diff.modelUsed, true);
     assert.deepEqual(diff.changes.map((c) => [c.label, c.summary, c.source]), [
@@ -57,7 +57,7 @@ describe('semantic diff', () => {
 
     let calls = 0;
     const flaky = { async generate() { if (calls++ === 0) return { text: '{"label":"maybe"}' }; throw new Error('offline'); } };
-    const unsure = await new PdfiumAI(await open('original.pdf'), { provider: flaky }).diff.compare(await open('revised.pdf'));
+    const unsure = await new PdfAI(await open('original.pdf'), { provider: flaky }).diff.compare(await open('revised.pdf'));
     assert.equal(unsure.modelUsed, false);
     assert.deepEqual(unsure.changes.filter((c) => c.kind === 'modified').map((c) => c.label), ['unclassified', 'unclassified']);
   });

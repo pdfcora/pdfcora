@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Downloads a spread of real-world PDFs for testing remediation (docs/…/remediation).
 # Nothing here is committed: these are third-party documents, fetched on demand into
-# $PDFIUMKIT_CORPUS (default ~/pdfiumkit-corpus/real-world).
+# $PDFCORA_CORPUS (default ~/pdfcora-corpus/real-world).
 set -euo pipefail
 
-DEST="${PDFIUMKIT_CORPUS:-$HOME/pdfiumkit-corpus/real-world}"
-UA="PdfiumKit-corpus/0.1 (+https://github.com/indaos/PdfiumKit-v2; testing PDF accessibility remediation)"
+DEST="${PDFCORA_CORPUS:-$HOME/pdfcora-corpus/real-world}"
+UA="PDFCora-corpus/0.1 (+https://github.com/indaos/PdfiumKit-v2; testing PDF accessibility remediation)"
 mkdir -p "$DEST"/{contracts,papers,reports-de,forms-de,invoices,govdocs}
 
 get() { # url, output path

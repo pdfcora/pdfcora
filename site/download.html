@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Get the PdfiumKit SDK — trial, licence keys and what ships</title>
-  <meta name="description" content="How to get PdfiumKit today, what a trial gives you, which modules a licence key unlocks, and the third-party licences in the binary.">
+  <title>Get the PDFCora SDK — trial, licence keys and what ships</title>
+  <meta name="description" content="How to get PDFCora today, what a trial gives you, which modules a licence key unlocks, and the third-party licences in the binary.">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#07080c">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -16,9 +16,9 @@
 
   <header class="site-header">
     <div class="wrap header-inner">
-      <a class="brand" href="index.html" aria-label="PdfiumKit home">
+      <a class="brand" href="index.html" aria-label="PDFCora home">
         <img src="favicon.svg" alt="" width="28" height="28">
-        <span>PdfiumKit</span>
+        <span>PDFCora</span>
       </a>
       <button class="nav-toggle" aria-expanded="false" aria-controls="site-nav">
         <span class="sr">Menu</span><span class="bars" aria-hidden="true"></span>
@@ -42,7 +42,7 @@
       <div class="wrap">
         <p class="eyebrow">Get the SDK</p>
         <h1>Try everything first.<br><span class="grad">Buy a key when you ship.</span></h1>
-        <p class="lede">Every feature works without a licence key — rendered pages, saved files and AI output simply carry a “PdfiumKit trial” watermark. A key removes it and unlocks the modules it names, and it is checked offline, so nothing phones home. The Java SDK has no licensing module yet, so it neither checks a key nor watermarks.</p>
+        <p class="lede">Every feature works without a licence key — rendered pages, saved files and AI output simply carry a “PDFCora trial” watermark. A key removes it and unlocks the modules it names, and it is checked offline, so nothing phones home. The Java SDK has no licensing module yet, so it neither checks a key nor watermarks.</p>
         <div class="cta">
           <a class="btn btn-primary" href="#get">How to get it <span aria-hidden="true">→</span></a>
           <a class="btn btn-glass" href="demos.html">Run a demo first</a>
@@ -77,40 +77,40 @@
           </div>
           <div role="tabpanel" id="dp-ios" aria-labelledby="d-ios" class="panel">
             <span class="panel-label">iOS — Swift Package Manager</span>
-<pre tabindex="0"><code>.<span class="f">product</span>(name: <span class="s">"PdfiumKit"</span>,   package: <span class="s">"PdfiumKit"</span>)
-.<span class="f">product</span>(name: <span class="s">"PdfiumKitUI"</span>, package: <span class="s">"PdfiumKit"</span>)
-.<span class="f">product</span>(name: <span class="s">"PdfiumKitAI"</span>, package: <span class="s">"PdfiumKit"</span>)</code></pre>
+<pre tabindex="0"><code>.<span class="f">product</span>(name: <span class="s">"PDFCora"</span>,   package: <span class="s">"PDFCora"</span>)
+.<span class="f">product</span>(name: <span class="s">"PDFCoraUI"</span>, package: <span class="s">"PDFCora"</span>)
+.<span class="f">product</span>(name: <span class="s">"PDFCoraAI"</span>, package: <span class="s">"PDFCora"</span>)</code></pre>
             <p class="reqs">iOS 15+ · Swift 5.9 · async/await · an xcframework with the engine inside</p>
           </div>
           <div role="tabpanel" id="dp-android" aria-labelledby="d-android" class="panel">
             <span class="panel-label">Android — Gradle</span>
-<pre tabindex="0"><code><span class="f">implementation</span>(<span class="s">"com.pdfiumkit:pdfiumkit:0.1.0"</span>)
-<span class="f">implementation</span>(<span class="s">"com.pdfiumkit:pdfiumkit-ui:0.1.0"</span>)
-<span class="f">implementation</span>(<span class="s">"com.pdfiumkit:pdfiumkit-ai:0.1.0"</span>)</code></pre>
+<pre tabindex="0"><code><span class="f">implementation</span>(<span class="s">"com.pdfcora:pdfcora:0.1.0"</span>)
+<span class="f">implementation</span>(<span class="s">"com.pdfcora:pdfcora-ui:0.1.0"</span>)
+<span class="f">implementation</span>(<span class="s">"com.pdfcora:pdfcora-ai:0.1.0"</span>)</code></pre>
             <p class="reqs">minSdk 23 · Kotlin coroutines · arm64-v8a, armeabi-v7a, x86, x86_64</p>
           </div>
           <div role="tabpanel" id="dp-web" aria-labelledby="d-web" class="panel">
             <span class="panel-label">Web — npm</span>
-<pre tabindex="0"><code>npm install <span class="s">@pdfiumkit/web</span>
-npm install <span class="s">@pdfiumkit/web-ai</span>     <span class="c"># optional</span>
-npm install <span class="s">pdfiumkit-mcp</span>         <span class="c"># optional, for agents</span></code></pre>
+<pre tabindex="0"><code>npm install <span class="s">@pdfcora/web</span>
+npm install <span class="s">@pdfcora/web-ai</span>     <span class="c"># optional</span>
+npm install <span class="s">pdfcora-mcp</span>         <span class="c"># optional, for agents</span></code></pre>
             <p class="reqs">TypeScript · WebAssembly · ESM · Node 18+ · the .wasm ships inside the package</p>
           </div>
           <div role="tabpanel" id="dp-node" aria-labelledby="d-node" class="panel">
             <span class="panel-label">Node — npm</span>
-<pre tabindex="0"><code>npm install <span class="s">@pdfiumkit/node</span>
-npm install <span class="s">@pdfiumkit/web-ai</span>     <span class="c"># optional</span>
-npm install <span class="s">pdfiumkit-mcp</span>         <span class="c"># optional, for agents</span></code></pre>
+<pre tabindex="0"><code>npm install <span class="s">@pdfcora/node</span>
+npm install <span class="s">@pdfcora/web-ai</span>     <span class="c"># optional</span>
+npm install <span class="s">pdfcora-mcp</span>         <span class="c"># optional, for agents</span></code></pre>
             <p class="reqs">Node 18+ · the whole web API re-exported, plus file and PNG helpers · nothing to compile</p>
           </div>
           <div role="tabpanel" id="dp-java" aria-labelledby="d-java" class="panel">
             <span class="panel-label">Java — Gradle</span>
-<pre tabindex="0"><code><span class="f">implementation</span>(<span class="s">"com.pdfiumkit:pdfiumkit:0.1.0"</span>)</code></pre>
+<pre tabindex="0"><code><span class="f">implementation</span>(<span class="s">"com.pdfcora:pdfcora:0.1.0"</span>)</code></pre>
             <p class="reqs">Java 17+ · macOS and Linux, x86-64 and arm64 · the engine is in the jar · no AI package yet</p>
           </div>
           <div role="tabpanel" id="dp-src" aria-labelledby="d-src" class="panel">
             <span class="panel-label">From source — what the samples do today</span>
-<pre tabindex="0"><code>git clone &lt;repository&gt; &amp;&amp; <span class="k">cd</span> PdfiumKit
+<pre tabindex="0"><code>git clone &lt;repository&gt; &amp;&amp; <span class="k">cd</span> PDFCora
 ./scripts/fetch-vendor.sh          <span class="c"># PDFium binaries, checksummed</span>
 (<span class="k">cd</span> web &amp;&amp; npm install &amp;&amp; npm run build)
 <span class="c"># iOS: add the local package · Android: includeBuild("../../android")</span></code></pre>
@@ -128,7 +128,7 @@ npm install <span class="s">pdfiumkit-mcp</span>         <span class="c"># optio
           <p>You can evaluate every feature, on every SDK, for as long as you like — including signing, redaction and the AI features. What you cannot do is ship the output.</p>
         </header>
         <div class="cards">
-          <article class="card reveal"><h3>What the trial marks</h3><p>Rendered pages, saved files and AI output carry “PdfiumKit trial”. The watermark is written as an artifact, so it is never read out by a screen reader — but its font is a standard one, so a watermarked file cannot claim PDF/UA.</p></article>
+          <article class="card reveal"><h3>What the trial marks</h3><p>Rendered pages, saved files and AI output carry “PDFCora trial”. The watermark is written as an artifact, so it is never read out by a screen reader — but its font is a standard one, so a watermarked file cannot claim PDF/UA.</p></article>
           <article class="card reveal"><h3>What the trial changes</h3><p>A watermarked document is always saved in full, even when you ask for an incremental save, and signing it rewrites the file first — so signatures already in that file stop verifying. With a key, incremental saves and earlier signatures are kept.</p></article>
           <article class="card reveal"><h3>What a key does not do</h3><p>It never makes the SDK throw. <code>PdfLicense.status</code> tells you whether the key is valid, which modules it covers and why one was rejected, and the SDK keeps working either way.</p></article>
           <article class="card reveal"><h3><span class="todo">Todo</span> Java is not licensed yet</h3><p>The JVM SDK carries no licence check and writes no watermark, so its output is unmarked whether or not you hold a key. That is a gap, not a concession — it will be brought in line before 1.0.</p></article>
@@ -152,7 +152,7 @@ npm install <span class="s">pdfiumkit-mcp</span>         <span class="c"># optio
               <tr><th scope="row"><code>forms</code></th><td>Filling form fields and creating them, including flat form detection</td></tr>
               <tr><th scope="row"><code>signing</code></th><td>Signing documents — reading and verifying signatures is always included</td></tr>
               <tr><th scope="row"><code>redaction</code></th><td>Removing content so it cannot be recovered</td></tr>
-              <tr><th scope="row"><code>ai</code></th><td>Everything in <code>pdfiumkit-ai</code>, including remediation and alt text</td></tr>
+              <tr><th scope="row"><code>ai</code></th><td>Everything in <code>pdfcora-ai</code>, including remediation and alt text</td></tr>
             </tbody>
           </table>
         </div>
@@ -192,7 +192,7 @@ npm install <span class="s">pdfiumkit-mcp</span>         <span class="c"># optio
         <header class="section-head reveal">
           <p class="eyebrow">What is in the binary</p>
           <h2 id="tp-h">Third-party licences, stated up front.</h2>
-          <p>PdfiumKit ships as a binary that statically links PDFium and six bundled libraries. The combination is permissive — the one that usually causes trouble is FreeType, and it is used under the FreeType License rather than GPLv2.</p>
+          <p>PDFCora ships as a binary that statically links PDFium and six bundled libraries. The combination is permissive — the one that usually causes trouble is FreeType, and it is used under the FreeType License rather than GPLv2.</p>
         </header>
         <div class="table-scroll reveal">
           <table class="matrix">
@@ -214,7 +214,7 @@ npm install <span class="s">pdfiumkit-mcp</span>         <span class="c"># optio
   <footer class="site-footer">
     <div class="wrap footer-inner">
       <div>
-        <a class="brand" href="index.html"><img src="favicon.svg" alt="" width="24" height="24"><span>PdfiumKit</span></a>
+        <a class="brand" href="index.html"><img src="favicon.svg" alt="" width="24" height="24"><span>PDFCora</span></a>
         <p class="footer-tag">One PDF SDK. Every platform.</p>
         <p class="muted">0.1.0 · Pre-release</p>
       </div>

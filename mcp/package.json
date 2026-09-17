@@ -1,9 +1,9 @@
 {
-  "name": "pdfiumkit-mcp",
+  "name": "pdfcora-mcp",
   "version": "0.1.0",
-  "description": "An MCP server that gives AI agents PdfiumKit's PDF tools",
+  "description": "An MCP server that gives AI agents PDFCora's PDF tools",
   "type": "module",
-  "bin": { "pdfiumkit-mcp": "./dist/main.js" },
+  "bin": { "pdfcora-mcp": "./dist/main.js" },
   "main": "./dist/server.js",
   "types": "./dist/server.d.ts",
   "files": ["dist", "README.md"],
@@ -15,8 +15,8 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
-    "@pdfiumkit/web": "file:../web",
-    "pdfiumkit-ai": "file:../web-ai"
+    "@pdfcora/web": "file:../web",
+    "@pdfcora/web-ai": "file:../web-ai"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",

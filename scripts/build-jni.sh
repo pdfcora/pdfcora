@@ -11,7 +11,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 ROOT="$(pwd)"
 TARGET="${1:-all}"
-GLUE="$ROOT/java/src/main/cpp/pdfiumkit_jni.cpp"
+GLUE="$ROOT/java/src/main/cpp/pdfcora_jni.cpp"
 HEADERS="$ROOT/vendor/desktop/include/public"
 OUT="$ROOT/java/src/main/resources/native"
 
@@ -41,14 +41,14 @@ build_macos() {
       $(jni_includes) -I"$HEADERS" \
       "$GLUE" "$lib" \
       -framework CoreGraphics -framework CoreFoundation -lc++ \
-      -o "$dest/libpdfiumkit_jni.dylib"
+      -o "$dest/libpdfcora_jni.dylib"
   done
 }
 
 build_linux() {
   command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1 || {
     echo "the Linux JNI library builds in a container; start Docker" >&2; return 1; }
-  local engine="${PDFIUMKIT_ARTIFACTS:-/Users/daos/Projects/Lab/pdfiumkit}"
+  local engine="${PDFCORA_ARTIFACTS:-/Users/daos/Projects/Lab/pdfiumkit}"
   [ -d "$engine/src-linux/pdfium" ] || {
     echo "no Linux engine checkout at $engine/src-linux; run ./build-pdfium.sh linux release there" >&2; return 1; }
   mkdir -p "$OUT/linux-x86_64" "$OUT/linux-aarch64"
@@ -76,10 +76,10 @@ build_linux() {
         $B/clang++ -std=c++17 -O2 -fPIC -shared --target="$2" \
           --sysroot="build/linux/$3" -fuse-ld=lld -B "$B" \
           $JNI -I/sdk/vendor/desktop/include/public \
-          /sdk/java/src/main/cpp/pdfiumkit_jni.cpp \
+          /sdk/java/src/main/cpp/pdfcora_jni.cpp \
           "/sdk/vendor/desktop/$( [ "$1" = x86_64 ] && echo linux-x64 || echo linux-arm64 )/libpdfium.a" \
           -lpthread -ldl -lm \
-          -o "/sdk/java/src/main/resources/native/$4/libpdfiumkit_jni.so"
+          -o "/sdk/java/src/main/resources/native/$4/libpdfcora_jni.so"
       done'
 }
 
@@ -91,4 +91,4 @@ case "$TARGET" in
 esac
 
 echo "JNI libraries:"
-find "$OUT" -name 'libpdfiumkit_jni.*' -exec ls -la {} \;
+find "$OUT" -name 'libpdfcora_jni.*' -exec ls -la {} \;

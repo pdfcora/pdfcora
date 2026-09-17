@@ -11,23 +11,23 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 CORPUS="${1:-/Users/daos/Projects/Lab/pdfiumkit/src/pdfium/testing/resources}"
-DESTINATION="${PDFIUMKIT_DESTINATION:-platform=iOS Simulator,name=iPhone 17 Pro,OS=27.0}"
+DESTINATION="${PDFCORA_DESTINATION:-platform=iOS Simulator,name=iPhone 17 Pro,OS=27.0}"
 work=$(mktemp -d)
 results="$work/results.jsonl"
 touch "$results"
 total=$(find "$CORPUS" -name '*.pdf' | wc -l | tr -d ' ')
 echo "sweeping $total documents from $CORPUS"
 
-xcodebuild build-for-testing -scheme PdfiumKit-Package -destination "$DESTINATION" -quiet
+xcodebuild build-for-testing -scheme PDFCora-Package -destination "$DESTINATION" -quiet
 
 start=0
 while [ "$start" -lt "$total" ]; do
     rm -f "$results.started"
     TEST_RUNNER_SWEEP_CORPUS="$CORPUS" TEST_RUNNER_SWEEP_RESULTS="$results" TEST_RUNNER_SWEEP_START="$start" \
-        xcodebuild test-without-building -scheme PdfiumKit-Package -destination "$DESTINATION" \
-        -only-testing:PdfiumKitTests/CorpusSweepTests > "$work/run.log" 2>&1 || true
+        xcodebuild test-without-building -scheme PDFCora-Package -destination "$DESTINATION" \
+        -only-testing:PDFCoraTests/CorpusSweepTests > "$work/run.log" 2>&1 || true
     # A run that never reached the test is a broken setup, not a crash in a document.
-    if ! grep -q "Test Case '-\[PdfiumKitTests.CorpusSweepTests testSweep\]' started" "$work/run.log"; then
+    if ! grep -q "Test Case '-\[PDFCoraTests.CorpusSweepTests testSweep\]' started" "$work/run.log"; then
         echo "sweep: the test did not start; last lines of the run:" >&2
         tail -20 "$work/run.log" >&2
         exit 1

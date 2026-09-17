@@ -2,8 +2,8 @@ import { test, describe, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { PdfDocument } from '@pdfiumkit/web';
-import { PdfiumAI } from '../dist/index.js';
+import { PdfDocument } from '@pdfcora/web';
+import { PdfAI } from '../dist/index.js';
 import { summariseInWindows } from '../dist/summaries.js';
 import { openChromeSummarizer } from '../dist/chrome.js';
 
@@ -108,7 +108,7 @@ describe('summaries', () => {
     const inputs: string[] = [];
     installChrome('available', { inputs });
     const document = await contract();
-    const result = await new PdfiumAI(document).summaries.summarize({ style: 'keyPoints' });
+    const result = await new PdfAI(document).summaries.summarize({ style: 'keyPoints' });
 
     assert.equal((result as { source: string }).source, 'onDevice');
     assert.deepEqual((result as unknown as { value: { pagesWithoutText: number[] } }).value.pagesWithoutText, [2]);
@@ -120,7 +120,7 @@ describe('summaries', () => {
     const inputs: string[] = [];
     installChrome('available', { inputs });
     const document = await contract();
-    await new PdfiumAI(document).summaries.summarize({ pages: { from: 0, to: 0 } });
+    await new PdfAI(document).summaries.summarize({ pages: { from: 0, to: 0 } });
     assert.ok(inputs.join().includes('1. Parties'));
     assert.ok(!inputs.join().includes('12. Termination'));
     await document.close();
@@ -129,7 +129,7 @@ describe('summaries', () => {
   test('an unsupported language is unavailable with that reason, not a poor summary (SUM-3)', async () => {
     installChrome('available', { languages: ['en'] });
     const document = await contract();
-    const ai = new PdfiumAI(document);
+    const ai = new PdfAI(document);
     const expected = { kind: 'unavailable', reason: 'languageNotSupported' };
     assert.deepEqual(await ai.summaries.availability('ja'), expected);
     assert.deepEqual(await ai.summaries.summarize({ language: 'ja' }), expected);
@@ -138,7 +138,7 @@ describe('summaries', () => {
 
   test('outside Chrome and without a provider, summaries are unavailable', async () => {
     const document = await contract();
-    const ai = new PdfiumAI(document);
+    const ai = new PdfAI(document);
     assert.deepEqual(await ai.summaries.availability(), { kind: 'unavailable', reason: 'noProvider' });
     assert.deepEqual(await ai.summaries.summarize(), { kind: 'unavailable', reason: 'noProvider' });
     await document.close();
@@ -147,7 +147,7 @@ describe('summaries', () => {
   test('outside Chrome a custom provider summarises instead', async () => {
     const document = await contract();
     const prompts: string[] = [];
-    const ai = new PdfiumAI(document, {
+    const ai = new PdfAI(document, {
       provider: { generate: async ({ prompt }) => { prompts.push(prompt); return { text: ' A contract. ' }; } },
     });
     const result = await ai.summaries.summarize();
@@ -164,7 +164,7 @@ describe('summaries', () => {
     summarizer.create = async (o) => { created++; return create(o); };
 
     const document = await contract();
-    const ai = new PdfiumAI(document);
+    const ai = new PdfAI(document);
     assert.deepEqual(await ai.summaries.availability(), { kind: 'downloadable' });
     assert.equal(created, 0);
 

@@ -27,5 +27,5 @@ The Java samples also need `./scripts/build-jni.sh`, which builds the native eng
 jar carries.
 
 The iOS, Android, web and Node samples run without a license key, so their output
-carries the "PdfiumKit trial" watermark; each README says where a key goes. The Java SDK
+carries the "PDFCora trial" watermark; each README says where a key goes. The Java SDK
 has no licensing module yet, so its samples produce unwatermarked output.

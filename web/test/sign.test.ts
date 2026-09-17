@@ -13,7 +13,7 @@ const FIXTURES = new URL('../../conformance/fixtures/', import.meta.url).pathnam
 const read = (file: string) => new Uint8Array(readFileSync(`${CORPUS}${file}`));
 
 const ANCHOR = new Uint8Array(readFileSync(`${FIXTURES}test-signer.der`));
-const scratch = mkdtempSync(join(tmpdir(), 'pdfiumkit-sign-'));
+const scratch = mkdtempSync(join(tmpdir(), 'pdfcora-sign-'));
 
 /**
  * The SDK ships no CMS implementation on web, so the caller supplies one. This is what

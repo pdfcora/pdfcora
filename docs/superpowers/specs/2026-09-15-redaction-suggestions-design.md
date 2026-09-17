@@ -1,8 +1,8 @@
-# PdfiumKit — Redaction Suggestions Design
+# PDFCora — Redaction Suggestions Design
 
 Date: 2026-09-15
 Status: Implemented 2026-09-15
-Implements: RED-1 to RED-5 and HIL-1 to HIL-3 of `2026-09-13-pdfiumkit-ai-requirements.md`
+Implements: RED-1 to RED-5 and HIL-1 to HIL-3 of `2026-09-13-pdfcora-ai-requirements.md`
 (AI Phase 2, first half; smart form filling follows in its own spec)
 
 ## 1. Purpose
@@ -25,7 +25,7 @@ Success criteria:
 | Question | Decision |
 | --- | --- |
 | First Phase 2 feature | Redaction suggestions; form filling next |
-| Where it lives | Detection in `pdfiumkit-ai`; generic marks in the core viewer and UI components |
+| Where it lives | Detection in `pdfcora-ai`; generic marks in the core viewer and UI components |
 | Pattern categories | IBAN, email, phone, payment card, date, URL, IP address |
 | Regions | International phone numbers; English and German national phone and date formats |
 | Model categories | Person names, postal addresses, dates of birth, ID numbers |
@@ -40,7 +40,7 @@ Success criteria:
 Web shown; iOS and Android follow each platform's conventions with the same shape.
 
 ```ts
-const ai = new PdfiumAI(document, { provider });   // provider optional
+const ai = new PdfAI(document, { provider });   // provider optional
 const review = await ai.redactions.suggest({ pages?, categories? });
 
 review.suggestions;  // PdfRedactionSuggestion[]

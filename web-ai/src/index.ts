@@ -1,4 +1,4 @@
-import type { PdfDocument } from '@pdfiumkit/web';
+import type { PdfDocument } from '@pdfcora/web';
 
 import {
   type PdfAnswer, groundedPrompt, groundedReplySchema, parseReply, passagesForBudget, verifyReply,
@@ -36,7 +36,7 @@ export type { PdfRemediationBlock, PdfRemediationOptions, PdfRemediationReview }
 export type { PdfAltTextDecision, PdfAltTextProposal, PdfAltTextReview } from './alt-text/suggest.js';
 import type { PdfPageRange as FormPageRange } from './text.js';
 
-export interface PdfiumAIOptions {
+export interface PdfAIOptions {
   readonly provider?: PdfAiProvider;
   /**
    * The custom provider's context window, in tokens. The web has no platform to read it
@@ -60,12 +60,12 @@ export interface PdfSummaryOptions {
  * Every feature reports availability separately (AVL-2) and re-checks it on each call
  * (AVL-3), because the user can turn the platform's AI off mid-session.
  */
-export class PdfiumAI {
+export class PdfAI {
   private index?: Promise<PdfTextIndex>;
 
   constructor(
     private readonly document: PdfDocument,
-    private readonly options: PdfiumAIOptions = {},
+    private readonly options: PdfAIOptions = {},
   ) {}
 
   /** The document this instance answers about. */

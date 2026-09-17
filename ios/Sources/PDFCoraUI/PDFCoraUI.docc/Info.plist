@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- DocC names every page after this. Without it, a local package takes its identity
+	     from the folder it happens to be checked out in, and that ends up in the site. -->
+	<key>CFBundleIdentifier</key>
+	<string>com.pdfcora.PDFCoraUI</string>
+	<key>CFBundleName</key>
+	<string>PDFCoraUI</string>
+	<key>CFBundleDisplayName</key>
+	<string>PDFCoraUI</string>
+</dict>
+</plist>

@@ -12,7 +12,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "types": ["node"],
-    "paths": { "@pdfiumkit/web": ["../web/dist/index.d.ts"] }
+    "paths": { "@pdfcora/web": ["../web/dist/index.d.ts"] }
   },
   "include": ["src/**/*.ts"]
 }

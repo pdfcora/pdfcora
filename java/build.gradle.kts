@@ -3,13 +3,13 @@ plugins {
     `maven-publish`
 }
 
-group = "com.pdfiumkit"
+group = "com.pdfcora"
 // PKG-1: released alongside the core with a matching version.
 version = "0.1.0"
 
-// The Maven artifactId is pdfiumkit; without this the jar is named after the Gradle
+// The Maven artifactId is pdfcora; without this the jar is named after the Gradle
 // project instead, and the loose jar would not match the coordinates it publishes under.
-base { archivesName = "pdfiumkit" }
+base { archivesName = "pdfcora" }
 
 java {
     // JNI, not the Foreign Function API, so the SDK runs on the JDK enterprises have.
@@ -49,7 +49,7 @@ tasks.test {
     useJUnitPlatform()
     testLogging { events("passed", "failed", "skipped") }
     // The conformance fixtures every platform is tested against.
-    systemProperty("pdfiumkit.conformance", rootProject.projectDir.parentFile.resolve("conformance").absolutePath)
+    systemProperty("pdfcora.conformance", rootProject.projectDir.parentFile.resolve("conformance").absolutePath)
 }
 
 publishing {
@@ -62,10 +62,10 @@ publishing {
     }
     publications {
         create<MavenPublication>("maven") {
-            artifactId = "pdfiumkit"
+            artifactId = "pdfcora"
             from(components["java"])
             pom {
-                name = "PdfiumKit for Java"
+                name = "PDFCora for Java"
                 description = "PDF SDK for the JVM, built on PDFium"
             }
         }

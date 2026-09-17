@@ -1,4 +1,4 @@
-# PdfiumKit
+# PDFCora
 
 A PDF SDK for **iOS, Android, Web and the server**, built on PDFium. One object model,
 expressed idiomatically in Swift, Kotlin, TypeScript and Java; thread-safe by
@@ -55,8 +55,8 @@ enough.
 
 | | Build | Test |
 |---|---|---|
-| iOS | `xcodebuild build -scheme PdfiumKit -destination 'platform=iOS Simulator,name=<device>'` | same with `test` |
-| Android | `cd android && gradle :pdfiumkit:assembleDebug` | `gradle :pdfiumkit:connectedDebugAndroidTest` (needs a device or emulator) |
+| iOS | `xcodebuild build -scheme PDFCora -destination 'platform=iOS Simulator,name=<device>'` | same with `test` |
+| Android | `cd android && gradle :pdfcora:assembleDebug` | `gradle :pdfcora:connectedDebugAndroidTest` (needs a device or emulator) |
 | Web | `cd web && npm run build` | `npm test` |
 | Node | `cd node && npm run build` | `./scripts/test-node.sh` |
 | Java | `./scripts/build-jni.sh && cd java && gradle build` | `./scripts/test-java.sh` |
@@ -89,7 +89,7 @@ rects with `PdfViewTransform`.
 Each SDK has been verified by consuming it from a project **outside** this repo, not
 just by running its own tests.
 
-**Web** — `npm install @pdfiumkit/web`. The PDFium `.wasm` ships inside the package, so
+**Web** — `npm install @pdfcora/web`. The PDFium `.wasm` ships inside the package, so
 there is nothing else to host. Node resolves it automatically; in a browser pass URLs
 via `configureEngine` or `PdfWorker`.
 
@@ -101,23 +101,23 @@ committed and a consumer resolving from git would otherwise get no binary:
 ./scripts/package-ios.sh     # writes the zip, its checksum, and the snippet to paste
 ```
 
-**Android** — Maven. `gradle :pdfiumkit:publishToMavenLocal` publishes
-`com.pdfiumkit:pdfiumkit:0.1.0`; the AAR is 9.3 MB and carries all four ABIs, of which
+**Android** — Maven. `gradle :pdfcora:publishToMavenLocal` publishes
+`com.pdfcora:pdfcora:0.1.0`; the AAR is 9.3 MB and carries all four ABIs, of which
 Play delivers one per device.
 
-**Node** — `npm install @pdfiumkit/node`. A thin layer over the web package rather than a
+**Node** — `npm install @pdfcora/node`. A thin layer over the web package rather than a
 second implementation: it re-exports the whole API and adds file and PNG helpers and a
 licence key from the environment. Same WebAssembly engine, so nothing to compile. See
 `node/README.md`.
 
-**Java** — Maven, `com.pdfiumkit:pdfiumkit:0.1.0`, Java 17 or newer on macOS and Linux
+**Java** — Maven, `com.pdfcora:pdfcora:0.1.0`, Java 17 or newer on macOS and Linux
 (x86-64 and arm64). This one *is* a separate implementation: a JNI layer over the native
 engine, carrying the document API — open, pages, render, text, search, metadata, save —
 plus annotations, form filling, redaction, tagging, signing and the viewer state layer.
 `./scripts/build-jni.sh` builds the native libraries the jar carries. See `java/README.md`.
 
-**AI, separately and optionally** — `pdfiumkit-ai` (npm), `PdfiumKitAI` (SPM product),
-`com.pdfiumkit:pdfiumkit-ai` (Maven). The core has no AI dependency and never gains one:
+**AI, separately and optionally** — `@pdfcora/web-ai` (npm), `PDFCoraAI` (SPM product),
+`com.pdfcora:pdfcora-ai` (Maven). The core has no AI dependency and never gains one:
 `scripts/check-core-deps.sh` reads the resolved graph on all three platforms and fails
 the build if it does. Today the package ships **no feature** — only the availability
 model, the custom-provider interface and the proposal/apply API that later features build
@@ -176,8 +176,8 @@ Android a watchdog makes the calls queued behind such a render fail fast with
 `engineUnresponsive`, but the stuck call keeps running; on web, a `PdfWorker` can be
 terminated. See Known limits.
 
-The AI features — grounded answers and summaries — are in the separate `pdfiumkit-ai`
-packages and are described in `docs/superpowers/specs/2026-09-13-pdfiumkit-ai-requirements.md`.
+The AI features — grounded answers and summaries — are in the separate `pdfcora-ai`
+packages and are described in `docs/superpowers/specs/2026-09-13-pdfcora-ai-requirements.md`.
 
 ## Engine
 
@@ -291,7 +291,7 @@ API, so calling code is unchanged. What you gain is `terminate()`, which is the 
 to recover from the hang above.
 
 ```ts
-import { PdfWorker } from '@pdfiumkit/web'
+import { PdfWorker } from '@pdfcora/web'
 
 const worker = new PdfWorker({
   workerUrl: new URL('./pdfium-worker.js', import.meta.url),
@@ -372,14 +372,14 @@ Full-corpus results, most recent run:
 
 ## Redaction suggestions
 
-`pdfiumkit-ai` suggests personal data to redact. Patterns find IBANs, emails, phone numbers,
+`pdfcora-ai` suggests personal data to redact. Patterns find IBANs, emails, phone numbers,
 payment cards, dates, URLs and IP addresses on every device; Apple's on-device model or your
 custom provider adds names, postal addresses, dates of birth and ID numbers. Nothing changes
 until the user accepts, and **suggestions may be incomplete: a person must still review the
 whole document.**
 
 ```ts
-const review = await new PdfiumAI(document, { provider }).redactions.suggest();
+const review = await new PdfAI(document, { provider }).redactions.suggest();
 await PdfViewerElement.mount(element, document, {
   review: {
     marks: review.suggestions.map((s) => ({ id: s.id, pageIndex: s.pageIndex, rects: s.rects, state: 'pending' })),
@@ -396,7 +396,7 @@ take the same review setup. Save with the full save mode afterwards.
 
 ## Smart form filling
 
-`pdfiumkit-ai` proposes values for a form's fields from a profile your app passes in (given and
+`pdfcora-ai` proposes values for a form's fields from a profile your app passes in (given and
 family name, date of birth, email, phone, street, postal code, city, country, IBAN, company).
 A synonym list in English and German matches each field by its tooltip, the label printed next
 to it, or its name, on every device; your custom provider, if configured, matches what the list
@@ -405,7 +405,7 @@ to one of a combo box's options — and nothing is written until the user accept
 never stored.
 
 ```ts
-const proposals = await new PdfiumAI(document, { provider }).forms.propose(profile);
+const proposals = await new PdfAI(document, { provider }).forms.propose(profile);
 // Show proposals.items as marks with label = the value, as for redaction; then:
 const applied = await proposals.apply(acceptedIds);   // applied.undo() reopens the document as it was
 ```
@@ -422,13 +422,13 @@ figures re-marked as artifacts in the content and removed from the tree. The ori
 is untouched. On the shared test document the result passes veraPDF's PDF/UA-1 profile on all
 three platforms (`scripts/verapdf-ua1.sh`).
 
-`pdfiumkit-ai` lists the figures that have no alternate text and proposes a description for
+`pdfcora-ai` lists the figures that have no alternate text and proposes a description for
 each, or decorative for a figure too thin or small to carry information. Descriptions need an
 image model: your custom provider on iOS and the web (Apple's on-device model takes no images),
 ML Kit's on-device image description (English, beta) and then the provider on Android.
 
 ```ts
-const review = await new PdfiumAI(document, { provider }).altText.suggest();
+const review = await new PdfAI(document, { provider }).altText.suggest();
 // review.untagged: the document needs tags first. Show review.items as labelled marks; then:
 const updated = await review.apply([{ id, text: 'edited description' }, { id: otherId }]);
 ```
@@ -437,7 +437,7 @@ Role-mapped figure types are not found, because PDFium does not expose `/RoleMap
 
 ## Remediation
 
-For an untagged document, `pdfiumkit-ai` proposes headings, paragraphs, list items, figures and
+For an untagged document, `pdfcora-ai` proposes headings, paragraphs, list items, figures and
 artifacts in reading order, from rules on the page objects (font sizes, line spacing, list
 markers), with the same result on every platform and no model. `document.tagContent(blocks)`
 in the core writes what the user confirms as a structure tree, with the content marked, `/Lang`,
@@ -446,7 +446,7 @@ feature afterwards. On the shared test document the result passes veraPDF's PDF/
 all three platforms.
 
 ```ts
-const review = await new PdfiumAI(document).remediation.suggest();
+const review = await new PdfAI(document).remediation.suggest();
 // Show review.blocks as marks labelled "<order> <type>"; then:
 const tagged = await review.apply({ language: 'en-GB', types: { [captionId]: 'P' } });
 ```
@@ -461,7 +461,7 @@ fields are not tagged, and a document without embedded fonts cannot pass PDF/UA 
 read a page's structure, and change it only through proposals — redactions, form values, fields for
 flat forms, alt text — applied with the ids the user accepted, undoable, and saved to a new file.
 The same tools are available to a browser agent through WebMCP: `registerWebMcpTools(session)` from
-`pdfiumkit-ai` registers them with `document.modelContext` where the browser has it (Chrome 152
+`pdfcora-ai` registers them with `document.modelContext` where the browser has it (Chrome 152
 behind `--enable-blink-features=WebMCP`). See `mcp/README.md`.
 
 ## Semantic diff
@@ -473,7 +473,7 @@ pair is labelled `meaningChanged` (with a one-sentence summary) or `wordingOnly`
 on-device model or your custom provider; without one it stays `unclassified`.
 
 ```ts
-const diff = await new PdfiumAI(original, { provider }).diff.compare(revised);
+const diff = await new PdfAI(original, { provider }).diff.compare(revised);
 // diff.changes: [{ kind: 'modified', label: 'meaningChanged', summary, original, revised }, …]
 ```
 
@@ -504,7 +504,7 @@ through the core's `document.addFormFields`, in a new document, and smart form f
 on them.
 
 ```ts
-const detected = await new PdfiumAI(document).forms.detect();
+const detected = await new PdfAI(document).forms.detect();
 const withFields = await detected.apply(detected.items.map((i) => i.id));
 ```
 
@@ -519,7 +519,7 @@ evaluated, and what an independent audit still has to cover — it is a self-ass
 ## License keys
 
 Without a license key every feature works, and rendered pages, saved files and AI output
-carry a "PdfiumKit trial" watermark. A key unlocks the modules it lists — `editing`,
+carry a "PDFCora trial" watermark. A key unlocks the modules it lists — `editing`,
 `forms`, `signing`, `redaction`, `ai` — for the app IDs and web hosts it names. Viewing,
 text, search, verifying signatures, the viewer and sync need only a valid key.
 
@@ -545,7 +545,7 @@ Keys are issued with `tools/license/issue.mjs`; see `docs/superpowers/specs/2026
 
 ## Licensing
 
-PdfiumKit is distributed as a binary that statically links PDFium and six bundled
+PDFCora is distributed as a binary that statically links PDFium and six bundled
 third-party libraries. **FreeType is used under the FreeType License (FTL)**, not
 GPLv2, which keeps the whole SDK permissively licensed.
 
@@ -568,5 +568,5 @@ vendor artifacts as checksummed release assets.
 
 ## Documentation
 
-- Design: `docs/superpowers/specs/2026-09-12-pdfiumkit-sdk-design.md`
+- Design: `docs/superpowers/specs/2026-09-12-pdfcora-sdk-design.md`
 - Foundation plan: `docs/superpowers/plans/2026-09-12-phase1-foundation.md`

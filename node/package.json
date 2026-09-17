@@ -1,5 +1,5 @@
 {
-  "name": "@pdfiumkit/node",
+  "name": "@pdfcora/node",
   "version": "0.1.0",
   "description": "PDF SDK for Node, built on PDFium",
   "type": "module",
@@ -21,7 +21,7 @@
     "prepack": "npm run build"
   },
   "dependencies": {
-    "@pdfiumkit/web": "file:../web"
+    "@pdfcora/web": "file:../web"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",

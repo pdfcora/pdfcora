@@ -1,4 +1,4 @@
-import type { PdfDocument, PdfPageObject, PdfRect, PdfTagBlock, PdfTagType } from '@pdfiumkit/web';
+import type { PdfDocument, PdfPageObject, PdfRect, PdfTagBlock, PdfTagType } from '@pdfcora/web';
 import { looksDecorative } from '../alt-text/suggest.js';
 import type { PdfPageRange } from '../text.js';
 import { trialText } from '../trial.js';

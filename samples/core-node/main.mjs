@@ -5,11 +5,11 @@
  *   node main.mjs
  */
 import { writeFile } from 'node:fs/promises';
-import { openFile, renderPng, saveFile, useLicenseFromEnvironment } from '@pdfiumkit/node';
+import { openFile, renderPng, saveFile, useLicenseFromEnvironment } from '@pdfcora/node';
 
 // A key from the environment rather than the source. Without one the rendered page
-// carries the "PdfiumKit trial" watermark; everything else works the same.
-await useLicenseFromEnvironment();          // PDFIUMKIT_LICENSE_KEY
+// carries the "PDFCora trial" watermark; everything else works the same.
+await useLicenseFromEnvironment();          // PDFCORA_LICENSE_KEY
 
 // Nothing to configure: unlike the browser, Node finds the engine's WASM itself.
 const pdf = await openFile('sample.pdf');

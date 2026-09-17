@@ -1,4 +1,4 @@
-# pdfiumkit-ai Phase 0 — Foundation Implementation Plan
+# pdfcora-ai Phase 0 — Foundation Implementation Plan
 
 > **For agentic workers:** implement task-by-task. Steps use checkbox (`- [ ]`) syntax.
 
@@ -14,7 +14,7 @@ provider or to `unavailable`.
 
 **Tech Stack:** TypeScript/Node, Swift (FoundationModels, weak-linked), Kotlin.
 
-**Spec:** `docs/superpowers/specs/2026-09-13-pdfiumkit-ai-requirements.md` §§3–7
+**Spec:** `docs/superpowers/specs/2026-09-13-pdfcora-ai-requirements.md` §§3–7
 (PKG, AVL, PRV, HIL, DOC)
 
 **Status:** complete. Web 15 tests, iOS 18, Android 8; the dependency guard verified by
@@ -34,7 +34,7 @@ Every mechanism below was checked against the installed toolchain, not assumed.
 | The model accepts images | ❌ **no** — zero occurrences of "image" in the interface; `PromptRepresentable` is conformed to only by `String`, `Prompt`, `Array`, `ConvertibleToGeneratedContent` |
 | The core's Swift graph is dependency-free | ✅ `swift package show-dependencies --format flatlist` prints nothing |
 | The core's web runtime graph is dependency-free | ✅ `web/package.json` `dependencies` is `{}` |
-| The core's Android graph is inspectable and clean | ✅ `gradle :pdfiumkit:dependencies --configuration releaseRuntimeClasspath` → kotlin-stdlib and coroutines only |
+| The core's Android graph is inspectable and clean | ✅ `gradle :pdfcora:dependencies --configuration releaseRuntimeClasspath` → kotlin-stdlib and coroutines only |
 
 The second row is the one that shapes Task 1: **our four-state model is a superset of
 Apple's two states.** That is deliberate — Android and Web really do have downloadable and
@@ -396,20 +396,20 @@ what makes the Phase 0 exit criterion testable before any real feature exists.
 - Test: `web-ai/test/stub.test.ts`
 
 **Interfaces:**
-- Consumes: Tasks 1–3, and `PdfDocument` from `@pdfiumkit/web`
-- Produces: `PdfiumAI`, `PdfiumAI.stub.availability()`, `PdfiumAI.stub.run()`
+- Consumes: Tasks 1–3, and `PdfDocument` from `@pdfcora/web`
+- Produces: `PdfAI`, `PdfAI.stub.availability()`, `PdfAI.stub.run()`
 
 - [x] **Step 1: Write the failing test**
 
 ```ts
 test('with no provider configured the stub is unavailable, with a reason', async () => {
-  const ai = new PdfiumAI(document, {});
+  const ai = new PdfAI(document, {});
   assert.deepEqual(await ai.stub.availability(),
     { kind: 'unavailable', reason: 'platformUnsupported' });
 });
 
 test('with a provider configured the stub becomes available and says so', async () => {
-  const ai = new PdfiumAI(document, {
+  const ai = new PdfAI(document, {
     provider: { async generate() { return { text: 'ok' }; } },
   });
   assert.deepEqual(await ai.stub.availability(), { kind: 'available' });
@@ -420,7 +420,7 @@ test('with a provider configured the stub becomes available and says so', async 
 - [x] **Step 2: Run it and watch it fail**
 
 Run: `cd web-ai && npm test`
-Expected: FAIL, cannot find `PdfiumAI`
+Expected: FAIL, cannot find `PdfAI`
 
 - [x] **Step 3: Implement**
 
@@ -429,11 +429,11 @@ of the core:
 
 ```json
 {
-  "name": "pdfiumkit-ai",
+  "name": "pdfcora-ai",
   "version": "0.1.0",
   "type": "module",
   "exports": { ".": "./dist/index.js" },
-  "peerDependencies": { "@pdfiumkit/web": "^0.1.0" },
+  "peerDependencies": { "@pdfcora/web": "^0.1.0" },
   "dependencies": {},
   "scripts": { "build": "tsc -p .", "test": "npm run build && node --test dist-test/" }
 }
@@ -441,7 +441,7 @@ of the core:
 
 ```ts
 // src/index.ts
-import type { PdfDocument } from '@pdfiumkit/web';
+import type { PdfDocument } from '@pdfcora/web';
 import { type PdfAiAvailability, unavailable } from './availability.js';
 import { type PdfAiProvider, type PdfAiResult, resolve } from './provider.js';
 
@@ -449,7 +449,7 @@ export * from './availability.js';
 export * from './provider.js';
 export * from './proposal.js';
 
-export interface PdfiumAIOptions {
+export interface PdfAIOptions {
   readonly provider?: PdfAiProvider;
   /** Android and Web alpha prompt APIs stay off unless asked for (PRV-5). */
   readonly experimentalOnDevicePrompt?: boolean;
@@ -461,10 +461,10 @@ export interface PdfiumAIOptions {
  * Every feature reports availability separately (AVL-2) and re-checks on each call
  * (AVL-3), because the user can turn the platform's AI off mid-session.
  */
-export class PdfiumAI {
+export class PdfAI {
   constructor(
     private readonly document: PdfDocument,
-    private readonly options: PdfiumAIOptions,
+    private readonly options: PdfAIOptions,
   ) {}
 
   /**
@@ -505,7 +505,7 @@ export class PdfiumAI {
 ```ts
 test('nothing downloads unless the host asks', async () => {
   let asked = false;
-  const ai = new PdfiumAI(document, {});
+  const ai = new PdfAI(document, {});
   await ai.stub.availability();
   // Merely checking availability must never trigger a fetch (AVL-4).
   assert.equal(asked, false);
@@ -530,24 +530,24 @@ Expected: no dependencies listed
 
 ```bash
 git add web-ai/
-git commit -m "Add the pdfiumkit-ai web package and its stub feature"
+git commit -m "Add the pdfcora-ai web package and its stub feature"
 ```
 
 ---
 
-## Task 5: Port to iOS — `PdfiumKitAI`
+## Task 5: Port to iOS — `PDFCoraAI`
 
 The only platform with a real general on-device model, and the only place the Apple
 mapping in Task 1 gets exercised.
 
 **Files:**
-- Modify: `Package.swift` — add a `PdfiumKitAI` library product and target
-- Create: `ios/Sources/PdfiumKitAI/{Availability,Provider,Proposal,PdfiumAI}.swift`
-- Create: `ios/Sources/PdfiumKitAI/Apple.swift` — the FoundationModels mapping
-- Test: `ios/Tests/PdfiumKitAITests/AvailabilityTests.swift`
+- Modify: `Package.swift` — add a `PDFCoraAI` library product and target
+- Create: `ios/Sources/PDFCoraAI/{Availability,Provider,Proposal,PdfAI}.swift`
+- Create: `ios/Sources/PDFCoraAI/Apple.swift` — the FoundationModels mapping
+- Test: `ios/Tests/PDFCoraAITests/AvailabilityTests.swift`
 
 **Interfaces:**
-- Consumes: `PdfDocument` from `PdfiumKit` (public API only)
+- Consumes: `PdfDocument` from `PDFCora` (public API only)
 - Produces: the Swift equivalents of Tasks 1–4
 
 - [x] **Step 1: Add the product without touching the core's**
@@ -555,15 +555,15 @@ mapping in Task 1 gets exercised.
 ```swift
 // Package.swift — the core product is untouched; this is additive.
 products: [
-    .library(name: "PdfiumKit", targets: ["PdfiumKit"]),
-    .library(name: "PdfiumKitAI", targets: ["PdfiumKitAI"]),
+    .library(name: "PDFCora", targets: ["PDFCora"]),
+    .library(name: "PDFCoraAI", targets: ["PDFCoraAI"]),
 ],
 targets: [
     // ...existing core targets unchanged...
-    .target(name: "PdfiumKitAI", dependencies: ["PdfiumKit"],
-            path: "ios/Sources/PdfiumKitAI"),
-    .testTarget(name: "PdfiumKitAITests", dependencies: ["PdfiumKitAI"],
-                path: "ios/Tests/PdfiumKitAITests"),
+    .target(name: "PDFCoraAI", dependencies: ["PDFCora"],
+            path: "ios/Sources/PDFCoraAI"),
+    .testTarget(name: "PDFCoraAITests", dependencies: ["PDFCoraAI"],
+                path: "ios/Tests/PDFCoraAITests"),
 ]
 ```
 
@@ -584,7 +584,7 @@ func testAppleStatesMapOntoOurs() {
 
 func testAnOsWithoutTheFrameworkIsUnsupportedNotACrash() async {
     // The package must build and run on iOS 15. Below iOS 26 there is no framework.
-    let ai = PdfiumAI(document: document, options: .init())
+    let ai = PdfAI(document: document, options: .init())
     if #available(iOS 26.0, *) {} else {
         let state = await ai.stub.availability()
         XCTAssertEqual(state, .unavailable(.platformUnsupported))
@@ -640,38 +640,38 @@ enum AppleModel {
 Run: `swift build -Xswiftc -target -Xswiftc arm64-apple-ios15.0-simulator`
 Expected: builds. `Package.swift` still declares `.iOS(.v15)`, and `FoundationModels` is
 reached only behind `#available(iOS 26.0, *)` with `#if canImport`. An app on iOS 15 that
-links `PdfiumKitAI` must still launch.
+links `PDFCoraAI` must still launch.
 
 - [x] **Step 5: Run the tests**
 
-Run: `xcodebuild test -scheme PdfiumKitAI -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=27.0'`
+Run: `xcodebuild test -scheme PDFCoraAI -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=27.0'`
 Expected: PASS
 
 - [x] **Step 6: Commit**
 
 ```bash
-git add Package.swift ios/Sources/PdfiumKitAI ios/Tests/PdfiumKitAITests
-git commit -m "Add PdfiumKitAI with the Apple availability mapping"
+git add Package.swift ios/Sources/PDFCoraAI ios/Tests/PDFCoraAITests
+git commit -m "Add PDFCoraAI with the Apple availability mapping"
 ```
 
 ---
 
-## Task 6: Port to Android — `pdfiumkit-ai`
+## Task 6: Port to Android — `pdfcora-ai`
 
 No ML Kit dependency in Phase 0. Android's on-device routes arrive with the features that
 need them; adding the dependency now would only risk PKG-2.
 
 **Files:**
-- Create: `android/pdfiumkit-ai/build.gradle.kts`
-- Create: `android/pdfiumkit-ai/src/main/java/com/pdfiumkit/ai/{Availability,Provider,Proposal,PdfiumAI}.kt`
+- Create: `android/pdfcora-ai/build.gradle.kts`
+- Create: `android/pdfcora-ai/src/main/java/com/pdfcora/ai/{Availability,Provider,Proposal,PdfAI}.kt`
 - Modify: `android/settings.gradle.kts` — include the module
-- Test: `android/pdfiumkit-ai/src/test/java/com/pdfiumkit/ai/AvailabilityTest.kt`
+- Test: `android/pdfcora-ai/src/test/java/com/pdfcora/ai/AvailabilityTest.kt`
 
 - [x] **Step 1: Add the module with `api` on the core only**
 
 ```kotlin
 dependencies {
-    api(project(":pdfiumkit"))
+    api(project(":pdfcora"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     // No ML Kit yet. It arrives with the feature that needs it.
 }
@@ -685,7 +685,7 @@ android { defaultConfig { minSdk = 23 } }
 ```kotlin
 @Test
 fun `with no provider the stub is unavailable with a reason`() = runTest {
-    val ai = PdfiumAI(document, PdfiumAIOptions())
+    val ai = PdfAI(document, PdfAIOptions())
     assertEquals(
         PdfAiAvailability.Unavailable(PdfAiUnavailableReason.PLATFORM_UNSUPPORTED),
         ai.stub.availability(),
@@ -703,14 +703,14 @@ implementations have diverged and one of them is wrong.
 
 - [x] **Step 4: Run the tests**
 
-Run: `cd android && gradle :pdfiumkit-ai:testDebugUnitTest`
+Run: `cd android && gradle :pdfcora-ai:testDebugUnitTest`
 Expected: PASS
 
 - [x] **Step 5: Commit**
 
 ```bash
-git add android/pdfiumkit-ai android/settings.gradle.kts
-git commit -m "Add the pdfiumkit-ai Android module"
+git add android/pdfcora-ai android/settings.gradle.kts
+git commit -m "Add the pdfcora-ai Android module"
 ```
 
 ---
@@ -730,14 +730,14 @@ The requirement that the core stays clean, enforced rather than reviewed.
 - [x] **Step 1: Write the check so it fails on a planted dependency first**
 
 Temporarily add `implementation("com.google.mlkit:genai-summarization:1.0.0-beta1")` to
-`android/pdfiumkit/build.gradle.kts`, run the script, confirm it exits non-zero and names
+`android/pdfcora/build.gradle.kts`, run the script, confirm it exits non-zero and names
 the line. **A guard that has never failed is not known to work.** Then revert.
 
 - [x] **Step 2: Implement**
 
 ```bash
 #!/usr/bin/env bash
-# The core must not depend on any AI runtime. pdfiumkit-ai may; pdfiumkit may not.
+# The core must not depend on any AI runtime. pdfcora-ai may; pdfcora may not.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -758,7 +758,7 @@ fi
 
 # Android: the resolved runtime classpath, not the declared block — a transitive
 # pull-in is exactly the failure this guard exists for.
-if (cd android && gradle -q :pdfiumkit:dependencies \
+if (cd android && gradle -q :pdfcora:dependencies \
       --configuration releaseRuntimeClasspath --console=plain) \
    | grep -Ei "$BANNED"; then
   echo "core Android module resolves an AI runtime (above)"; fail=1
@@ -769,7 +769,7 @@ fi
 core_web=$(node -p 'require("./web/package.json").version')
 ai_web=$(node -p 'require("./web-ai/package.json").version')
 if [ "$core_web" != "$ai_web" ]; then
-  echo "version drift: @pdfiumkit/web $core_web vs pdfiumkit-ai $ai_web"; fail=1
+  echo "version drift: @pdfcora/web $core_web vs pdfcora-ai $ai_web"; fail=1
 fi
 
 [ "$fail" -eq 0 ] && echo "core dependency graph is clean, versions aligned"
@@ -796,7 +796,7 @@ The Phase 0 exit criterion. Each demo shows what a user sees when a feature cann
 which, on most devices today, is what they will see.
 
 **Files:**
-- Modify: `web/demo/app.js`, `ios/Demo/Sources/Screens/`, `android/demo/src/main/java/com/pdfiumkit/demo/`
+- Modify: `web/demo/app.js`, `ios/Demo/Sources/Screens/`, `android/demo/src/main/java/com/pdfcora/demo/`
 - Modify: `scripts/make-docs.sh` — an AI section in each quickstart
 
 - [x] **Step 1: Add an "AI" tab to each demo**
@@ -844,7 +844,7 @@ git commit -am "Show the not-available path in all three demos"
 
 | Risk | Mitigation |
 | --- | --- |
-| The AI package drifts from the core's public API and needs an internal hook | PKG-4 is checked by the package importing only `PdfiumKit` / `@pdfiumkit/web`, never `@testable` |
+| The AI package drifts from the core's public API and needs an internal hook | PKG-4 is checked by the package importing only `PDFCora` / `@pdfcora/web`, never `@testable` |
 | ML Kit raises Android's `minSdk` above 23 when it is added in a later phase | Not a Phase 0 risk — nothing depends on ML Kit yet. Measure when the dependency lands |
 | The four-state availability model proves wrong once a second platform is wired up | It is one file per platform and one mapping test; changing it in Phase 1 is cheap. Changing it after three features ship is not |
 | Apple adds image input and §11's design is stale | The finding is dated and the source named, so it can be re-checked against a newer SDK in one command |
@@ -881,8 +881,8 @@ decision.
 
 **Adding a second library product broke the core's test script.** Once `Package.swift`
 declared two library products, the per-product schemes stopped carrying a test action, and
-`scripts/test-ios.sh` failed with "Scheme PdfiumKit is not currently configured for the
-test action". The core suite was not running. The script now drives `PdfiumKit-Package`
+`scripts/test-ios.sh` failed with "Scheme PDFCora is not currently configured for the
+test action". The core suite was not running. The script now drives `PDFCora-Package`
 and selects targets explicitly. Worth noting because nothing about adding an optional
 package suggests it would touch the core's gate.
 

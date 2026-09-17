@@ -182,7 +182,7 @@ describe('conformance', () => {
  */
 describe('signing contract', () => {
   const FIXTURES = new URL('../../conformance/fixtures/', import.meta.url).pathname;
-  const scratch = mkdtempSync(join(tmpdir(), 'pdfiumkit-conformance-'));
+  const scratch = mkdtempSync(join(tmpdir(), 'pdfcora-conformance-'));
 
   const signer = {
     async sign(data: Uint8Array): Promise<Uint8Array> {

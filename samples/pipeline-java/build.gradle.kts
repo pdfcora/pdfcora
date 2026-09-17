@@ -4,7 +4,7 @@ plugins {
 
 java { toolchain { languageVersion = JavaLanguageVersion.of(17) } }
 
-dependencies { implementation("com.pdfiumkit:pdfiumkit:0.1.0") }
+dependencies { implementation("com.pdfcora:pdfcora:0.1.0") }
 
 application { mainClass = "Main" }
 

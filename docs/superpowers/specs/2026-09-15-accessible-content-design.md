@@ -1,8 +1,8 @@
-# PdfiumKit — Accessible Content Design
+# PDFCora — Accessible Content Design
 
 Date: 2026-09-15
 Status: Implemented 2026-09-15
-Implements: A11Y-2 of `2026-09-13-pdfiumkit-ai-requirements.md` (the core accessibility track)
+Implements: A11Y-2 of `2026-09-13-pdfcora-ai-requirements.md` (the core accessibility track)
 
 ## 1. Purpose
 

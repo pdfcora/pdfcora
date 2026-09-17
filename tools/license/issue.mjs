@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Issues PdfiumKit license keys.
+ * Issues PDFCora license keys.
  *
  *   node tools/license/issue.mjs keygen --out <dir>
  *   node tools/license/issue.mjs sign --private-key <pem> --id lic_… --customer Acme

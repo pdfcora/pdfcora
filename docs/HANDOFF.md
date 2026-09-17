@@ -3,13 +3,38 @@
 Last updated: 2026-09-15. Everything described here is committed; `git log` is the
 detailed record and each commit message explains *why*, not just what.
 
+## The name: PDFCora (formerly PdfiumKit)
+
+Renamed on 2026-09-17, before anything was published, because PDFium is Google's project
+name and its BSD-3-Clause licence forbids using it to promote derived products. "Built on
+PDFium" stays as attribution; everything about the engine itself keeps its name
+(`libpdfium`, `CPdfium`, `PdfiumModule`, the build scripts).
+
+| Was | Is |
+| --- | --- |
+| `PdfiumKit`, `PdfiumKitUI`, `PdfiumKitAI` (Swift) | `PDFCora`, `PDFCoraUI`, `PDFCoraAI` |
+| `com.pdfiumkit:pdfiumkit`, `-ui`, `-ai` | `com.pdfcora:pdfcora`, `pdfcora-ui`, `pdfcora-ai` |
+| `@pdfiumkit/web`, `@pdfiumkit/node`, `pdfiumkit-ai`, `pdfiumkit-mcp` | `@pdfcora/web`, `@pdfcora/node`, `@pdfcora/web-ai`, `pdfcora-mcp` |
+| `PdfiumAI`, `PdfiumAIOptions` | `PdfAI`, `PdfAIOptions` — a Swift type cannot share its module's name |
+| `PDFIUMKIT_*` environment variables | `PDFCORA_*` |
+| "PdfiumKit trial" watermark | "PDFCora trial" |
+
+Not renamed, on purpose, because they are real things outside the code: this repository's
+folder and GitHub name (`PdfiumKit-v2`), the production licence key at
+`~/.pdfiumkit-license`, and the PDFium build tree at `/Users/daos/Projects/Lab/pdfiumkit`.
+Licence keys already issued keep working: nothing in the key format carried the name.
+The test signing identity and the test TSA certificate were regenerated as "PDFCora Test
+Signer" / "PDFCora Test TSA" with the password `pdfcora`; nothing committed was signed with
+the old ones. The iOS modules now carry `.docc` catalogs, so DocC names its pages
+`com.pdfcora.*` instead of taking the identity from the folder name.
+
 ## The short version
 
 The SDK is feature-complete for its stated scope on iOS, Android and Web: render, text,
 search, forms, annotations, digital signatures (read/verify/sign), redaction, and a
 viewer with cross-platform sync and an optional UI component.
 
-`pdfiumkit-ai` Phase 1 — grounded answers and summaries — is built on all three platforms
+`pdfcora-ai` Phase 1 — grounded answers and summaries — is built on all three platforms
 and has run against real models on Apple and on an Android phone; Chrome's has not.
 
 Small per-feature samples live in `samples/`: core, AI and UI for iOS, Android and web,
@@ -29,21 +54,21 @@ because each lesson generalises. §4 lists what is open and what was parked.
 | Viewer: editing through the viewer, presenter rule | Done, three platforms |
 | UI layer: component, configurable toolbar, theme | Done, three platforms, adopted by all demos |
 | Engine watchdog: calls behind a hung PDFium call fail fast | Done, three platforms |
-| `pdfiumkit-ai` Phase 1: grounded answers, summaries | Built, three platforms; real-model tested on Apple and on an Android phone |
+| `pdfcora-ai` Phase 1: grounded answers, summaries | Built, three platforms; real-model tested on Apple and on an Android phone |
 | Samples: one small app per feature area (core, AI, UI, agents) | iOS, Android, web — `samples/` |
-| Node SDK (`@pdfiumkit/node`) | Done — a thin layer over the web package: whole API re-exported, plus file, PNG and env-key helpers |
-| Java SDK (`com.pdfiumkit:pdfiumkit`) | Core, annotations, form filling, redaction, tagging (veraPDF-validated), signatures (read, verify, sign), viewer state — over JNI on macOS and Linux. No timestamping, no AI |
+| Node SDK (`@pdfcora/node`) | Done — a thin layer over the web package: whole API re-exported, plus file, PNG and env-key helpers |
+| Java SDK (`com.pdfcora:pdfcora`) | Core, annotations, form filling, redaction, tagging (veraPDF-validated), signatures (read, verify, sign), viewer state — over JNI on macOS and Linux. No timestamping, no AI |
 | License keys: offline, per module, trial watermark | Done, three platforms, shared cases in `conformance/license/` |
-| `pdfiumkit-ai` Phase 2a: redaction suggestions, review marks in the viewer, undo | Done, three platforms, shared cases in `conformance/redaction/` |
-| `pdfiumkit-ai` Phase 2b: smart form filling from a profile, labelled marks, undo | Done, three platforms, shared cases in `conformance/forms/`; no on-device model (measured) |
+| `pdfcora-ai` Phase 2a: redaction suggestions, review marks in the viewer, undo | Done, three platforms, shared cases in `conformance/redaction/` |
+| `pdfcora-ai` Phase 2b: smart form filling from a profile, labelled marks, undo | Done, three platforms, shared cases in `conformance/forms/`; no on-device model (measured) |
 | Core structure tree read; figure alt text and decorative writes | Done, three platforms; written documents pass veraPDF PDF/UA-1 (`scripts/verapdf-ua1.sh`) |
 | Remediation: core `tagContent`, rule-based tag proposals (Phase 3b) | Done, three platforms, shared document in `conformance/remediation/`; output passes veraPDF PDF/UA-1 |
 | Flat form detection (FORM-7) and core `addFormFields` | Done, three platforms, shared fixture `conformance/forms/flat.pdf`; rules only |
 | Agent tools: MCP server (`mcp/`) and WebMCP registration | Done; read tools plus proposal/apply/undo, saving only to a new file; WebMCP checked in Chrome 152 behind a flag |
 | Automated accessibility audits in the gates (A11Y-1) | Done, three platforms; draft report in `docs/accessibility/conformance-report.md`. A11Y-4 still needs an independent audit |
 | Accessible content (A11Y-2): tagged structure exposed to VoiceOver, TalkBack, browser screen readers | Done, three platforms, UI-tested; not yet tried with a real screen reader by a person |
-| `pdfiumkit-ai` semantic diff: sentence alignment, meaning vs wording labels | Done, three platforms, shared pair in `conformance/diff/`; Apple's model 3 of 3 runs right |
-| `pdfiumkit-ai` Phase 3a: alt text proposals for figures in tagged PDFs | Done, three platforms, shared document in `conformance/alt-text/`; ML Kit image description measured on a Samsung SM-F971B on 2026-09-16 |
+| `pdfcora-ai` semantic diff: sentence alignment, meaning vs wording labels | Done, three platforms, shared pair in `conformance/diff/`; Apple's model 3 of 3 runs right |
+| `pdfcora-ai` Phase 3a: alt text proposals for figures in tagged PDFs | Done, three platforms, shared document in `conformance/alt-text/`; ML Kit image description measured on a Samsung SM-F971B on 2026-09-16 |
 
 Test counts at the time of writing (2026-09-16): web 303, web-ai 128 (one Ollama test skipped),
 browser viewer 36 (includes the axe audit and WebMCP), MCP server 3, license tool 1, iOS 191 (sweep
@@ -160,7 +185,7 @@ Latin-1 byte. Web and Android index bytes and were never affected.
 
 ## 4. Open
 
-**`pdfiumkit-ai` on real models.** The iOS simulator reaches the Mac's
+**`pdfcora-ai` on real models.** The iOS simulator reaches the Mac's
 own Apple Intelligence model, and on the contract it grounds 30 of 30 answers — after two
 fixes the real model forced (it misnames passage ids, and says "not mentioned" instead of
 replying empty). ML Kit GenAI summarises accurately on a real phone (Samsung SM-F971B, Android 17) — but
@@ -201,7 +226,7 @@ that actually scrolls never returns: Compose never reports itself idle, the main
 no work, and ActivityManager kills the process after about 40 s, which Gradle reports as
 "Process crashed". A thread dump puts the test thread in `Espresso.onIdle` under
 `ComposeUiTest.waitForIdle`, so nothing of ours is on the stack. It reproduces with a bare
-`Column { scrollable Row of IconButtons; Box }` — no PdfiumKit code — and is unchanged by the
+`Column { scrollable Row of IconButtons; Box }` — no PDFCora code — and is unchanged by the
 Android version (36 and 35), the Espresso version (3.7.0; 3.6.1 cannot run on Android 16 at all,
 because it calls the removed `InputManager.getInstance`), disabling the 1.8 overscroll effect, or
 `kotlinx-coroutines-test` 1.8.1 against 1.10.2. Compose 1.6 (BOM 2024.06.00) with Espresso 3.7.0 is
@@ -239,8 +264,8 @@ the desktop engines, and those are optional artifacts. macOS and Linux only: the
 Windows engine build. Every feature added to it is a feature to add four times, which is
 the cost to weigh before extending it.
 
-**The Node SDK is not a fourth implementation**, deliberately. `@pdfiumkit/node` re-exports
-`@pdfiumkit/web` — a test asserts every export is present — and adds only `openFile`,
+**The Node SDK is not a fourth implementation**, deliberately. `@pdfcora/node` re-exports
+`@pdfcora/web` — a test asserts every export is present — and adds only `openFile`,
 `saveFile`, `renderPng`, `renderRaw` and `useLicenseFromEnvironment`. The engine is the same
 WebAssembly build. What a server does not get from it is `PdfWorker`: containing a stalled
 page needs a `worker_thread` or a child process.
@@ -277,7 +302,7 @@ needed). AGP 8.7 uninstalls test APKs after a run, so `scripts/test-android.sh` 
 
 **Chrome's Summarizer has run for real** (2026-09-15, Chrome 152): summaries on the contract and a
 German page are grounded, and a quota bug it exposed is fixed. `node web-ai/scripts/measure-chrome-summarizer.mjs`
-reruns it (the model stays in `~/.cache/pdfiumkit/chrome-ai-profile`). A real custom provider
+reruns it (the model stays in `~/.cache/pdfcora/chrome-ai-profile`). A real custom provider
 has run: Llama 3.2 3B through Ollama grounds 25 of 30 answers (`web-ai/test/ollama.test.ts`).
 
 **The code is on GitHub** at `github.com/indaos/PdfiumKit-v2`, a **private** repository,

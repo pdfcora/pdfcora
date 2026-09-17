@@ -1,8 +1,8 @@
-# PdfiumKit — Digital Signatures and Redaction Design
+# PDFCora — Digital Signatures and Redaction Design
 
 Date: 2026-09-13
 Status: Draft, pending review
-Extends: `2026-09-12-pdfiumkit-sdk-design.md`
+Extends: `2026-09-12-pdfcora-sdk-design.md`
 
 ## 1. Purpose
 

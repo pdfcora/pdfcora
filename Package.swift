@@ -2,14 +2,14 @@
 import PackageDescription
 
 let package = Package(
-    name: "PdfiumKit",
+    name: "PDFCora",
     platforms: [.iOS(.v15)],
     products: [
-        .library(name: "PdfiumKit", targets: ["PdfiumKit"]),
+        .library(name: "PDFCora", targets: ["PDFCora"]),
         // Optional, and additive: the core product above is untouched (PKG-1).
-        .library(name: "PdfiumKitAI", targets: ["PdfiumKitAI"]),
+        .library(name: "PDFCoraAI", targets: ["PDFCoraAI"]),
         // The UI layer. Optional: the headless PdfViewer stays usable alone.
-        .library(name: "PdfiumKitUI", targets: ["PdfiumKitUI"]),
+        .library(name: "PDFCoraUI", targets: ["PDFCoraUI"]),
     ],
     targets: [
         .binaryTarget(name: "pdfium", path: "vendor/ios/pdfium.xcframework"),
@@ -19,10 +19,10 @@ let package = Package(
             path: "ios/Sources/CPdfium",
             publicHeadersPath: "include"
         ),
-        .target(name: "PdfiumKit", dependencies: ["CPdfium"], path: "ios/Sources/PdfiumKit"),
-        .testTarget(name: "PdfiumKitTests", dependencies: ["PdfiumKit"], path: "ios/Tests/PdfiumKitTests"),
-        .target(name: "PdfiumKitAI", dependencies: ["PdfiumKit"], path: "ios/Sources/PdfiumKitAI"),
-        .target(name: "PdfiumKitUI", dependencies: ["PdfiumKit"], path: "ios/Sources/PdfiumKitUI"),
-        .testTarget(name: "PdfiumKitAITests", dependencies: ["PdfiumKitAI"], path: "ios/Tests/PdfiumKitAITests"),
+        .target(name: "PDFCora", dependencies: ["CPdfium"], path: "ios/Sources/PDFCora"),
+        .testTarget(name: "PDFCoraTests", dependencies: ["PDFCora"], path: "ios/Tests/PDFCoraTests"),
+        .target(name: "PDFCoraAI", dependencies: ["PDFCora"], path: "ios/Sources/PDFCoraAI"),
+        .target(name: "PDFCoraUI", dependencies: ["PDFCora"], path: "ios/Sources/PDFCoraUI"),
+        .testTarget(name: "PDFCoraAITests", dependencies: ["PDFCoraAI"], path: "ios/Tests/PDFCoraAITests"),
     ]
 )

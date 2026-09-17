@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PdfiumKit for AI agents — MCP server and WebMCP tools</title>
+  <title>PDFCora for AI agents — MCP server and WebMCP tools</title>
   <meta name="description" content="Give an agent PDF tools it can use safely: read text, search, list form fields and structure freely, and change documents only through proposals a person accepts, with undo and saving to a new file.">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#07080c">
@@ -16,9 +16,9 @@
 
   <header class="site-header">
     <div class="wrap header-inner">
-      <a class="brand" href="index.html" aria-label="PdfiumKit home">
+      <a class="brand" href="index.html" aria-label="PDFCora home">
         <img src="favicon.svg" alt="" width="28" height="28">
-        <span>PdfiumKit</span>
+        <span>PDFCora</span>
       </a>
       <button class="nav-toggle" aria-expanded="false" aria-controls="site-nav">
         <span class="sr">Menu</span><span class="bars" aria-hidden="true"></span>
@@ -57,17 +57,17 @@
           <h2 id="how-h">The same tools, wherever the agent lives.</h2>
         </header>
         <div class="cards">
-          <article class="card reveal"><span class="tag">Node</span><h3>An MCP server</h3><p><code>pdfiumkit-mcp</code> speaks the Model Context Protocol over stdio, so any MCP client can start it from its own configuration. It handles many documents at once, each addressed by id, on the same <code>@pdfiumkit/node</code> engine your own server code would use — so a tool the agent calls and a job you run yourself see the same document.</p></article>
+          <article class="card reveal"><span class="tag">Node</span><h3>An MCP server</h3><p><code>pdfcora-mcp</code> speaks the Model Context Protocol over stdio, so any MCP client can start it from its own configuration. It handles many documents at once, each addressed by id, on the same <code>@pdfcora/node</code> engine your own server code would use — so a tool the agent calls and a job you run yourself see the same document.</p></article>
           <article class="card reveal"><span class="tag">Browser</span><h3>WebMCP</h3><p><code>registerWebMcpTools(session)</code> offers the same tools to the browser’s agent for the document your page already has open. Where the browser has no WebMCP it returns nothing, so your page can say so instead of breaking.</p></article>
         </div>
         <div class="code-card reveal" style="margin-top:1.4rem">
           <div class="code-head"><div class="tablist"><span class="panel-label-tab">JSON</span></div></div>
           <div class="panel">
             <span class="panel-label">Wiring the server into an MCP client</span>
-<pre tabindex="0"><code>{ <span class="s">"mcpServers"</span>: { <span class="s">"pdfiumkit"</span>: {
+<pre tabindex="0"><code>{ <span class="s">"mcpServers"</span>: { <span class="s">"pdfcora"</span>: {
     <span class="s">"command"</span>: <span class="s">"node"</span>,
     <span class="s">"args"</span>: [<span class="s">"/path/to/mcp/dist/main.js"</span>],
-    <span class="s">"env"</span>: { <span class="s">"PDFIUMKIT_LICENSE_KEY"</span>: <span class="s">"pk1…"</span> }
+    <span class="s">"env"</span>: { <span class="s">"PDFCORA_LICENSE_KEY"</span>: <span class="s">"pk1…"</span> }
 } } }</code></pre>
           </div>
         </div>
@@ -125,7 +125,7 @@
   <footer class="site-footer">
     <div class="wrap footer-inner">
       <div>
-        <a class="brand" href="index.html"><img src="favicon.svg" alt="" width="24" height="24"><span>PdfiumKit</span></a>
+        <a class="brand" href="index.html"><img src="favicon.svg" alt="" width="24" height="24"><span>PDFCora</span></a>
         <p class="footer-tag">One PDF SDK. Every platform.</p>
         <p class="muted">0.1.0 · Pre-release</p>
       </div>

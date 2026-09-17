@@ -6,14 +6,14 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-DESTINATION="${PDFIUMKIT_DESTINATION:-platform=iOS Simulator,name=iPhone 17 Pro,OS=27.0}"
-LEAKY=(PdfiumKitTests/BlastRadiusTests PdfiumKitTests/HangProbeTests)
+DESTINATION="${PDFCORA_DESTINATION:-platform=iOS Simulator,name=iPhone 17 Pro,OS=27.0}"
+LEAKY=(PDFCoraTests/BlastRadiusTests PDFCoraTests/HangProbeTests)
 
 # The package scheme, not the product scheme: once the package gained a second library
 # product, the per-product schemes stopped carrying a test action at all.
-SCHEME=PdfiumKit-Package
+SCHEME=PDFCora-Package
 
-skip=(-only-testing:PdfiumKitTests)
+skip=(-only-testing:PDFCoraTests)
 for suite in "${LEAKY[@]}"; do skip+=("-skip-testing:$suite"); done
 
 xcodebuild test -scheme "$SCHEME" -destination "$DESTINATION" "${skip[@]}" "$@"
@@ -22,18 +22,18 @@ xcodebuild test -scheme "$SCHEME" -destination "$DESTINATION" "${skip[@]}" "$@"
 # rest of the process, so it gets a process of its own. HangProbeTests stays skipped:
 # it was a one-off probe, and its question is answered.
 xcodebuild test -scheme "$SCHEME" -destination "$DESTINATION" \
-    -only-testing:PdfiumKitTests/BlastRadiusTests "$@"
+    -only-testing:PDFCoraTests/BlastRadiusTests "$@"
 
 # The UI layer, end to end in the demo app: every screen renders, the component's toolbar
 # can be scrolled to every item, and the component says why it cannot show a document.
 # The Xcode project is generated, so it is regenerated first.
 (cd ios/Demo && xcodegen generate > /dev/null)
-xcodebuild test -project ios/Demo/PdfiumKitDemo.xcodeproj -scheme PdfiumKitDemo \
+xcodebuild test -project ios/Demo/PDFCoraDemo.xcodeproj -scheme PDFCoraDemo \
     -destination "$DESTINATION" "$@"
 
 # The AI package's own suite.
 xcodebuild test -scheme "$SCHEME" -destination "$DESTINATION" \
-    -only-testing:PdfiumKitAITests "$@"
+    -only-testing:PDFCoraAITests "$@"
 
 # The signing cross-check. An iOS test cannot spawn a process, so the suite writes a
 # signed document here and the gate runs on the host. Our own verifier agreeing with our
@@ -55,9 +55,9 @@ check_pdfsig() {
 }
 
 if command -v pdfsig > /dev/null; then
-    check_pdfsig /tmp/pdfiumkit-ios-signed.pdf iOS-signed
+    check_pdfsig /tmp/pdfcora-ios-signed.pdf iOS-signed
     # Signed without a signing license, so it is watermarked first.
-    check_pdfsig /tmp/pdfiumkit-ios-trial-signed.pdf iOS-trial-signed
+    check_pdfsig /tmp/pdfcora-ios-trial-signed.pdf iOS-trial-signed
 else
     echo "cross-check:   skipped, pdfsig is not installed" >&2
 fi

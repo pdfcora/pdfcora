@@ -1,5 +1,5 @@
 import { configureEngine, PdfDocument } from '../../web/dist/index.js';
-import { PdfiumAI } from '../../web-ai/dist/index.js';
+import { PdfAI } from '../../web-ai/dist/index.js';
 
 configureEngine({
   factory: async (options) => (await import('../../web/vendor/pdfium.esm.js')).default(options),
@@ -12,7 +12,7 @@ let pdf = await PdfDocument.open(bytes);
 // No provider is configured here, so the SDK uses what the browser offers (Chrome's
 // built-in Summarizer) and its own patterns. An app that has a hosted model passes
 // `{ provider }`, and document text reaches it only because the app said so.
-let ai = new PdfiumAI(pdf);
+let ai = new PdfAI(pdf);
 
 // AVL-2: the SDK reports whether a feature can run; it never downloads a model itself.
 // Call `ai.summaries.prepare()` from a user gesture to download one.
@@ -67,7 +67,7 @@ document.getElementById('suggest').onclick = async () => {
     undo.textContent = 'Undo';
     undo.onclick = async () => {
       pdf = await applied.undo();
-      ai = new PdfiumAI(pdf);
+      ai = new PdfAI(pdf);
       box.insertAdjacentHTML('beforeend', '<p class="status">Undone; the original document is open again.</p>');
     };
     box.append(undo);

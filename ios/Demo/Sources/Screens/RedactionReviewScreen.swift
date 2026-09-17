@@ -1,7 +1,7 @@
 import SwiftUI
-import PdfiumKit
-import PdfiumKitUI
-import PdfiumKitAI
+import PDFCora
+import PDFCoraUI
+import PDFCoraAI
 
 /// Redaction suggestions reviewed in the component: patterns only, so it runs anywhere.
 struct RedactionReviewScreen: View {
@@ -29,7 +29,7 @@ struct RedactionReviewScreen: View {
             guard let url = Bundle.main.url(forResource: "pii", withExtension: "pdf"),
                   let opened = try? await PdfDocument(url: url) else { return }
             document = opened
-            review = try? await PdfiumAI(document: opened).redactions.suggest(categories: Set(PdfRedactionCategory.patterns))
+            review = try? await PdfAI(document: opened).redactions.suggest(categories: Set(PdfRedactionCategory.patterns))
         }
     }
 }

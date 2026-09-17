@@ -1,12 +1,12 @@
-# PdfiumKit — Agent Tools (MCP and WebMCP) Design
+# PDFCora — Agent Tools (MCP and WebMCP) Design
 
 Date: 2026-09-15
 Status: Implemented 2026-09-16
-Implements: "MCP / WebMCP tools for agents" of `2026-09-13-pdfiumkit-ai-requirements.md` §14
+Implements: "MCP / WebMCP tools for agents" of `2026-09-13-pdfcora-ai-requirements.md` §14
 
 ## 1. Purpose
 
-Let an AI agent work with a PDF through PdfiumKit: read it freely, and change it only through
+Let an AI agent work with a PDF through PDFCora: read it freely, and change it only through
 proposals that a person accepts (HIL-1), with undo (HIL-2).
 
 Success criteria:
@@ -22,9 +22,9 @@ Success criteria:
 
 | Question | Decision |
 | --- | --- |
-| Where definitions live | `pdfiumkit-ai` (web): `agentTools` and `PdfAgentSession`, no MCP dependency |
-| MCP server | New package `mcp/` (`pdfiumkit-mcp`), depending on `@modelcontextprotocol/sdk`, stdio transport, many documents by id |
-| WebMCP | `registerWebMcpTools(session)` in `pdfiumkit-ai`, one document, feature-detected. Chrome 152 exposes `document.modelContext.registerTool(tool, { signal })` behind `--enable-blink-features=WebMCP`; the explainer's `navigator.modelContext` shape is accepted too |
+| Where definitions live | `pdfcora-ai` (web): `agentTools` and `PdfAgentSession`, no MCP dependency |
+| MCP server | New package `mcp/` (`pdfcora-mcp`), depending on `@modelcontextprotocol/sdk`, stdio transport, many documents by id |
+| WebMCP | `registerWebMcpTools(session)` in `pdfcora-ai`, one document, feature-detected. Chrome 152 exposes `document.modelContext.registerTool(tool, { signal })` behind `--enable-blink-features=WebMCP`; the explainer's `navigator.modelContext` shape is accepted too |
 | Writes | Every change is a proposal set first; `apply_proposals` takes the accepted ids; its description tells the agent to pass only ids the user accepted, and MCP annotations mark it destructive |
 | Model inside tools | The agent is the model: tools run patterns and rules only, unless the host configured a provider for the session |
 | Saving | MCP only, to a path that must differ from the opened file; WebMCP leaves saving to the page |

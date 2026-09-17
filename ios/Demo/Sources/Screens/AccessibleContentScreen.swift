@@ -1,6 +1,6 @@
 import SwiftUI
-import PdfiumKit
-import PdfiumKitUI
+import PDFCora
+import PDFCoraUI
 
 /// A tagged document in the component, for VoiceOver: headings, paragraphs and figures by
 /// their alternate text, in reading order.

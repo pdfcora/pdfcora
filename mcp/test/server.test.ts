@@ -5,13 +5,13 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
-import { createPdfiumKitServer } from '../dist/server.js';
+import { createPDFCoraServer } from '../dist/server.js';
 
 const PII = new URL('../../conformance/redaction/pii.pdf', import.meta.url).pathname;
 
 async function client(): Promise<Client> {
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-  await createPdfiumKitServer().connect(serverTransport);
+  await createPDFCoraServer().connect(serverTransport);
   const c = new Client({ name: 'test', version: '0' });
   await c.connect(clientTransport);
   return c;
@@ -22,7 +22,7 @@ async function call(c: Client, name: string, args: Record<string, unknown>) {
   return { error: result.isError === true, value: result.isError ? result.content[0]!.text : JSON.parse(result.content[0]!.text) };
 }
 
-describe('pdfiumkit MCP server', () => {
+describe('pdfcora MCP server', () => {
   test('lists the tools with read-only and destructive hints', async () => {
     const { tools } = await (await client()).listTools();
     const byName = new Map(tools.map((t) => [t.name, t]));
@@ -48,7 +48,7 @@ describe('pdfiumkit MCP server', () => {
     const emails = proposals.items.filter((i: { category: string }) => i.category === 'email');
     await call(c, 'apply_proposals', { documentId, proposalSetId: proposals.proposalSetId, acceptedIds: emails.map((i: { id: string }) => i.id) });
 
-    const dir = mkdtempSync(join(tmpdir(), 'pdfiumkit-mcp-'));
+    const dir = mkdtempSync(join(tmpdir(), 'pdfcora-mcp-'));
     const output = join(dir, 'redacted.pdf');
     const { value: saved } = await call(c, 'save_document', { documentId, outputPath: output });
     assert.equal(saved.path, output);
@@ -68,7 +68,7 @@ describe('pdfiumkit MCP server', () => {
     assert.equal(overOriginal.error, true);
     assert.match(overOriginal.value, /refusing to overwrite/);
 
-    const dir = mkdtempSync(join(tmpdir(), 'pdfiumkit-mcp-'));
+    const dir = mkdtempSync(join(tmpdir(), 'pdfcora-mcp-'));
     const output = join(dir, 'copy.pdf');
     await call(c, 'save_document', { documentId: opened.documentId, outputPath: output });
     assert.match((await call(c, 'save_document', { documentId: opened.documentId, outputPath: output })).value, /exists/);

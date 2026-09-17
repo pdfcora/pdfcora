@@ -1,9 +1,9 @@
-# pdfiumkit-ai Phase 1 — Answers and Summaries
+# pdfcora-ai Phase 1 — Answers and Summaries
 
 **Goal:** grounded answers that highlight the exact sentence they came from, and
 summaries of a document or page range, on iOS, Android and Web.
 
-**Spec:** `docs/superpowers/specs/2026-09-13-pdfiumkit-ai-requirements.md` §§8, 10, 15
+**Spec:** `docs/superpowers/specs/2026-09-13-pdfcora-ai-requirements.md` §§8, 10, 15
 
 **Status:** built on all three platforms. Apple's on-device model has been run for real
 (see "Measured against a real model"). ML Kit summarises and describes images on a real phone
@@ -20,7 +20,7 @@ been run for real.
 | ML Kit's languages | ⚠️ **English, Japanese, Korean only** |
 | ML Kit's output shapes | ⚠️ **one to three bullets**; there is no paragraph, so a paragraph request gets one bullet |
 | ML Kit links against this project's Kotlin | ❌ its jar carries Kotlin 2.1 metadata; the AI module skips the metadata check rather than upgrading Kotlin project-wide |
-| Core still has no AI dependency | ✅ `scripts/check-core-deps.sh` passes; ML Kit resolves only in `pdfiumkit-ai` |
+| Core still has no AI dependency | ✅ `scripts/check-core-deps.sh` passes; ML Kit resolves only in `pdfcora-ai` |
 
 ## What was built
 
@@ -96,7 +96,7 @@ platforms.
 ### Redaction suggestions with Apple's model
 
 On 2026-09-15, through the iOS simulator (`RedactionMeasurementTests`, opt-in with
-`TEST_RUNNER_PDFIUMKIT_MEASURE_APPLE=1`), on `conformance/redaction/pii.pdf` with only the
+`TEST_RUNNER_PDFCORA_MEASURE_APPLE=1`), on `conformance/redaction/pii.pdf` with only the
 model categories asked for: the English page **3 of 3** (a person's name, a postal address,
 a passport number) in 2.7 s, the German page **4 of 4** (a name, an address, an ID card
 number and a tax ID) in 2.6 s. It also returned each date of birth, and every name at both of
@@ -188,7 +188,7 @@ Two things the phone did show, both fixed on every platform they apply to:
 ### ML Kit image description on a real phone
 
 On 2026-09-16, the same Samsung SM-F971B, on `conformance/alt-text/tagged.pdf` through the demo
-(`adb shell am start -n com.pdfiumkit.demo/.MainActivity -e measure alt-text`, results in
+(`adb shell am start -n com.pdfcora.demo/.MainActivity -e measure alt-text`, results in
 `adb logcat -s MEASURE`). The feature was `DOWNLOADABLE`; `altText.prepare()` made it available in
 under a second. `altText.suggest()` then took 4.6 s for the document's three figures: the thin rule
 was called decorative by the rules, and both images were described on device
@@ -222,4 +222,4 @@ cannot reach ML Kit itself, and AVL-4 forbids the SDK downloading a model on its
 - Android answers use the custom provider only; `experimentalOnDevicePrompt` does nothing
   yet (open question 6).
 - No ready-made provider adapters ship (open question 4).
-- `PdfWorker` gained nothing for AI: `pdfiumkit-ai` works with the in-process document.
+- `PdfWorker` gained nothing for AI: `pdfcora-ai` works with the in-process document.

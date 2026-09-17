@@ -1,10 +1,10 @@
 name: ViewerUI
 options:
-  bundleIdPrefix: com.pdfiumkit.samples
+  bundleIdPrefix: com.pdfcora.samples
   deploymentTarget:
     iOS: "15.0"
 packages:
-  PdfiumKit:
+  PDFCora:
     path: ../..
 targets:
   ViewerUI:
@@ -15,15 +15,15 @@ targets:
       - path: Resources
         buildPhase: resources
     dependencies:
-      - package: PdfiumKit
-        product: PdfiumKit
-      - package: PdfiumKit
-        product: PdfiumKitUI
+      - package: PDFCora
+        product: PDFCora
+      - package: PDFCora
+        product: PDFCoraUI
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.pdfiumkit.samples.ui
+        PRODUCT_BUNDLE_IDENTIFIER: com.pdfcora.samples.ui
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        INFOPLIST_KEY_CFBundleDisplayName: PdfiumKit UI
+        INFOPLIST_KEY_CFBundleDisplayName: PDFCora UI
         TARGETED_DEVICE_FAMILY: "1,2"
         SWIFT_VERSION: "5.9"

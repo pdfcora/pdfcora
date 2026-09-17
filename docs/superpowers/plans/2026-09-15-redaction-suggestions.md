@@ -4,7 +4,7 @@
 
 **Goal:** Suggest likely personal data in a document (patterns everywhere, a model where one is available), show the suggestions as marks in the viewer for review, and redact the accepted ones with undo.
 
-**Architecture:** `pdfiumkit-ai` finds suggestions: a pattern matcher shared in behaviour across platforms by a JSON case file, plus a model route whose quotes are verified against the text. The core gains two generic pieces with no AI in them: `PdfDocument.snapshot()` (opaque, reopenable) and viewer marks (set, hit-test, tap to cycle), which the three UI components draw with a review bar. `apply` snapshots, redacts the accepted rectangles through the existing `redact()`, re-checks the text, and returns an undo.
+**Architecture:** `pdfcora-ai` finds suggestions: a pattern matcher shared in behaviour across platforms by a JSON case file, plus a model route whose quotes are verified against the text. The core gains two generic pieces with no AI in them: `PdfDocument.snapshot()` (opaque, reopenable) and viewer marks (set, hit-test, tap to cycle), which the three UI components draw with a review bar. `apply` snapshots, redacts the accepted rectangles through the existing `redact()`, re-checks the text, and returns an undo.
 
 **Tech Stack:** TypeScript (web, web-ai), Swift 5.9 / SwiftUI (iOS 15), Kotlin 1.9 / Compose (Android minSdk 23), PDFium.
 
@@ -37,12 +37,12 @@
 | `web/src/document.ts` (+ `PdfDocumentSnapshot`) | Core snapshot |
 | `web/src/view/viewer.ts`, `web/src/view/state.ts` | Headless marks |
 | `web/src/ui/viewerElement.ts` | Mark overlay and review bar |
-| `ios/Sources/PdfiumKitAI/Redaction/Patterns.swift`, `Suggest.swift` | iOS detection, apply/undo |
-| `ios/Sources/PdfiumKit/Snapshot.swift`, `ios/Sources/PdfiumKit/View/Marks.swift` | iOS core snapshot and marks |
-| `ios/Sources/PdfiumKitUI/PdfViewerView.swift` | iOS overlay and review bar |
-| `android/pdfiumkit-ai/src/main/java/com/pdfiumkit/ai/redaction/Patterns.kt`, `Suggest.kt` | Android detection, apply/undo |
-| `android/pdfiumkit/src/main/java/com/pdfiumkit/Snapshot.kt`, `view/Marks.kt` | Android core snapshot and marks |
-| `android/pdfiumkit-ui/src/main/java/com/pdfiumkit/ui/PdfViewerView.kt` | Android overlay and review bar |
+| `ios/Sources/PDFCoraAI/Redaction/Patterns.swift`, `Suggest.swift` | iOS detection, apply/undo |
+| `ios/Sources/PDFCora/Snapshot.swift`, `ios/Sources/PDFCora/View/Marks.swift` | iOS core snapshot and marks |
+| `ios/Sources/PDFCoraUI/PdfViewerView.swift` | iOS overlay and review bar |
+| `android/pdfcora-ai/src/main/java/com/pdfcora/ai/redaction/Patterns.kt`, `Suggest.kt` | Android detection, apply/undo |
+| `android/pdfcora/src/main/java/com/pdfcora/Snapshot.kt`, `view/Marks.kt` | Android core snapshot and marks |
+| `android/pdfcora-ui/src/main/java/com/pdfcora/ui/PdfViewerView.kt` | Android overlay and review bar |
 
 ---
 
@@ -177,7 +177,7 @@ console.log(`wrote pii.pdf (${pdf.length} bytes) and ${EXPECTED.length} expected
 
 - [ ] **Step 3: Generate and check the text layer**
 
-Run: `node conformance/redaction/make-pii.mjs && cd web-ai && node --input-type=module -e 'const {PdfDocument}=await import("@pdfiumkit/web");const {readFileSync}=await import("node:fs");const d=await PdfDocument.open(new Uint8Array(readFileSync("../conformance/redaction/pii.pdf")));for(let i=0;i<2;i++)console.log(await (await d.page(i)).text.string())' 2>&1 | grep -v ^PdfiumKit`
+Run: `node conformance/redaction/make-pii.mjs && cd web-ai && node --input-type=module -e 'const {PdfDocument}=await import("@pdfcora/web");const {readFileSync}=await import("node:fs");const d=await PdfDocument.open(new Uint8Array(readFileSync("../conformance/redaction/pii.pdf")));for(let i=0;i<2;i++)console.log(await (await d.page(i)).text.string())' 2>&1 | grep -v ^PDFCora`
 Expected: `wrote pii.pdf (… bytes) and 25 expected suggestions`, then both pages' lines, with `Müller`, `März`, `Rückruf` intact.
 
 - [ ] **Step 4: Commit**
@@ -455,7 +455,7 @@ test('a snapshot of a watermarked document reopens watermarked, and stamps once'
     assert.equal(copy.needsWatermark, true);
     const saved = await PdfDocument.open(await copy.toBytes());
     const text = await (await saved.page(0)).text.string();
-    assert.equal(text.split('PdfiumKit trial').length - 1, 1);
+    assert.equal(text.split('PDFCora trial').length - 1, 1);
   } finally {
     await configureLicenseForTesting({ key: FIXTURE.fullKey, host: null });
   }
@@ -673,7 +673,7 @@ git commit -m "Web: viewer marks — set, hit-test, tap to cycle, never synced"
 
 **Files:**
 - Create: `web-ai/src/redaction/suggest.ts`, `web-ai/test/redaction-suggest.test.ts`
-- Modify: `web-ai/src/index.ts` (add `redactions` to `PdfiumAI`, export types)
+- Modify: `web-ai/src/index.ts` (add `redactions` to `PdfAI`, export types)
 
 **Interfaces:**
 - Consumes: `findPatterns`, `PATTERN_CATEGORIES` (Task 2); `PdfDocument.snapshot()` (Task 3); existing `readPages`, `rectsForRange`, `locateQuote`, `resolve`, `trialText`.
@@ -683,7 +683,7 @@ git commit -m "Web: viewer marks — set, hit-test, tap to cycle, never synced"
   - `interface PdfRedactionOptions { pages?: PdfPageRange; categories?: readonly PdfRedactionCategory[] }`
   - `interface PdfRedactionReview { suggestions; modelUsed: boolean; notice: string; pagesWithoutText: readonly number[]; apply(acceptedIds: readonly string[]): Promise<PdfRedactionApplied> }`
   - `interface PdfRedactionApplied { report: PdfRedactionReport; remaining: readonly PdfRedactionSuggestion[]; undo(): Promise<PdfDocument> }`
-  - `PdfiumAI.redactions.suggest(options?: PdfRedactionOptions): Promise<PdfRedactionReview>`
+  - `PdfAI.redactions.suggest(options?: PdfRedactionOptions): Promise<PdfRedactionReview>`
   - exported for tests: `REDACTION_NOTICE`, `redactionPrompt(text: string): string`, `redactionSchema`
 
 - [ ] **Step 1: Write the failing tests**
@@ -692,8 +692,8 @@ git commit -m "Web: viewer marks — set, hit-test, tap to cycle, never synced"
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { PdfDocument } from '@pdfiumkit/web';
-import { PdfiumAI, type PdfAiRequest } from '../dist/index.js';
+import { PdfDocument } from '@pdfcora/web';
+import { PdfAI, type PdfAiRequest } from '../dist/index.js';
 
 const ROOT = new URL('../../conformance/redaction/', import.meta.url);
 const EXPECTED = JSON.parse(readFileSync(new URL('pii-expected.json', ROOT), 'utf8'));
@@ -708,7 +708,7 @@ const model = (items: (prompt: string) => { category: string; quote: string }[])
 
 describe('redaction suggestions', () => {
   test('without a model, the patterns alone find exactly the expected items', async () => {
-    const review = await new PdfiumAI(await pii()).redactions.suggest();
+    const review = await new PdfAI(await pii()).redactions.suggest();
     assert.equal(review.modelUsed, false);
     assert.match(review.notice, /Suggestions may be incomplete\. Review the whole document\./);
     assert.deepEqual(review.suggestions.map((s) => ({ pageIndex: s.pageIndex, category: s.category, text: s.text })), EXPECTED);
@@ -727,7 +727,7 @@ describe('redaction suggestions', () => {
       { category: 'idNumber', quote: 'Li' },
       { category: 'bankBalance', quote: 'Customer record' },
     ]);
-    const review = await new PdfiumAI(await pii(), { provider }).redactions.suggest({ pages: { from: 0, to: 0 } });
+    const review = await new PdfAI(await pii(), { provider }).redactions.suggest({ pages: { from: 0, to: 0 } });
     assert.equal(review.modelUsed, true);
     const fromModel = review.suggestions.filter((s) => s.source === 'customProvider');
     assert.deepEqual(fromModel.map((s) => [s.category, s.text]), [['personName', 'Anna Schmidt'], ['personName', 'Anna Schmidt']]);
@@ -736,19 +736,19 @@ describe('redaction suggestions', () => {
 
   test('a failing model leaves the pattern suggestions', async () => {
     const provider = { generate: async () => { throw new Error('offline'); } };
-    const review = await new PdfiumAI(await pii(), { provider }).redactions.suggest();
+    const review = await new PdfAI(await pii(), { provider }).redactions.suggest();
     assert.equal(review.modelUsed, false);
     assert.equal(review.suggestions.length, EXPECTED.length);
   });
 
   test('categories restrict both patterns and the model', async () => {
-    const review = await new PdfiumAI(await pii()).redactions.suggest({ categories: ['iban'] });
+    const review = await new PdfAI(await pii()).redactions.suggest({ categories: ['iban'] });
     assert.deepEqual(review.suggestions.map((s) => s.text), ['GB29 NWBK 6016 1331 9268 19', 'DE89 3704 0044 0532 0130 00']);
   });
 
   test('apply removes accepted text, keeps rejected text, and undo restores it', async () => {
     const document = await pii();
-    const review = await new PdfiumAI(document).redactions.suggest({ pages: { from: 0, to: 0 } });
+    const review = await new PdfAI(document).redactions.suggest({ pages: { from: 0, to: 0 } });
     const email = review.suggestions.find((s) => s.category === 'email')!;
     const iban = review.suggestions.find((s) => s.category === 'iban')!;
 
@@ -766,7 +766,7 @@ describe('redaction suggestions', () => {
 
   test('an unknown id writes nothing', async () => {
     const document = await pii();
-    const review = await new PdfiumAI(document).redactions.suggest();
+    const review = await new PdfAI(document).redactions.suggest();
     await assert.rejects(review.apply([review.suggestions[0]!.id, 'nope']), /unknown suggestion: nope/);
     assert.ok((await (await document.page(0)).text.string()).includes(review.suggestions[0]!.text));
   });
@@ -776,12 +776,12 @@ describe('redaction suggestions', () => {
 - [ ] **Step 2: Run to verify it fails**
 
 Run: `cd web-ai && npm run build && npm run build:test 2>&1 | grep error`
-Expected: `Property 'redactions' does not exist on type 'PdfiumAI'`.
+Expected: `Property 'redactions' does not exist on type 'PdfAI'`.
 
 - [ ] **Step 3: Implement `suggest.ts`**
 
 ```ts
-import type { PdfDocument, PdfRect, PdfRedactionReport } from '@pdfiumkit/web';
+import type { PdfDocument, PdfRect, PdfRedactionReport } from '@pdfcora/web';
 import { findPatterns, PATTERN_CATEGORIES, type PdfPatternCategory } from './patterns.js';
 import { locateQuote } from '../quote.js';
 import { readPages, rectsForRange, sentencesOf, type PdfPageRange, type PdfPageText } from '../text.js';
@@ -1003,7 +1003,7 @@ export type {
 } from './redaction/suggest.js';
 ```
 
-and add to `PdfiumAI`, after `summaries`:
+and add to `PdfAI`, after `summaries`:
 
 ```ts
   /**
@@ -1017,7 +1017,7 @@ and add to `PdfiumAI`, after `summaries`:
   };
 ```
 
-Check `sentencesOf` is exported from `text.ts` (it is, line 84) and `PdfRedactionReport` from `@pdfiumkit/web` (add it to the core `index.ts` exports if `tsc` says it is missing).
+Check `sentencesOf` is exported from `text.ts` (it is, line 84) and `PdfRedactionReport` from `@pdfcora/web` (add it to the core `index.ts` exports if `tsc` says it is missing).
 
 - [ ] **Step 4: Run the tests**
 
@@ -1195,7 +1195,7 @@ git commit -m "Web: review marks on the page, with a review bar that always show
 ### Task 7: iOS pattern matcher
 
 **Files:**
-- Create: `ios/Sources/PdfiumKitAI/Redaction/Patterns.swift`, `ios/Tests/PdfiumKitAITests/RedactionPatternTests.swift`
+- Create: `ios/Sources/PDFCoraAI/Redaction/Patterns.swift`, `ios/Tests/PDFCoraAITests/RedactionPatternTests.swift`
 
 **Interfaces:**
 - Consumes: `conformance/redaction/patterns.json`.
@@ -1205,7 +1205,7 @@ git commit -m "Web: review marks on the page, with a review bar that always show
 
 ```swift
 import XCTest
-@testable import PdfiumKitAI
+@testable import PDFCoraAI
 
 final class RedactionPatternTests: LicensedTestCase {
     struct Case: Decodable { let text: String; let expected: [[String]] }
@@ -1233,7 +1233,7 @@ final class RedactionPatternTests: LicensedTestCase {
 
 - [ ] **Step 2: Run to verify it fails**
 
-Run: `./build/run-ios-tests.sh PdfiumKitAITests/RedactionPatternTests`
+Run: `./build/run-ios-tests.sh PDFCoraAITests/RedactionPatternTests`
 Expected: `cannot find 'Patterns' in scope`.
 
 - [ ] **Step 3: Implement `Patterns.swift`**
@@ -1431,13 +1431,13 @@ Note on `month` inside a raw regex: the Swift strings above interpolate `month` 
 
 - [ ] **Step 4: Run the tests**
 
-Run: `./build/run-ios-tests.sh PdfiumKitAITests/RedactionPatternTests`
+Run: `./build/run-ios-tests.sh PDFCoraAITests/RedactionPatternTests`
 Expected: `Executed 2 tests, with 0 failures`. On a mismatch, compare with the web output for the same case (`node --input-type=module -e` importing `web-ai/dist/redaction/patterns.js`): the platforms must agree, and the web implementation passed first.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add ios/Sources/PdfiumKitAI/Redaction ios/Tests/PdfiumKitAITests/RedactionPatternTests.swift
+git add ios/Sources/PDFCoraAI/Redaction ios/Tests/PDFCoraAITests/RedactionPatternTests.swift
 git commit -m "iOS AI: redaction patterns, matching the shared cases"
 ```
 
@@ -1445,8 +1445,8 @@ git commit -m "iOS AI: redaction patterns, matching the shared cases"
 ### Task 8: iOS core — snapshots and viewer marks
 
 **Files:**
-- Create: `ios/Sources/PdfiumKit/Snapshot.swift`, `ios/Sources/PdfiumKit/View/Marks.swift`, `ios/Tests/PdfiumKitTests/SnapshotAndMarksTests.swift`
-- Modify: `ios/Sources/PdfiumKit/PdfDocument.swift` (`needsWatermark` setter becomes internal), `ios/Sources/PdfiumKit/View/Viewer.swift` (marks storage)
+- Create: `ios/Sources/PDFCora/Snapshot.swift`, `ios/Sources/PDFCora/View/Marks.swift`, `ios/Tests/PDFCoraTests/SnapshotAndMarksTests.swift`
+- Modify: `ios/Sources/PDFCora/PdfDocument.swift` (`needsWatermark` setter becomes internal), `ios/Sources/PDFCora/View/Viewer.swift` (marks storage)
 
 **Interfaces:**
 - Produces: `PdfDocument.snapshot() throws -> PdfDocumentSnapshot`; `public final class PdfDocumentSnapshot: Sendable { public func open() async throws -> PdfDocument }`; `public enum PdfMarkState: Sendable { case pending, accepted, rejected }`; `public struct PdfMark: Equatable, Sendable { id: String; pageIndex: Int; rects: [PdfRect]; state: PdfMarkState; public init(...) }`; on `PdfViewer`: `marks: [PdfMark]`, `setMarks(_:)`, `setAllMarks(_:)`, `markAt(page:point:) -> String?`, `tapMark(page:point:) -> String?` (discardable).
@@ -1455,7 +1455,7 @@ git commit -m "iOS AI: redaction patterns, matching the shared cases"
 
 ```swift
 import XCTest
-@testable import PdfiumKit
+@testable import PDFCora
 
 final class SnapshotAndMarksTests: LicensedTestCase {
     private func read(_ name: String) throws -> Data { try Data(contentsOf: Repo.corpus.appendingPathComponent(name)) }
@@ -1483,7 +1483,7 @@ final class SnapshotAndMarksTests: LicensedTestCase {
         XCTAssertTrue(needs)
         let saved = try await PdfDocument(data: try await copy.data())
         let text = try await saved.page(0).text.string()
-        XCTAssertEqual(text.components(separatedBy: "PdfiumKit trial").count - 1, 1)
+        XCTAssertEqual(text.components(separatedBy: "PDFCora trial").count - 1, 1)
     }
 
     private func viewer() async throws -> PdfViewer {
@@ -1533,7 +1533,7 @@ Check the viewer init signature (`PdfViewer(document:viewport:)` in `View/Viewer
 
 - [ ] **Step 2: Run to verify it fails**
 
-Run: `./build/run-ios-tests.sh PdfiumKitTests/SnapshotAndMarksTests`
+Run: `./build/run-ios-tests.sh PDFCoraTests/SnapshotAndMarksTests`
 Expected: `value of type 'PdfDocument' has no member 'snapshot'`.
 
 - [ ] **Step 3: Implement**
@@ -1639,13 +1639,13 @@ Check `PdfRect.contains(_:)` (`Geometry.swift:170`) treats edges as inside; the 
 
 - [ ] **Step 4: Run the tests**
 
-Run: `./build/run-ios-tests.sh PdfiumKitTests/SnapshotAndMarksTests`
+Run: `./build/run-ios-tests.sh PDFCoraTests/SnapshotAndMarksTests`
 Expected: `Executed 4 tests, with 0 failures`.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add ios/Sources/PdfiumKit ios/Tests/PdfiumKitTests/SnapshotAndMarksTests.swift
+git add ios/Sources/PDFCora ios/Tests/PDFCoraTests/SnapshotAndMarksTests.swift
 git commit -m "iOS: document snapshots and viewer marks"
 ```
 
@@ -1653,19 +1653,19 @@ git commit -m "iOS: document snapshots and viewer marks"
 ### Task 9: iOS AI — suggest, apply and undo
 
 **Files:**
-- Create: `ios/Sources/PdfiumKitAI/Redaction/Suggest.swift`, `ios/Tests/PdfiumKitAITests/RedactionSuggestTests.swift`
-- Modify: `ios/Sources/PdfiumKitAI/PdfiumAI.swift` (`appleReading()` from `fileprivate` to internal; add `redactions`)
+- Create: `ios/Sources/PDFCoraAI/Redaction/Suggest.swift`, `ios/Tests/PDFCoraAITests/RedactionSuggestTests.swift`
+- Modify: `ios/Sources/PDFCoraAI/PdfAI.swift` (`appleReading()` from `fileprivate` to internal; add `redactions`)
 
 **Interfaces:**
 - Consumes: `Patterns.find` (Task 7); `PdfDocument.snapshot()` (Task 8); existing `TextLayer.readPages`, `TextLayer.sentences(of:)`, `TextLayer.rects`, `locateQuote(in:_:)`, `resolveRoutes`, `AppleModel.respond(to:)`, `Trial`.
-- Produces: `public struct PdfRedactionSuggestion: Sendable, Equatable { id; category: PdfRedactionCategory; source: PdfAiSource; pageIndex: Int; range: Range<Int>; text: String; rects: [PdfRect] }`; `public struct PdfRedactionReview: Sendable { suggestions; modelUsed: Bool; notice: String; pagesWithoutText: [Int]; func apply(accepting: [String]) async throws -> PdfRedactionApplied }`; `public struct PdfRedactionApplied: Sendable { report: PdfRedactionReport; remaining: [PdfRedactionSuggestion]; func undo() async throws -> PdfDocument }`; `PdfiumAI.redactions.suggest(pages: ClosedRange<Int>? = nil, categories: Set<PdfRedactionCategory>? = nil) async throws -> PdfRedactionReview`; `enum PdfRedactionError: Error { case unknownSuggestion(String) }`.
+- Produces: `public struct PdfRedactionSuggestion: Sendable, Equatable { id; category: PdfRedactionCategory; source: PdfAiSource; pageIndex: Int; range: Range<Int>; text: String; rects: [PdfRect] }`; `public struct PdfRedactionReview: Sendable { suggestions; modelUsed: Bool; notice: String; pagesWithoutText: [Int]; func apply(accepting: [String]) async throws -> PdfRedactionApplied }`; `public struct PdfRedactionApplied: Sendable { report: PdfRedactionReport; remaining: [PdfRedactionSuggestion]; func undo() async throws -> PdfDocument }`; `PdfAI.redactions.suggest(pages: ClosedRange<Int>? = nil, categories: Set<PdfRedactionCategory>? = nil) async throws -> PdfRedactionReview`; `enum PdfRedactionError: Error { case unknownSuggestion(String) }`.
 
 - [ ] **Step 1: Write the failing tests**
 
 ```swift
 import XCTest
-@testable import PdfiumKit
-@testable import PdfiumKitAI
+@testable import PDFCora
+@testable import PDFCoraAI
 
 final class RedactionSuggestTests: LicensedTestCase {
     struct Expected: Decodable, Equatable { let pageIndex: Int; let category: String; let text: String }
@@ -1674,10 +1674,10 @@ final class RedactionSuggestTests: LicensedTestCase {
     private func pii() async throws -> PdfDocument {
         try await PdfDocument(data: try Data(contentsOf: Self.dir.appendingPathComponent("pii.pdf")))
     }
-    private func ai(_ document: PdfDocument, _ provider: PdfAiProvider? = nil) -> PdfiumAI {
-        var options = PdfiumAIOptions(provider: provider)
+    private func ai(_ document: PdfDocument, _ provider: PdfAiProvider? = nil) -> PdfAI {
+        var options = PdfAIOptions(provider: provider)
         options.allowsOnDevice = false
-        return PdfiumAI(document: document, options: options)
+        return PdfAI(document: document, options: options)
     }
 
     struct Items: PdfAiProvider {
@@ -1761,14 +1761,14 @@ Check `PdfAiResponse`'s initialiser and `structured` type in `Provider.swift`, a
 
 - [ ] **Step 2: Run to verify it fails**
 
-Run: `./build/run-ios-tests.sh PdfiumKitAITests/RedactionSuggestTests`
-Expected: `value of type 'PdfiumAI' has no member 'redactions'`.
+Run: `./build/run-ios-tests.sh PDFCoraAITests/RedactionSuggestTests`
+Expected: `value of type 'PdfAI' has no member 'redactions'`.
 
 - [ ] **Step 3: Implement `Suggest.swift`**
 
 ```swift
 import Foundation
-import PdfiumKit
+import PDFCora
 
 public let redactionNotice = "Suggestions may be incomplete. Review the whole document."
 
@@ -1899,9 +1899,9 @@ enum RedactionSuggester {
     }
 }
 
-extension PdfiumAI {
+extension PdfAI {
     public struct Redactions: Sendable {
-        let ai: PdfiumAI
+        let ai: PdfAI
 
         /// Suggests likely personal data to redact (RED). Patterns run on every device; Apple's
         /// on-device model, or the custom provider, adds names, addresses, dates of birth and
@@ -1993,13 +1993,13 @@ Match to the real code before building: the element type of `TextLayer.readPages
 
 - [ ] **Step 4: Run the tests**
 
-Run: `./build/run-ios-tests.sh PdfiumKitAITests`
+Run: `./build/run-ios-tests.sh PDFCoraAITests`
 Expected: all AI tests pass, including the 5 new ones. If "Email" is removed by the redaction, inset each rectangle by 0.3 pt left and right in `apply`, and apply the same inset on web and Android.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add ios/Sources/PdfiumKitAI ios/Tests/PdfiumKitAITests/RedactionSuggestTests.swift
+git add ios/Sources/PDFCoraAI ios/Tests/PDFCoraAITests/RedactionSuggestTests.swift
 git commit -m "iOS AI: redaction suggestions from patterns, Apple's model and a provider, with apply and undo"
 ```
 
@@ -2007,12 +2007,12 @@ git commit -m "iOS AI: redaction suggestions from patterns, Apple's model and a 
 ### Task 10: iOS UI — marks overlay, review bar, demo screen
 
 **Files:**
-- Modify: `ios/Sources/PdfiumKitUI/PdfViewerView.swift`
-- Create: `ios/Sources/PdfiumKitUI/Review.swift`, `ios/Demo/Sources/Screens/RedactionReviewScreen.swift`
+- Modify: `ios/Sources/PDFCoraUI/PdfViewerView.swift`
+- Create: `ios/Sources/PDFCoraUI/Review.swift`, `ios/Demo/Sources/Screens/RedactionReviewScreen.swift`
 - Modify: the demo's screen list (find it with `grep -rn "ComponentScreen()" ios/Demo/Sources`), `ios/Demo/UITests/ScreenTourTests.swift`
 
 **Interfaces:**
-- Consumes: viewer marks (Task 8); `PdfiumAI.redactions` (Task 9).
+- Consumes: viewer marks (Task 8); `PdfAI.redactions` (Task 9).
 - Produces: `public struct PdfReviewConfiguration { marks: [PdfMark]; notice: String; applyLabel: String; onApply: ([String]) -> Void; onCancel: (() -> Void)?; public init(...) }`; `PdfViewerView(document:toolbar:theme:review:onSave:)`. Accessibility ids: `review-notice`, `review-counts`, `review-accept-all`, `review-reject-all`, `review-apply`, `review-cancel`, and one `mark-<id>` per rect.
 
 - [ ] **Step 1: Write the failing UI test**
@@ -2055,7 +2055,7 @@ private extension XCUIElement {
 
 - [ ] **Step 2: Run to verify it fails**
 
-Run: `(cd ios/Demo && xcodegen generate >/dev/null) && xcodebuild test -project ios/Demo/PdfiumKitDemo.xcodeproj -scheme PdfiumKitDemo -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=27.0' -only-testing:PdfiumKitDemoUITests/ScreenTourTests/testRedactionReviewAcceptsAndApplies 2>&1 | grep -E "error:|Executed" | head -5`
+Run: `(cd ios/Demo && xcodegen generate >/dev/null) && xcodebuild test -project ios/Demo/PDFCoraDemo.xcodeproj -scheme PDFCoraDemo -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=27.0' -only-testing:PDFCoraDemoUITests/ScreenTourTests/testRedactionReviewAcceptsAndApplies 2>&1 | grep -E "error:|Executed" | head -5`
 Expected: failure at `link.tap()` (no such screen).
 
 - [ ] **Step 3: Implement**
@@ -2063,7 +2063,7 @@ Expected: failure at `link.tap()` (no such screen).
 `Review.swift`:
 ```swift
 import SwiftUI
-import PdfiumKit
+import PDFCora
 
 /// Puts the viewer in review mode: marks over the page that a tap cycles, and a bar that
 /// always shows `notice`. The component does not apply anything; `onApply` does.
@@ -2158,9 +2158,9 @@ with
 `RedactionReviewScreen.swift` (demo):
 ```swift
 import SwiftUI
-import PdfiumKit
-import PdfiumKitUI
-import PdfiumKitAI
+import PDFCora
+import PDFCoraUI
+import PDFCoraAI
 
 /// Redaction suggestions reviewed in the component: patterns only, so it runs anywhere.
 struct RedactionReviewScreen: View {
@@ -2188,12 +2188,12 @@ struct RedactionReviewScreen: View {
             guard let url = Bundle.main.url(forResource: "pii", withExtension: "pdf"),
                   let opened = try? await PdfDocument(url: url) else { return }
             document = opened
-            review = try? await PdfiumAI(document: opened).redactions.suggest()
+            review = try? await PdfAI(document: opened).redactions.suggest()
         }
     }
 }
 ```
-Register it in the demo's screen list with the identifier `demo-RedactionReview`, following how `ComponentScreen` is listed, add `PdfiumKitAI` to the demo target dependencies in `ios/Demo/project.yml` if absent, and copy `conformance/redaction/pii.pdf` into `ios/Demo/Resources/pii.pdf`.
+Register it in the demo's screen list with the identifier `demo-RedactionReview`, following how `ComponentScreen` is listed, add `PDFCoraAI` to the demo target dependencies in `ios/Demo/project.yml` if absent, and copy `conformance/redaction/pii.pdf` into `ios/Demo/Resources/pii.pdf`.
 
 - [ ] **Step 4: Run the UI test and the iOS gate**
 
@@ -2204,7 +2204,7 @@ Expected: everything passes; demo UI tests are now 10.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add ios/Sources/PdfiumKitUI ios/Demo
+git add ios/Sources/PDFCoraUI ios/Demo
 git commit -m "iOS: review marks and bar in PdfViewerView, and a redaction review demo screen"
 ```
 
@@ -2212,7 +2212,7 @@ git commit -m "iOS: review marks and bar in PdfViewerView, and a redaction revie
 ### Task 11: Android pattern matcher
 
 **Files:**
-- Create: `android/pdfiumkit-ai/src/main/java/com/pdfiumkit/ai/redaction/Patterns.kt`, `android/pdfiumkit-ai/src/test/java/com/pdfiumkit/ai/redaction/PatternsTest.kt`
+- Create: `android/pdfcora-ai/src/main/java/com/pdfcora/ai/redaction/Patterns.kt`, `android/pdfcora-ai/src/test/java/com/pdfcora/ai/redaction/PatternsTest.kt`
 
 **Interfaces:**
 - Consumes: `conformance/redaction/patterns.json`.
@@ -2221,7 +2221,7 @@ git commit -m "iOS: review marks and bar in PdfViewerView, and a redaction revie
 - [ ] **Step 1: Write the failing JVM test**
 
 ```kotlin
-package com.pdfiumkit.ai.redaction
+package com.pdfcora.ai.redaction
 
 import org.json.JSONArray
 import org.junit.Assert.assertEquals
@@ -2249,17 +2249,17 @@ class PatternsTest {
 }
 ```
 
-`org.json` is an Android stub in JVM unit tests. If `JSONArray` throws "not mocked", add `testImplementation("org.json:json:20240303")` to `android/pdfiumkit-ai/build.gradle.kts`.
+`org.json` is an Android stub in JVM unit tests. If `JSONArray` throws "not mocked", add `testImplementation("org.json:json:20240303")` to `android/pdfcora-ai/build.gradle.kts`.
 
 - [ ] **Step 2: Run to verify it fails**
 
-Run: `cd android && gradle :pdfiumkit-ai:testDebugUnitTest --tests '*PatternsTest' --console=plain -q 2>&1 | grep -E "^e:" | head -2`
+Run: `cd android && gradle :pdfcora-ai:testDebugUnitTest --tests '*PatternsTest' --console=plain -q 2>&1 | grep -E "^e:" | head -2`
 Expected: `Unresolved reference: Patterns`.
 
 - [ ] **Step 3: Implement `Patterns.kt`**
 
 ```kotlin
-package com.pdfiumkit.ai.redaction
+package com.pdfcora.ai.redaction
 
 enum class PdfRedactionCategory(val id: String) {
     IBAN("iban"), EMAIL("email"), PHONE("phone"), PAYMENT_CARD("paymentCard"), DATE("date"), URL("url"),
@@ -2422,13 +2422,13 @@ internal object Patterns {
 
 - [ ] **Step 4: Run the tests**
 
-Run: `cd android && gradle :pdfiumkit-ai:testDebugUnitTest --tests '*PatternsTest' --console=plain -q; echo exit=$?`
+Run: `cd android && gradle :pdfcora-ai:testDebugUnitTest --tests '*PatternsTest' --console=plain -q; echo exit=$?`
 Expected: `exit=0`. On a mismatch, compare with the web output for the same text.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add android/pdfiumkit-ai
+git add android/pdfcora-ai
 git commit -m "Android AI: redaction patterns, matching the shared cases"
 ```
 
@@ -2436,8 +2436,8 @@ git commit -m "Android AI: redaction patterns, matching the shared cases"
 ### Task 12: Android core — snapshots and viewer marks
 
 **Files:**
-- Create: `android/pdfiumkit/src/main/java/com/pdfiumkit/Snapshot.kt`, `android/pdfiumkit/src/main/java/com/pdfiumkit/view/Marks.kt`, `android/pdfiumkit/src/androidTest/java/com/pdfiumkit/SnapshotAndMarksTest.kt`
-- Modify: `android/pdfiumkit/src/main/java/com/pdfiumkit/PdfDocument.kt` (`needsWatermark` setter `internal`), `android/pdfiumkit/src/main/java/com/pdfiumkit/view/Viewer.kt` (marks)
+- Create: `android/pdfcora/src/main/java/com/pdfcora/Snapshot.kt`, `android/pdfcora/src/main/java/com/pdfcora/view/Marks.kt`, `android/pdfcora/src/androidTest/java/com/pdfcora/SnapshotAndMarksTest.kt`
+- Modify: `android/pdfcora/src/main/java/com/pdfcora/PdfDocument.kt` (`needsWatermark` setter `internal`), `android/pdfcora/src/main/java/com/pdfcora/view/Viewer.kt` (marks)
 
 **Interfaces:**
 - Produces: `suspend fun PdfDocument.snapshot(): PdfDocumentSnapshot`; `class PdfDocumentSnapshot { suspend fun open(): PdfDocument }`; `enum class PdfMarkState { PENDING, ACCEPTED, REJECTED }`; `data class PdfMark(val id: String, val pageIndex: Int, val rects: List<PdfRect>, val state: PdfMarkState = PdfMarkState.PENDING)`; on `PdfViewer`: `val marks: List<PdfMark>`, `fun setMarks(marks: List<PdfMark>)`, `fun setAllMarks(state: PdfMarkState)`, `fun markAt(page: Int, point: PdfPoint): String?`, `fun tapMark(page: Int, point: PdfPoint): String?`.
@@ -2445,12 +2445,12 @@ git commit -m "Android AI: redaction patterns, matching the shared cases"
 - [ ] **Step 1: Write the failing test**
 
 ```kotlin
-package com.pdfiumkit
+package com.pdfcora
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.pdfiumkit.license.PdfLicense
-import com.pdfiumkit.view.*
+import com.pdfcora.license.PdfLicense
+import com.pdfcora.view.*
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.runBlocking
@@ -2483,7 +2483,7 @@ class SnapshotAndMarksTest {
         val copy = PdfDocument.open(corpus("hello_world.pdf")).snapshot().open()
         assertTrue(copy.needsWatermark)
         val text = PdfDocument.open(copy.toByteArray()).page(0).text.string()
-        assertEquals(1, text.split("PdfiumKit trial").size - 1)
+        assertEquals(1, text.split("PDFCora trial").size - 1)
     }
 
     private suspend fun viewer() = PdfViewer.open(PdfDocument.open(corpus("hello_world.pdf")), PdfViewport(400f, 600f))
@@ -2519,7 +2519,7 @@ Match `PdfViewport`'s constructor and `PdfRedactionTarget.TextMatches` to the re
 
 - [ ] **Step 2: Run to verify it fails**
 
-Run: `cd android && gradle :pdfiumkit:compileDebugAndroidTestKotlin --console=plain -q 2>&1 | grep "^e:" | head -2`
+Run: `cd android && gradle :pdfcora:compileDebugAndroidTestKotlin --console=plain -q 2>&1 | grep "^e:" | head -2`
 Expected: `Unresolved reference: snapshot`.
 
 - [ ] **Step 3: Implement**
@@ -2528,7 +2528,7 @@ Expected: `Unresolved reference: snapshot`.
 
 `Snapshot.kt`:
 ```kotlin
-package com.pdfiumkit
+package com.pdfcora
 
 /**
  * A document as it was when [PdfDocument.snapshot] was called.
@@ -2558,9 +2558,9 @@ suspend fun PdfDocument.snapshot(): PdfDocumentSnapshot {
 
 `view/Marks.kt`:
 ```kotlin
-package com.pdfiumkit.view
+package com.pdfcora.view
 
-import com.pdfiumkit.PdfRect
+import com.pdfcora.PdfRect
 
 enum class PdfMarkState { PENDING, ACCEPTED, REJECTED }
 
@@ -2604,17 +2604,17 @@ data class PdfMark(
         return id
     }
 ```
-Import `com.pdfiumkit.contains` if `PdfRect.contains` is not visible (it is a top-level extension in `Types.kt`).
+Import `com.pdfcora.contains` if `PdfRect.contains` is not visible (it is a top-level extension in `Types.kt`).
 
 - [ ] **Step 4: Run the test**
 
-Run: `cd android && gradle :pdfiumkit:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.pdfiumkit.SnapshotAndMarksTest --console=plain -q; echo exit=$?`
+Run: `cd android && gradle :pdfcora:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.pdfcora.SnapshotAndMarksTest --console=plain -q; echo exit=$?`
 Expected: `exit=0`, 4 tests.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add android/pdfiumkit
+git add android/pdfcora
 git commit -m "Android: document snapshots and viewer marks"
 ```
 
@@ -2622,24 +2622,24 @@ git commit -m "Android: document snapshots and viewer marks"
 ### Task 13: Android AI — suggest, apply and undo
 
 **Files:**
-- Create: `android/pdfiumkit-ai/src/main/java/com/pdfiumkit/ai/redaction/Suggest.kt`, `android/pdfiumkit-ai/src/androidTest/java/com/pdfiumkit/ai/RedactionSuggestTest.kt`
-- Modify: `android/pdfiumkit-ai/src/main/java/com/pdfiumkit/ai/PdfiumAI.kt` (add `redactions`), `android/pdfiumkit-ai/build.gradle.kts` (androidTest assets include `conformance/redaction`)
+- Create: `android/pdfcora-ai/src/main/java/com/pdfcora/ai/redaction/Suggest.kt`, `android/pdfcora-ai/src/androidTest/java/com/pdfcora/ai/RedactionSuggestTest.kt`
+- Modify: `android/pdfcora-ai/src/main/java/com/pdfcora/ai/PdfAI.kt` (add `redactions`), `android/pdfcora-ai/build.gradle.kts` (androidTest assets include `conformance/redaction`)
 
 **Interfaces:**
 - Consumes: `Patterns.find` (Task 11); `PdfDocument.snapshot()` (Task 12); existing `TextLayer.readPages`, `TextLayer.sentencesOf`, `TextLayer.rects`, `locateQuote`, `resolveRoutes`, `Trial`.
-- Produces: `data class PdfRedactionSuggestion(val id: String, val category: PdfRedactionCategory, val source: PdfAiSource, val pageIndex: Int, val start: Int, val end: Int, val text: String, val rects: List<PdfRect>)`; `class PdfRedactionReview { val suggestions; val modelUsed; val notice; val pagesWithoutText; suspend fun apply(accepting: List<String>): PdfRedactionApplied }`; `class PdfRedactionApplied { val report; val remaining; suspend fun undo(): PdfDocument }`; `class UnknownSuggestionException(id: String)`; `PdfiumAI.redactions.suggest(pages: IntRange? = null, categories: Set<PdfRedactionCategory>? = null): PdfRedactionReview`.
+- Produces: `data class PdfRedactionSuggestion(val id: String, val category: PdfRedactionCategory, val source: PdfAiSource, val pageIndex: Int, val start: Int, val end: Int, val text: String, val rects: List<PdfRect>)`; `class PdfRedactionReview { val suggestions; val modelUsed; val notice; val pagesWithoutText; suspend fun apply(accepting: List<String>): PdfRedactionApplied }`; `class PdfRedactionApplied { val report; val remaining; suspend fun undo(): PdfDocument }`; `class UnknownSuggestionException(id: String)`; `PdfAI.redactions.suggest(pages: IntRange? = null, categories: Set<PdfRedactionCategory>? = null): PdfRedactionReview`.
 
 - [ ] **Step 1: Write the failing test**
 
 ```kotlin
-package com.pdfiumkit.ai
+package com.pdfcora.ai
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.pdfiumkit.PdfDocument
-import com.pdfiumkit.PdfSaveMode
-import com.pdfiumkit.ai.redaction.PdfRedactionCategory
-import com.pdfiumkit.ai.redaction.UnknownSuggestionException
+import com.pdfcora.PdfDocument
+import com.pdfcora.PdfSaveMode
+import com.pdfcora.ai.redaction.PdfRedactionCategory
+import com.pdfcora.ai.redaction.UnknownSuggestionException
 import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
 import org.json.JSONObject
@@ -2660,7 +2660,7 @@ class RedactionSuggestTest {
     @Test fun patternsAloneFindExactlyTheExpectedItems() = runBlocking {
         val expected = JSONArray(assets.open("pii-expected.json").use { it.readBytes().decodeToString() })
             .let { a -> (0 until a.length()).map { a.getJSONObject(it).run { Triple(getInt("pageIndex"), getString("category"), getString("text")) } } }
-        val review = PdfiumAI(pii()).redactions.suggest()
+        val review = PdfAI(pii()).redactions.suggest()
         assertFalse(review.modelUsed)
         assertTrue(review.notice.contains("Suggestions may be incomplete. Review the whole document."))
         assertEquals(expected, review.suggestions.map { Triple(it.pageIndex, it.category.id, it.text) })
@@ -2674,21 +2674,21 @@ class RedactionSuggestTest {
     @Test fun modelQuotesAreVerifiedExpandedAndNeverOverlapAPattern() = runBlocking {
         val provider = items("personName" to "Anna Schmidt", "personName" to "Nobody Invented",
             "dateOfBirth" to "14 March 1985", "idNumber" to "Li", "bankBalance" to "Customer record")
-        val review = PdfiumAI(pii(), PdfiumAIOptions(provider)).redactions.suggest(pages = 0..0)
+        val review = PdfAI(pii(), PdfAIOptions(provider)).redactions.suggest(pages = 0..0)
         assertTrue(review.modelUsed)
         assertEquals(listOf("personName" to "Anna Schmidt", "personName" to "Anna Schmidt"),
             review.suggestions.filter { it.source == PdfAiSource.CUSTOM_PROVIDER }.map { it.category.id to it.text })
     }
 
     @Test fun aFailingModelLeavesThePatterns() = runBlocking {
-        val review = PdfiumAI(pii(), PdfiumAIOptions(PdfAiProvider { throw java.io.IOException("offline") })).redactions.suggest()
+        val review = PdfAI(pii(), PdfAIOptions(PdfAiProvider { throw java.io.IOException("offline") })).redactions.suggest()
         assertFalse(review.modelUsed)
         assertEquals(25, review.suggestions.size)
     }
 
     @Test fun applyRemovesAcceptedTextKeepsRejectedAndUndoRestores() = runBlocking {
         val document = pii()
-        val review = PdfiumAI(document).redactions.suggest(pages = 0..0)
+        val review = PdfAI(document).redactions.suggest(pages = 0..0)
         val email = review.suggestions.first { it.category == PdfRedactionCategory.EMAIL }
         val iban = review.suggestions.first { it.category == PdfRedactionCategory.IBAN }
         val applied = review.apply(listOf(email.id))
@@ -2702,7 +2702,7 @@ class RedactionSuggestTest {
 
     @Test fun anUnknownIdWritesNothing() = runBlocking {
         val document = pii()
-        val review = PdfiumAI(document).redactions.suggest()
+        val review = PdfAI(document).redactions.suggest()
         val first = review.suggestions[0]
         assertThrows(UnknownSuggestionException::class.java) { runBlocking { review.apply(listOf(first.id, "nope")) } }
         assertTrue(document.page(0).text.string().contains(first.text))
@@ -2710,26 +2710,26 @@ class RedactionSuggestTest {
 }
 ```
 
-In `android/pdfiumkit-ai/build.gradle.kts`, add the fixture directory to the androidTest assets next to the one holding `contract.pdf` (`grep -n assets android/pdfiumkit-ai/build.gradle.kts`): `rootProject.projectDir.parentFile.resolve("conformance/redaction")`. Match `PdfAiResponse`'s constructor and how `structured` is typed to `AnswersTest`'s `Model`.
+In `android/pdfcora-ai/build.gradle.kts`, add the fixture directory to the androidTest assets next to the one holding `contract.pdf` (`grep -n assets android/pdfcora-ai/build.gradle.kts`): `rootProject.projectDir.parentFile.resolve("conformance/redaction")`. Match `PdfAiResponse`'s constructor and how `structured` is typed to `AnswersTest`'s `Model`.
 
 - [ ] **Step 2: Run to verify it fails**
 
-Run: `cd android && gradle :pdfiumkit-ai:compileDebugAndroidTestKotlin --console=plain -q 2>&1 | grep "^e:" | head -2`
+Run: `cd android && gradle :pdfcora-ai:compileDebugAndroidTestKotlin --console=plain -q 2>&1 | grep "^e:" | head -2`
 Expected: `Unresolved reference: redactions`.
 
 - [ ] **Step 3: Implement `Suggest.kt`**
 
 ```kotlin
-package com.pdfiumkit.ai.redaction
+package com.pdfcora.ai.redaction
 
-import com.pdfiumkit.PdfDocument
-import com.pdfiumkit.PdfDocumentSnapshot
-import com.pdfiumkit.PdfRect
-import com.pdfiumkit.PdfRedactionReport
-import com.pdfiumkit.PdfRedactionTarget
-import com.pdfiumkit.ai.*
-import com.pdfiumkit.redact
-import com.pdfiumkit.snapshot
+import com.pdfcora.PdfDocument
+import com.pdfcora.PdfDocumentSnapshot
+import com.pdfcora.PdfRect
+import com.pdfcora.PdfRedactionReport
+import com.pdfcora.PdfRedactionTarget
+import com.pdfcora.ai.*
+import com.pdfcora.redact
+import com.pdfcora.snapshot
 import org.json.JSONObject
 
 const val REDACTION_NOTICE = "Suggestions may be incomplete. Review the whole document."
@@ -2846,7 +2846,7 @@ internal object RedactionSuggester {
     }
 }
 
-suspend fun suggestRedactions(ai: PdfiumAI, pages: IntRange?, categories: Set<PdfRedactionCategory>?): PdfRedactionReview {
+suspend fun suggestRedactions(ai: PdfAI, pages: IntRange?, categories: Set<PdfRedactionCategory>?): PdfRedactionReview {
     val wanted = categories ?: PdfRedactionCategory.values().toSet()
     val document = ai.document
     val (pageTexts, pagesWithoutText) = TextLayer.readPages(document, pages)
@@ -2896,7 +2896,7 @@ suspend fun suggestRedactions(ai: PdfiumAI, pages: IntRange?, categories: Set<Pd
 }
 ```
 
-In `PdfiumAI.kt` add:
+In `PdfAI.kt` add:
 ```kotlin
     /**
      * Suggests likely personal data to redact (RED). Patterns run on every device; the custom
@@ -2907,10 +2907,10 @@ In `PdfiumAI.kt` add:
 
     inner class Redactions {
         suspend fun suggest(pages: IntRange? = null, categories: Set<PdfRedactionCategory>? = null): PdfRedactionReview =
-            suggestRedactions(this@PdfiumAI, pages, categories)
+            suggestRedactions(this@PdfAI, pages, categories)
     }
 ```
-with imports for `com.pdfiumkit.ai.redaction.*`.
+with imports for `com.pdfcora.ai.redaction.*`.
 
 In `Trial.kt` add:
 ```kotlin
@@ -2924,13 +2924,13 @@ This module's instrumented tests run without a license key, so the notice carrie
 
 - [ ] **Step 4: Run the tests**
 
-Run: `cd android && gradle :pdfiumkit-ai:connectedDebugAndroidTest :pdfiumkit-ai:testDebugUnitTest --console=plain -q; echo exit=$?`
+Run: `cd android && gradle :pdfcora-ai:connectedDebugAndroidTest :pdfcora-ai:testDebugUnitTest --console=plain -q; echo exit=$?`
 Expected: `exit=0`; AnswersTest 10 + RedactionSuggestTest 5 on the device.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add android/pdfiumkit-ai
+git add android/pdfcora-ai
 git commit -m "Android AI: redaction suggestions from patterns and a provider, with apply and undo"
 ```
 
@@ -2938,9 +2938,9 @@ git commit -m "Android AI: redaction suggestions from patterns and a provider, w
 ### Task 14: Android UI — marks overlay and review bar
 
 **Files:**
-- Modify: `android/pdfiumkit-ui/src/main/java/com/pdfiumkit/ui/PdfViewerView.kt`
-- Create: `android/pdfiumkit-ui/src/main/java/com/pdfiumkit/ui/Review.kt`
-- Test: `android/pdfiumkit-ui/src/androidTest/java/com/pdfiumkit/ui/PdfViewerViewTest.kt`
+- Modify: `android/pdfcora-ui/src/main/java/com/pdfcora/ui/PdfViewerView.kt`
+- Create: `android/pdfcora-ui/src/main/java/com/pdfcora/ui/Review.kt`
+- Test: `android/pdfcora-ui/src/androidTest/java/com/pdfcora/ui/PdfViewerViewTest.kt`
 
 **Interfaces:**
 - Consumes: viewer marks (Task 12).
@@ -2974,18 +2974,18 @@ Add to `PdfViewerViewTest`:
         document.close()
     }
 ```
-Imports: `com.pdfiumkit.PdfRect`, `com.pdfiumkit.view.PdfMark`, `androidx.compose.ui.test.performClick`, `org.junit.Assert.assertEquals`.
+Imports: `com.pdfcora.PdfRect`, `com.pdfcora.view.PdfMark`, `androidx.compose.ui.test.performClick`, `org.junit.Assert.assertEquals`.
 
 - [ ] **Step 2: Run to verify it fails**
 
-Run: `cd android && gradle :pdfiumkit-ui:compileDebugAndroidTestKotlin --console=plain -q 2>&1 | grep "^e:" | head -2`
+Run: `cd android && gradle :pdfcora-ui:compileDebugAndroidTestKotlin --console=plain -q 2>&1 | grep "^e:" | head -2`
 Expected: `Unresolved reference: PdfReviewConfiguration`.
 
 - [ ] **Step 3: Implement**
 
 `Review.kt`:
 ```kotlin
-package com.pdfiumkit.ui
+package com.pdfcora.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -2996,8 +2996,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import com.pdfiumkit.view.PdfMark
-import com.pdfiumkit.view.PdfMarkState
+import com.pdfcora.view.PdfMark
+import com.pdfcora.view.PdfMarkState
 
 /**
  * Puts the viewer in review mode: marks over the page that a tap cycles, and a bar that
@@ -3069,19 +3069,19 @@ The counts `Text` has a content description, which replaces its text for `onAllN
                     }
                 }
 ```
-   Imports: `androidx.compose.foundation.border`, `androidx.compose.foundation.clickable`, `androidx.compose.ui.graphics.Color`, `androidx.compose.ui.unit.IntOffset`, `com.pdfiumkit.view.PdfMark`, `com.pdfiumkit.view.PdfMarkState`. Check `PdfViewTransform.toPdf`'s signature on Android (x, y floats or a point) and adapt.
+   Imports: `androidx.compose.foundation.border`, `androidx.compose.foundation.clickable`, `androidx.compose.ui.graphics.Color`, `androidx.compose.ui.unit.IntOffset`, `com.pdfcora.view.PdfMark`, `com.pdfcora.view.PdfMarkState`. Check `PdfViewTransform.toPdf`'s signature on Android (x, y floats or a point) and adapt.
 4. Below the page `Box` and above `status`: `review?.let { PdfReviewBar(it, marks, theme) { state -> viewer?.setAllMarks(state); marks = viewer?.marks.orEmpty() } }`.
 5. While reviewing, ignore drags: at the start of `onDragEnd`'s launch, `if (review != null) return@launch`; and pass `reviewing = review != null` to `PdfToolbar`, disabling `PdfToolbarItem.Tool` items.
 
 - [ ] **Step 4: Run the UI tests**
 
-Run: `cd android && gradle :pdfiumkit-ui:connectedDebugAndroidTest --console=plain -q; echo exit=$?`
+Run: `cd android && gradle :pdfcora-ui:connectedDebugAndroidTest --console=plain -q; echo exit=$?`
 Expected: `exit=0`, 4 tests.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add android/pdfiumkit-ui
+git add android/pdfcora-ui
 git commit -m "Android: review marks and bar in PdfViewerView"
 ```
 
@@ -3090,22 +3090,22 @@ git commit -m "Android: review marks and bar in PdfViewerView"
 ### Task 15: Measure Apple's model, document, run every gate
 
 **Files:**
-- Create: `ios/Tests/PdfiumKitAITests/RedactionMeasurementTests.swift`
-- Modify: `docs/superpowers/plans/2026-09-14-phase1-ai-answers-summaries.md` (measurement), `README.md` (feature table row and a short section), `docs/HANDOFF.md`, `docs/superpowers/specs/2026-09-13-pdfiumkit-ai-requirements.md` (§12 status), the spec's §4.1 (tap cycling lives in the headless viewer)
+- Create: `ios/Tests/PDFCoraAITests/RedactionMeasurementTests.swift`
+- Modify: `docs/superpowers/plans/2026-09-14-phase1-ai-answers-summaries.md` (measurement), `README.md` (feature table row and a short section), `docs/HANDOFF.md`, `docs/superpowers/specs/2026-09-13-pdfcora-ai-requirements.md` (§12 status), the spec's §4.1 (tap cycling lives in the headless viewer)
 
 - [ ] **Step 1: Write the opt-in measurement**
 
 ```swift
 import XCTest
-@testable import PdfiumKit
-@testable import PdfiumKitAI
+@testable import PDFCora
+@testable import PDFCoraAI
 
 /// How much personal data Apple's on-device model adds on the shared document, per language.
-/// Opt-in: `TEST_RUNNER_PDFIUMKIT_MEASURE_APPLE=1` in the environment of `xcodebuild test`.
+/// Opt-in: `TEST_RUNNER_PDFCORA_MEASURE_APPLE=1` in the environment of `xcodebuild test`.
 final class RedactionMeasurementTests: LicensedTestCase {
     func testAppleModelOnThePiiDocument() async throws {
-        guard ProcessInfo.processInfo.environment["PDFIUMKIT_MEASURE_APPLE"] == "1" else {
-            throw XCTSkip("set TEST_RUNNER_PDFIUMKIT_MEASURE_APPLE=1")
+        guard ProcessInfo.processInfo.environment["PDFCORA_MEASURE_APPLE"] == "1" else {
+            throw XCTSkip("set TEST_RUNNER_PDFCORA_MEASURE_APPLE=1")
         }
         let url = RedactionPatternTests.root.appendingPathComponent("conformance/redaction/pii.pdf")
         let document = try await PdfDocument(data: try Data(contentsOf: url))
@@ -3115,7 +3115,7 @@ final class RedactionMeasurementTests: LicensedTestCase {
         ]
         for page in [0, 1] {
             let started = Date()
-            let review = try await PdfiumAI(document: document).redactions.suggest(pages: page...page, categories: Set(PdfRedactionCategory.model))
+            let review = try await PdfAI(document: document).redactions.suggest(pages: page...page, categories: Set(PdfRedactionCategory.model))
             let found = review.suggestions.filter { $0.source == .onDevice }
             let hits = wanted[page]!.filter { want in found.contains { $0.category == want.0 && $0.text.contains(want.1) } }
             print("MEASURE page \(page) \(page == 0 ? "English" : "German"): modelUsed=\(review.modelUsed) found \(hits.count) of \(wanted[page]!.count) in \(String(format: "%.1f", Date().timeIntervalSince(started))) s; suggestions: \(found.map { "\($0.category.rawValue)=\($0.text)" })")
@@ -3126,7 +3126,7 @@ final class RedactionMeasurementTests: LicensedTestCase {
 
 - [ ] **Step 2: Run it against the Mac's Apple Intelligence**
 
-Run: `TEST_RUNNER_PDFIUMKIT_MEASURE_APPLE=1 ./build/run-ios-tests.sh PdfiumKitAITests/RedactionMeasurementTests; grep MEASURE build/ios-selected.log`
+Run: `TEST_RUNNER_PDFCORA_MEASURE_APPLE=1 ./build/run-ios-tests.sh PDFCoraAITests/RedactionMeasurementTests; grep MEASURE build/ios-selected.log`
 Expected: two `MEASURE` lines with `modelUsed=true`. If `modelUsed=false`, the simulator did not reach the model this launch (the first readings after launch report no budget); run it again.
 
 - [ ] **Step 3: Document**
@@ -3151,7 +3151,7 @@ Expected: every suite passes.
 - [ ] **Step 5: Commit, push, check CI**
 
 ```bash
-git add ios/Tests/PdfiumKitAITests/RedactionMeasurementTests.swift docs README.md
+git add ios/Tests/PDFCoraAITests/RedactionMeasurementTests.swift docs README.md
 git commit -m "Redaction suggestions: Apple's model measured, documentation"
 ```
 Push with the user's token as before, then `./build/ci-status.sh $(git rev-parse HEAD) --wait`. Expected: all six workflows pass.

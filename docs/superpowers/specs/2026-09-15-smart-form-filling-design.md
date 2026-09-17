@@ -1,8 +1,8 @@
-# PdfiumKit — Smart Form Filling Design
+# PDFCora — Smart Form Filling Design
 
 Date: 2026-09-15
 Status: Implemented 2026-09-15
-Implements: FORM-1 to FORM-6 and HIL-1 to HIL-3 of `2026-09-13-pdfiumkit-ai-requirements.md`
+Implements: FORM-1 to FORM-6 and HIL-1 to HIL-3 of `2026-09-13-pdfcora-ai-requirements.md`
 (AI Phase 2, second half)
 
 ## 1. Purpose

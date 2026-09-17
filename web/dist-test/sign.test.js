@@ -9,7 +9,7 @@ const CORPUS = new URL('../../conformance/corpus/', import.meta.url).pathname;
 const FIXTURES = new URL('../../conformance/fixtures/', import.meta.url).pathname;
 const read = (file) => new Uint8Array(readFileSync(`${CORPUS}${file}`));
 const ANCHOR = new Uint8Array(readFileSync(`${FIXTURES}test-signer.der`));
-const scratch = mkdtempSync(join(tmpdir(), 'pdfiumkit-sign-'));
+const scratch = mkdtempSync(join(tmpdir(), 'pdfcora-sign-'));
 /**
  * The SDK ships no CMS implementation on web, so the caller supplies one. This is what
  * an application would write; here it shells out to OpenSSL, which is a test dependency

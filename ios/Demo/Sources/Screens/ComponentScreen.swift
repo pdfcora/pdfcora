@@ -1,6 +1,6 @@
 import SwiftUI
-import PdfiumKit
-import PdfiumKitUI
+import PDFCora
+import PDFCoraUI
 
 /// The same editor as `EditorScreen`, built from the SDK's own component instead of by
 /// hand — which is the point of the component existing.

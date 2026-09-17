@@ -14,5 +14,5 @@ Serve the repo root rather than this folder: the page imports the SDK from `web/
 `defaultToolbar` and `viewingToolbar` are ready-made; this sample lists its own items.
 The viewer never writes a file — `onSave` hands the app the bytes.
 
-Pages show a "PdfiumKit trial" watermark: the sample runs without a license key. The
+Pages show a "PDFCora trial" watermark: the sample runs without a license key. The
 commented line in `main.js` shows where a key issued for this site goes.

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PdfiumKit — a PDF SDK for iOS, Android, Web, Node and Java</title>
+  <title>PDFCora — a PDF SDK for iOS, Android, Web, Node and Java</title>
   <meta name="description" content="A PDF SDK for iOS, Android, the Web, Node and Java. Render, search, annotate, fill forms, sign, redact and tag for accessibility — on a phone, in a browser or on a server, with the same results everywhere.">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#07080c">
@@ -16,9 +16,9 @@
 
   <header class="site-header">
     <div class="wrap header-inner">
-      <a class="brand" href="#top" aria-label="PdfiumKit home">
+      <a class="brand" href="#top" aria-label="PDFCora home">
         <img src="favicon.svg" alt="" width="28" height="28">
-        <span>PdfiumKit</span>
+        <span>PDFCora</span>
       </a>
       <button class="nav-toggle" aria-expanded="false" aria-controls="site-nav">
         <span class="sr">Menu</span><span class="bars" aria-hidden="true"></span>
@@ -148,7 +148,7 @@
           <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 13.9 9l5.6 1.9-5.6 1.9L12 18.3 10.1 12.8 4.5 10.9 10.1 9z"/><path d="M18.5 16.5 19.3 19l2.2.8-2.2.8-.8 2.2"/></svg></span><h3>AI where it helps</h3><p>Answers, summaries, redaction and form proposals, alt text, semantic diff — on device, your model, or rules alone. <a href="ai.html">More →</a></p></li>
           <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="7.5" width="15" height="11" rx="2.5"/><path d="M12 7.5V4.5M8.5 12.5h.01M15.5 12.5h.01M9.5 15.5h5"/></svg></span><h3>Tools for agents</h3><p>MCP and WebMCP. An agent reads freely and changes a document only through proposals a person accepts. <a href="agents.html">More →</a></p></li>
           <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 9h17M7 13h6"/></svg></span><h3>A viewer, included</h3><p>A component with a configurable toolbar, theme and review bar, and the page’s structure exposed to VoiceOver, TalkBack and screen readers — or drive the state layer yourself.</p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="6" rx="1.8"/><rect x="3.5" y="13.5" width="17" height="6" rx="1.8"/><path d="M7 7.5h.01M7 16.5h.01"/></svg></span><h3>Runs on your server</h3><p><code>@pdfiumkit/node</code> re-exports the whole web API; the Java SDK puts the native engine on the JVM for batch work.</p></li>
+          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="6" rx="1.8"/><rect x="3.5" y="13.5" width="17" height="6" rx="1.8"/><path d="M7 7.5h.01M7 16.5h.01"/></svg></span><h3>Runs on your server</h3><p><code>@pdfcora/node</code> re-exports the whole web API; the Java SDK puts the native engine on the JVM for batch work.</p></li>
           <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9.5" r="5"/><path d="m9 14-1.5 6 4.5-2.4 4.5 2.4L15 14"/></svg></span><h3>Offline licensing</h3><p>Keys verified with no network, per app ID or host. Without one everything still works, watermarked. <a href="download.html">More →</a></p></li>
         </ul>
         <div class="table-scroll reveal" style="margin-top:1.6rem">
@@ -398,27 +398,27 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
             </div>
             <div role="tabpanel" id="p-ios" aria-labelledby="t-ios" class="panel">
               <span class="panel-label">iOS — Swift Package Manager</span>
-<pre tabindex="0"><code>.<span class="f">product</span>(name: <span class="s">"PdfiumKit"</span>, package: <span class="s">"PdfiumKit"</span>)</code></pre>
+<pre tabindex="0"><code>.<span class="f">product</span>(name: <span class="s">"PDFCora"</span>, package: <span class="s">"PDFCora"</span>)</code></pre>
               <p class="reqs">iOS 15+ · Swift 5.9 · async/await</p>
             </div>
             <div role="tabpanel" id="p-android" aria-labelledby="t-android" class="panel">
               <span class="panel-label">Android — Gradle</span>
-<pre tabindex="0"><code><span class="f">implementation</span>(<span class="s">"com.pdfiumkit:pdfiumkit:0.1.0"</span>)</code></pre>
+<pre tabindex="0"><code><span class="f">implementation</span>(<span class="s">"com.pdfcora:pdfcora:0.1.0"</span>)</code></pre>
               <p class="reqs">minSdk 23 · Kotlin coroutines · all four ABIs</p>
             </div>
             <div role="tabpanel" id="p-web" aria-labelledby="t-web" class="panel">
               <span class="panel-label">Web — npm</span>
-<pre tabindex="0"><code>npm install <span class="s">@pdfiumkit/web</span></code></pre>
+<pre tabindex="0"><code>npm install <span class="s">@pdfcora/web</span></code></pre>
               <p class="reqs">TypeScript · WebAssembly · ESM · Node 18+ · the .wasm ships inside the package</p>
             </div>
             <div role="tabpanel" id="p-node" aria-labelledby="t-node" class="panel">
               <span class="panel-label">Node — npm</span>
-<pre tabindex="0"><code>npm install <span class="s">@pdfiumkit/node</span></code></pre>
+<pre tabindex="0"><code>npm install <span class="s">@pdfcora/node</span></code></pre>
               <p class="reqs">Node 18+ · the whole web API, plus file and PNG helpers · nothing to compile</p>
             </div>
             <div role="tabpanel" id="p-java" aria-labelledby="t-java" class="panel">
               <span class="panel-label">Java — Gradle</span>
-<pre tabindex="0"><code><span class="f">implementation</span>(<span class="s">"com.pdfiumkit:pdfiumkit:0.1.0"</span>)</code></pre>
+<pre tabindex="0"><code><span class="f">implementation</span>(<span class="s">"com.pdfcora:pdfcora:0.1.0"</span>)</code></pre>
               <p class="reqs">Java 17+ · macOS and Linux, x86-64 and arm64 · the engine is in the jar</p>
             </div>
           </div>
@@ -430,7 +430,7 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
   <footer class="site-footer">
     <div class="wrap footer-inner">
       <div>
-        <a class="brand" href="#top"><img src="favicon.svg" alt="" width="24" height="24"><span>PdfiumKit</span></a>
+        <a class="brand" href="#top"><img src="favicon.svg" alt="" width="24" height="24"><span>PDFCora</span></a>
         <p class="footer-tag">One PDF SDK. Every platform.</p>
         <p class="muted">0.1.0 · Pre-release</p>
       </div>

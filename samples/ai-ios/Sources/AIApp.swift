@@ -1,6 +1,6 @@
 import SwiftUI
-import PdfiumKit
-import PdfiumKitAI
+import PDFCora
+import PDFCoraAI
 
 @main
 struct AIApp: App {
@@ -12,7 +12,7 @@ struct AIApp: App {
 /// Summarise a document with Apple's on-device model, and propose redactions a person
 /// accepts before anything is changed.
 struct ContentView: View {
-    @State private var ai: PdfiumAI?
+    @State private var ai: PdfAI?
     @State private var availability = "…"
     @State private var summary = ""
     @State private var review: PdfRedactionReview?
@@ -57,8 +57,8 @@ struct ContentView: View {
         }
         // No provider is configured, so the SDK uses Apple's on-device model where the
         // device has it, and its own patterns otherwise. An app with a hosted model
-        // passes `PdfiumAIOptions(provider:)`; text reaches it only because it did.
-        let engine = PdfiumAI(document: document)
+        // passes `PdfAIOptions(provider:)`; text reaches it only because it did.
+        let engine = PdfAI(document: document)
         ai = engine
         // AVL-2: availability is reported per feature and re-read on every call.
         availability = "Summaries: \(engine.summaries.availability())"

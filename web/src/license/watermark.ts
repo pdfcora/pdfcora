@@ -2,7 +2,7 @@ import { withBuffer, withUtf16, type PdfiumModule } from '../engine.js';
 import { PdfError } from '../errors.js';
 import { saveHandle } from '../save.js';
 
-const TEXT = 'PdfiumKit trial';
+const TEXT = 'PDFCora trial';
 
 /** Adds the watermark to `page`, centred on the box and running along its diagonal. */
 function placeWatermark(m: PdfiumModule, document: number, page: number,

@@ -2,7 +2,7 @@
 
 The core API with no UI component: open a PDF, read its facts, get page text, search, list
 form fields, render a page, save. Everything is in
-`src/main/java/com/pdfiumkit/samples/core/MainActivity.kt`.
+`src/main/java/com/pdfcora/samples/core/MainActivity.kt`.
 
 ```bash
 ./scripts/fetch-vendor.sh          # from the repo root, once: PDFium binaries

@@ -1,8 +1,8 @@
-# PdfiumKit — Semantic Diff Design
+# PDFCora — Semantic Diff Design
 
 Date: 2026-09-15
 Status: Implemented 2026-09-15
-Implements: "Semantic document diff" of `2026-09-13-pdfiumkit-ai-requirements.md` §14
+Implements: "Semantic document diff" of `2026-09-13-pdfcora-ai-requirements.md` §14
 
 ## 1. Purpose
 

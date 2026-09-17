@@ -12,7 +12,7 @@ const ROOT = new URL('../../', import.meta.url).pathname;
 const FIXTURE = JSON.parse(readFileSync(`${ROOT}conformance/license/cases.json`, 'utf8'));
 const PARTIAL = JSON.parse(readFileSync(`${ROOT}conformance/license/partial-keys.json`, 'utf8'));
 const read = (file: string) => new Uint8Array(readFileSync(`${ROOT}conformance/corpus/${file}`));
-const MARK = 'PdfiumKit trial';
+const MARK = 'PDFCora trial';
 
 const useKey = (key: string | null) => configureLicenseForTesting({ key, host: null });
 const keyWith = (modules: string[]): string => PARTIAL[modules.join(',')];
@@ -96,7 +96,7 @@ describe('watermark', () => {
 
   test('unlicensed signing verifies in pdfsig and contains the watermark', async () => {
     await useKey(keyWith([]));
-    const scratch = mkdtempSync(join(tmpdir(), 'pdfiumkit-license-'));
+    const scratch = mkdtempSync(join(tmpdir(), 'pdfcora-license-'));
     const FIXTURES = `${ROOT}conformance/fixtures/`;
     const signer: CmsSigner = {
       async sign(data) {

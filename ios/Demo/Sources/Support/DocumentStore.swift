@@ -1,6 +1,6 @@
 import Foundation
 import SwiftUI
-import PdfiumKit
+import PDFCora
 
 /// Holds the document every screen works against, and the list of bundled samples.
 @MainActor

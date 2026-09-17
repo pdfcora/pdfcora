@@ -1,5 +1,5 @@
 import SwiftUI
-import PdfiumKit
+import PDFCora
 
 /// What a tap or drag on the page does.
 enum EditorTool: String, CaseIterable, Identifiable {
@@ -467,7 +467,7 @@ struct EditorScreen: View {
         do {
             let bytes = try await document.data()
             let url = FileManager.default.temporaryDirectory
-                .appendingPathComponent("pdfiumkit-edited.pdf")
+                .appendingPathComponent("pdfcora-edited.pdf")
             try bytes.write(to: url, options: .atomic)
             status = "Saved \(ByteCountFormatter.string(fromByteCount: Int64(bytes.count), countStyle: .file))"
         } catch let error as PdfError {

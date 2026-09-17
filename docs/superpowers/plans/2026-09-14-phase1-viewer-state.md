@@ -583,9 +583,9 @@ git commit -m "Add the view event wire format"
 ## Task 6: Port to iOS
 
 **Files:**
-- Modify: `ios/Sources/PdfiumKit/Geometry.swift` — the two transform functions
-- Create: `ios/Sources/PdfiumKit/View/{Zoom,ViewState,Viewer,Codec}.swift`
-- Test: `ios/Tests/PdfiumKitTests/ViewerTests.swift`
+- Modify: `ios/Sources/PDFCora/Geometry.swift` — the two transform functions
+- Create: `ios/Sources/PDFCora/View/{Zoom,ViewState,Viewer,Codec}.swift`
+- Test: `ios/Tests/PDFCoraTests/ViewerTests.swift`
 
 - [ ] **Step 1: Port the tests first, one for one**
 
@@ -610,9 +610,9 @@ Expected: PASS
 ## Task 7: Port to Android
 
 **Files:**
-- Modify: `android/pdfiumkit/src/main/java/com/pdfiumkit/Types.kt`
-- Create: `android/pdfiumkit/src/main/java/com/pdfiumkit/view/{Zoom,ViewState,Viewer,Codec}.kt`
-- Test: `android/pdfiumkit/src/androidTest/java/com/pdfiumkit/ViewerTest.kt`
+- Modify: `android/pdfcora/src/main/java/com/pdfcora/Types.kt`
+- Create: `android/pdfcora/src/main/java/com/pdfcora/view/{Zoom,ViewState,Viewer,Codec}.kt`
+- Test: `android/pdfcora/src/androidTest/java/com/pdfcora/ViewerTest.kt`
 
 - [ ] **Step 1: Port the tests first, one for one**
 
@@ -637,8 +637,8 @@ The claim this whole plan exists to support, asserted the way redaction and sign
 are — against a shared fixture, not against ourselves.
 
 **Files:**
-- Modify: `web/test/conformance.test.ts`, `ios/Tests/PdfiumKitTests/ConformanceTests.swift`,
-  `android/pdfiumkit/src/androidTest/java/com/pdfiumkit/ConformanceTest.kt`
+- Modify: `web/test/conformance.test.ts`, `ios/Tests/PDFCoraTests/ConformanceTests.swift`,
+  `android/pdfcora/src/androidTest/java/com/pdfcora/ConformanceTest.kt`
 
 - [ ] **Step 1: Write the contract, identically on all three**
 

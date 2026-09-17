@@ -113,7 +113,7 @@ describe('writing figures', () => {
       assert.equal(updated.needsWatermark, true);
       const saved = await PdfDocument.open(await updated.toBytes());
       const words = await (await saved.page(0)).text.string();
-      assert.equal(words.split('PdfiumKit trial').length - 1, 1);
+      assert.equal(words.split('PDFCora trial').length - 1, 1);
     } finally {
       await configureLicenseForTesting({ key: LICENSE.fullKey, host: null });
     }

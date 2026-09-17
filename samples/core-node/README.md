@@ -12,4 +12,4 @@ npm install && npm start
 Nothing to configure and nothing to compile: the WebAssembly engine ships inside the
 package and Node finds it itself.
 
-Set `PDFIUMKIT_LICENSE_KEY` before running to drop the trial watermark from `page-1.png`.
+Set `PDFCORA_LICENSE_KEY` before running to drop the trial watermark from `page-1.png`.

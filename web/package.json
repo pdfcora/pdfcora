@@ -1,5 +1,5 @@
 {
-  "name": "@pdfiumkit/web",
+  "name": "@pdfcora/web",
   "version": "0.1.0",
   "description": "PDF SDK for the web, built on PDFium",
   "type": "module",

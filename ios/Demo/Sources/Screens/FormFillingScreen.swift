@@ -1,7 +1,7 @@
 import SwiftUI
-import PdfiumKit
-import PdfiumKitUI
-import PdfiumKitAI
+import PDFCora
+import PDFCoraUI
+import PDFCoraAI
 
 /// Smart form filling reviewed in the component: a fixed demo profile, synonyms only, so it
 /// runs anywhere.
@@ -36,7 +36,7 @@ struct FormFillingScreen: View {
             guard let url = Bundle.main.url(forResource: "forms", withExtension: "pdf"),
                   let opened = try? await PdfDocument(url: url) else { return }
             document = opened
-            proposals = try? await PdfiumAI(document: opened).forms.propose(profile: Self.profile)
+            proposals = try? await PdfAI(document: opened).forms.propose(profile: Self.profile)
         }
     }
 

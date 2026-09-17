@@ -1,8 +1,8 @@
-# PdfiumKit — Viewer and Cross-Platform Sync Design
+# PDFCora — Viewer and Cross-Platform Sync Design
 
 Date: 2026-09-14
 Status: Draft 0.2, pending review
-Extends: `2026-09-12-pdfiumkit-sdk-design.md`
+Extends: `2026-09-12-pdfcora-sdk-design.md`
 
 ## 1. Purpose
 

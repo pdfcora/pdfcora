@@ -1,11 +1,11 @@
 /**
- * Tools for AI agents, shared by the MCP server (`pdfiumkit-mcp`) and WebMCP. Reading is free;
+ * Tools for AI agents, shared by the MCP server (`pdfcora-mcp`) and WebMCP. Reading is free;
  * every change is a proposal set first, applied only with the ids a person accepted (HIL-1), and
  * undoable (HIL-2). Spec: docs/superpowers/specs/2026-09-15-agent-tools-design.md.
  */
 
-import type { PdfDocument, PdfDocumentSnapshot } from '@pdfiumkit/web';
-import { PdfiumAI, type PdfiumAIOptions } from '../index.js';
+import type { PdfDocument, PdfDocumentSnapshot } from '@pdfcora/web';
+import { PdfAI, type PdfAIOptions } from '../index.js';
 import type { PdfProfile } from '../forms/propose.js';
 import type { PdfRedactionCategory } from '../redaction/suggest.js';
 
@@ -44,7 +44,7 @@ export class PdfAgentSession {
   #history: PdfDocumentSnapshot[] = [];
   #next = 1;
 
-  constructor(document: PdfDocument, private readonly options: PdfiumAIOptions = {}) {
+  constructor(document: PdfDocument, private readonly options: PdfAIOptions = {}) {
     this.#document = document;
   }
 
@@ -53,8 +53,8 @@ export class PdfAgentSession {
     return this.#document;
   }
 
-  get ai(): PdfiumAI {
-    return new PdfiumAI(this.#document, this.options);
+  get ai(): PdfAI {
+    return new PdfAI(this.#document, this.options);
   }
 
   /** Records a proposal set and returns its id. */

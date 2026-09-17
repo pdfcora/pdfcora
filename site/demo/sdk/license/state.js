@@ -53,7 +53,7 @@ export function noteWatermark(detail) {
     if (warned)
         return;
     warned = true;
-    console.warn(`PdfiumKit: output is watermarked — ${detail}`);
+    console.warn(`PDFCora: output is watermarked — ${detail}`);
 }
 /** @internal Test hook. Not exported from the package entry point. */
 export function configureLicenseForTesting(options) {

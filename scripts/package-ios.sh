@@ -23,7 +23,7 @@ cat > "$OUT/binary-target.swift" <<SNIPPET
 // Paste into Package.swift for a release, replacing the local .binaryTarget:
 .binaryTarget(
     name: "pdfium",
-    url: "https://github.com/<owner>/PdfiumKit/releases/download/<tag>/pdfium.xcframework.zip",
+    url: "https://github.com/<owner>/PDFCora/releases/download/<tag>/pdfium.xcframework.zip",
     checksum: "$CHECKSUM"
 ),
 SNIPPET

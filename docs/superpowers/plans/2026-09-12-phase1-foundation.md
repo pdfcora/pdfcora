@@ -1,4 +1,4 @@
-# PdfiumKit Phase 1 (Foundation) Implementation Plan
+# PDFCora Phase 1 (Foundation) Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. **Subagent-driven execution is disabled for this project by user instruction — execute inline.**
 
@@ -8,7 +8,7 @@
 
 **Tech Stack:** Bash, Node 18+ (`node --test`, zero runtime dependencies), Emscripten PDFium build, poppler (`pdfinfo`/`pdftotext`) as independent oracle, GitHub Actions.
 
-**Spec:** `docs/superpowers/specs/2026-09-12-pdfiumkit-sdk-design.md`
+**Spec:** `docs/superpowers/specs/2026-09-12-pdfcora-sdk-design.md`
 
 ## Global Constraints
 
@@ -86,7 +86,7 @@ No runtime dependencies. Test and utility scripts only.
 
 ```json
 {
-  "name": "pdfiumkit-tools",
+  "name": "pdfcora-tools",
   "private": true,
   "type": "module",
   "engines": { "node": ">=18" },
@@ -324,7 +324,7 @@ set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 MANIFEST="$ROOT/vendor.manifest.json"
 VENDOR="$ROOT/vendor"
-SOURCE="${PDFIUMKIT_ARTIFACTS:-/Users/daos/Projects/Lab/pdfiumkit}"
+SOURCE="${PDFCORA_ARTIFACTS:-/Users/daos/Projects/Lab/pdfiumkit}"
 VERIFY_ONLY=0
 [ "${1:-}" = "--verify-only" ] && VERIFY_ONLY=1
 
@@ -733,7 +733,7 @@ Create `conformance/expectations.schema.json`. This is the cross-platform contra
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "PdfiumKit conformance expectations",
+  "title": "PDFCora conformance expectations",
   "type": "object",
   "required": ["engine", "documents"],
   "properties": {
@@ -1064,14 +1064,14 @@ jobs:
       - name: Fetch vendor artifacts
         run: ./scripts/fetch-vendor.sh
         env:
-          PDFIUMKIT_ARTIFACTS: ${{ runner.temp }}/pdfium-artifacts
+          PDFCORA_ARTIFACTS: ${{ runner.temp }}/pdfium-artifacts
       - name: Run host test suite
         run: npm test
       - name: Validate conformance expectations
         run: npm run conformance:validate
 ```
 
-No workflow can actually run yet: there is no git repository and no remote. These files are written now so the pipeline is designed alongside the code rather than retrofitted. The `PDFIUMKIT_ARTIFACTS` path is the one line that will need a real value once artifacts are published as Release assets — leave it pointing at `runner.temp` as an explicit marker of that outstanding work, and do not add `continue-on-error` to paper over it later.
+No workflow can actually run yet: there is no git repository and no remote. These files are written now so the pipeline is designed alongside the code rather than retrofitted. The `PDFCORA_ARTIFACTS` path is the one line that will need a real value once artifacts are published as Release assets — leave it pointing at `runner.temp` as an explicit marker of that outstanding work, and do not add `continue-on-error` to paper over it later.
 
 - [x] **Step 2: Write the three platform scaffolds**
 
@@ -1106,7 +1106,7 @@ jobs:
       - name: Fetch vendor artifacts
         run: ./scripts/fetch-vendor.sh
       - name: Build and test
-        run: echo "phase 3 — ./gradlew :pdfiumkit:test"
+        run: echo "phase 3 — ./gradlew :pdfcora:test"
 ```
 
 Create `.github/workflows/web.yml`:
@@ -1148,7 +1148,7 @@ Expected: four `ok` lines. YAML forbids tabs, which is the most common way these
 Create `README.md`:
 
 ````markdown
-# PdfiumKit
+# PDFCora
 
 Cross-platform PDF SDK for iOS, Android, and Web, built on PDFium.
 
@@ -1192,7 +1192,7 @@ cross-checked against poppler so the suite is not purely self-referential.
 
 ## Design
 
-See `docs/superpowers/specs/2026-09-12-pdfiumkit-sdk-design.md`.
+See `docs/superpowers/specs/2026-09-12-pdfcora-sdk-design.md`.
 ````
 
 - [x] **Step 5: Final checkpoint — full suite from a clean vendor tree**

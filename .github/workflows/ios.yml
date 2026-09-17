@@ -22,14 +22,14 @@ jobs:
           echo "using $name"
       - name: SDK tests
         run: |
-          xcodebuild test -scheme PdfiumKit-Package -destination "$DESTINATION" \
-            -only-testing:PdfiumKitTests -skip-testing:PdfiumKitTests/BlastRadiusTests \
-            -skip-testing:PdfiumKitTests/HangProbeTests
+          xcodebuild test -scheme PDFCora-Package -destination "$DESTINATION" \
+            -only-testing:PDFCoraTests -skip-testing:PDFCoraTests/BlastRadiusTests \
+            -skip-testing:PDFCoraTests/HangProbeTests
       - name: The hung-render suite, in its own process
         run: |
-          xcodebuild test -scheme PdfiumKit-Package -destination "$DESTINATION" \
-            -only-testing:PdfiumKitTests/BlastRadiusTests
+          xcodebuild test -scheme PDFCora-Package -destination "$DESTINATION" \
+            -only-testing:PDFCoraTests/BlastRadiusTests
       - name: AI tests
         run: |
-          xcodebuild test -scheme PdfiumKit-Package -destination "$DESTINATION" \
-            -only-testing:PdfiumKitAITests
+          xcodebuild test -scheme PDFCora-Package -destination "$DESTINATION" \
+            -only-testing:PDFCoraAITests

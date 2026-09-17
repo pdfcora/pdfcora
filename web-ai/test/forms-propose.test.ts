@@ -1,8 +1,8 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { PdfDocument } from '@pdfiumkit/web';
-import { PdfiumAI, type PdfAiRequest } from '../dist/index.js';
+import { PdfDocument } from '@pdfcora/web';
+import { PdfAI, type PdfAiRequest } from '../dist/index.js';
 
 const DIR = new URL('../../conformance/forms/', import.meta.url);
 const EXPECTED = JSON.parse(readFileSync(new URL('forms-expected.json', DIR), 'utf8'));
@@ -17,7 +17,7 @@ const field = async (document: PdfDocument, pageIndex: number, name: string) =>
 
 describe('form proposals', () => {
   test('without a model, the synonym list proposes exactly the expected values', async () => {
-    const proposals = await new PdfiumAI(await forms()).forms.propose(PROFILE);
+    const proposals = await new PdfAI(await forms()).forms.propose(PROFILE);
     assert.equal(proposals.modelUsed, false);
     assert.match(proposals.notice, /Check every value before filling in the form\./);
     assert.deepEqual(proposals.items.map((p) => ({ pageIndex: p.pageIndex, fieldName: p.fieldName, key: p.key, value: p.value })), EXPECTED);
@@ -39,7 +39,7 @@ describe('form proposals', () => {
         ] } };
       },
     };
-    const proposals = await new PdfiumAI(await forms(), { provider }).forms.propose(PROFILE, { pages: { from: 0, to: 0 } });
+    const proposals = await new PdfAI(await forms(), { provider }).forms.propose(PROFILE, { pages: { from: 0, to: 0 } });
     assert.equal(proposals.modelUsed, true);
     const byName = Object.fromEntries(proposals.items.map((p) => [p.fieldName, p]));
     assert.equal(byName.Colour?.key, 'company');
@@ -51,7 +51,7 @@ describe('form proposals', () => {
 
   test('apply writes only the accepted values, and undo restores the form', async () => {
     const document = await forms();
-    const proposals = await new PdfiumAI(document).forms.propose(PROFILE, { pages: { from: 0, to: 0 } });
+    const proposals = await new PdfAI(document).forms.propose(PROFILE, { pages: { from: 0, to: 0 } });
     const accept = proposals.items.filter((p) => p.fieldName === 'fname' || p.fieldName === 'Country').map((p) => p.id);
     const applied = await proposals.apply(accept);
 
@@ -69,7 +69,7 @@ describe('form proposals', () => {
 
   test('an unknown id writes nothing', async () => {
     const document = await forms();
-    const proposals = await new PdfiumAI(document).forms.propose(PROFILE);
+    const proposals = await new PdfAI(document).forms.propose(PROFILE);
     await assert.rejects(proposals.apply([proposals.items[0]!.id, 'nope']), /unknown proposal: nope/);
     const fname = await field(document, 0, 'fname');
     assert.equal(fname.kind === 'text' && fname.value, '');

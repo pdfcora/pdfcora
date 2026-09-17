@@ -1,5 +1,5 @@
 import SwiftUI
-import PdfiumKit
+import PDFCora
 
 struct PageOpsScreen: View {
     @EnvironmentObject private var store: DocumentStore

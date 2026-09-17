@@ -18,7 +18,7 @@ const CORPUS = new URL('../../conformance/corpus/', import.meta.url).pathname;
 const FIXTURES = new URL('../../conformance/fixtures/', import.meta.url).pathname;
 const read = (file: string) => new Uint8Array(readFileSync(`${CORPUS}${file}`));
 
-const scratch = mkdtempSync(join(tmpdir(), 'pdfiumkit-tsa-'));
+const scratch = mkdtempSync(join(tmpdir(), 'pdfcora-tsa-'));
 const TSA = new URL('../../conformance/fixtures/tsa/', import.meta.url).pathname;
 const ANCHOR = new Uint8Array(readFileSync(`${FIXTURES}test-signer.der`));
 

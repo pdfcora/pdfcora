@@ -63,7 +63,7 @@ final class ScreenTourTests: XCTestCase {
         for (screen, ready) in [("Component", "zoom-in"), ("Redaction Review", "review-notice"), ("Accessible Content", "zoom-in")] {
             // The screen on its own, so the audit covers the component rather than the demo's list.
             let app = XCUIApplication()
-            app.launchArguments += ["-PdfiumKitScreen", screen]
+            app.launchArguments += ["-PDFCoraScreen", screen]
             app.launch()
             XCTAssertTrue(app.descendants(matching: .any)[ready].waitForExistence(timeout: 20), screen)
             Thread.sleep(forTimeInterval: 2)
@@ -153,7 +153,7 @@ final class ScreenTourTests: XCTestCase {
             Thread.sleep(forTimeInterval: 1.2)   // let async rendering land
             save(app, named: screen.replacingOccurrences(of: " ", with: "-"))
             app.navigationBars[screen].buttons.firstMatch.tap()
-            _ = app.navigationBars["PdfiumKit"].waitForExistence(timeout: 5)
+            _ = app.navigationBars["PDFCora"].waitForExistence(timeout: 5)
         }
     }
 
@@ -415,7 +415,7 @@ final class ScreenTourTests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Editor"].exists, "toggling a checkbox broke the editor")
 
         app.navigationBars["Editor"].buttons.firstMatch.tap()
-        _ = app.navigationBars["PdfiumKit"].waitForExistence(timeout: 5)
+        _ = app.navigationBars["PDFCora"].waitForExistence(timeout: 5)
 
         // combobox_form.pdf: 3 dropdowns.
         let dropdowns = openEditor(on: "Dropdowns")

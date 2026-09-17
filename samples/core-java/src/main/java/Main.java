@@ -1,5 +1,5 @@
-import com.pdfiumkit.PdfDocument;
-import com.pdfiumkit.PdfPage;
+import com.pdfcora.PdfDocument;
+import com.pdfcora.PdfPage;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.nio.file.Files;

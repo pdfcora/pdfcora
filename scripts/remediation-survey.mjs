@@ -24,7 +24,7 @@ await configureLicenseForTesting({
 });
 
 const { PdfDocument } = await import('../web/dist/index.js');
-const { PdfiumAI } = await import('../web-ai/dist/index.js');
+const { PdfAI } = await import('../web-ai/dist/index.js');
 
 const args = process.argv.slice(2);
 const flag = (name, fallback) => {
@@ -32,11 +32,11 @@ const flag = (name, fallback) => {
   return i < 0 ? fallback : args[i + 1];
 };
 const root = args.find((a) => !a.startsWith('--') && args[args.indexOf(a) - 1]?.startsWith('--') !== true)
-  ?? `${process.env.HOME}/pdfiumkit-corpus/real-world`;
+  ?? `${process.env.HOME}/pdfcora-corpus/real-world`;
 const limit = Number(flag('--limit', '0')) || Infinity;
 const reportPath = flag('--out', 'build/remediation-survey.json');
 const verapdf = process.env.VERAPDF ?? `${process.env.HOME}/.cache/verapdf/app/verapdf`;
-const work = mkdtempSync(join(tmpdir(), 'pdfiumkit-survey-'));
+const work = mkdtempSync(join(tmpdir(), 'pdfcora-survey-'));
 
 function* walk(dir) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -85,7 +85,7 @@ for (const [n, path] of files.entries()) {
 
     if (!row.tagged && !row.scanned) {
       const started = Date.now();
-      const review = await new PdfiumAI(pdf).remediation.suggest();
+      const review = await new PdfAI(pdf).remediation.suggest();
       row.suggestMs = Date.now() - started;
       row.blocks = review.blocks.length;
       row.byType = {};

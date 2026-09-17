@@ -1,5 +1,5 @@
 /**
- * An MCP server for PdfiumKit: many documents by id, the shared agent tools from pdfiumkit-ai,
+ * An MCP server for PDFCora: many documents by id, the shared agent tools from @pdfcora/web-ai,
  * and opening, closing and saving files. Spec: docs/superpowers/specs/2026-09-15-agent-tools-design.md.
  */
 
@@ -7,8 +7,8 @@ import { existsSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
-import { PdfDocument } from '@pdfiumkit/web';
-import { agentTools, PdfAgentError, PdfAgentSession, type PdfiumAIOptions } from 'pdfiumkit-ai';
+import { PdfDocument } from '@pdfcora/web';
+import { agentTools, PdfAgentError, PdfAgentSession, type PdfAIOptions } from '@pdfcora/web-ai';
 
 interface OpenDocument {
   readonly session: PdfAgentSession;
@@ -28,7 +28,7 @@ interface ServerTool {
 
 const DOCUMENT_ID = { documentId: { type: 'string', description: 'From open_document.' } };
 
-export function createPdfiumKitServer(options: PdfiumAIOptions = {}): Server {
+export function createPDFCoraServer(options: PdfAIOptions = {}): Server {
   const documents = new Map<string, OpenDocument>();
   let next = 1;
 
@@ -106,7 +106,7 @@ export function createPdfiumKitServer(options: PdfiumAIOptions = {}): Server {
     })),
   ];
 
-  const server = new Server({ name: 'pdfiumkit', version: '0.1.0' }, { capabilities: { tools: {} } });
+  const server = new Server({ name: 'pdfcora', version: '0.1.0' }, { capabilities: { tools: {} } });
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: tools.map((t) => ({
       name: t.name, description: t.description, inputSchema: t.inputSchema,

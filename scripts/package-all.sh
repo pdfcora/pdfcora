@@ -4,13 +4,13 @@
 #   ./scripts/package-all.sh [outdir]        (default: build/dist)
 #
 # Produces:
-#   ios/PdfiumKit.xcframework.zip     self-contained framework, pdfium linked in
+#   ios/PDFCora.xcframework.zip     self-contained framework, pdfium linked in
 #   ios/pdfium.xcframework.zip        the binary target for SPM consumers, + checksum
-#   android/pdfiumkit-release.aar     all four ABIs
+#   android/pdfcora-release.aar     all four ABIs
 #   android/maven/                    a repository the AAR resolves from
-#   web/pdfiumkit-web-<version>.tgz   npm tarball, wasm included
-#   node/pdfiumkit-node-<version>.tgz npm tarball, depending on the published web package
-#   java/pdfiumkit-<version>.jar      the jar, with a native library per platform
+#   web/pdfcora-web-<version>.tgz   npm tarball, wasm included
+#   node/pdfcora-node-<version>.tgz npm tarball, depending on the published web package
+#   java/pdfcora-<version>.jar      the jar, with a native library per platform
 #   java/maven/                       a repository the jar resolves from
 #   SHA256SUMS, NOTICE.md, README.md
 set -euo pipefail
@@ -18,7 +18,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$(cd "$(dirname "${1:-$ROOT/build/dist}")" && pwd)/$(basename "${1:-dist}")"
 WORK="$OUT/.work"
-DEST_IOS="${PDFIUMKIT_IOS_DESTINATIONS:-generic/platform=iOS Simulator|generic/platform=iOS}"
+DEST_IOS="${PDFCORA_IOS_DESTINATIONS:-generic/platform=iOS Simulator|generic/platform=iOS}"
 
 for d in ios android web; do
     [ -d "$ROOT/vendor/$d" ] || { echo "missing vendor/$d — run ./scripts/fetch-vendor.sh" >&2; exit 1; }
@@ -34,7 +34,7 @@ mkdir -p "$OUT"/{ios,android,web,node,java} "$WORK"
 echo "==> iOS"
 STAGE="$WORK/stage"
 mkdir -p "$STAGE/Sources" "$STAGE/vendor"
-ln -sf "$ROOT/ios/Sources/PdfiumKit" "$STAGE/Sources/PdfiumKit"
+ln -sf "$ROOT/ios/Sources/PDFCora" "$STAGE/Sources/PDFCora"
 ln -sf "$ROOT/ios/Sources/CPdfium"   "$STAGE/Sources/CPdfium"
 ln -sf "$ROOT/vendor/ios/pdfium.xcframework" "$STAGE/vendor/pdfium.xcframework"
 cat > "$STAGE/Package.swift" <<'EOF'
@@ -42,14 +42,14 @@ cat > "$STAGE/Package.swift" <<'EOF'
 import PackageDescription
 
 let package = Package(
-    name: "PdfiumKit",
+    name: "PDFCora",
     platforms: [.iOS(.v15)],
-    products: [.library(name: "PdfiumKit", type: .dynamic, targets: ["PdfiumKit"])],
+    products: [.library(name: "PDFCora", type: .dynamic, targets: ["PDFCora"])],
     targets: [
         .binaryTarget(name: "pdfium", path: "vendor/pdfium.xcframework"),
         .target(name: "CPdfium", dependencies: ["pdfium"], path: "Sources/CPdfium",
                 publicHeadersPath: "include"),
-        .target(name: "PdfiumKit", dependencies: ["CPdfium"], path: "Sources/PdfiumKit"),
+        .target(name: "PDFCora", dependencies: ["CPdfium"], path: "Sources/PDFCora"),
     ]
 )
 EOF
@@ -65,24 +65,24 @@ for destination in "${destinations[@]}"; do
     # Each slice needs its own derived data: a shared one is cleaned between archives,
     # taking the .swiftmodule with it.
     derived="$WORK/dd-$slice"
-    ( cd "$STAGE" && xcodebuild archive -scheme PdfiumKit -destination "$destination" \
+    ( cd "$STAGE" && xcodebuild archive -scheme PDFCora -destination "$destination" \
         -archivePath "$archive" -derivedDataPath "$derived" \
         SKIP_INSTALL=NO BUILD_LIBRARY_FOR_DISTRIBUTION=YES ) > "$WORK/$slice.log" 2>&1 \
         || { echo "archive failed for $destination — see $WORK/$slice.log" >&2; exit 1; }
 
-    framework="$archive/Products/usr/local/lib/PdfiumKit.framework"
+    framework="$archive/Products/usr/local/lib/PDFCora.framework"
     # A dynamic SPM product archives without its .swiftmodule, so consumers could not
     # import it. Copy the one the build emitted alongside.
-    module="$(find "$derived" -type d -path "*Release-$sdk/PdfiumKit.swiftmodule" | head -1)"
-    [ -n "$module" ] || { echo "no PdfiumKit.swiftmodule for $slice" >&2; exit 1; }
+    module="$(find "$derived" -type d -path "*Release-$sdk/PDFCora.swiftmodule" | head -1)"
+    [ -n "$module" ] || { echo "no PDFCora.swiftmodule for $slice" >&2; exit 1; }
     mkdir -p "$framework/Modules"
     cp -R "$module" "$framework/Modules/"
     frameworks+=(-framework "$framework")
-    echo "    $slice: $(du -h "$framework/PdfiumKit" | cut -f1)"
+    echo "    $slice: $(du -h "$framework/PDFCora" | cut -f1)"
 done
 
-xcodebuild -create-xcframework "${frameworks[@]}" -output "$WORK/PdfiumKit.xcframework" > /dev/null
-( cd "$WORK" && zip -qr "$OUT/ios/PdfiumKit.xcframework.zip" PdfiumKit.xcframework )
+xcodebuild -create-xcframework "${frameworks[@]}" -output "$WORK/PDFCora.xcframework" > /dev/null
+( cd "$WORK" && zip -qr "$OUT/ios/PDFCora.xcframework.zip" PDFCora.xcframework )
 
 ( cd "$ROOT/vendor/ios" && zip -qr "$OUT/ios/pdfium.xcframework.zip" pdfium.xcframework )
 CHECKSUM=$(swift package --package-path "$ROOT" compute-checksum "$OUT/ios/pdfium.xcframework.zip")
@@ -90,19 +90,19 @@ cat > "$OUT/ios/binary-target.swift" <<EOF
 // For an SPM release, replace the local .binaryTarget in Package.swift with:
 .binaryTarget(
     name: "pdfium",
-    url: "https://github.com/<owner>/PdfiumKit/releases/download/<tag>/pdfium.xcframework.zip",
+    url: "https://github.com/<owner>/PDFCora/releases/download/<tag>/pdfium.xcframework.zip",
     checksum: "$CHECKSUM"
 ),
 EOF
 
 # --- Android --------------------------------------------------------------------
 echo "==> Android"
-( cd "$ROOT/android" && gradle :pdfiumkit:assembleRelease \
-    :pdfiumkit:publishReleasePublicationToDistRepository \
+( cd "$ROOT/android" && gradle :pdfcora:assembleRelease \
+    :pdfcora:publishReleasePublicationToDistRepository \
     -PdistRepo="$OUT/android/maven" --console=plain ) > "$WORK/android.log" 2>&1 \
     || { echo "gradle failed — see $WORK/android.log" >&2; exit 1; }
-cp "$ROOT/android/pdfiumkit/build/outputs/aar/pdfiumkit-release.aar" "$OUT/android/"
-echo "    abis: $(unzip -l "$OUT/android/pdfiumkit-release.aar" | grep -c 'jni/.*\.so$')"
+cp "$ROOT/android/pdfcora/build/outputs/aar/pdfcora-release.aar" "$OUT/android/"
+echo "    abis: $(unzip -l "$OUT/android/pdfcora-release.aar" | grep -c 'jni/.*\.so$')"
 
 # --- Web ------------------------------------------------------------------------
 echo "==> Web"
@@ -122,7 +122,7 @@ cp -R "$ROOT/node/dist" "$NODE_STAGE/dist"
 python3 - "$NODE_STAGE/package.json" <<'PYEOF'
 import json, sys
 package = json.load(open(sys.argv[1]))
-package["dependencies"]["@pdfiumkit/web"] = "^" + package["version"]
+package["dependencies"]["@pdfcora/web"] = "^" + package["version"]
 # The copy has no node_modules, and dist is already in it, so the prepack build
 # would only fail.
 package.get("scripts", {}).pop("prepack", None)
@@ -149,22 +149,22 @@ fi
 # --- Manifest -------------------------------------------------------------------
 cp "$ROOT/NOTICE.md" "$OUT/"
 cat > "$OUT/README.md" <<EOF
-# PdfiumKit distribution
+# PDFCora distribution
 
 Built $(date -u +%Y-%m-%dT%H:%M:%SZ) from $(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo "untracked").
 Third-party licences are in NOTICE.md — FreeType's credit line is required in your docs.
 
 ## iOS
-Drag \`PdfiumKit.xcframework\` into your target and embed it. pdfium is linked in;
+Drag \`PDFCora.xcframework\` into your target and embed it. pdfium is linked in;
 there is nothing else to add. For SPM instead, host \`pdfium.xcframework.zip\` and use
 the snippet in \`binary-target.swift\`.
 
 ## Android
 \`\`\`kotlin
 repositories { maven { url = uri("<path to android/maven>") } }
-dependencies { implementation("com.pdfiumkit:pdfiumkit:0.1.0") }
+dependencies { implementation("com.pdfcora:pdfcora:0.1.0") }
 \`\`\`
-Or drop \`pdfiumkit-release.aar\` into \`libs/\`.
+Or drop \`pdfcora-release.aar\` into \`libs/\`.
 
 ## Web
 \`\`\`
@@ -176,16 +176,16 @@ The \`.wasm\` ships inside the package; serve it from the same origin.
 \`\`\`
 npm install ./node/$(basename "$(ls "$OUT/node"/*.tgz)")
 \`\`\`
-It depends on \`@pdfiumkit/web\`, which resolves from the registry or from the tarball
+It depends on \`@pdfcora/web\`, which resolves from the registry or from the tarball
 above.
 
 ## Java
 \`\`\`kotlin
 repositories { maven { url = uri("<path to java/maven>") } }
-dependencies { implementation("com.pdfiumkit:pdfiumkit:0.1.0") }
+dependencies { implementation("com.pdfcora:pdfcora:0.1.0") }
 \`\`\`
 Or put the jar on the classpath. It carries a native library for macOS and Linux on
-x86-64 and arm64; \`-Dpdfiumkit.native.path=\` overrides which one is loaded.
+x86-64 and arm64; \`-Dpdfcora.native.path=\` overrides which one is loaded.
 EOF
 
 ( cd "$OUT" && find . -type f ! -name SHA256SUMS ! -path "./.work/*" -print0 \

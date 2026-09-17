@@ -182,7 +182,7 @@ function editorToolbar(page, annotations, scale, fitScale) {
   const save = button('Save', async () => {
     const bytes = await state.document.toBytes();
     const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
-    const link = el('a', { href: url, download: 'pdfiumkit-edited.pdf', textContent: 'Download' });
+    const link = el('a', { href: url, download: 'pdfcora-edited.pdf', textContent: 'Download' });
     setStatus('Exported ' + (bytes.length / 1024).toFixed(0) + ' KB');
     bar.append(link);
   });
@@ -400,15 +400,15 @@ function draw() {
  * real feature does.
  */
 async function renderAI() {
-  // Imported here rather than at the top: pdfiumkit-ai is an optional package with its
+  // Imported here rather than at the top: pdfcora-ai is an optional package with its
   // own build, and a static import would take the whole demo down when it is absent
   // rather than just this tab.
-  let PdfiumAI;
+  let PdfAI;
   try {
-    ({ PdfiumAI } = await import('../../web-ai/dist/index.js'));
+    ({ PdfAI } = await import('../../web-ai/dist/index.js'));
   } catch {
     $panel.append(el('p', { className: 'warn' },
-      'pdfiumkit-ai is not built. Run `npm install && npm run build` in web-ai/.'));
+      'pdfcora-ai is not built. Run `npm install && npm run build` in web-ai/.'));
     return;
   }
 
@@ -424,7 +424,7 @@ async function renderAI() {
         } }
     : undefined;
 
-  const ai = new PdfiumAI(state.document, { provider });
+  const ai = new PdfAI(state.document, { provider });
   const describe = (a) => a.kind === 'available'
     ? 'available' : `${a.kind}${a.reason ? ` — ${a.reason}` : ''}`;
   const answers = await ai.answers.availability();
@@ -856,7 +856,7 @@ async function renderExport() {
       try {
         const bytes = await state.document.toBytes(mode.value);
         const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
-        const link = el('a', { href: url, download: 'pdfiumkit-export.pdf', textContent: 'Download' });
+        const link = el('a', { href: url, download: 'pdfcora-export.pdf', textContent: 'Download' });
         result.replaceChildren(`Exported ${(bytes.length / 1024).toFixed(0)} KB — `, link);
       } catch (error) {
         result.textContent = `Export failed — ${error.message}`;

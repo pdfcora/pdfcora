@@ -1,10 +1,10 @@
 name: AISample
 options:
-  bundleIdPrefix: com.pdfiumkit.samples
+  bundleIdPrefix: com.pdfcora.samples
   deploymentTarget:
     iOS: "15.0"
 packages:
-  PdfiumKit:
+  PDFCora:
     path: ../..
 targets:
   AISample:
@@ -15,15 +15,15 @@ targets:
       - path: Resources
         buildPhase: resources
     dependencies:
-      - package: PdfiumKit
-        product: PdfiumKit
-      - package: PdfiumKit
-        product: PdfiumKitAI
+      - package: PDFCora
+        product: PDFCora
+      - package: PDFCora
+        product: PDFCoraAI
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.pdfiumkit.samples.ai
+        PRODUCT_BUNDLE_IDENTIFIER: com.pdfcora.samples.ai
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        INFOPLIST_KEY_CFBundleDisplayName: PdfiumKit AI
+        INFOPLIST_KEY_CFBundleDisplayName: PDFCora AI
         TARGETED_DEVICE_FAMILY: "1,2"
         SWIFT_VERSION: "5.9"

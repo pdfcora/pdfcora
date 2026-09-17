@@ -1,7 +1,7 @@
 {
-  "name": "pdfiumkit-ai",
+  "name": "@pdfcora/web-ai",
   "version": "0.1.0",
-  "description": "On-device AI for PdfiumKit",
+  "description": "On-device AI for PDFCora",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -25,12 +25,12 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "peerDependencies": {
-    "@pdfiumkit/web": "^0.1.0"
+    "@pdfcora/web": "^0.1.0"
   },
   "dependencies": {},
   "devDependencies": {
     "@types/node": "^20.14.0",
     "typescript": "^5.5.4",
-    "@pdfiumkit/web": "file:../web"
+    "@pdfcora/web": "file:../web"
   }
 }

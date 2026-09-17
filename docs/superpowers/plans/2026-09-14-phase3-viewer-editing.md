@@ -306,8 +306,8 @@ never failed is not known to work.** Revert.
 ## Task 6: Port to iOS and Android
 
 **Files:**
-- Modify: `ios/Sources/PdfiumKit/View/{ViewState,Viewer,Codec}.swift`
-- Modify: `android/pdfiumkit/src/main/java/com/pdfiumkit/view/{ViewState,Viewer,Codec}.kt`
+- Modify: `ios/Sources/PDFCora/View/{ViewState,Viewer,Codec}.swift`
+- Modify: `android/pdfcora/src/main/java/com/pdfcora/view/{ViewState,Viewer,Codec}.kt`
 - Test: the iOS and Android suites gain the same tests
 
 - [ ] **Step 1: Port the tests first, one for one**

@@ -1,6 +1,6 @@
 # Third-party notices
 
-PdfiumKit is distributed as a compiled binary that statically links PDFium and the
+PDFCora is distributed as a compiled binary that statically links PDFium and the
 third-party libraries PDFium bundles. The notices below cover everything verified to
 be present in the shipped artifacts.
 
@@ -24,11 +24,11 @@ https://pdfium.googlesource.com/pdfium/+/refs/heads/main/LICENSE
 
 ## FreeType
 
-PdfiumKit bundles FreeType (PDFium DEPS revision `320b72a2955a312f2a392bede8d6af900aec924d`,
+PDFCora bundles FreeType (PDFium DEPS revision `320b72a2955a312f2a392bede8d6af900aec924d`,
 copyright header 1996-2024). FreeType is dual-licensed under the FreeType License (FTL)
 and GPLv2.
 
-**PdfiumKit uses FreeType under the FreeType License (FTL).**
+**PDFCora uses FreeType under the FreeType License (FTL).**
 
 The FTL requires the following credit, which must appear in the documentation of any
 product that uses this software:
@@ -123,9 +123,9 @@ is not a substitute for legal review before public distribution. In particular:
   only zlib (1.3.1) and FreeType (revision pin) are pinned precisely here.
 - Symbols that are statically dead-stripped from a consumer's final application may
   mean some of these are not present in an end product, but the notices are retained
-  because PdfiumKit itself ships them.
+  because PDFCora itself ships them.
 - A licence that requires shipping full licence text with **source** redistribution —
   the FTL does — applies if you redistribute PDFium or FreeType sources, which
-  PdfiumKit does not.
+  PDFCora does not.
 
 Confirm this file with counsel before the first public release.

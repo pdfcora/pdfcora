@@ -5,7 +5,7 @@
 #   ./scripts/make-docs.sh --no-serve        builds only (CI)
 #   ./scripts/make-docs.sh --site            builds into site/api/, where the website links it
 #
-# PDFIUMKIT_DOCS_BASE is the URL path the output will be served under (default: the root).
+# PDFCORA_DOCS_BASE is the URL path the output will be served under (default: the root).
 # DocC bakes that path into every page, so it has to be right before the build, not after.
 #
 # Each SDK gets a quickstart page and a full API reference, generated from the source by
@@ -23,7 +23,7 @@ for arg in "$@"; do
     case "$arg" in
         --no-serve) SERVE=0 ;;
         # The website serves the references from /api/, next to its own pages.
-        --site) SERVE=0; args+=("$ROOT/site/api"); : "${PDFIUMKIT_DOCS_BASE:=/api}" ;;
+        --site) SERVE=0; args+=("$ROOT/site/api"); : "${PDFCORA_DOCS_BASE:=/api}" ;;
         --serve|--open) SERVE=1 ;;
         *) args+=("$arg") ;;
     esac
@@ -32,7 +32,7 @@ TARGET="${args[0]:-$ROOT/build/docs}"
 mkdir -p "$TARGET"
 OUT="$(cd "$TARGET" && pwd)"
 WORK="$OUT/.work"
-IOS_DESTINATION="${PDFIUMKIT_DOC_DESTINATION:-generic/platform=iOS}"
+IOS_DESTINATION="${PDFCORA_DOC_DESTINATION:-generic/platform=iOS}"
 VERSION="$(python3 -c "import json;print(json.load(open('$ROOT/web/package.json'))['version'])")"
 
 [ -d "$ROOT/vendor/ios" ] || { echo "missing vendor/ — run ./scripts/fetch-vendor.sh" >&2; exit 1; }
@@ -46,7 +46,7 @@ mkdir -p "$WORK"
 # DocC static site serves exactly one module.
 echo "==> iOS (DocC)"
 mkdir -p "$OUT/ios"   # docc will not create a nested output parent
-for pair in "PdfiumKit:api" "PdfiumKitUI:api-ui" "PdfiumKitAI:api-ai"; do
+for pair in "PDFCora:api" "PDFCoraUI:api-ui" "PDFCoraAI:api-ai"; do
     scheme="${pair%%:*}"; dir="${pair##*:}"
     slug="$(echo "$scheme" | tr '[:upper:]' '[:lower:]')"
     xcodebuild docbuild -scheme "$scheme" -destination "$IOS_DESTINATION" \
@@ -55,7 +55,7 @@ for pair in "PdfiumKit:api" "PdfiumKitUI:api-ui" "PdfiumKitAI:api-ai"; do
     ARCHIVE="$(find "$WORK/ios-dd" -name "$scheme.doccarchive" | head -1)"
     [ -n "$ARCHIVE" ] || { echo "no doccarchive for $scheme — see $WORK/ios-$slug.log" >&2; exit 1; }
     xcrun docc process-archive transform-for-static-hosting "$ARCHIVE" \
-        --output-path "$OUT/ios/$dir" --hosting-base-path "${PDFIUMKIT_DOCS_BASE:-}/ios/$dir" \
+        --output-path "$OUT/ios/$dir" --hosting-base-path "${PDFCORA_DOCS_BASE:-}/ios/$dir" \
         > "$WORK/ios-$slug-transform.log" 2>&1 \
         || { echo "docc transform failed for $scheme — see $WORK/ios-$slug-transform.log" >&2; exit 1; }
     # transform-for-static-hosting rewrites every page except the archive root, which
@@ -65,7 +65,7 @@ for pair in "PdfiumKit:api" "PdfiumKitUI:api-ui" "PdfiumKitAI:api-ai"; do
     # when served over http from the path it was built for. A blind redirect sent a
     # reader opening the site from disk into a directory listing, and a server rooted in
     # the wrong folder to a blank page. This checks both and says which one it is.
-    base="${PDFIUMKIT_DOCS_BASE:-}/ios/$dir/"
+    base="${PDFCORA_DOCS_BASE:-}/ios/$dir/"
     cat > "$OUT/ios/$dir/index.html" <<HTML
 <!doctype html>
 <html lang="en">
@@ -101,7 +101,7 @@ python3 -m http.server 8000
   <pre><code>cd site
 python3 -m http.server 8000</code></pre>
   <p class="muted">Deploying under a sub-path instead? Rebuild with the path it will live at:
-    <code>PDFIUMKIT_DOCS_BASE=/your/path/api ./scripts/make-docs.sh --site</code></p>
+    <code>PDFCORA_DOCS_BASE=/your/path/api ./scripts/make-docs.sh --site</code></p>
 </div>
 
 <script>
@@ -131,27 +131,27 @@ done
 
 # --- Android: Dokka -------------------------------------------------------------
 echo "==> Android (Dokka)"
-( cd "$ROOT/android" && gradle :pdfiumkit:dokkaHtml :pdfiumkit-ui:dokkaHtml :pdfiumkit-ai:dokkaHtml \
+( cd "$ROOT/android" && gradle :pdfcora:dokkaHtml :pdfcora-ui:dokkaHtml :pdfcora-ai:dokkaHtml \
     --console=plain ) > "$WORK/android.log" 2>&1 \
     || { echo "dokka failed — see $WORK/android.log" >&2; exit 1; }
 mkdir -p "$OUT/android"
-cp -R "$ROOT/android/pdfiumkit/build/dokka/html" "$OUT/android/api"
-cp -R "$ROOT/android/pdfiumkit-ui/build/dokka/html" "$OUT/android/api-ui"
-cp -R "$ROOT/android/pdfiumkit-ai/build/dokka/html" "$OUT/android/api-ai"
+cp -R "$ROOT/android/pdfcora/build/dokka/html" "$OUT/android/api"
+cp -R "$ROOT/android/pdfcora-ui/build/dokka/html" "$OUT/android/api-ui"
+cp -R "$ROOT/android/pdfcora-ai/build/dokka/html" "$OUT/android/api-ai"
 
 # --- Web: TypeDoc ---------------------------------------------------------------
 echo "==> Web (TypeDoc)"
 ( cd "$ROOT/web" && npx --no-install typedoc --entryPoints src/index.ts \
     --tsconfig tsconfig.json --out "$OUT/web/api" --readme none \
-    --excludePrivate --excludeInternal --skipErrorChecking \
-    --name "PdfiumKit for Web" ) > "$WORK/web.log" 2>&1 \
+    --excludePrivate --excludeInternal --skipErrorChecking --disableSources \
+    --name "PDFCora for Web" ) > "$WORK/web.log" 2>&1 \
     || { echo "typedoc failed — see $WORK/web.log (npm install in web/ first?)" >&2; exit 1; }
 
 # The AI package is its own npm package on the web, so it gets its own reference.
 ( cd "$ROOT/web-ai" && "$ROOT/web/node_modules/.bin/typedoc" --entryPoints src/index.ts \
     --tsconfig tsconfig.json --out "$OUT/web/api-ai" --readme none \
-    --excludePrivate --excludeInternal --skipErrorChecking \
-    --name "PdfiumKit AI for Web" ) > "$WORK/web-ai.log" 2>&1 \
+    --excludePrivate --excludeInternal --skipErrorChecking --disableSources \
+    --name "PDFCora AI for Web" ) > "$WORK/web-ai.log" 2>&1 \
     || { echo "typedoc failed for web-ai — see $WORK/web-ai.log (npm install in web-ai/ first?)" >&2; exit 1; }
 
 # --- Node: TypeDoc --------------------------------------------------------------
@@ -160,8 +160,8 @@ echo "==> Web (TypeDoc)"
 echo "==> Node (TypeDoc)"
 ( cd "$ROOT/node" && "$ROOT/web/node_modules/.bin/typedoc" --entryPoints src/index.ts \
     --tsconfig tsconfig.json --out "$OUT/node/api" --readme none \
-    --excludePrivate --excludeInternal --skipErrorChecking \
-    --name "PdfiumKit for Node" ) > "$WORK/node.log" 2>&1 \
+    --excludePrivate --excludeInternal --skipErrorChecking --disableSources \
+    --name "PDFCora for Node" ) > "$WORK/node.log" 2>&1 \
     || { echo "typedoc failed — see $WORK/node.log (npm install in web/ first?)" >&2; exit 1; }
 
 # --- Java: Javadoc --------------------------------------------------------------
@@ -203,8 +203,8 @@ $3
 HTML
 }
 
-page "$OUT/index.html" "PdfiumKit documentation" "
-<h1>PdfiumKit</h1>
+page "$OUT/index.html" "PDFCora documentation" "
+<h1>PDFCora</h1>
 <p>One PDF engine — PDFium — behind five SDKs that share an object model, an error type
 and a conformance suite.</p>
 <a class='card' href='ios/index.html'><b>iOS</b><span>Swift 5.9, iOS 15+, async/await</span></a>
@@ -224,7 +224,7 @@ and a conformance suite.</p>
       covers the whole file.</li>
 </ul>
 <h2>AI, separately</h2>
-<p><code>pdfiumkit-ai</code> is an optional package. The core has no AI dependency and
+<p><code>pdfcora-ai</code> is an optional package. The core has no AI dependency and
 never gains one &mdash; a CI check fails the build if it does. Today the package ships no
 feature: it provides the availability model, the custom-provider interface and the
 proposal/apply API that later features are built on.</p>
@@ -237,18 +237,18 @@ written until your app applies the ones the user accepted.</p>
 <p class='meta'>Version $VERSION · built $(date -u +%Y-%m-%d) · $(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo untracked).
 Third-party licences: <a href='notice.html'>NOTICE</a>.</p>"
 
-page "$OUT/ios/index.html" "PdfiumKit for iOS" "
-<h1>PdfiumKit for iOS</h1>
-<a class='card' href='api/index.html'><b>PdfiumKit</b><span>The core: documents, pages, text, forms, annotations, signatures, redaction</span></a>
-<a class='card' href='api-ui/index.html'><b>PdfiumKitUI</b><span>The SwiftUI viewer and its toolbar, theme and review bar</span></a>
-<a class='card' href='api-ai/index.html'><b>PdfiumKitAI</b><span>Answers, summaries, proposals, alt text, remediation, diff</span></a>
+page "$OUT/ios/index.html" "PDFCora for iOS" "
+<h1>PDFCora for iOS</h1>
+<a class='card' href='api/index.html'><b>PDFCora</b><span>The core: documents, pages, text, forms, annotations, signatures, redaction</span></a>
+<a class='card' href='api-ui/index.html'><b>PDFCoraUI</b><span>The SwiftUI viewer and its toolbar, theme and review bar</span></a>
+<a class='card' href='api-ai/index.html'><b>PDFCoraAI</b><span>Answers, summaries, proposals, alt text, remediation, diff</span></a>
 <p class='meta'>DocC is a single-page app: this reference only works over http, not file://.
 Run <code>./serve.sh</code> in the documentation directory.</p>
 <h2>Install</h2>
-<p>Embed <code>PdfiumKit.xcframework</code> from a release, or add the package:</p>
-<pre>.package(url: \"https://github.com/&lt;owner&gt;/PdfiumKit\", from: \"$VERSION\")</pre>
+<p>Embed <code>PDFCora.xcframework</code> from a release, or add the package:</p>
+<pre>.package(url: \"https://github.com/&lt;owner&gt;/PDFCora\", from: \"$VERSION\")</pre>
 <h2>Open and render</h2>
-<pre>import PdfiumKit
+<pre>import PDFCora
 
 let document = try await PdfDocument(data: data)
 let page = try await document.page(0)
@@ -299,14 +299,14 @@ catch PdfError.passwordRequired { /* prompt */ }
 catch let error as PdfError { print(error.description) }</pre>
 <p class='meta'><a href='../index.html'>All platforms</a></p>"
 
-page "$OUT/android/index.html" "PdfiumKit for Android" "
-<h1>PdfiumKit for Android</h1>
-<a class='card' href='api/index.html'><b>pdfiumkit</b><span>The core: documents, pages, text, forms, annotations, signatures, redaction</span></a>
-<a class='card' href='api-ui/index.html'><b>pdfiumkit-ui</b><span>The Compose viewer and its toolbar, theme and review bar</span></a>
-<a class='card' href='api-ai/index.html'><b>pdfiumkit-ai</b><span>Answers, summaries, proposals, alt text, remediation, diff</span></a>
+page "$OUT/android/index.html" "PDFCora for Android" "
+<h1>PDFCora for Android</h1>
+<a class='card' href='api/index.html'><b>pdfcora</b><span>The core: documents, pages, text, forms, annotations, signatures, redaction</span></a>
+<a class='card' href='api-ui/index.html'><b>pdfcora-ui</b><span>The Compose viewer and its toolbar, theme and review bar</span></a>
+<a class='card' href='api-ai/index.html'><b>@pdfcora/web-ai</b><span>Answers, summaries, proposals, alt text, remediation, diff</span></a>
 <h2>Install</h2>
-<pre>dependencies { implementation(\"com.pdfiumkit:pdfiumkit:$VERSION\") }</pre>
-<p>Or drop <code>pdfiumkit-release.aar</code> into <code>libs/</code>. All four ABIs are included.</p>
+<pre>dependencies { implementation(\"com.pdfcora:pdfcora:$VERSION\") }</pre>
+<p>Or drop <code>pdfcora-release.aar</code> into <code>libs/</code>. All four ABIs are included.</p>
 <h2>Open and render</h2>
 <pre>val document = PdfDocument.open(bytes)
 val page = document.page(0)
@@ -356,15 +356,15 @@ without a visible appearance.</p>
 page.formFields().forEach { field -> val box = transform.toView(field.base.rect) }</pre>
 <p class='meta'><a href='../index.html'>All platforms</a></p>"
 
-page "$OUT/web/index.html" "PdfiumKit for Web" "
-<h1>PdfiumKit for Web</h1>
-<a class='card' href='api/index.html'><b>@pdfiumkit/web</b><span>The core and the viewer component: documents, pages, forms, annotations, signatures, PdfViewerElement</span></a>
-<a class='card' href='api-ai/index.html'><b>@pdfiumkit/web-ai</b><span>Answers, summaries, proposals, alt text, remediation, diff, and the agent tools</span></a>
+page "$OUT/web/index.html" "PDFCora for Web" "
+<h1>PDFCora for Web</h1>
+<a class='card' href='api/index.html'><b>@pdfcora/web</b><span>The core and the viewer component: documents, pages, forms, annotations, signatures, PdfViewerElement</span></a>
+<a class='card' href='api-ai/index.html'><b>@pdfcora/web-ai</b><span>Answers, summaries, proposals, alt text, remediation, diff, and the agent tools</span></a>
 <h2>Install</h2>
-<pre>npm install @pdfiumkit/web</pre>
+<pre>npm install @pdfcora/web</pre>
 <p>The <code>.wasm</code> ships inside the package and must be served from the same origin.</p>
 <h2>Open and render</h2>
-<pre>import { PdfDocument } from '@pdfiumkit/web';
+<pre>import { PdfDocument } from '@pdfcora/web';
 
 const doc = await PdfDocument.open(bytes);
 const page = await doc.page(0);
@@ -372,7 +372,7 @@ const image = await page.render({ width: 1024, annotations: true, forms: true })
 <h2>Survive a hung render</h2>
 <p>A malformed page can hang PDFium in native code, where it cannot be cancelled.
 Run it in a worker so the page can recover by terminating it:</p>
-<pre>import { PdfWorker } from '@pdfiumkit/web/worker';</pre>
+<pre>import { PdfWorker } from '@pdfcora/web/worker';</pre>
 <h2>Read a signature</h2>
 <pre>for (const signature of await doc.signatures()) {
   if (!signature.coversWholeDocument) {
@@ -412,20 +412,20 @@ document keeps verifying. The first release signs invisibly.</p>
 for (const field of await page.formFields()) { const box = t.toViewRect(field.rect); }</pre>
 <p class='meta'><a href='../index.html'>All platforms</a></p>"
 
-page "$OUT/node/index.html" "PdfiumKit for Node" "
-<h1>PdfiumKit for Node</h1>
+page "$OUT/node/index.html" "PDFCora for Node" "
+<h1>PDFCora for Node</h1>
 <a class='card' href='api/index.html'><b>API reference</b><span>Every public type, generated by TypeDoc</span></a>
 <h2>Install</h2>
-<pre>npm install @pdfiumkit/node</pre>
-<p>A thin layer over <code>@pdfiumkit/web</code> rather than a second implementation: the
+<pre>npm install @pdfcora/node</pre>
+<p>A thin layer over <code>@pdfcora/web</code> rather than a second implementation: the
 whole web API is re-exported, so anything the web SDK does &mdash; annotations, form
 filling, redaction, tagging, signatures, viewer state, the AI package, the agent tools
 &mdash; works unchanged on the server. The same WebAssembly engine, so nothing to compile.</p>
 <h2>Open and render</h2>
 <pre>import { writeFile } from 'node:fs/promises';
-import { openFile, renderPng, useLicenseFromEnvironment } from '@pdfiumkit/node';
+import { openFile, renderPng, useLicenseFromEnvironment } from '@pdfcora/node';
 
-await useLicenseFromEnvironment();            // PDFIUMKIT_LICENSE_KEY
+await useLicenseFromEnvironment();            // PDFCORA_LICENSE_KEY
 const doc = await openFile('contract.pdf');
 await writeFile('page-1.png', await renderPng(await doc.page(0), { width: 1024 }));</pre>
 <p class='meta'>The PNG encoder uses <code>node:zlib</code>; there is no image dependency.</p>
@@ -447,11 +447,11 @@ library, an HSM client or a remote signing service.</p>
 an apply that takes only the ids a person accepted.</p>
 <p class='meta'><a href='../index.html'>All platforms</a></p>"
 
-page "$OUT/java/index.html" "PdfiumKit for Java" "
-<h1>PdfiumKit for Java</h1>
+page "$OUT/java/index.html" "PDFCora for Java" "
+<h1>PDFCora for Java</h1>
 <a class='card' href='api/index.html'><b>API reference</b><span>Every public type, generated by Javadoc</span></a>
 <h2>Install</h2>
-<pre>implementation(\"com.pdfiumkit:pdfiumkit:$VERSION\")</pre>
+<pre>implementation(\"com.pdfcora:pdfcora:$VERSION\")</pre>
 <p>Java 17 or newer, macOS and Linux on x86-64 and arm64. The engine is a native library
 inside the jar, reached through <b>JNI, not the Foreign Function API</b>, so it runs on the
 JDK most teams already have rather than requiring 22+.</p>
@@ -497,7 +497,7 @@ import html, sys
 src, dst = sys.argv[1], sys.argv[2]
 body = html.escape(open(src).read())
 open(dst, 'w').write(
-    '<!doctype html><meta charset="utf-8"><title>PdfiumKit — third-party notices</title>'
+    '<!doctype html><meta charset="utf-8"><title>PDFCora — third-party notices</title>'
     '<style>body{font:15px/1.6 -apple-system,system-ui,sans-serif;max-width:46rem;'
     'margin:0 auto;padding:2rem 1.25rem}pre{white-space:pre-wrap}</style>'
     f'<p><a href="./">Back</a></p><pre>{body}</pre>')
@@ -518,7 +518,7 @@ echo
 echo "documentation: $OUT"
 
 if [ "$SERVE" -eq 1 ]; then
-    PORT="${PDFIUMKIT_DOC_PORT:-8080}"
+    PORT="${PDFCORA_DOC_PORT:-8080}"
     ( cd "$OUT" && python3 -m http.server "$PORT" > /dev/null 2>&1 ) &
     sleep 1
     echo "serving:       http://localhost:$PORT/  (ctrl-c to stop)"

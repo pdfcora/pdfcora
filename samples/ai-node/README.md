@@ -14,7 +14,7 @@ Redaction suggestions are patterns, so they run with no model at all — which i
 makes them useful in a batch job. Summaries are not: with no provider configured the
 sample prints what `availability()` reports rather than pretending, and the SDK never
 downloads a model by itself. An app with a hosted model passes
-`new PdfiumAI(pdf, { provider })`, and document text reaches that provider only because
+`new PdfAI(pdf, { provider })`, and document text reaches that provider only because
 the app configured one.
 
 Nothing is applied until ids are passed to `apply`. Here a reviewer's decision is a

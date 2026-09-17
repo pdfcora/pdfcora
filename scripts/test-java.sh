@@ -8,9 +8,9 @@ cd "$(dirname "$0")/.."
 
 case "$(uname -s)" in
   Darwin) arch="$(uname -m)"; [ "$arch" = arm64 ] && platform=macos-arm64 || platform=macos-x86_64
-          library="libpdfiumkit_jni.dylib" ;;
+          library="libpdfcora_jni.dylib" ;;
   Linux)  arch="$(uname -m)"; [ "$arch" = aarch64 ] && platform=linux-aarch64 || platform=linux-x86_64
-          library="libpdfiumkit_jni.so" ;;
+          library="libpdfcora_jni.so" ;;
   *) echo "unsupported host: $(uname -s)" >&2; exit 1 ;;
 esac
 

@@ -1,8 +1,8 @@
-# PdfiumKit — Licensing Design
+# PDFCora — Licensing Design
 
 Date: 2026-09-15
 Status: Implemented 2026-09-15
-Extends: `2026-09-12-pdfiumkit-sdk-design.md`
+Extends: `2026-09-12-pdfcora-sdk-design.md`
 
 ## 1. Purpose
 
@@ -51,7 +51,7 @@ A valid key always includes **core** and adds the modules it lists.
 | `forms` | Setting form field values: text, checked, option |
 | `signing` | Creating a signature |
 | `redaction` | Redacting |
-| `ai` | Everything in `pdfiumkit-ai`: answers and summaries |
+| `ai` | Everything in `pdfcora-ai`: answers and summaries |
 
 Editing through the viewer calls the same document methods, so it is gated as `editing`.
 
@@ -107,7 +107,7 @@ compares on every platform: `noKey`, `malformed`, `badSignature`, `unsupportedVe
 
 ## 5. API
 
-The type is `PdfLicense` rather than `PdfiumKit`: a Swift type named after its own module
+The type is `PdfLicense` rather than `PDFCora`: a Swift type named after its own module
 breaks qualified names in a generated `.swiftinterface`, which binary distribution needs.
 
 ```swift
@@ -122,7 +122,7 @@ PdfLicense.status   // PdfLicenseStatus.Licensed(customer, modules) / Trial(reas
 ```
 
 ```ts
-import { PdfLicense } from '@pdfiumkit/web';
+import { PdfLicense } from '@pdfcora/web';
 await PdfLicense.setKey('pk1.…');
 PdfLicense.status;  // { kind: 'licensed', customer, modules } / { kind: 'trial', reason }
 ```
@@ -149,11 +149,11 @@ Each document carries one flag: **needs watermark**.
   is already in its content.
 - A sync follower replays edits through the same methods, so its document is marked by
   the same gate.
-- `pdfiumkit-ai` checks `ai` per call; it has no document to mark (§7.4).
+- `pdfcora-ai` checks `ai` per call; it has no document to mark (§7.4).
 
 ## 7. The watermark
 
-"PdfiumKit trial", Helvetica Bold (a standard PDF font, so nothing is embedded), grey at
+"PDFCora trial", Helvetica Bold (a standard PDF font, so nothing is embedded), grey at
 25% opacity, diagonal, scaled to the page. It is built with PDFium itself on every
 platform, so it looks the same everywhere and needs no canvas in Node. The web build
 already exports every function required: `FPDF_CreateNewDocument`, `FPDFPage_New`,
@@ -197,7 +197,7 @@ were already in the file no longer verify in the result. A licensed signing keep
 ### 7.4 AI
 
 When `ai` is not licensed, the answer or summary text is prefixed with
-"PdfiumKit trial — ". Quotes and citations are not changed, so grounding still verifies.
+"PDFCora trial — ". Quotes and citations are not changed, so grounding still verifies.
 
 ### 7.5 Redaction
 

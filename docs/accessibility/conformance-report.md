@@ -1,6 +1,6 @@
-# PdfiumKit — Accessibility Conformance Report (draft)
+# PDFCora — Accessibility Conformance Report (draft)
 
-Date: 2026-09-16 · Product: PdfiumKit 0.1.0 viewer components (web `PdfViewerElement`, iOS
+Date: 2026-09-16 · Product: PDFCora 0.1.0 viewer components (web `PdfViewerElement`, iOS
 `PdfViewerView`, Android `PdfViewerView`) · Standards: WCAG 2.1 Level A and AA; EN 301 549 v3.2.1
 chapters 9 (web), 11 (software) and 5 (generic).
 
@@ -20,7 +20,7 @@ chapters 9 (web), 11 (software) and 5 (generic).
 | Web | Text scaling: root font size 32 px — controls grow, nothing clips, review buttons wrap | same file |
 | iOS | `XCUIApplication.performAccessibilityAudit()` (contrast, element description, hit region, clipped text, traits) on three screens, each opened on its own | `ios/Demo/UITests/ScreenTourTests.swift` |
 | iOS | Dynamic Type at `AccessibilityXXXL`: toolbar grows, review buttons stay on screen | same file |
-| Android | Accessibility Test Framework checks (preset LATEST) over the platform's accessibility tree for the component, reviewing and showing a tagged document | `android/pdfiumkit-ui/src/androidTest/.../PdfViewerViewTest.kt` |
+| Android | Accessibility Test Framework checks (preset LATEST) over the platform's accessibility tree for the component, reviewing and showing a tagged document | `android/pdfcora-ui/src/androidTest/.../PdfViewerViewTest.kt` |
 | All | The page's content is exposed as structure (headings, lists, figures with alternate text, tables, form fields) and asserted per platform | `web/test/accessible.test.ts`, `AccessibleContentTests.swift`, `AccessibleContentTest.kt`, and the UI tests |
 
 Nobody has yet driven the components with VoiceOver, TalkBack, NVDA, JAWS or VoiceOver for macOS

@@ -1,8 +1,8 @@
-# PdfiumKit — Alt Text Design
+# PDFCora — Alt Text Design
 
 Date: 2026-09-15
 Status: Implemented 2026-09-15
-Implements: ALT-1 to ALT-4 and HIL-1 to HIL-3 of `2026-09-13-pdfiumkit-ai-requirements.md`
+Implements: ALT-1 to ALT-4 and HIL-1 to HIL-3 of `2026-09-13-pdfcora-ai-requirements.md`
 (AI Phase 3, first half; remediation follows in its own spec)
 
 ## 1. Purpose

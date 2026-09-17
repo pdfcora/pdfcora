@@ -20,11 +20,11 @@ first:
 ```
 
 `--site` also sets the URL path DocC bakes into the iOS references to `/api`. If the site
-is served under a sub-path — `https://example.com/pdfiumkit/` — set it to match, or every
+is served under a sub-path — `https://example.com/pdfcora/` — set it to match, or every
 iOS reference page will load its own "page not found":
 
 ```bash
-PDFIUMKIT_DOCS_BASE=/pdfiumkit/api ./scripts/make-docs.sh --site
+PDFCORA_DOCS_BASE=/pdfcora/api ./scripts/make-docs.sh --site
 ```
 
 It builds ten references: the core, viewer and AI modules on iOS and on Android, the web

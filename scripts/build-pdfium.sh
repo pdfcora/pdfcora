@@ -451,26 +451,26 @@ gclient sync -r "origin/${PDFIUM_BRANCH}" --no-history --shallow
   cd pdfium
 
   # Inject a small GN target to build our JNI bridge with the same toolchain
-  if [ -f /work/sdk/android/pdfiumkit/src/main/cpp/pdfiumkit_jni.cpp ]; then
-    mkdir -p third_party/pdfiumkit
-    cp -f /work/sdk/android/pdfiumkit/src/main/cpp/pdfiumkit_jni.cpp third_party/pdfiumkit/pdfiumkit_jni.cpp
-    cat > third_party/pdfiumkit/BUILD.gn <<GN
+  if [ -f /work/sdk/android/pdfcora/src/main/cpp/pdfcora_jni.cpp ]; then
+    mkdir -p third_party/pdfcora
+    cp -f /work/sdk/android/pdfcora/src/main/cpp/pdfcora_jni.cpp third_party/pdfcora/pdfcora_jni.cpp
+    cat > third_party/pdfcora/BUILD.gn <<GN
 import("//build/config/android/rules.gni")
 
-shared_library("pdfiumkit") {
-  sources = [ "pdfiumkit_jni.cpp" ]
+shared_library("pdfcora") {
+  sources = [ "pdfcora_jni.cpp" ]
   include_dirs = [ "//public" ]
   deps = [ "//:pdfium" ]
   libs = [ "log", "android", "jnigraphics" ]
 }
 GN
     # Ensure the target is reachable by the root build graph
-    if ! grep -q "group\(\"pdfiumkit_aggregate\"\)" BUILD.gn; then
+    if ! grep -q "group\(\"pdfcora_aggregate\"\)" BUILD.gn; then
       cat >> BUILD.gn <<GNROOT
 
-group("pdfiumkit_aggregate") {
+group("pdfcora_aggregate") {
   if (is_android) {
-    deps = [ "//third_party/pdfiumkit:pdfiumkit" ]
+    deps = [ "//third_party/pdfcora:pdfcora" ]
   }
 }
 GNROOT
@@ -482,12 +482,12 @@ GNROOT
     mkdir -p "$out_dir"
   gn gen "$out_dir" --args="is_debug=${IS_DEBUG} pdf_enable_v8=false pdf_enable_xfa=false target_os=\"android\" target_cpu=\"${cpu}\" clang_use_chrome_plugins=false default_min_sdk_version=21 pdf_is_standalone=true pdf_bundle_freetype=true pdf_is_complete_lib=true $( [ "$CONFIG" = "release" ] && echo symbol_level=0 )"
     ninja -C "$out_dir" pdfium -v
-    if [ -f third_party/pdfiumkit/pdfiumkit_jni.cpp ]; then
+    if [ -f third_party/pdfcora/pdfcora_jni.cpp ]; then
       # Build our JNI shared library using the same toolchain
-      ninja -C "$out_dir" pdfiumkit -v || true
+      ninja -C "$out_dir" pdfcora -v || true
       # If GN target wasn't wired into the graph, fall back to direct NDK clang link
-      if [ ! -f "$out_dir/libpdfiumkit.so" ] && [ ! -f "$out_dir/obj/third_party/pdfiumkit/libpdfiumkit.so" ]; then
-        echo "==> Fallback: building libpdfiumkit.so via NDK clang"
+      if [ ! -f "$out_dir/libpdfcora.so" ] && [ ! -f "$out_dir/obj/third_party/pdfcora/libpdfcora.so" ]; then
+        echo "==> Fallback: building libpdfcora.so via NDK clang"
         NDK="$(pwd)/third_party/android_ndk"
         CLANG="$NDK/toolchains/llvm/prebuilt/linux-x64/bin/clang++"
         SYSROOT="$NDK/toolchains/llvm/prebuilt/linux-x64/sysroot"
@@ -499,11 +499,11 @@ GNROOT
         esac
         "$CLANG" --target="$target" --sysroot="$SYSROOT" -fPIC -shared \
           -I "$(pwd)/public" \
-          third_party/pdfiumkit/pdfiumkit_jni.cpp \
+          third_party/pdfcora/pdfcora_jni.cpp \
           "$out_dir/obj/libpdfium.a" \
           -landroid -llog -ljnigraphics -lc++_shared -latomic -lm \
           -Wl,--no-rosegment -Wl,--no-undefined-version -Wl,--fatal-warnings \
-          -o "$out_dir/libpdfiumkit.so"
+          -o "$out_dir/libpdfcora.so"
       fi
       # Copy built .so into the Android module jniLibs for packaging
       case "$cpu" in
@@ -512,11 +512,11 @@ GNROOT
         x86) abi=x86;;
         x64) abi=x86_64;;
       esac
-      mkdir -p "/work/sdk/android/pdfiumkit/src/main/jniLibs/$abi"
-      if [ -f "$out_dir/libpdfiumkit.so" ]; then
-        cp -f "$out_dir/libpdfiumkit.so" "/work/sdk/android/pdfiumkit/src/main/jniLibs/$abi/libpdfiumkit.so"
-      elif [ -f "$out_dir/obj/third_party/pdfiumkit/libpdfiumkit.so" ]; then
-        cp -f "$out_dir/obj/third_party/pdfiumkit/libpdfiumkit.so" "/work/sdk/android/pdfiumkit/src/main/jniLibs/$abi/libpdfiumkit.so"
+      mkdir -p "/work/sdk/android/pdfcora/src/main/jniLibs/$abi"
+      if [ -f "$out_dir/libpdfcora.so" ]; then
+        cp -f "$out_dir/libpdfcora.so" "/work/sdk/android/pdfcora/src/main/jniLibs/$abi/libpdfcora.so"
+      elif [ -f "$out_dir/obj/third_party/pdfcora/libpdfcora.so" ]; then
+        cp -f "$out_dir/obj/third_party/pdfcora/libpdfcora.so" "/work/sdk/android/pdfcora/src/main/jniLibs/$abi/libpdfcora.so"
       fi
     fi
 done

@@ -117,7 +117,7 @@ struct RootView: View {
                     }
                 }
             }
-            .navigationTitle("PdfiumKit")
+            .navigationTitle("PDFCora")
             .task { if store.document == nil { await store.load(DocumentStore.samples[0]) } }
             .fileImporter(isPresented: $showingPicker, allowedContentTypes: [.pdf]) { result in
                 if case .success(let url) = result {

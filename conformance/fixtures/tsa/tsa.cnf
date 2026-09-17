@@ -3,8 +3,8 @@ distinguished_name = dn
 x509_extensions = ext
 prompt = no
 [ dn ]
-CN = PdfiumKit Test TSA
-O = PdfiumKit
+CN = PDFCora Test TSA
+O = PDFCora
 C = GB
 [ ext ]
 basicConstraints = critical,CA:false

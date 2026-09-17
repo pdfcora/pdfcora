@@ -1,4 +1,4 @@
-import type { PdfDocument, PdfRect } from '@pdfiumkit/web';
+import type { PdfDocument, PdfRect } from '@pdfcora/web';
 import { labelFor } from './describe.js';
 import type { PdfPageRange } from '../text.js';
 import { trialText } from '../trial.js';

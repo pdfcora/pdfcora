@@ -17,8 +17,8 @@
 - Modules: `editing`, `forms`, `signing`, `redaction`, `ai`. `core` is implicit and never listed. Unknown names are ignored.
 - Check order and reason codes: `noKey`, `malformed`, `badSignature`, `unsupportedVersion` (`v` ≠ 1), `revoked`, `expired` (release date > `expires`), `wrongApp`.
 - Binding: iOS bundle ID ∈ `ios`; Android package ∈ `android`; web hostname matches `web` (exact or `*.suffix`, case-insensitive, wildcard never matches the bare suffix); Node (no hostname) needs `server: true`. A missing list means not covered.
-- Watermark: text `PdfiumKit trial`, font `Helvetica-Bold`, fill RGB 128,128,128 alpha 64, diagonal bottom-left to top-right, text width 60% of the diagonal, centred.
-- AI prefix: `PdfiumKit trial — ` (with the em dash and trailing space), on answer text and summary text only.
+- Watermark: text `PDFCora trial`, font `Helvetica-Bold`, fill RGB 128,128,128 alpha 64, diagonal bottom-left to top-right, text width 60% of the diagonal, centred.
+- AI prefix: `PDFCora trial — ` (with the em dash and trailing space), on answer text and summary text only.
 - A watermarked save is always a full save (`FPDF_NO_INCREMENTAL` = 2).
 - Setting a key never throws. The first watermark in a process logs one warning.
 - Test hooks must not be public API: `@testable`/`internal` on iOS, `internal` on Android, an unexported module on web.
@@ -44,16 +44,16 @@
 | `web/test/license-setup.ts` | Installs the full test key for every web test process |
 | `web/test/license.test.ts` | Conformance cases |
 | `web/test/license-watermark.test.ts` | Behaviour tests |
-| `ios/Sources/PdfiumKit/License/LicenseKey.swift` | Parse, verify, evaluate |
-| `ios/Sources/PdfiumKit/License/PdfLicense.swift` | Public API, state, test hook, warning |
-| `ios/Sources/PdfiumKit/License/Watermark.swift` | Draw and stamp |
-| `ios/Tests/PdfiumKitTests/LicensedTestCase.swift` | Base class installing the full test key |
-| `ios/Tests/PdfiumKitTests/LicenseTests.swift` | Conformance + behaviour tests |
-| `android/pdfiumkit/src/main/java/com/pdfiumkit/license/LicenseKey.kt` | Parse, verify, evaluate |
-| `android/pdfiumkit/src/main/java/com/pdfiumkit/license/PdfLicense.kt` | Public API, state, test hook, warning |
-| `android/pdfiumkit/src/main/cpp/watermark.cpp` | Draw and stamp in C++ |
-| `android/pdfiumkit/src/androidTest/java/com/pdfiumkit/LicensedTestRunner.kt` | Runner installing the full test key |
-| `android/pdfiumkit/src/androidTest/java/com/pdfiumkit/LicenseTest.kt` | Conformance + behaviour tests |
+| `ios/Sources/PDFCora/License/LicenseKey.swift` | Parse, verify, evaluate |
+| `ios/Sources/PDFCora/License/PdfLicense.swift` | Public API, state, test hook, warning |
+| `ios/Sources/PDFCora/License/Watermark.swift` | Draw and stamp |
+| `ios/Tests/PDFCoraTests/LicensedTestCase.swift` | Base class installing the full test key |
+| `ios/Tests/PDFCoraTests/LicenseTests.swift` | Conformance + behaviour tests |
+| `android/pdfcora/src/main/java/com/pdfcora/license/LicenseKey.kt` | Parse, verify, evaluate |
+| `android/pdfcora/src/main/java/com/pdfcora/license/PdfLicense.kt` | Public API, state, test hook, warning |
+| `android/pdfcora/src/main/cpp/watermark.cpp` | Draw and stamp in C++ |
+| `android/pdfcora/src/androidTest/java/com/pdfcora/LicensedTestRunner.kt` | Runner installing the full test key |
+| `android/pdfcora/src/androidTest/java/com/pdfcora/LicenseTest.kt` | Conformance + behaviour tests |
 | `scripts/set-release-date.sh` | Writes the release date into all three platforms |
 
 ---
@@ -120,7 +120,7 @@ Expected: FAIL, `Cannot find module .../issue.mjs`.
 ```js
 #!/usr/bin/env node
 /**
- * Issues PdfiumKit license keys.
+ * Issues PDFCora license keys.
  *
  *   node tools/license/issue.mjs keygen --out <dir>
  *   node tools/license/issue.mjs sign --private-key <pem> --id lic_… --customer Acme
@@ -511,7 +511,7 @@ export function setKeyForHost(value: string | null, host: string | null): Promis
 export function noteWatermark(detail: string): void {
   if (warned) return;
   warned = true;
-  console.warn(`PdfiumKit: output is watermarked — ${detail}`);
+  console.warn(`PDFCora: output is watermarked — ${detail}`);
 }
 
 /** @internal Test hook. Not exported from the package entry point. */
@@ -616,7 +616,7 @@ const ROOT = new URL('../../', import.meta.url).pathname;
 const FIXTURE = JSON.parse(readFileSync(`${ROOT}conformance/license/cases.json`, 'utf8'));
 const PARTIAL = JSON.parse(readFileSync(`${ROOT}conformance/license/partial-keys.json`, 'utf8'));
 const read = (file: string) => new Uint8Array(readFileSync(`${ROOT}conformance/corpus/${file}`));
-const MARK = 'PdfiumKit trial';
+const MARK = 'PDFCora trial';
 
 const useKey = (key: string | null) => configureLicenseForTesting({ key, host: null });
 const keyWith = (modules: string[]): string => PARTIAL[modules.join(',')];
@@ -700,7 +700,7 @@ describe('watermark', () => {
 
   test('unlicensed signing verifies in pdfsig and contains the watermark', async () => {
     await useKey(keyWith([]));
-    const scratch = mkdtempSync(join(tmpdir(), 'pdfiumkit-license-'));
+    const scratch = mkdtempSync(join(tmpdir(), 'pdfcora-license-'));
     const FIXTURES = `${ROOT}conformance/fixtures/`;
     const signer: CmsSigner = {
       async sign(data) {
@@ -780,7 +780,7 @@ import { withBuffer, withUtf16, type PdfiumModule } from '../engine.js';
 import { PdfError } from '../errors.js';
 import { saveHandle } from '../save.js';
 
-const TEXT = 'PdfiumKit trial';
+const TEXT = 'PDFCora trial';
 
 /** Adds the watermark to `page`, centred on the box and running along its diagonal. */
 function placeWatermark(m: PdfiumModule, document: number, page: number,
@@ -993,7 +993,7 @@ import { PdfWorker } from '../dist/index.js';
 import { configureLicenseForTesting } from '../dist/license/state.js';
 
 const ROOT = new URL('../../', import.meta.url).pathname;
-const MARK = 'PdfiumKit trial';
+const MARK = 'PDFCora trial';
 
 test('a worker in trial mode watermarks what it saves', async () => {
   await configureLicenseForTesting({ key: null, host: null });
@@ -1060,7 +1060,7 @@ git commit -m "Web: PdfWorker checks the license against the page's hostname"
 - Test: `web-ai/test/trial.test.ts` (match the existing web-ai test folder; run `ls web-ai` first)
 
 **Interfaces:**
-- Consumes: `PdfLicense.covers('ai')` from `@pdfiumkit/web`.
+- Consumes: `PdfLicense.covers('ai')` from `@pdfcora/web`.
 - Produces: `trialText(text: string): string`.
 
 - [ ] **Step 1: Write the failing test**
@@ -1071,8 +1071,8 @@ import assert from 'node:assert/strict';
 import { trialText, TRIAL_PREFIX } from '../dist/trial.js';
 
 test('without an ai license the text is prefixed, and only once', () => {
-  assert.equal(TRIAL_PREFIX, 'PdfiumKit trial — ');
-  assert.equal(trialText('An answer.', false), 'PdfiumKit trial — An answer.');
+  assert.equal(TRIAL_PREFIX, 'PDFCora trial — ');
+  assert.equal(trialText('An answer.', false), 'PDFCora trial — An answer.');
   assert.equal(trialText('An answer.', true), 'An answer.');
 });
 ```
@@ -1086,9 +1086,9 @@ Expected: FAIL, cannot find `../dist/trial.js`.
 
 `web-ai/src/trial.ts`:
 ```ts
-import { PdfLicense } from '@pdfiumkit/web';
+import { PdfLicense } from '@pdfcora/web';
 
-export const TRIAL_PREFIX = 'PdfiumKit trial — ';
+export const TRIAL_PREFIX = 'PDFCora trial — ';
 let warned = false;
 
 /** Marks model output produced without an `ai` license. Quotes are never touched. */
@@ -1096,7 +1096,7 @@ export function trialText(text: string, licensed = PdfLicense.covers('ai')): str
   if (licensed) return text;
   if (!warned) {
     warned = true;
-    console.warn('PdfiumKit: AI output is marked as trial — the license key does not include the ai module');
+    console.warn('PDFCora: AI output is marked as trial — the license key does not include the ai module');
   }
   return TRIAL_PREFIX + text;
 }
@@ -1108,7 +1108,7 @@ In `web-ai/src/index.ts`, import `trialText` and change every summary constructi
 
 - [ ] **Step 4: Make the existing web-ai tests licensed**
 
-web-ai tests compare answer and summary text. Add `web-ai/test/license-setup.ts` that installs the full key exactly as `web/test/license-setup.ts` does, importing `configureLicenseForTesting` from `'@pdfiumkit/web/dist/license/state.js'` if the package exports allow it, otherwise from the relative path web-ai already uses to reach the web build (check `grep -rn "pdfiumkit/web" web-ai/test | head -3`). Add `--import ./dist-test/license-setup.js` to web-ai's test script the same way.
+web-ai tests compare answer and summary text. Add `web-ai/test/license-setup.ts` that installs the full key exactly as `web/test/license-setup.ts` does, importing `configureLicenseForTesting` from `'@pdfcora/web/dist/license/state.js'` if the package exports allow it, otherwise from the relative path web-ai already uses to reach the web build (check `grep -rn "pdfcora/web" web-ai/test | head -3`). Add `--import ./dist-test/license-setup.js` to web-ai's test script the same way.
 
 - [ ] **Step 5: Run web-ai tests**
 
@@ -1127,8 +1127,8 @@ git commit -m "web-ai: mark answers and summaries without an ai license"
 ### Task 6: iOS license state and conformance
 
 **Files:**
-- Create: `ios/Sources/PdfiumKit/License/LicenseKey.swift`, `ios/Sources/PdfiumKit/License/PdfLicense.swift`, `ios/Tests/PdfiumKitTests/LicenseTests.swift`, `ios/Tests/PdfiumKitTests/LicensedTestCase.swift`, `ios/Tests/PdfiumKitAITests/LicensedTestCase.swift`
-- Modify: every `ios/Tests/PdfiumKitTests/*.swift` and `ios/Tests/PdfiumKitAITests/*.swift` class declared `: XCTestCase` → `: LicensedTestCase`
+- Create: `ios/Sources/PDFCora/License/LicenseKey.swift`, `ios/Sources/PDFCora/License/PdfLicense.swift`, `ios/Tests/PDFCoraTests/LicenseTests.swift`, `ios/Tests/PDFCoraTests/LicensedTestCase.swift`, `ios/Tests/PDFCoraAITests/LicensedTestCase.swift`
+- Modify: every `ios/Tests/PDFCoraTests/*.swift` and `ios/Tests/PDFCoraAITests/*.swift` class declared `: XCTestCase` → `: LicensedTestCase`
 
 **Interfaces:**
 - Consumes: `cases.json` (Task 1).
@@ -1141,10 +1141,10 @@ git commit -m "web-ai: mark answers and summaries without an ai license"
 
 - [ ] **Step 1: Write the failing conformance test**
 
-`ios/Tests/PdfiumKitTests/LicenseTests.swift`:
+`ios/Tests/PDFCoraTests/LicenseTests.swift`:
 ```swift
 import XCTest
-@testable import PdfiumKit
+@testable import PDFCora
 
 struct LicenseFixture: Decodable {
     struct Expected: Decodable { let kind: String; let reason: String?; let modules: [String]? }
@@ -1185,10 +1185,10 @@ final class LicenseTests: LicensedTestCase {
 
 `Repo` is defined in `ConformanceTests.swift` (`Repo.root`); reuse it.
 
-`ios/Tests/PdfiumKitTests/LicensedTestCase.swift`:
+`ios/Tests/PDFCoraTests/LicensedTestCase.swift`:
 ```swift
 import XCTest
-@testable import PdfiumKit
+@testable import PDFCora
 
 /// Every suite runs licensed for every module. License tests change this locally and
 /// restore it in `tearDown`.
@@ -1215,7 +1215,7 @@ class LicensedTestCase: XCTestCase {
 The AI test target cannot see `LicenseFixture` or `Repo`; its `LicensedTestCase.swift` inlines both:
 ```swift
 import XCTest
-@testable import PdfiumKit
+@testable import PDFCora
 
 class LicensedTestCase: XCTestCase {
     override class func setUp() {
@@ -1233,11 +1233,11 @@ class LicensedTestCase: XCTestCase {
     }
 }
 ```
-Check the path depth: `ios/Tests/PdfiumKitAITests/LicensedTestCase.swift` → four `deletingLastPathComponent()` reach the repo root. Compare with `Repo.root` in `ConformanceTests.swift`.
+Check the path depth: `ios/Tests/PDFCoraAITests/LicensedTestCase.swift` → four `deletingLastPathComponent()` reach the repo root. Compare with `Repo.root` in `ConformanceTests.swift`.
 
 Switch every test class to the base class:
 ```bash
-grep -rl ": XCTestCase" ios/Tests/PdfiumKitTests ios/Tests/PdfiumKitAITests \
+grep -rl ": XCTestCase" ios/Tests/PDFCoraTests ios/Tests/PDFCoraAITests \
   | grep -v LicensedTestCase.swift \
   | xargs sed -i '' 's/: XCTestCase/: LicensedTestCase/'
 grep -rn "override func tearDown()" ios/Tests | head
@@ -1246,10 +1246,10 @@ Any existing `override func tearDown()` must call `super.tearDown()`; add the ca
 
 - [ ] **Step 2: Run to verify it fails**
 
-Run: `xcodebuild test -scheme PdfiumKit-Package -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=27.0' -only-testing:PdfiumKitTests/LicenseTests 2>&1 | grep -E "error:|Test Suite|passed|failed" | head`
+Run: `xcodebuild test -scheme PDFCora-Package -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=27.0' -only-testing:PDFCoraTests/LicenseTests 2>&1 | grep -E "error:|Test Suite|passed|failed" | head`
 Expected: build error, `cannot find 'PdfLicense' in scope`.
 
-- [ ] **Step 3: Write `ios/Sources/PdfiumKit/License/LicenseKey.swift`**
+- [ ] **Step 3: Write `ios/Sources/PDFCora/License/LicenseKey.swift`**
 
 ```swift
 import CryptoKit
@@ -1366,7 +1366,7 @@ enum LicenseKey {
 
 A non-integer `v` such as `1.5` must fail: add `guard v.doubleValue == Double(v.intValue)` to the `Payload` init if the conformance cases ever include one; today none do.
 
-- [ ] **Step 4: Write `ios/Sources/PdfiumKit/License/PdfLicense.swift`**
+- [ ] **Step 4: Write `ios/Sources/PDFCora/License/PdfLicense.swift`**
 
 ```swift
 import Foundation
@@ -1390,7 +1390,7 @@ public enum PdfLicense {
     private static var key: String?
     private static var current: PdfLicenseStatus = .trial(reason: .noKey, message: "no license key set")
     private static var warned = false
-    private static let log = Logger(subsystem: "com.pdfiumkit", category: "license")
+    private static let log = Logger(subsystem: "com.pdfcora", category: "license")
 
     /// Sets the license key. Call before opening documents. Never throws: a bad key
     /// leaves the SDK in trial mode, and ``status`` says why.
@@ -1411,7 +1411,7 @@ public enum PdfLicense {
         let first = !warned
         warned = true
         lock.unlock()
-        if first { log.warning("PdfiumKit: output is watermarked — \(detail, privacy: .public)") }
+        if first { log.warning("PDFCora: output is watermarked — \(detail, privacy: .public)") }
     }
 
     /// Test hook. Internal, so only `@testable` code reaches it.
@@ -1435,7 +1435,7 @@ public enum PdfLicense {
 
 - [ ] **Step 5: Run the license tests**
 
-Run: `xcodebuild test -scheme PdfiumKit-Package -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=27.0' -only-testing:PdfiumKitTests/LicenseTests 2>&1 | grep -E "error:|Executed|failed" | head`
+Run: `xcodebuild test -scheme PDFCora-Package -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=27.0' -only-testing:PDFCoraTests/LicenseTests 2>&1 | grep -E "error:|Executed|failed" | head`
 Expected: `Executed 1 test, with 0 failures`.
 
 - [ ] **Step 6: Run the iOS gate**
@@ -1446,7 +1446,7 @@ Expected: all suites pass as before (the key changes nothing yet), pdfsig cross-
 - [ ] **Step 7: Commit**
 
 ```bash
-git add ios/Sources/PdfiumKit/License ios/Tests
+git add ios/Sources/PDFCora/License ios/Tests
 git commit -m "iOS: license keys, verified offline"
 ```
 
@@ -1455,9 +1455,9 @@ git commit -m "iOS: license keys, verified offline"
 ### Task 7: iOS watermark, marking and gates
 
 **Files:**
-- Create: `ios/Sources/PdfiumKit/License/Watermark.swift`
-- Modify: `ios/Sources/PdfiumKit/PdfDocument.swift` (mark at init, `use`), `ios/Sources/PdfiumKit/Save.swift` (extract `serialise`), `ios/Sources/PdfiumKit/Render.swift` (overlay), `ios/Sources/PdfiumKit/Sign/Sign.swift` (stamp before signing), `ios/Sources/PdfiumKit/Redact/Redact.swift`, `ios/Sources/PdfiumKit/PdfAnnotation.swift:248,273,298,316`, `ios/Sources/PdfiumKit/PdfFormField.swift:184,206,225,236`, `ios/Sources/PdfiumKit/PdfPage.swift:60`, `scripts/test-ios.sh`
-- Test: `ios/Tests/PdfiumKitTests/LicenseTests.swift`
+- Create: `ios/Sources/PDFCora/License/Watermark.swift`
+- Modify: `ios/Sources/PDFCora/PdfDocument.swift` (mark at init, `use`), `ios/Sources/PDFCora/Save.swift` (extract `serialise`), `ios/Sources/PDFCora/Render.swift` (overlay), `ios/Sources/PDFCora/Sign/Sign.swift` (stamp before signing), `ios/Sources/PDFCora/Redact/Redact.swift`, `ios/Sources/PDFCora/PdfAnnotation.swift:248,273,298,316`, `ios/Sources/PDFCora/PdfFormField.swift:184,206,225,236`, `ios/Sources/PDFCora/PdfPage.swift:60`, `scripts/test-ios.sh`
+- Test: `ios/Tests/PDFCoraTests/LicenseTests.swift`
 
 **Interfaces:**
 - Consumes: `PdfLicense.status`, `PdfLicense.noteWatermark`, `PdfLicense.configureForTesting` (Task 6).
@@ -1470,7 +1470,7 @@ git commit -m "iOS: license keys, verified offline"
 
 Append to `LicenseTests`:
 ```swift
-    private let mark = "PdfiumKit trial"
+    private let mark = "PDFCora trial"
 
     private func read(_ name: String) throws -> Data {
         try Data(contentsOf: Repo.corpus.appendingPathComponent(name))
@@ -1561,17 +1561,17 @@ Append to `LicenseTests`:
         try use(try keyWith([]))
         let p12 = try Data(contentsOf: Repo.root.appendingPathComponent("conformance/fixtures/test-signer.p12"))
         let signed = try await PdfDocument(data: try read("hello_world.pdf"))
-            .sign(PdfSignOptions(signer: try Pkcs12Signer(pkcs12: p12, password: "pdfiumkit")))
+            .sign(PdfSignOptions(signer: try Pkcs12Signer(pkcs12: p12, password: "pdfcora")))
         XCTAssertTrue(try await texts(signed)[0].contains(mark))
-        try signed.write(to: URL(fileURLWithPath: "/tmp/pdfiumkit-ios-trial-signed.pdf"))
+        try signed.write(to: URL(fileURLWithPath: "/tmp/pdfcora-ios-trial-signed.pdf"))
     }
 ```
 
-Check the real redaction target case name: `grep -n "case " ios/Sources/PdfiumKit/Redact/*.swift | grep -i "textMatch\|search"`, and the `PdfRect` initialiser labels in `Geometry.swift`; adjust the two calls to match.
+Check the real redaction target case name: `grep -n "case " ios/Sources/PDFCora/Redact/*.swift | grep -i "textMatch\|search"`, and the `PdfRect` initialiser labels in `Geometry.swift`; adjust the two calls to match.
 
 - [ ] **Step 2: Run to verify they fail**
 
-Run: `xcodebuild test -scheme PdfiumKit-Package -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=27.0' -only-testing:PdfiumKitTests/LicenseTests 2>&1 | grep -E "error:|Executed" | head`
+Run: `xcodebuild test -scheme PDFCora-Package -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=27.0' -only-testing:PDFCoraTests/LicenseTests 2>&1 | grep -E "error:|Executed" | head`
 Expected: build error, `value of type 'PdfDocument' has no member 'needsWatermark'`.
 
 - [ ] **Step 3: Extract `serialise` in `Save.swift`**
@@ -1621,7 +1621,7 @@ import Foundation
 
 /// The trial watermark, drawn with PDFium so it looks the same on every platform.
 enum Watermark {
-    private static let text = "PdfiumKit trial"
+    private static let text = "PDFCora trial"
 
     /// Adds the watermark to `page`, centred on the box and running along its diagonal.
     private static func place(in document: FPDF_DOCUMENT, page: FPDF_PAGE,
@@ -1733,11 +1733,11 @@ In `Sign.swift`, replace `sign(_:)` on `PdfDocument`:
 
 - [ ] **Step 6: Cross-check the unlicensed signature on the host**
 
-In `scripts/test-ios.sh`, after the existing pdfsig block for `$SIGNED`, add the same checks for `/tmp/pdfiumkit-ios-trial-signed.pdf`, printing `cross-check:   pdfsig accepts the iOS trial-signed document`. Extract the two `case` checks into a shell function `check_pdfsig <file> <label>` and call it for both files, so the logic exists once.
+In `scripts/test-ios.sh`, after the existing pdfsig block for `$SIGNED`, add the same checks for `/tmp/pdfcora-ios-trial-signed.pdf`, printing `cross-check:   pdfsig accepts the iOS trial-signed document`. Extract the two `case` checks into a shell function `check_pdfsig <file> <label>` and call it for both files, so the logic exists once.
 
 - [ ] **Step 7: Run the license tests, then the gate**
 
-Run: `xcodebuild test -scheme PdfiumKit-Package -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=27.0' -only-testing:PdfiumKitTests/LicenseTests 2>&1 | grep -E "error:|Executed|failed" | head`
+Run: `xcodebuild test -scheme PDFCora-Package -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=27.0' -only-testing:PDFCoraTests/LicenseTests 2>&1 | grep -E "error:|Executed|failed" | head`
 Expected: `Executed 8 tests, with 0 failures`.
 
 Run: `./scripts/test-ios.sh 2>&1 | grep -E "Executed|error:|cross-check|TEST FAILED" | tail -14`
@@ -1755,8 +1755,8 @@ git commit -m "iOS: watermark rendering, saving and signing without a covering l
 ### Task 8: iOS AI trial prefix
 
 **Files:**
-- Modify: `ios/Sources/PdfiumKitAI/PdfiumAI.swift` (`ask`, `summarize`), create `ios/Sources/PdfiumKitAI/Trial.swift`
-- Test: `ios/Tests/PdfiumKitAITests/TrialTests.swift`
+- Modify: `ios/Sources/PDFCoraAI/PdfAI.swift` (`ask`, `summarize`), create `ios/Sources/PDFCoraAI/Trial.swift`
+- Test: `ios/Tests/PDFCoraAITests/TrialTests.swift`
 
 **Interfaces:**
 - Consumes: `PdfLicense.status.covers(.ai)`.
@@ -1766,7 +1766,7 @@ git commit -m "iOS: watermark rendering, saving and signing without a covering l
 
 ```swift
 import XCTest
-@testable import PdfiumKitAI
+@testable import PDFCoraAI
 
 final class TrialTests: LicensedTestCase {
     func testAnswersAndSummariesArePrefixedWithoutAnAiLicense() {
@@ -1774,7 +1774,7 @@ final class TrialTests: LicensedTestCase {
             value: .answered(text: "Yes.", citations: [], grounded: true, pagesWithoutText: []), source: .rules))
         guard case .answered(let marked) = Trial.mark(answer, licensed: false),
               case .answered(let text, _, _, _) = marked.value else { return XCTFail() }
-        XCTAssertEqual(text, "PdfiumKit trial — Yes.")
+        XCTAssertEqual(text, "PDFCora trial — Yes.")
 
         let summary = PdfAiOutcome<PdfSummary>.answered(PdfAiResult(
             value: PdfSummary(text: "Short.", pagesWithoutText: []), source: .rules))
@@ -1788,7 +1788,7 @@ If `PdfAiResult` or `PdfSummary` have no accessible memberwise initialisers from
 
 - [ ] **Step 2: Run to verify it fails**
 
-Run: `xcodebuild test -scheme PdfiumKit-Package -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=27.0' -only-testing:PdfiumKitAITests/TrialTests 2>&1 | grep -E "error:|Executed" | head -3`
+Run: `xcodebuild test -scheme PDFCora-Package -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=27.0' -only-testing:PDFCoraAITests/TrialTests 2>&1 | grep -E "error:|Executed" | head -3`
 Expected: `cannot find 'Trial' in scope`.
 
 - [ ] **Step 3: Implement `Trial.swift`**
@@ -1796,12 +1796,12 @@ Expected: `cannot find 'Trial' in scope`.
 ```swift
 import Foundation
 import os
-import PdfiumKit
+import PDFCora
 
 /// Marks model output produced without an `ai` license. Quotes are never touched, so
 /// grounding still verifies.
 enum Trial {
-    static let prefix = "PdfiumKit trial — "
+    static let prefix = "PDFCora trial — "
     private static let warned = OSAllocatedUnfairLock(initialState: false)
 
     static func mark(_ outcome: PdfAiOutcome<PdfAnswer>,
@@ -1826,8 +1826,8 @@ enum Trial {
     private static func warn() {
         let first = warned.withLock { value -> Bool in defer { value = true }; return !value }
         if first {
-            Logger(subsystem: "com.pdfiumkit", category: "license")
-                .warning("PdfiumKit: AI output is marked as trial — the license key does not include the ai module")
+            Logger(subsystem: "com.pdfcora", category: "license")
+                .warning("PDFCora: AI output is marked as trial — the license key does not include the ai module")
         }
     }
 }
@@ -1835,19 +1835,19 @@ enum Trial {
 
 `OSAllocatedUnfairLock` needs iOS 16; the floor is 15. Use an `NSLock` and a `static var` instead if the build reports availability errors.
 
-In `PdfiumAI.swift`:
+In `PdfAI.swift`:
 - `ask`: wrap the early rules return and the final return. Change `return .answered(PdfAiResult(value: .notFound(…), source: .rules))` — leave it (not-found carries no text). Change `return await resolveRoutes(` to `return Trial.mark(await resolveRoutes(` and close the extra parenthesis after the `resolveRoutes` call's closing `)`.
 - `summarize`: same change on its `return await resolveRoutes(`.
 
 - [ ] **Step 4: Run AI tests**
 
-Run: `xcodebuild test -scheme PdfiumKit-Package -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=27.0' -only-testing:PdfiumKitAITests 2>&1 | grep -E "error:|Executed" | tail -3`
+Run: `xcodebuild test -scheme PDFCora-Package -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=27.0' -only-testing:PDFCoraAITests 2>&1 | grep -E "error:|Executed" | tail -3`
 Expected: 42 existing + 1 pass.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add ios/Sources/PdfiumKitAI ios/Tests/PdfiumKitAITests
+git add ios/Sources/PDFCoraAI ios/Tests/PDFCoraAITests
 git commit -m "iOS AI: mark answers and summaries without an ai license"
 ```
 
@@ -1856,11 +1856,11 @@ git commit -m "iOS AI: mark answers and summaries without an ai license"
 ### Task 9: Android license state and conformance
 
 **Files:**
-- Create: `android/pdfiumkit/src/main/java/com/pdfiumkit/license/LicenseKey.kt`, `android/pdfiumkit/src/main/java/com/pdfiumkit/license/PdfLicense.kt`, `android/pdfiumkit/src/androidTest/java/com/pdfiumkit/LicensedTestRunner.kt`, `android/pdfiumkit/src/androidTest/java/com/pdfiumkit/LicenseTest.kt`
-- Modify: `android/pdfiumkit/build.gradle.kts:21` (runner)
+- Create: `android/pdfcora/src/main/java/com/pdfcora/license/LicenseKey.kt`, `android/pdfcora/src/main/java/com/pdfcora/license/PdfLicense.kt`, `android/pdfcora/src/androidTest/java/com/pdfcora/LicensedTestRunner.kt`, `android/pdfcora/src/androidTest/java/com/pdfcora/LicenseTest.kt`
+- Modify: `android/pdfcora/build.gradle.kts:21` (runner)
 
 **Interfaces:**
-- Consumes: `cases.json` as the asset `license/cases.json` (the androidTest assets root is `conformance/`; confirm with `sed -n 55,62p android/pdfiumkit/build.gradle.kts`).
+- Consumes: `cases.json` as the asset `license/cases.json` (the androidTest assets root is `conformance/`; confirm with `sed -n 55,62p android/pdfcora/build.gradle.kts`).
 - Produces:
   - `enum class PdfLicenseModule(val id: String) { EDITING("editing"), FORMS("forms"), SIGNING("signing"), REDACTION("redaction"), AI("ai") }`
   - `enum class PdfLicenseReason(val id: String) { NO_KEY("noKey"), MALFORMED("malformed"), BAD_SIGNATURE("badSignature"), UNSUPPORTED_VERSION("unsupportedVersion"), REVOKED("revoked"), EXPIRED("expired"), WRONG_APP("wrongApp") }`
@@ -1872,12 +1872,12 @@ git commit -m "iOS AI: mark answers and summaries without an ai license"
 
 `LicenseTest.kt`:
 ```kotlin
-package com.pdfiumkit
+package com.pdfcora
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.pdfiumkit.license.PdfLicense
-import com.pdfiumkit.license.PdfLicenseStatus
+import com.pdfcora.license.PdfLicense
+import com.pdfcora.license.PdfLicenseStatus
 import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -1938,7 +1938,7 @@ class LicenseTest {
 
 `LicensedTestRunner.kt`:
 ```kotlin
-package com.pdfiumkit
+package com.pdfcora
 
 import android.os.Bundle
 import androidx.test.runner.AndroidJUnitRunner
@@ -1952,21 +1952,21 @@ class LicensedTestRunner : AndroidJUnitRunner() {
 }
 ```
 
-In `android/pdfiumkit/build.gradle.kts` change line 21 to:
+In `android/pdfcora/build.gradle.kts` change line 21 to:
 ```kotlin
-        testInstrumentationRunner = "com.pdfiumkit.LicensedTestRunner"
+        testInstrumentationRunner = "com.pdfcora.LicensedTestRunner"
 ```
-`scripts/sweep-android.sh` names the runner; change `$PACKAGE/androidx.test.runner.AndroidJUnitRunner` there to `$PACKAGE/com.pdfiumkit.LicensedTestRunner`.
+`scripts/sweep-android.sh` names the runner; change `$PACKAGE/androidx.test.runner.AndroidJUnitRunner` there to `$PACKAGE/com.pdfcora.LicensedTestRunner`.
 
 - [ ] **Step 2: Run to verify it fails**
 
-Run: `cd android && gradle :pdfiumkit:compileDebugAndroidTestKotlin --console=plain -q 2>&1 | grep "^e:" | head -3`
+Run: `cd android && gradle :pdfcora:compileDebugAndroidTestKotlin --console=plain -q 2>&1 | grep "^e:" | head -3`
 Expected: `e: … Unresolved reference: license`.
 
 - [ ] **Step 3: Write `LicenseKey.kt`**
 
 ```kotlin
-package com.pdfiumkit.license
+package com.pdfcora.license
 
 import android.util.Base64
 import org.json.JSONArray
@@ -2111,7 +2111,7 @@ internal object LicenseKey {
 - [ ] **Step 4: Write `PdfLicense.kt`**
 
 ```kotlin
-package com.pdfiumkit.license
+package com.pdfcora.license
 
 import android.content.Context
 import android.util.Log
@@ -2145,7 +2145,7 @@ object PdfLicense {
     internal fun noteWatermark(detail: String) {
         if (warned) return
         warned = true
-        Log.w("PdfiumKit", "output is watermarked — $detail")
+        Log.w("PDFCora", "output is watermarked — $detail")
     }
 
     /** Test hook; internal to this module. */
@@ -2169,7 +2169,7 @@ object PdfLicense {
 
 - [ ] **Step 5: Run the license test**
 
-Run: `cd android && ANDROID_SERIAL=emulator-5554 gradle :pdfiumkit:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.pdfiumkit.LicenseTest --console=plain -q 2>&1 | tail -5`
+Run: `cd android && ANDROID_SERIAL=emulator-5554 gradle :pdfcora:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.pdfcora.LicenseTest --console=plain -q 2>&1 | tail -5`
 Expected: BUILD SUCCESSFUL, 1 test passed.
 
 - [ ] **Step 6: Run the Android gate**
@@ -2189,13 +2189,13 @@ git commit -m "Android: license keys, verified offline"
 ### Task 10: Android watermark, marking and gates
 
 **Files:**
-- Create: `android/pdfiumkit/src/main/cpp/watermark.cpp`, `android/pdfiumkit/src/main/cpp/watermark.h`
-- Modify: `android/pdfiumkit/src/main/cpp/CMakeLists.txt` (add source), `android/pdfiumkit/src/main/cpp/pdfiumkit_jni.cpp` (`renderPage` gains `watermark`, new `stampWatermark`), `Native.kt`, `PdfDocument.kt` (mark, `use`, render, `toByteArray`, `setRotation`), `PageContent.kt` (gates), `Redact.kt:87`, `sign/Sign.kt:53`, `LicenseTest.kt`, `scripts/test-android.sh`
+- Create: `android/pdfcora/src/main/cpp/watermark.cpp`, `android/pdfcora/src/main/cpp/watermark.h`
+- Modify: `android/pdfcora/src/main/cpp/CMakeLists.txt` (add source), `android/pdfcora/src/main/cpp/pdfcora_jni.cpp` (`renderPage` gains `watermark`, new `stampWatermark`), `Native.kt`, `PdfDocument.kt` (mark, `use`, render, `toByteArray`, `setRotation`), `PageContent.kt` (gates), `Redact.kt:87`, `sign/Sign.kt:53`, `LicenseTest.kt`, `scripts/test-android.sh`
 
 **Interfaces:**
 - Consumes: `PdfLicense.status`, `PdfLicense.noteWatermark` (Task 9).
 - Produces:
-  - C++: `void pdfiumkit_draw_watermark(FPDF_BITMAP bitmap, int width, int height);` and `std::vector<uint8_t> pdfiumkit_stamp_watermark(const uint8_t* data, size_t size);`
+  - C++: `void pdfcora_draw_watermark(FPDF_BITMAP bitmap, int width, int height);` and `std::vector<uint8_t> pdfcora_stamp_watermark(const uint8_t* data, size_t size);`
   - `Native.renderPage(handle, index, bitmap, flags, background, drawForms, watermark: Boolean): Boolean`, `Native.stampWatermark(bytes: ByteArray): ByteArray`
   - `PdfDocument.needsWatermark: Boolean` (internal), `PdfDocument.use(module: PdfLicenseModule)` (internal)
 
@@ -2203,7 +2203,7 @@ git commit -m "Android: license keys, verified offline"
 
 Append to `LicenseTest`:
 ```kotlin
-    private val mark = "PdfiumKit trial"
+    private val mark = "PDFCora trial"
     private val assets get() = InstrumentationRegistry.getInstrumentation().context.assets
     private fun corpus(name: String) = assets.open("corpus/$name").use { it.readBytes() }
     private fun use(key: String?) { PdfLicense.configureForTesting(key = key, setKey = true) }
@@ -2278,11 +2278,11 @@ Append to `LicenseTest`:
     /** pdfsig runs on the host over this file; see scripts/test-android.sh. */
     @Test fun writesAnUnlicensedSignedDocumentForTheHost() = kotlinx.coroutines.runBlocking {
         use(keyWith(""))
-        val signer = com.pdfiumkit.sign.Pkcs12Signer(assets.open("fixtures/test-signer.p12").use { it.readBytes() }, "pdfiumkit")
-        val signed = PdfDocument.open(corpus("hello_world.pdf")).use { it.sign(com.pdfiumkit.sign.PdfSignOptions(signer)) }
+        val signer = com.pdfcora.sign.Pkcs12Signer(assets.open("fixtures/test-signer.p12").use { it.readBytes() }, "pdfcora")
+        val signed = PdfDocument.open(corpus("hello_world.pdf")).use { it.sign(com.pdfcora.sign.PdfSignOptions(signer)) }
         org.junit.Assert.assertTrue(texts(signed)[0].contains(mark))
         java.io.File(InstrumentationRegistry.getInstrumentation().targetContext.filesDir,
-                     "pdfiumkit-android-trial-signed.pdf").writeBytes(signed)
+                     "pdfcora-android-trial-signed.pdf").writeBytes(signed)
     }
 ```
 
@@ -2290,7 +2290,7 @@ Match real names before running: `PdfRect` argument order in `Types.kt`, the red
 
 - [ ] **Step 2: Run to verify they fail**
 
-Run: `cd android && gradle :pdfiumkit:compileDebugAndroidTestKotlin --console=plain -q 2>&1 | grep "^e:" | head -3`
+Run: `cd android && gradle :pdfcora:compileDebugAndroidTestKotlin --console=plain -q 2>&1 | grep "^e:" | head -3`
 Expected: `Unresolved reference: needsWatermark`.
 
 - [ ] **Step 3: Write the C++ watermark**
@@ -2304,11 +2304,11 @@ Expected: `Unresolved reference: needsWatermark`.
 #include "fpdfview.h"
 
 /// Draws the trial watermark over an already rendered bitmap.
-void pdfiumkit_draw_watermark(FPDF_BITMAP bitmap, int width, int height);
+void pdfcora_draw_watermark(FPDF_BITMAP bitmap, int width, int height);
 
 /// A full save of the document in `data` with the watermark in every page's content.
 /// Empty when the bytes cannot be reopened or saved.
-std::vector<uint8_t> pdfiumkit_stamp_watermark(const uint8_t* data, size_t size);
+std::vector<uint8_t> pdfcora_stamp_watermark(const uint8_t* data, size_t size);
 ```
 
 `watermark.cpp`:
@@ -2321,7 +2321,7 @@ std::vector<uint8_t> pdfiumkit_stamp_watermark(const uint8_t* data, size_t size)
 
 namespace {
 
-const char16_t kText[] = u"PdfiumKit trial";
+const char16_t kText[] = u"PDFCora trial";
 
 void place(FPDF_DOCUMENT document, FPDF_PAGE page, float left, float bottom, float width, float height) {
     FPDF_PAGEOBJECT object = FPDFPageObj_NewTextObj(document, "Helvetica-Bold", 100.0f);
@@ -2355,7 +2355,7 @@ int collect(FPDF_FILEWRITE* self, const void* data, unsigned long size) {
 
 }  // namespace
 
-void pdfiumkit_draw_watermark(FPDF_BITMAP bitmap, int width, int height) {
+void pdfcora_draw_watermark(FPDF_BITMAP bitmap, int width, int height) {
     FPDF_DOCUMENT scratch = FPDF_CreateNewDocument();
     if (!scratch) return;
     FPDF_PAGE page = FPDFPage_New(scratch, 0, width, height);
@@ -2367,7 +2367,7 @@ void pdfiumkit_draw_watermark(FPDF_BITMAP bitmap, int width, int height) {
     FPDF_CloseDocument(scratch);
 }
 
-std::vector<uint8_t> pdfiumkit_stamp_watermark(const uint8_t* data, size_t size) {
+std::vector<uint8_t> pdfcora_stamp_watermark(const uint8_t* data, size_t size) {
     std::vector<uint8_t> out;
     FPDF_DOCUMENT document = FPDF_LoadMemDocument(data, static_cast<int>(size), nullptr);
     if (!document) return out;
@@ -2390,14 +2390,14 @@ std::vector<uint8_t> pdfiumkit_stamp_watermark(const uint8_t* data, size_t size)
 }
 ```
 
-Add `#include <algorithm>` for `std::max`. In `CMakeLists.txt`, add `watermark.cpp` next to `pdfiumkit_jni.cpp` in the library sources (`grep -n "pdfiumkit_jni.cpp" android/pdfiumkit/src/main/cpp/CMakeLists.txt`).
+Add `#include <algorithm>` for `std::max`. In `CMakeLists.txt`, add `watermark.cpp` next to `pdfcora_jni.cpp` in the library sources (`grep -n "pdfcora_jni.cpp" android/pdfcora/src/main/cpp/CMakeLists.txt`).
 
 - [ ] **Step 4: Wire JNI and Kotlin**
 
-In `pdfiumkit_jni.cpp`: `#include "watermark.h"`. Change the `renderPage` signature to add `jboolean watermark` after `jboolean drawForms`, and after the `if (drawForms && d->form) { … }` block, before the BGRA swap, add:
+In `pdfcora_jni.cpp`: `#include "watermark.h"`. Change the `renderPage` signature to add `jboolean watermark` after `jboolean drawForms`, and after the `if (drawForms && d->form) { … }` block, before the BGRA swap, add:
 ```cpp
     if (watermark) {
-        pdfiumkit_draw_watermark(target, static_cast<int>(info.width), static_cast<int>(info.height));
+        pdfcora_draw_watermark(target, static_cast<int>(info.width), static_cast<int>(info.height));
     }
 ```
 The watermark must be drawn before the channel swap so all pixels are swapped once.
@@ -2405,11 +2405,11 @@ The watermark must be drawn before the channel swap so all pixels are swapped on
 Add a JNI function next to `saveDocument`:
 ```cpp
 extern "C" JNIEXPORT jbyteArray JNICALL
-Java_com_pdfiumkit_Native_stampWatermark(JNIEnv* env, jclass, jbyteArray bytes) {
+Java_com_pdfcora_Native_stampWatermark(JNIEnv* env, jclass, jbyteArray bytes) {
     jsize size = env->GetArrayLength(bytes);
     std::vector<uint8_t> input(static_cast<size_t>(size));
     env->GetByteArrayRegion(bytes, 0, size, reinterpret_cast<jbyte*>(input.data()));
-    std::vector<uint8_t> out = pdfiumkit_stamp_watermark(input.data(), input.size());
+    std::vector<uint8_t> out = pdfcora_stamp_watermark(input.data(), input.size());
     jbyteArray result = env->NewByteArray(static_cast<jsize>(out.size()));
     if (!out.empty()) {
         env->SetByteArrayRegion(result, 0, static_cast<jsize>(out.size()), reinterpret_cast<const jbyte*>(out.data()));
@@ -2425,7 +2425,7 @@ In `Native.kt`: add `watermark: Boolean` as the last parameter of `renderPage`, 
 ```
 
 In `PdfDocument.kt`:
-- imports: `import com.pdfiumkit.license.PdfLicense`, `import com.pdfiumkit.license.PdfLicenseModule`, `import com.pdfiumkit.license.PdfLicenseStatus`.
+- imports: `import com.pdfcora.license.PdfLicense`, `import com.pdfcora.license.PdfLicenseModule`, `import com.pdfcora.license.PdfLicenseStatus`.
 - After `private val closed = AtomicBoolean(false)` add:
 ```kotlin
     /** Set at open in trial mode, or by [use] when a feature is not licensed. */
@@ -2485,11 +2485,11 @@ Update the function's KDoc with the trial limitation sentence from Task 7 Step 5
 
 - [ ] **Step 5: Cross-check on the host**
 
-In `scripts/test-android.sh`, pull `files/pdfiumkit-android-trial-signed.pdf` the same way as the existing file and run the same pdfsig checks; extract a `check_pdfsig <file> <label>` function so both use one implementation.
+In `scripts/test-android.sh`, pull `files/pdfcora-android-trial-signed.pdf` the same way as the existing file and run the same pdfsig checks; extract a `check_pdfsig <file> <label>` function so both use one implementation.
 
 - [ ] **Step 6: Run the license test, then the gate**
 
-Run: `cd android && ANDROID_SERIAL=emulator-5554 gradle :pdfiumkit:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.pdfiumkit.LicenseTest --console=plain -q 2>&1 | tail -5`
+Run: `cd android && ANDROID_SERIAL=emulator-5554 gradle :pdfcora:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.pdfcora.LicenseTest --console=plain -q 2>&1 | tail -5`
 Expected: 8 tests pass.
 
 Run: `ANDROID_SERIAL=emulator-5554 ./scripts/test-android.sh 2>&1 | grep -E "tests completed|FAILED|BUILD|cross-check" | tail -10`
@@ -2507,8 +2507,8 @@ git commit -m "Android: watermark rendering, saving and signing without a coveri
 ### Task 11: Android AI trial prefix
 
 **Files:**
-- Create: `android/pdfiumkit-ai/src/main/java/com/pdfiumkit/ai/Trial.kt`, `android/pdfiumkit-ai/src/test/java/com/pdfiumkit/ai/TrialTest.kt`
-- Modify: `android/pdfiumkit-ai/src/main/java/com/pdfiumkit/ai/PdfiumAI.kt` (`ask` and `summarize` returns)
+- Create: `android/pdfcora-ai/src/main/java/com/pdfcora/ai/Trial.kt`, `android/pdfcora-ai/src/test/java/com/pdfcora/ai/TrialTest.kt`
+- Modify: `android/pdfcora-ai/src/main/java/com/pdfcora/ai/PdfAI.kt` (`ask` and `summarize` returns)
 
 **Interfaces:**
 - Consumes: `PdfLicense.status.covers(PdfLicenseModule.AI)`.
@@ -2516,9 +2516,9 @@ git commit -m "Android: watermark rendering, saving and signing without a coveri
 
 - [ ] **Step 1: Write the failing JVM test**
 
-Check the JVM test folder first: `ls android/pdfiumkit-ai/src/test/java/com/pdfiumkit/ai/`.
+Check the JVM test folder first: `ls android/pdfcora-ai/src/test/java/com/pdfcora/ai/`.
 ```kotlin
-package com.pdfiumkit.ai
+package com.pdfcora.ai
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -2528,32 +2528,32 @@ class TrialTest {
         val answer = PdfAiOutcome.Answered(PdfAiResult<PdfAnswer>(
             PdfAnswer.Answered("Yes.", emptyList(), true, emptyList()), PdfAiSource.RULES))
         val marked = Trial.answer(answer, licensed = false) as PdfAiOutcome.Answered
-        assertEquals("PdfiumKit trial — Yes.", (marked.result.value as PdfAnswer.Answered).text)
+        assertEquals("PDFCora trial — Yes.", (marked.result.value as PdfAnswer.Answered).text)
 
         val summary = PdfAiOutcome.Answered(PdfAiResult(PdfSummary("Short.", emptyList()), PdfAiSource.RULES))
         assertEquals("Short.", (Trial.summary(summary, licensed = true) as PdfAiOutcome.Answered).result.value.text)
     }
 }
 ```
-Check the real property names first: `grep -n "class Answered\|val result\|val value\|val text" android/pdfiumkit-ai/src/main/java/com/pdfiumkit/ai/*.kt` and adjust `result`, `value`, `text`.
+Check the real property names first: `grep -n "class Answered\|val result\|val value\|val text" android/pdfcora-ai/src/main/java/com/pdfcora/ai/*.kt` and adjust `result`, `value`, `text`.
 
 - [ ] **Step 2: Run to verify it fails**
 
-Run: `cd android && gradle :pdfiumkit-ai:testDebugUnitTest --tests com.pdfiumkit.ai.TrialTest --console=plain -q 2>&1 | grep -E "^e:|FAILED" | head -3`
+Run: `cd android && gradle :pdfcora-ai:testDebugUnitTest --tests com.pdfcora.ai.TrialTest --console=plain -q 2>&1 | grep -E "^e:|FAILED" | head -3`
 Expected: `Unresolved reference: Trial`.
 
 - [ ] **Step 3: Implement**
 
 ```kotlin
-package com.pdfiumkit.ai
+package com.pdfcora.ai
 
 import android.util.Log
-import com.pdfiumkit.license.PdfLicense
-import com.pdfiumkit.license.PdfLicenseModule
+import com.pdfcora.license.PdfLicense
+import com.pdfcora.license.PdfLicenseModule
 
 /** Marks model output produced without an `ai` license. Quotes are never touched. */
 internal object Trial {
-    const val PREFIX = "PdfiumKit trial — "
+    const val PREFIX = "PDFCora trial — "
     @Volatile private var warned = false
 
     private fun licensedNow() = PdfLicense.status.covers(PdfLicenseModule.AI)
@@ -2575,7 +2575,7 @@ internal object Trial {
         if (warned) return
         warned = true
         try {
-            Log.w("PdfiumKit", "AI output is marked as trial — the license key does not include the ai module")
+            Log.w("PDFCora", "AI output is marked as trial — the license key does not include the ai module")
         } catch (e: RuntimeException) {
             // android.util.Log is a stub in JVM unit tests.
         }
@@ -2584,19 +2584,19 @@ internal object Trial {
 ```
 `copy` requires `PdfAiResult`, `PdfAnswer.Answered` and `PdfSummary` to be data classes; `PdfSummary` is one (`Summaries.kt:5`). If `PdfAiResult` is not, construct a new one with its constructor.
 
-In `PdfiumAI.kt`, wrap the value returned by `resolveRoutes(…)` in `ask` with `Trial.answer(…)` and in `summarize` with `Trial.summary(…)`. Leave the `NotFound` rules return as is.
+In `PdfAI.kt`, wrap the value returned by `resolveRoutes(…)` in `ask` with `Trial.answer(…)` and in `summarize` with `Trial.summary(…)`. Leave the `NotFound` rules return as is.
 
 - [ ] **Step 4: Run AI tests**
 
-Run: `cd android && gradle :pdfiumkit-ai:testDebugUnitTest --console=plain -q 2>&1 | tail -3`
+Run: `cd android && gradle :pdfcora-ai:testDebugUnitTest --console=plain -q 2>&1 | tail -3`
 Expected: 27 existing + 1 pass.
 
-The AI instrumented tests run without a key (their module keeps `AndroidJUnitRunner`), so real-model summaries carry the prefix. Run `ANDROID_SERIAL=R3GL607XFKV gradle :pdfiumkit-ai:connectedDebugAndroidTest` only if a phone is connected and unlocked; if an assertion compares the start of the text, strip `Trial.PREFIX` in that test.
+The AI instrumented tests run without a key (their module keeps `AndroidJUnitRunner`), so real-model summaries carry the prefix. Run `ANDROID_SERIAL=R3GL607XFKV gradle :pdfcora-ai:connectedDebugAndroidTest` only if a phone is connected and unlocked; if an assertion compares the start of the text, strip `Trial.PREFIX` in that test.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add android/pdfiumkit-ai
+git add android/pdfcora-ai
 git commit -m "Android AI: mark answers and summaries without an ai license"
 ```
 
@@ -2606,7 +2606,7 @@ git commit -m "Android AI: mark answers and summaries without an ai license"
 
 **Files:**
 - Create: `scripts/set-release-date.sh`
-- Modify: `web/src/license/build.ts`, `ios/Sources/PdfiumKit/License/PdfLicense.swift` (`LicenseBuild`), `android/pdfiumkit/src/main/java/com/pdfiumkit/license/PdfLicense.kt` (`LicenseBuild`), `README.md`, `docs/HANDOFF.md`, `docs/superpowers/specs/2026-09-15-licensing-design.md`
+- Modify: `web/src/license/build.ts`, `ios/Sources/PDFCora/License/PdfLicense.swift` (`LicenseBuild`), `android/pdfcora/src/main/java/com/pdfcora/license/PdfLicense.kt` (`LicenseBuild`), `README.md`, `docs/HANDOFF.md`, `docs/superpowers/specs/2026-09-15-licensing-design.md`
 
 - [ ] **Step 1: Generate the production key pair — ask the user first**
 
@@ -2620,7 +2620,7 @@ Expected: prints `private key: …/license-private.pem` and `public key:  <base6
 
 Replace `REPLACED_IN_TASK_12` with the printed public key in the three `LicenseBuild` locations:
 ```bash
-grep -rln REPLACED_IN_TASK_12 web/src ios/Sources android/pdfiumkit/src | xargs sed -i '' "s|REPLACED_IN_TASK_12|<public key>|"
+grep -rln REPLACED_IN_TASK_12 web/src ios/Sources android/pdfcora/src | xargs sed -i '' "s|REPLACED_IN_TASK_12|<public key>|"
 grep -rn REPLACED_IN_TASK_12 web ios android || echo "none left"
 ```
 Expected: `none left`.
@@ -2638,10 +2638,10 @@ date="${1:?usage: set-release-date.sh YYYY-MM-DD}"
 [[ "$date" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || { echo "not a YYYY-MM-DD date: $date" >&2; exit 1; }
 
 sed -i '' -E "s/(RELEASE_DATE = ')[0-9-]+(')/\1$date\2/" web/src/license/build.ts
-sed -i '' -E "s/(static let releaseDate = \")[0-9-]+(\")/\1$date\2/" ios/Sources/PdfiumKit/License/PdfLicense.swift
-sed -i '' -E "s/(const val RELEASE_DATE = \")[0-9-]+(\")/\1$date\2/" android/pdfiumkit/src/main/java/com/pdfiumkit/license/PdfLicense.kt
-grep -h "$date" web/src/license/build.ts ios/Sources/PdfiumKit/License/PdfLicense.swift \
-    android/pdfiumkit/src/main/java/com/pdfiumkit/license/PdfLicense.kt | wc -l | grep -q 3 \
+sed -i '' -E "s/(static let releaseDate = \")[0-9-]+(\")/\1$date\2/" ios/Sources/PDFCora/License/PdfLicense.swift
+sed -i '' -E "s/(const val RELEASE_DATE = \")[0-9-]+(\")/\1$date\2/" android/pdfcora/src/main/java/com/pdfcora/license/PdfLicense.kt
+grep -h "$date" web/src/license/build.ts ios/Sources/PDFCora/License/PdfLicense.swift \
+    android/pdfcora/src/main/java/com/pdfcora/license/PdfLicense.kt | wc -l | grep -q 3 \
     || { echo "release date was not written to all three platforms" >&2; exit 1; }
 echo "release date: $date"
 ```
@@ -2653,14 +2653,14 @@ Expected: `release date: 2026-09-15`, no content change (already that date).
 
 ```bash
 node tools/license/issue.mjs sign --private-key <their directory>/license-private.pem \
-  --customer Smoke --modules editing --server --expires 2030-01-01 > /tmp/pdfiumkit-smoke-key.txt
+  --customer Smoke --modules editing --server --expires 2030-01-01 > /tmp/pdfcora-smoke-key.txt
 cd web && npm run build && node -e '
   const { PdfLicense } = await import("./dist/index.js");
   const { readFileSync } = await import("node:fs");
-  console.log(await PdfLicense.setKey(readFileSync("/tmp/pdfiumkit-smoke-key.txt", "utf8").trim()));
+  console.log(await PdfLicense.setKey(readFileSync("/tmp/pdfcora-smoke-key.txt", "utf8").trim()));
 ' --input-type=module
 ```
-Expected: `{ kind: 'licensed', customer: 'Smoke', modules: [ 'editing' ] }`. Delete `/tmp/pdfiumkit-smoke-key.txt` afterwards.
+Expected: `{ kind: 'licensed', customer: 'Smoke', modules: [ 'editing' ] }`. Delete `/tmp/pdfcora-smoke-key.txt` afterwards.
 
 - [ ] **Step 5: Document it**
 
@@ -2669,7 +2669,7 @@ Expected: `{ kind: 'licensed', customer: 'Smoke', modules: [ 'editing' ] }`. Del
 ## Licensing
 
 Without a license key every feature works, and rendered pages, saved files and AI output
-carry a "PdfiumKit trial" watermark. A key unlocks the modules it lists — `editing`,
+carry a "PDFCora trial" watermark. A key unlocks the modules it lists — `editing`,
 `forms`, `signing`, `redaction`, `ai` — for the app IDs and web hosts it names. Viewing,
 text, search, verifying signatures, the viewer and sync need only a valid key.
 
@@ -2712,6 +2712,6 @@ Expected: every suite passes; four pdfsig cross-checks (iOS, iOS trial, Android,
 - [ ] **Step 7: Commit**
 
 ```bash
-git add scripts/set-release-date.sh web/src/license/build.ts ios/Sources/PdfiumKit/License android/pdfiumkit/src/main/java/com/pdfiumkit/license README.md docs
+git add scripts/set-release-date.sh web/src/license/build.ts ios/Sources/PDFCora/License android/pdfcora/src/main/java/com/pdfcora/license README.md docs
 git commit -m "Licensing: production public key, release date script, documentation"
 ```

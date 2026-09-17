@@ -1,1 +1,1 @@
-rootProject.name = "pdfiumkit-java"
+rootProject.name = "pdfcora-java"

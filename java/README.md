@@ -1,10 +1,10 @@
-# PdfiumKit for Java
+# PDFCora for Java
 
 The PDF engine behind Chrome, on the JVM, with the same object model and the same error
 cases as the iOS, Android and web SDKs.
 
 ```kotlin
-implementation("com.pdfiumkit:pdfiumkit:0.1.0")
+implementation("com.pdfcora:pdfcora:0.1.0")
 ```
 
 Java 17 or newer. macOS and Linux, on x86-64 and arm64. The engine is a native library
@@ -14,7 +14,7 @@ JDK most teams already have rather than requiring 22+.
 ## First render
 
 ```java
-import com.pdfiumkit.*;
+import com.pdfcora.*;
 import java.nio.file.Path;
 import javax.imageio.ImageIO;
 
@@ -199,7 +199,7 @@ Java a signature is PAdES B-B rather than B-T.
 
 ### The viewer
 
-`com.pdfiumkit.view.PdfViewer` is the viewer's logic with no user interface: page, zoom,
+`com.pdfcora.view.PdfViewer` is the viewer's logic with no user interface: page, zoom,
 centre, tool and review marks. Its state is a value, so it can be sent to another device
 and adopted there — which is how the iOS, Android and web viewers stay in step.
 
@@ -231,7 +231,7 @@ The jar carries a native library per platform, built from the vendored engine:
 ```
 
 `build-jni.sh macos` needs an Xcode whose SDK this PDFium revision understands, and
-`build-jni.sh linux` needs Docker. `-Dpdfiumkit.native.path=/path/to/lib` overrides the
+`build-jni.sh linux` needs Docker. `-Dpdfcora.native.path=/path/to/lib` overrides the
 library the SDK loads, for a build that manages its own.
 
 ## What is not here yet
@@ -248,5 +248,5 @@ library the SDK loads, for a build that manages its own.
   save, which PDFium writes plainly, so this is not hit in practice — but a file that
   arrives that way is refused with a clear error rather than half-written.
 
-`@pdfiumkit/node` has the AI package and the agent tools today, because it is the web SDK
+`@pdfcora/node` has the AI package and the agent tools today, because it is the web SDK
 rather than a second implementation.

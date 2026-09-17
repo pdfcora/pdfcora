@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Measures pdfiumkit-ai summaries on Chrome's built-in Summarizer (Gemini Nano), in a real Chrome
- * with its own profile under ~/.cache/pdfiumkit/chrome-ai-profile. The first run downloads the model
+ * Measures pdfcora-ai summaries on Chrome's built-in Summarizer (Gemini Nano), in a real Chrome
+ * with its own profile under ~/.cache/pdfcora/chrome-ai-profile. The first run downloads the model
  * (about 2.5 minutes on a fast connection); later runs reuse it. Build web and web-ai first.
  *
  * Usage: node web-ai/scripts/measure-chrome-summarizer.mjs [dense]
@@ -15,7 +15,7 @@ import { connect } from './cdp.mjs';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const CHROME = process.env.CHROME ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-const PROFILE = join(process.env.HOME, '.cache/pdfiumkit/chrome-ai-profile');
+const PROFILE = join(process.env.HOME, '.cache/pdfcora/chrome-ai-profile');
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.wasm': 'application/wasm', '.pdf': 'application/pdf', '.json': 'application/json' };
 
 const server = createServer((request, response) => {

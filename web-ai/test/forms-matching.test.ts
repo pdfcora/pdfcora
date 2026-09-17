@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { PdfDocument } from '@pdfiumkit/web';
+import { PdfDocument } from '@pdfcora/web';
 import { matchField } from '../dist/forms/synonyms.js';
 import { describeFields } from '../dist/forms/describe.js';
 

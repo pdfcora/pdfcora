@@ -11,4 +11,4 @@ xcodegen generate && open AISample.xcodeproj
 
 Summaries need Apple Intelligence, so `availability()` says what a device without it
 reports; redaction suggestions are patterns, so they work anywhere. An app with a hosted
-model passes `PdfiumAIOptions(provider: …)` instead.
+model passes `PdfAIOptions(provider: …)` instead.

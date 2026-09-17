@@ -8,7 +8,7 @@ PDFium's test files. This is the first run against documents nobody wrote for us
 ## How to repeat it
 
 ```bash
-./scripts/fetch-real-world-corpus.sh          # ~175 MB into ~/pdfiumkit-corpus/real-world
+./scripts/fetch-real-world-corpus.sh          # ~175 MB into ~/pdfcora-corpus/real-world
 node scripts/remediation-survey.mjs           # writes build/remediation-survey.json
 ```
 
@@ -101,7 +101,7 @@ platforms in the same commit as this report.
 
 **The trial watermark broke PDF/UA on every page.** It was drawn as an ordinary text
 object, so a remediated trial document had one piece of untagged content per page
-(7.1-3) — a screen reader would read "PdfiumKit trial" in the middle of the content. The
+(7.1-3) — a screen reader would read "PDFCora trial" in the middle of the content. The
 watermark is now marked as an `Artifact`. Its font is a standard one that no tagging can
 embed, so trial output still fails 7.21.4.1 and only that; `scripts/verapdf-ua1.sh --allow
 7.21.4.1` is how CI states this, and a licensed document is unaffected either way.

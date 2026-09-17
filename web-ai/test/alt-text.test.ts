@@ -1,8 +1,8 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { PdfDocument, type PdfStructureElement } from '@pdfiumkit/web';
-import { PdfiumAI, type PdfAiRequest } from '../dist/index.js';
+import { PdfDocument, type PdfStructureElement } from '@pdfcora/web';
+import { PdfAI, type PdfAiRequest } from '../dist/index.js';
 
 const DIR = new URL('../../conformance/alt-text/', import.meta.url);
 const EXPECTED = JSON.parse(readFileSync(new URL('tagged-expected.json', DIR), 'utf8'));
@@ -15,7 +15,7 @@ const PNG = [137, 80, 78, 71, 13, 10, 26, 10];
 
 describe('alt text proposals', () => {
   test('without a model, the figures missing alt text are listed and the rule is decorative', async () => {
-    const review = await new PdfiumAI(await tagged()).altText.suggest();
+    const review = await new PdfAI(await tagged()).altText.suggest();
     assert.equal(review.untagged, false);
     assert.equal(review.modelUsed, false);
     assert.match(review.notice, /Check every description before it is written\./);
@@ -40,7 +40,7 @@ describe('alt text proposals', () => {
         return { text: JSON.stringify({ decorative: false, description: logo ? 'Red circle logo' : 'Office building at dusk' }) };
       },
     };
-    const review = await new PdfiumAI(await tagged(), { provider }).altText.suggest();
+    const review = await new PdfAI(await tagged(), { provider }).altText.suggest();
     assert.equal(requests.length, 2, 'the rule is decorative by rules and needs no call');
     for (const request of requests) {
       assert.equal(request.images?.length, 1);
@@ -62,32 +62,32 @@ describe('alt text proposals', () => {
         throw new Error('offline');
       },
     };
-    const review = await new PdfiumAI(await tagged(), { provider }).altText.suggest();
+    const review = await new PdfAI(await tagged(), { provider }).altText.suggest();
     assert.deepEqual(review.items.map((i) => [i.kind, i.source]), [['decorative', 'customProvider'], ['decorative', 'rules'], ['description', null]]);
   });
 
   test('apply writes edited and proposed decisions into a new document', async () => {
     const document = await tagged();
     const provider = { async generate() { return { text: '', structured: { decorative: false, description: 'Office building' } }; } };
-    const review = await new PdfiumAI(document, { provider }).altText.suggest();
+    const review = await new PdfAI(document, { provider }).altText.suggest();
     const [photo, rule, logo] = review.items;
 
     const updated = await review.apply([{ id: photo!.id }, { id: rule!.id }, { id: logo!.id, text: 'Company logo' }]);
     const figures = [0, 1].map(async (p) => flatten(await (await updated.page(p)).structure()).filter((e) => e.type === 'Figure'));
     assert.deepEqual((await figures[0]!).map((f) => f.altText), [EXPECTED.figuresWithAlt[0].altText, 'Office building']);
     assert.deepEqual((await figures[1]!).map((f) => f.altText), ['Company logo']);
-    assert.equal((await new PdfiumAI(updated).altText.suggest()).items.length, 0);
+    assert.equal((await new PdfAI(updated).altText.suggest()).items.length, 0);
   });
 
   test('apply refuses an unknown id or a missing description, writing nothing', async () => {
-    const review = await new PdfiumAI(await tagged()).altText.suggest();
+    const review = await new PdfAI(await tagged()).altText.suggest();
     await assert.rejects(review.apply([{ id: '9:9' }]), /unknown/);
     await assert.rejects(review.apply([{ id: review.items[0]!.id }]), /no description/);
   });
 
   test('an untagged document reports untagged and lists nothing', async () => {
     const bytes = new Uint8Array(readFileSync(new URL('../../conformance/corpus/hello_world.pdf', import.meta.url)));
-    const review = await new PdfiumAI(await PdfDocument.open(bytes)).altText.suggest();
+    const review = await new PdfAI(await PdfDocument.open(bytes)).altText.suggest();
     assert.equal(review.untagged, true);
     assert.deepEqual(review.items, []);
   });
