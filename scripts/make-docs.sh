@@ -3,6 +3,10 @@
 #
 #   ./scripts/make-docs.sh [outdir]          builds, then serves and opens a browser
 #   ./scripts/make-docs.sh --no-serve        builds only (CI)
+#   ./scripts/make-docs.sh --site            builds into site/api/, where the website links it
+#
+# PDFIUMKIT_DOCS_BASE is the URL path the output will be served under (default: the root).
+# DocC bakes that path into every page, so it has to be right before the build, not after.
 #
 # Each SDK gets a quickstart page and a full API reference, generated from the source by
 # that platform's own tool — DocC, Dokka, TypeDoc and Javadoc — so the reference never
@@ -18,6 +22,8 @@ args=()
 for arg in "$@"; do
     case "$arg" in
         --no-serve) SERVE=0 ;;
+        # The website serves the references from /api/, next to its own pages.
+        --site) SERVE=0; args+=("$ROOT/site/api"); : "${PDFIUMKIT_DOCS_BASE:=/api}" ;;
         --serve|--open) SERVE=1 ;;
         *) args+=("$arg") ;;
     esac
@@ -31,36 +37,45 @@ VERSION="$(python3 -c "import json;print(json.load(open('$ROOT/web/package.json'
 
 [ -d "$ROOT/vendor/ios" ] || { echo "missing vendor/ — run ./scripts/fetch-vendor.sh" >&2; exit 1; }
 
-rm -rf "$OUT"/{ios,android,web,node,java,index.html,.work}
+rm -rf "$OUT"/{ios,android,web,node,java,index.html,notice.html,serve.sh,.work}
 mkdir -p "$WORK"
 
 # --- iOS: DocC ------------------------------------------------------------------
 # docbuild rather than the SwiftPM docc plugin: the plugin builds for the host, and
-# these sources import UIKit.
+# these sources import UIKit. One archive per product, each at its own path, because a
+# DocC static site serves exactly one module.
 echo "==> iOS (DocC)"
-xcodebuild docbuild -scheme PdfiumKit -destination "$IOS_DESTINATION" \
-    -derivedDataPath "$WORK/ios-dd" > "$WORK/ios.log" 2>&1 \
-    || { echo "docbuild failed — see $WORK/ios.log" >&2; exit 1; }
-ARCHIVE="$(find "$WORK/ios-dd" -name "PdfiumKit.doccarchive" | head -1)"
-[ -n "$ARCHIVE" ] || { echo "no doccarchive produced — see $WORK/ios.log" >&2; exit 1; }
 mkdir -p "$OUT/ios"   # docc will not create a nested output parent
-xcrun docc process-archive transform-for-static-hosting "$ARCHIVE" \
-    --output-path "$OUT/ios/api" --hosting-base-path /ios/api > "$WORK/ios-transform.log" 2>&1 \
-    || { echo "docc transform failed — see $WORK/ios-transform.log" >&2; exit 1; }
-# transform-for-static-hosting rewrites every page except the archive root, which keeps
-# baseUrl "/" and so 404s its own assets. Redirect it to the entry point.
-cat > "$OUT/ios/api/index.html" <<'HTML'
+for pair in "PdfiumKit:api" "PdfiumKitUI:api-ui" "PdfiumKitAI:api-ai"; do
+    scheme="${pair%%:*}"; dir="${pair##*:}"
+    slug="$(echo "$scheme" | tr '[:upper:]' '[:lower:]')"
+    xcodebuild docbuild -scheme "$scheme" -destination "$IOS_DESTINATION" \
+        -derivedDataPath "$WORK/ios-dd" > "$WORK/ios-$slug.log" 2>&1 \
+        || { echo "docbuild failed for $scheme — see $WORK/ios-$slug.log" >&2; exit 1; }
+    ARCHIVE="$(find "$WORK/ios-dd" -name "$scheme.doccarchive" | head -1)"
+    [ -n "$ARCHIVE" ] || { echo "no doccarchive for $scheme — see $WORK/ios-$slug.log" >&2; exit 1; }
+    xcrun docc process-archive transform-for-static-hosting "$ARCHIVE" \
+        --output-path "$OUT/ios/$dir" --hosting-base-path "${PDFIUMKIT_DOCS_BASE:-}/ios/$dir" \
+        > "$WORK/ios-$slug-transform.log" 2>&1 \
+        || { echo "docc transform failed for $scheme — see $WORK/ios-$slug-transform.log" >&2; exit 1; }
+    # transform-for-static-hosting rewrites every page except the archive root, which
+    # keeps baseUrl "/" and so 404s its own assets. Redirect it to the entry point.
+    cat > "$OUT/ios/$dir/index.html" <<HTML
 <!doctype html><meta charset="utf-8">
-<meta http-equiv="refresh" content="0; url=documentation/pdfiumkit/">
-<a href="documentation/pdfiumkit/">PdfiumKit API reference</a>
+<meta http-equiv="refresh" content="0; url=documentation/$slug/">
+<a href="documentation/$slug/">$scheme API reference</a>
 HTML
+done
 
 # --- Android: Dokka -------------------------------------------------------------
 echo "==> Android (Dokka)"
-( cd "$ROOT/android" && gradle :pdfiumkit:dokkaHtml --console=plain ) > "$WORK/android.log" 2>&1 \
+( cd "$ROOT/android" && gradle :pdfiumkit:dokkaHtml :pdfiumkit-ui:dokkaHtml :pdfiumkit-ai:dokkaHtml \
+    --console=plain ) > "$WORK/android.log" 2>&1 \
     || { echo "dokka failed — see $WORK/android.log" >&2; exit 1; }
 mkdir -p "$OUT/android"
 cp -R "$ROOT/android/pdfiumkit/build/dokka/html" "$OUT/android/api"
+cp -R "$ROOT/android/pdfiumkit-ui/build/dokka/html" "$OUT/android/api-ui"
+cp -R "$ROOT/android/pdfiumkit-ai/build/dokka/html" "$OUT/android/api-ai"
 
 # --- Web: TypeDoc ---------------------------------------------------------------
 echo "==> Web (TypeDoc)"
@@ -69,6 +84,13 @@ echo "==> Web (TypeDoc)"
     --excludePrivate --excludeInternal --skipErrorChecking \
     --name "PdfiumKit for Web" ) > "$WORK/web.log" 2>&1 \
     || { echo "typedoc failed — see $WORK/web.log (npm install in web/ first?)" >&2; exit 1; }
+
+# The AI package is its own npm package on the web, so it gets its own reference.
+( cd "$ROOT/web-ai" && "$ROOT/web/node_modules/.bin/typedoc" --entryPoints src/index.ts \
+    --tsconfig tsconfig.json --out "$OUT/web/api-ai" --readme none \
+    --excludePrivate --excludeInternal --skipErrorChecking \
+    --name "PdfiumKit AI for Web" ) > "$WORK/web-ai.log" 2>&1 \
+    || { echo "typedoc failed for web-ai — see $WORK/web-ai.log (npm install in web-ai/ first?)" >&2; exit 1; }
 
 # --- Node: TypeDoc --------------------------------------------------------------
 # Uses web's typedoc: the Node package is a thin layer over it and carries no doc tool
@@ -155,7 +177,9 @@ Third-party licences: <a href='notice.html'>NOTICE</a>.</p>"
 
 page "$OUT/ios/index.html" "PdfiumKit for iOS" "
 <h1>PdfiumKit for iOS</h1>
-<a class='card' href='api/documentation/pdfiumkit/'><b>API reference</b><span>Every public type, generated by DocC</span></a>
+<a class='card' href='api/index.html'><b>PdfiumKit</b><span>The core: documents, pages, text, forms, annotations, signatures, redaction</span></a>
+<a class='card' href='api-ui/index.html'><b>PdfiumKitUI</b><span>The SwiftUI viewer and its toolbar, theme and review bar</span></a>
+<a class='card' href='api-ai/index.html'><b>PdfiumKitAI</b><span>Answers, summaries, proposals, alt text, remediation, diff</span></a>
 <p class='meta'>DocC is a single-page app: this reference only works over http, not file://.
 Run <code>./serve.sh</code> in the documentation directory.</p>
 <h2>Install</h2>
@@ -215,7 +239,9 @@ catch let error as PdfError { print(error.description) }</pre>
 
 page "$OUT/android/index.html" "PdfiumKit for Android" "
 <h1>PdfiumKit for Android</h1>
-<a class='card' href='api/pdfiumkit/com.pdfiumkit/'><b>API reference</b><span>Every public type, generated by Dokka</span></a>
+<a class='card' href='api/index.html'><b>pdfiumkit</b><span>The core: documents, pages, text, forms, annotations, signatures, redaction</span></a>
+<a class='card' href='api-ui/index.html'><b>pdfiumkit-ui</b><span>The Compose viewer and its toolbar, theme and review bar</span></a>
+<a class='card' href='api-ai/index.html'><b>pdfiumkit-ai</b><span>Answers, summaries, proposals, alt text, remediation, diff</span></a>
 <h2>Install</h2>
 <pre>dependencies { implementation(\"com.pdfiumkit:pdfiumkit:$VERSION\") }</pre>
 <p>Or drop <code>pdfiumkit-release.aar</code> into <code>libs/</code>. All four ABIs are included.</p>
@@ -270,7 +296,8 @@ page.formFields().forEach { field -> val box = transform.toView(field.base.rect)
 
 page "$OUT/web/index.html" "PdfiumKit for Web" "
 <h1>PdfiumKit for Web</h1>
-<a class='card' href='api/'><b>API reference</b><span>Every public type, generated by TypeDoc</span></a>
+<a class='card' href='api/index.html'><b>@pdfiumkit/web</b><span>The core and the viewer component: documents, pages, forms, annotations, signatures, PdfViewerElement</span></a>
+<a class='card' href='api-ai/index.html'><b>@pdfiumkit/web-ai</b><span>Answers, summaries, proposals, alt text, remediation, diff, and the agent tools</span></a>
 <h2>Install</h2>
 <pre>npm install @pdfiumkit/web</pre>
 <p>The <code>.wasm</code> ships inside the package and must be served from the same origin.</p>
@@ -325,7 +352,7 @@ for (const field of await page.formFields()) { const box = t.toViewRect(field.re
 
 page "$OUT/node/index.html" "PdfiumKit for Node" "
 <h1>PdfiumKit for Node</h1>
-<a class='card' href='api/'><b>API reference</b><span>Every public type, generated by TypeDoc</span></a>
+<a class='card' href='api/index.html'><b>API reference</b><span>Every public type, generated by TypeDoc</span></a>
 <h2>Install</h2>
 <pre>npm install @pdfiumkit/node</pre>
 <p>A thin layer over <code>@pdfiumkit/web</code> rather than a second implementation: the
@@ -360,7 +387,7 @@ an apply that takes only the ids a person accepted.</p>
 
 page "$OUT/java/index.html" "PdfiumKit for Java" "
 <h1>PdfiumKit for Java</h1>
-<a class='card' href='api/'><b>API reference</b><span>Every public type, generated by Javadoc</span></a>
+<a class='card' href='api/index.html'><b>API reference</b><span>Every public type, generated by Javadoc</span></a>
 <h2>Install</h2>
 <pre>implementation(\"com.pdfiumkit:pdfiumkit:$VERSION\")</pre>
 <p>Java 17 or newer, macOS and Linux on x86-64 and arm64. The engine is a native library

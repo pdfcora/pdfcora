@@ -10,6 +10,11 @@
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css">
   <script>document.documentElement.classList.add('js')</script>
+  <style>
+    .ref-links { list-style: none; margin: .7rem 0 0; padding: 0; display: grid; gap: .3rem; }
+    .ref-links a { font-size: .92rem; }
+    .ref-quick { margin: .8rem 0 0; font-size: .88rem; }
+  </style>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -160,32 +165,58 @@
       <div class="wrap">
         <header class="section-head reveal">
           <p class="eyebrow">Reference</p>
-          <h2 id="reference-h">Every public type, generated from the source.</h2>
-          <p>Each SDK&rsquo;s reference is produced by that language&rsquo;s own tool, from the code that ships &mdash; so it cannot drift from the API you call. One command builds all five, plus a quickstart page each.</p>
+          <h2 id="reference-h">API documentation, per SDK.</h2>
+          <p>Generated from the source by each language&rsquo;s own tool. <a href="api/index.html">All SDKs on one page →</a></p>
         </header>
-        <div class="code-card reveal">
-          <div class="code-head"><div class="tablist"><span class="panel-label-tab">Shell</span></div><button class="copy" type="button" data-copy aria-label="Copy code">Copy</button></div>
-          <div class="panel">
-            <span class="panel-label">Build the documentation, then open it</span>
-<pre tabindex="0"><code>./scripts/make-docs.sh                 <span class="c"># builds and serves on :8080</span>
-./scripts/make-docs.sh --no-serve out  <span class="c"># files only, into out/</span></code></pre>
-          </div>
+        <div class="cards">
+          <article class="card reveal">
+            <span class="tag">iOS</span>
+            <h3>Swift · DocC</h3>
+            <ul class="ref-links">
+              <li><a href="api/ios/api/index.html"><code>PdfiumKit</code></a></li>
+              <li><a href="api/ios/api-ui/index.html"><code>PdfiumKitUI</code></a></li>
+              <li><a href="api/ios/api-ai/index.html"><code>PdfiumKitAI</code></a></li>
+            </ul>
+            <p class="ref-quick"><a href="api/ios/index.html">Quickstart →</a></p>
+          </article>
+          <article class="card reveal">
+            <span class="tag">Android</span>
+            <h3>Kotlin · Dokka</h3>
+            <ul class="ref-links">
+              <li><a href="api/android/api/index.html"><code>pdfiumkit</code></a></li>
+              <li><a href="api/android/api-ui/index.html"><code>pdfiumkit-ui</code></a></li>
+              <li><a href="api/android/api-ai/index.html"><code>pdfiumkit-ai</code></a></li>
+            </ul>
+            <p class="ref-quick"><a href="api/android/index.html">Quickstart →</a></p>
+          </article>
+          <article class="card reveal">
+            <span class="tag">Web</span>
+            <h3>TypeScript · TypeDoc</h3>
+            <ul class="ref-links">
+              <li><a href="api/web/api/index.html"><code>@pdfiumkit/web</code></a></li>
+              <li><a href="api/web/api-ai/index.html"><code>@pdfiumkit/web-ai</code></a></li>
+            </ul>
+            <p class="ref-quick"><a href="api/web/index.html">Quickstart →</a></p>
+          </article>
+          <article class="card reveal">
+            <span class="tag">Node</span>
+            <h3>TypeScript · TypeDoc</h3>
+            <ul class="ref-links">
+              <li><a href="api/node/api/index.html"><code>@pdfiumkit/node</code></a></li>
+              <li><a href="api/web/api-ai/index.html"><code>@pdfiumkit/web-ai</code></a></li>
+            </ul>
+            <p class="ref-quick"><a href="api/node/index.html">Quickstart →</a></p>
+          </article>
+          <article class="card reveal">
+            <span class="tag">Java</span>
+            <h3>Java · Javadoc</h3>
+            <ul class="ref-links">
+              <li><a href="api/java/api/index.html"><code>com.pdfiumkit</code></a></li>
+            </ul>
+            <p class="ref-quick"><a href="api/java/index.html">Quickstart →</a></p>
+          </article>
         </div>
-        <div class="table-scroll reveal">
-          <table class="matrix">
-            <caption class="sr">API reference tool and quickstart page per SDK</caption>
-            <thead><tr><th scope="col">SDK</th><th scope="col">Reference</th><th scope="col">Where it lands</th></tr></thead>
-            <tbody>
-              <tr><th scope="row">iOS</th><td>DocC</td><td><code>ios/api/</code></td></tr>
-              <tr><th scope="row">Android</th><td>Dokka</td><td><code>android/api/</code></td></tr>
-              <tr><th scope="row">Web</th><td>TypeDoc</td><td><code>web/api/</code></td></tr>
-              <tr><th scope="row">Node</th><td>TypeDoc</td><td><code>node/api/</code></td></tr>
-              <tr><th scope="row">Java</th><td>Javadoc</td><td><code>java/api/</code></td></tr>
-            </tbody>
-          </table>
-        </div>
-        <p class="muted" style="margin-top:.9rem">Serve the output rather than opening it from the filesystem: the iOS reference fetches its own content and needs a real origin. <code>serve.sh</code> is written into the output directory for that. Each SDK also carries a hand-written API table in its own <code>README.md</code>, which is the faster read when you already know what you are looking for.</p>
-        <p class="muted"><span class="todo">Todo</span> A hosted copy of the reference is not published yet.</p>
+        <p class="muted" style="margin-top:1rem">Each package has its own reference. On the web the viewer component is part of the core package and AI is a separate one, which Node uses unchanged; the Java SDK has no AI package yet. The iOS references load their content at runtime and need the site served over http.</p>
       </div>
     </section>
 
