@@ -9,28 +9,50 @@ accepts, and it can be undone.
 search it, ask for redaction proposals, apply the two the user accepted, save to a **new**
 file.
 
+<!-- repo -->
 ```bash
 (cd ../../web && npm install && npm run build)
 (cd ../../web-ai && npm install && npm run build)
 (cd ../../mcp && npm install && npm run build)
 npm install && node mcp-client.mjs
 ```
+<!-- /repo -->
+<!-- public
+```bash
+npm install && node mcp-client.mjs
+```
+-->
 
 To wire the server into a real client instead:
 
+<!-- repo -->
 ```json
 { "mcpServers": { "pdfcora": { "command": "node", "args": ["/path/to/mcp/dist/main.js" ] } } }
 ```
+<!-- /repo -->
+<!-- public
+```json
+{ "mcpServers": { "pdfcora": { "command": "npx", "args": ["pdfcora-mcp"] } } }
+```
+-->
 
 ## WebMCP (browser)
 
 `index.html` offers the same tools to the browser's own agent for one open document, and
 runs two of them from buttons so the page works either way.
 
+<!-- repo -->
 ```bash
 python3 -m http.server 8000 --directory ../..
 open http://localhost:8000/samples/agents-web/
 ```
+<!-- /repo -->
+<!-- public
+```bash
+python3 -m http.server 8000
+open http://localhost:8000/
+```
+-->
 
 Chrome 152 needs `--enable-blink-features=WebMCP`; without it `registerWebMcpTools`
 returns `null` and the page says so.

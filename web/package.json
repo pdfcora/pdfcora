@@ -2,6 +2,8 @@
   "name": "@pdfcora/web",
   "version": "0.1.0",
   "description": "PDF SDK for the web, built on PDFium",
+  "license": "SEE LICENSE IN LICENSE.md",
+  "homepage": "https://pdfcora.com",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

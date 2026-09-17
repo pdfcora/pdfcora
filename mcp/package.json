@@ -2,6 +2,8 @@
   "name": "pdfcora-mcp",
   "version": "0.1.0",
   "description": "An MCP server that gives AI agents PDFCora's PDF tools",
+  "license": "SEE LICENSE IN LICENSE.md",
+  "homepage": "https://pdfcora.com",
   "type": "module",
   "bin": { "pdfcora-mcp": "./dist/main.js" },
   "main": "./dist/server.js",

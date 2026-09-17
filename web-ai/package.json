@@ -2,6 +2,8 @@
   "name": "@pdfcora/web-ai",
   "version": "0.1.0",
   "description": "On-device AI for PDFCora",
+  "license": "SEE LICENSE IN LICENSE.md",
+  "homepage": "https://pdfcora.com",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

@@ -4,10 +4,19 @@ The core API with no UI component: open a PDF, read its facts, get page text, se
 form fields, render a page, save. Everything is in
 `src/main/java/com/pdfcora/samples/core/MainActivity.kt`.
 
+<!-- repo -->
 ```bash
 ./scripts/fetch-vendor.sh          # from the repo root, once: PDFium binaries
 cd samples/core-android && gradle installDebug
 ```
+<!-- /repo -->
+<!-- public
+```bash
+gradle installDebug
+```
+-->
 
+<!-- repo -->
 The SDK comes from this repository through `includeBuild("../../android")`; an app outside
 the repo depends on the published artifact instead.
+<!-- /repo -->

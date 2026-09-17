@@ -3,12 +3,19 @@
 Propose redactions, apply only what a reviewer accepted, undo. Everything is in
 `main.mjs`.
 
+<!-- repo -->
 ```bash
 (cd ../../web && npm install && npm run build)
 (cd ../../web-ai && npm install && npm run build)
 (cd ../../node && npm install && npm run build)
 npm install && npm start
 ```
+<!-- /repo -->
+<!-- public
+```bash
+npm install && npm start
+```
+-->
 
 Redaction suggestions are patterns, so they run with no model at all — which is what
 makes them useful in a batch job. Summaries are not: with no provider configured the

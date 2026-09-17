@@ -182,7 +182,7 @@ above.
 ## Java
 \`\`\`kotlin
 repositories { maven { url = uri("<path to java/maven>") } }
-dependencies { implementation("com.pdfcora:pdfcora:0.1.0") }
+dependencies { implementation("com.pdfcora:pdfcora-java:0.1.0") }
 \`\`\`
 Or put the jar on the classpath. It carries a native library for macOS and Linux on
 x86-64 and arm64; \`-Dpdfcora.native.path=\` overrides which one is loaded.

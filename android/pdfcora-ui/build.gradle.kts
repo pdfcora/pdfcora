@@ -28,7 +28,7 @@ android {
     }
     kotlinOptions { jvmTarget = "17" }
 
-    publishing { singleVariant("release") { withSourcesJar() } }
+    publishing { singleVariant("release") }
 
     // The test APK otherwise targets minSdk, and Android 16 covers it with a warning
     // dialog that hides the composition under test.
@@ -60,3 +60,18 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
+
+publishing {
+    publications {
+        register<MavenPublication>("release") {
+            artifactId = "pdfcora-ui"
+            afterEvaluate { from(components["release"]) }
+            pom {
+                name.set("PDFCora UI")
+                description.set("Compose viewer, toolbar and review bar for PDFCora")
+            }
+        }
+    }
+}
+
+apply(from = rootProject.projectDir.parentFile.resolve("gradle/central.gradle.kts"))

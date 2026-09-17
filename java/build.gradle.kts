@@ -7,14 +7,13 @@ group = "com.pdfcora"
 // PKG-1: released alongside the core with a matching version.
 version = "0.1.0"
 
-// The Maven artifactId is pdfcora; without this the jar is named after the Gradle
+// The Maven artifactId is pdfcora-java; without this the jar is named after the Gradle
 // project instead, and the loose jar would not match the coordinates it publishes under.
-base { archivesName = "pdfcora" }
+base { archivesName = "pdfcora-java" }
 
 java {
     // JNI, not the Foreign Function API, so the SDK runs on the JDK enterprises have.
     toolchain { languageVersion = JavaLanguageVersion.of(17) }
-    withSourcesJar()
     withJavadocJar()
 }
 
@@ -53,16 +52,9 @@ tasks.test {
 }
 
 publishing {
-    repositories {
-        // scripts/package-all.sh passes a directory to publish into, the same way the
-        // Android module does, so a release can be tried before it is uploaded.
-        providers.gradleProperty("distRepo").orNull?.let { dist ->
-            maven { name = "dist"; url = uri(dist) }
-        }
-    }
     publications {
         create<MavenPublication>("maven") {
-            artifactId = "pdfcora"
+            artifactId = "pdfcora-java"
             from(components["java"])
             pom {
                 name = "PDFCora for Java"
@@ -71,3 +63,5 @@ publishing {
         }
     }
 }
+
+apply(from = rootProject.projectDir.parentFile.resolve("gradle/central.gradle.kts"))

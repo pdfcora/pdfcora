@@ -110,7 +110,7 @@ second implementation: it re-exports the whole API and adds file and PNG helpers
 licence key from the environment. Same WebAssembly engine, so nothing to compile. See
 `node/README.md`.
 
-**Java** — Maven, `com.pdfcora:pdfcora:0.1.0`, Java 17 or newer on macOS and Linux
+**Java** — Maven, `com.pdfcora:pdfcora-java:0.1.0`, Java 17 or newer on macOS and Linux
 (x86-64 and arm64). This one *is* a separate implementation: a JNI layer over the native
 engine, carrying the document API — open, pages, render, text, search, metadata, save —
 plus annotations, form filling, redaction, tagging, signing and the viewer state layer.

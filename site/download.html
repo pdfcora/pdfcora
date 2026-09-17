@@ -77,9 +77,10 @@
           </div>
           <div role="tabpanel" id="dp-ios" aria-labelledby="d-ios" class="panel">
             <span class="panel-label">iOS — Swift Package Manager</span>
-<pre tabindex="0"><code>.<span class="f">product</span>(name: <span class="s">"PDFCora"</span>,   package: <span class="s">"PDFCora"</span>)
-.<span class="f">product</span>(name: <span class="s">"PDFCoraUI"</span>, package: <span class="s">"PDFCora"</span>)
-.<span class="f">product</span>(name: <span class="s">"PDFCoraAI"</span>, package: <span class="s">"PDFCora"</span>)</code></pre>
+<pre tabindex="0"><code>.<span class="f">package</span>(url: <span class="s">"https://github.com/pdfcora/pdfcora-swift"</span>, from: <span class="s">"0.1.0"</span>)
+.<span class="f">product</span>(name: <span class="s">"PDFCora"</span>,   package: <span class="s">"pdfcora-swift"</span>)
+.<span class="f">product</span>(name: <span class="s">"PDFCoraUI"</span>, package: <span class="s">"pdfcora-swift"</span>)
+.<span class="f">product</span>(name: <span class="s">"PDFCoraAI"</span>, package: <span class="s">"pdfcora-swift"</span>)</code></pre>
             <p class="reqs">iOS 15+ · Swift 5.9 · async/await · an xcframework with the engine inside</p>
           </div>
           <div role="tabpanel" id="dp-android" aria-labelledby="d-android" class="panel">
@@ -105,7 +106,7 @@ npm install <span class="s">pdfcora-mcp</span>         <span class="c"># optiona
           </div>
           <div role="tabpanel" id="dp-java" aria-labelledby="d-java" class="panel">
             <span class="panel-label">Java — Gradle</span>
-<pre tabindex="0"><code><span class="f">implementation</span>(<span class="s">"com.pdfcora:pdfcora:0.1.0"</span>)</code></pre>
+<pre tabindex="0"><code><span class="f">implementation</span>(<span class="s">"com.pdfcora:pdfcora-java:0.1.0"</span>)</code></pre>
             <p class="reqs">Java 17+ · macOS and Linux, x86-64 and arm64 · the engine is in the jar · no AI package yet</p>
           </div>
           <div role="tabpanel" id="dp-src" aria-labelledby="d-src" class="panel">

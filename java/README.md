@@ -4,7 +4,7 @@ The PDF engine behind Chrome, on the JVM, with the same object model and the sam
 cases as the iOS, Android and web SDKs.
 
 ```kotlin
-implementation("com.pdfcora:pdfcora:0.1.0")
+implementation("com.pdfcora:pdfcora-java:0.1.0")
 ```
 
 Java 17 or newer. macOS and Linux, on x86-64 and arm64. The engine is a native library

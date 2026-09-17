@@ -4,10 +4,17 @@ What a server does to a document nobody will open by hand: tag it for accessibil
 sign it, then sign it again and show the first signature still verifies. Everything is
 in `src/main/java/Main.java`.
 
+<!-- repo -->
 ```bash
 (cd ../.. && ./scripts/fetch-vendor.sh && ./scripts/build-jni.sh)
 gradle run
 ```
+<!-- /repo -->
+<!-- public
+```bash
+gradle run
+```
+-->
 
 The three steps, and why each is worth seeing:
 

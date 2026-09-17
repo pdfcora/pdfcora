@@ -3,12 +3,20 @@
 Summarise a document and propose redactions a person accepts, with undo. Everything is in
 `main.js`.
 
+<!-- repo -->
 ```bash
 (cd ../../web && npm install && npm run build)
 (cd ../../web-ai && npm install && npm run build)
 python3 -m http.server 8000 --directory ../..
 open http://localhost:8000/samples/ai-web/
 ```
+<!-- /repo -->
+<!-- public
+```bash
+python3 -m http.server 8000
+open http://localhost:8000/
+```
+-->
 
 The summary uses Chrome's built-in `Summarizer` where the browser has it; the page shows
 what `availability()` reports otherwise, and never downloads a model by itself — that is

@@ -57,7 +57,7 @@ because each lesson generalises. §4 lists what is open and what was parked.
 | `pdfcora-ai` Phase 1: grounded answers, summaries | Built, three platforms; real-model tested on Apple and on an Android phone |
 | Samples: one small app per feature area (core, AI, UI, agents) | iOS, Android, web — `samples/` |
 | Node SDK (`@pdfcora/node`) | Done — a thin layer over the web package: whole API re-exported, plus file, PNG and env-key helpers |
-| Java SDK (`com.pdfcora:pdfcora`) | Core, annotations, form filling, redaction, tagging (veraPDF-validated), signatures (read, verify, sign), viewer state — over JNI on macOS and Linux. No timestamping, no AI |
+| Java SDK (`com.pdfcora:pdfcora-java`) | Core, annotations, form filling, redaction, tagging (veraPDF-validated), signatures (read, verify, sign), viewer state — over JNI on macOS and Linux. No timestamping, no AI |
 | License keys: offline, per module, trial watermark | Done, three platforms, shared cases in `conformance/license/` |
 | `pdfcora-ai` Phase 2a: redaction suggestions, review marks in the viewer, undo | Done, three platforms, shared cases in `conformance/redaction/` |
 | `pdfcora-ai` Phase 2b: smart form filling from a profile, labelled marks, undo | Done, three platforms, shared cases in `conformance/forms/`; no on-device model (measured) |
@@ -124,6 +124,34 @@ test hook is not reachable in any of them: internal on iOS (not in the interface
 exported), refused by the release AAR (Kotlin `internal` is a public JVM method, so it is
 gated on `BuildConfig.DEBUG`), and not exported by the npm package — though on web the file
 is still there to import by path, which is no worse than editing the JavaScript.
+
+**Releasing.** The source stays in this private repository; only packages and samples
+are public. In order:
+
+```bash
+./scripts/publish-npm.sh [--publish]        # @pdfcora/web, web-ai, node, pdfcora-mcp
+./scripts/publish-maven.sh [--upload]       # com.pdfcora:pdfcora, -ui, -ai, pdfcora-java
+./scripts/package-swift.sh                  # build/swift: 3 xcframework zips + repo/
+./scripts/export-samples.sh                 # build/samples-public
+```
+
+- npm needs `npm login` as a member of the `@pdfcora` organisation.
+- Maven Central needs the `com.pdfcora` namespace verified on central.sonatype.com,
+  `PDFCORA_SIGNING_KEY`/`PDFCORA_SIGNING_PASSWORD` (a PGP key whose public half is on
+  keys.openpgp.org) and `PDFCORA_CENTRAL_TOKEN`. The upload is user-managed: press
+  Publish in the portal.
+- iOS: push `build/swift/repo` to github.com/pdfcora/pdfcora-swift, tag it with the
+  version, and attach the three zips to that tag's release. The checksums in
+  `Package.swift` are for those exact zips, so rebuild and re-upload together.
+- Samples: `.github/workflows/samples-sync.yml` pushes the export to
+  github.com/pdfcora/samples once the `SAMPLES_DEPLOY_KEY` secret is set; set it only
+  after the packages above are live.
+
+Published artifacts carry no source: the Maven sources jars hold a README only, and the
+Swift frameworks ship public interfaces only. The npm packages are compiled JavaScript,
+which is readable. `build/samples-public` was checked against the local packages on
+2026-09-17: Node and Java samples run, Android samples run on the emulator, iOS samples
+build and launch on the simulator.
 
 **Set `ANDROID_SERIAL` whenever more than one device is attached.** Gradle honours it;
 so does the gate now. They used to disagree, and the signing cross-check pulled the

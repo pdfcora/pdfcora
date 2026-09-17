@@ -26,7 +26,7 @@ android {
     }
     kotlinOptions { jvmTarget = "17" }
 
-    publishing { singleVariant("release") { withSourcesJar() } }
+    publishing { singleVariant("release") }
 
     // The contract answers are tested on, shared with the iOS and Web suites.
     sourceSets["androidTest"].assets.srcDirs(
@@ -58,3 +58,18 @@ dependencies {
     androidTestImplementation("androidx.test:runner:1.5.2")
     androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
 }
+
+publishing {
+    publications {
+        register<MavenPublication>("release") {
+            artifactId = "pdfcora-ai"
+            afterEvaluate { from(components["release"]) }
+            pom {
+                name.set("PDFCora AI")
+                description.set("On-device AI for PDFCora")
+            }
+        }
+    }
+}
+
+apply(from = rootProject.projectDir.parentFile.resolve("gradle/central.gradle.kts"))
