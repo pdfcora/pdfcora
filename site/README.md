@@ -34,3 +34,31 @@ core and web AI packages, Node, and Java.
 
 `demo/` carries a copy of the built web SDK so it runs with no build step. Refresh the
 copy after changing the web SDK — see `demo/README.md`.
+
+## Deploying
+
+Cloudflare Pages, two projects:
+
+| Project | Address | Who can see it |
+| --- | --- | --- |
+| `pdfcora-preview` | https://pdfcora-preview.pages.dev | anyone with the preview password |
+| `pdfcora` | https://pdfcora.pages.dev, then pdfcora.com | everyone |
+
+```bash
+npx wrangler login                         # once per machine
+./scripts/make-docs.sh --site              # the API references
+./scripts/deploy-site.sh preview           # or: production
+```
+
+The preview project runs `deploy/preview/functions/_middleware.js`, which asks for a
+password on every request and serves nothing if none is configured. The public project
+deploys from `deploy/production`, which has no functions, so the gate can never reach it.
+The password is a secret on the preview project; to change it:
+
+```bash
+npx wrangler pages secret put PREVIEW_PASSWORD --project-name pdfcora-preview
+```
+
+The site has a top-level `404.html` on purpose: without one, Pages treats the site as a
+single-page app and answers every missing URL with the home page and a 200.
+

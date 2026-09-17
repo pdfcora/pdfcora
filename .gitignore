@@ -45,3 +45,6 @@ conformance/robustness-report.json
 # API references generated into the website by `scripts/make-docs.sh --site`: 49 MB and
 # thousands of files that change with every API change. Built at deploy time instead.
 site/api/
+
+# Wrangler (Cloudflare CLI) local cache: account and project IDs, not source.
+.wrangler/
