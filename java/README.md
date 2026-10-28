@@ -228,7 +228,7 @@ try (PdfDocument document = PdfDocument.open(Path.of("letter.docx"))) {
   unreadable PDF does.
 - **Encrypted DOCX** is refused with `CORRUPT` and the message
   "encrypted DOCX is not supported". A password passed with a DOCX is ignored.
-- **Limits.** At most 100 MiB in, and at most 512 MiB unpacked, as the ZIP declares it.
+- **Limits.** At most 100 MiB in, and at most 512 MiB unpacked, counted as it unpacks.
   Past either, `open` raises `CORRUPT` with "the DOCX is too large". The conversion runs
   in the JVM process: errors and Rust panics become a `PdfError`, but a hostile file can
   still exhaust memory or the stack, as a hostile PDF can.

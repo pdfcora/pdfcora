@@ -1,7 +1,7 @@
 //! DOCX to PDF for the Java SDK, behind a C API the JNI glue links against.
 
 use std::ffi::CString;
-use std::io::Cursor;
+use std::io::{Cursor, Read};
 use std::os::raw::c_char;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 
@@ -10,7 +10,7 @@ const TOO_LARGE: &str = "the DOCX is too large";
 #[derive(Clone, Copy)]
 struct Limits {
     max_input: usize,
-    /// The sum of the uncompressed sizes the ZIP declares, so a small file cannot unpack to gigabytes.
+    /// The total bytes the ZIP's entries unpack to, so a small file cannot unpack to gigabytes.
     max_unpacked: u64,
 }
 
@@ -37,15 +37,17 @@ fn convert(data: &[u8], limits: Limits) -> Outcome {
     if archive.index_for_name("word/document.xml").is_none() {
         return Outcome::NotDocx;
     }
-    let mut unpacked = 0u64;
+    // Count what really comes out: a ZIP can declare small sizes and inflate far past them.
+    let mut remaining = limits.max_unpacked;
     for i in 0..archive.len() {
-        let Ok(entry) = archive.by_index_raw(i) else {
-            return Outcome::Failed("the DOCX could not be converted: unreadable entry".into());
-        };
-        unpacked = unpacked.saturating_add(entry.size());
-    }
-    if unpacked > limits.max_unpacked {
-        return Outcome::Failed(TOO_LARGE.into());
+        let read = archive.by_index(i).and_then(|entry| {
+            Ok(std::io::copy(&mut entry.take(remaining + 1), &mut std::io::sink())?)
+        });
+        match read {
+            Ok(n) if n > remaining => return Outcome::Failed(TOO_LARGE.into()),
+            Ok(n) => remaining -= n,
+            Err(e) => return Outcome::Failed(format!("the DOCX could not be converted: {e}")),
+        }
     }
     match docxide_pdf::convert_docx_bytes_to_pdf_bytes(data) {
         Ok(pdf) => Outcome::Pdf(pdf),
@@ -151,6 +153,35 @@ mod tests {
     fn unpacked_over_limit_fails() {
         let limits = Limits { max_unpacked: 100, ..Limits::DEFAULT };
         match convert(&fixture("docx/hello.docx"), limits) {
+            Outcome::Failed(message) => assert_eq!(message, "the DOCX is too large"),
+            _ => panic!("expected a failure"),
+        }
+    }
+
+    /// hello.docx with a large document.xml whose declared size is patched down to 1000.
+    fn lying_docx(real_size: usize) -> Vec<u8> {
+        use std::io::Write;
+        let padding = " ".repeat(real_size);
+        let document = format!(
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?><w:document xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:body>{padding}<w:p/></w:body></w:document>"
+        );
+        let mut zip = zip::ZipWriter::new(std::io::Cursor::new(Vec::new()));
+        let options = zip::write::SimpleFileOptions::default();
+        zip.start_file("word/document.xml", options).unwrap();
+        zip.write_all(document.as_bytes()).unwrap();
+        let mut bytes = zip.finish().unwrap().into_inner();
+        let lie = 1000u32.to_le_bytes();
+        let local = 22; // uncompressed size in the local file header
+        bytes[local..local + 4].copy_from_slice(&lie);
+        let central = bytes.windows(4).position(|w| w == b"PK\x01\x02").unwrap() + 24;
+        bytes[central..central + 4].copy_from_slice(&lie);
+        bytes
+    }
+
+    #[test]
+    fn unpacked_limit_counts_real_bytes_not_declared_sizes() {
+        let limits = Limits { max_unpacked: 100_000, ..Limits::DEFAULT };
+        match convert(&lying_docx(1_000_000), limits) {
             Outcome::Failed(message) => assert_eq!(message, "the DOCX is too large"),
             _ => panic!("expected a failure"),
         }
