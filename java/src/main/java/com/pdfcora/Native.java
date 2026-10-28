@@ -68,6 +68,12 @@ final class Native {
   /** Returns a handle, or a negative {@link PdfError} code. */
   static native long open(byte[] data, String password);
 
+  /**
+   * Converts a DOCX to PDF. Returns null for bytes that are not a DOCX; on failure returns
+   * null and puts the reason in {@code error[0]}.
+   */
+  static native byte[] convertDocx(byte[] data, String[] error);
+
   static native void close(long handle);
 
   static native int pageCount(long handle);

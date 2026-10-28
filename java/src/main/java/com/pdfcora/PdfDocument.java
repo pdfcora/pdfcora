@@ -1,8 +1,10 @@
 package com.pdfcora;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -48,12 +50,55 @@ public final class PdfDocument implements AutoCloseable {
       thread.setDaemon(true);
       return thread;
     });
-    long handle = await(engine, () -> Native.open(bytes, password));
+    byte[][] pdf = {bytes};
+    long handle;
+    try {
+      handle = await(engine, () -> {
+        pdf[0] = asPdf(bytes);
+        // A password belongs to a PDF; a DOCX that arrives with one opens without it.
+        return Native.open(pdf[0], pdf[0] == bytes ? password : null);
+      });
+    } catch (PdfError error) {
+      engine.shutdown();
+      throw error;
+    }
     if (handle < 0) {
       engine.shutdown();
       throw PdfError.fromNative((int) handle);
     }
-    return new PdfDocument(handle, engine, bytes.length);
+    return new PdfDocument(handle, engine, pdf[0].length);
+  }
+
+  private static final byte[] CFB = {(byte) 0xD0, (byte) 0xCF, 0x11, (byte) 0xE0, (byte) 0xA1, (byte) 0xB1, 0x1A, (byte) 0xE1};
+  private static final byte[] ZIP = {'P', 'K', 3, 4};
+  private static final byte[] ENCRYPTED_PACKAGE = "EncryptedPackage".getBytes(StandardCharsets.UTF_16LE);
+
+  /** The bytes themselves for a PDF, the converted PDF for a DOCX. */
+  private static byte[] asPdf(byte[] bytes) {
+    // An encrypted DOCX is not a ZIP but an OLE container holding an EncryptedPackage stream.
+    if (startsWith(bytes, CFB) && indexOf(bytes, ENCRYPTED_PACKAGE) >= 0) {
+      throw new PdfError(PdfError.Code.CORRUPT, "encrypted DOCX is not supported");
+    }
+    if (!startsWith(bytes, ZIP)) return bytes;
+    String[] error = new String[1];
+    byte[] converted = Native.convertDocx(bytes, error);
+    if (error[0] != null) throw new PdfError(PdfError.Code.CORRUPT, error[0]);
+    return converted != null ? converted : bytes;
+  }
+
+  private static boolean startsWith(byte[] bytes, byte[] prefix) {
+    return bytes.length >= prefix.length && Arrays.equals(bytes, 0, prefix.length, prefix, 0, prefix.length);
+  }
+
+  private static int indexOf(byte[] bytes, byte[] pattern) {
+    outer:
+    for (int i = 0; i <= bytes.length - pattern.length; i++) {
+      for (int j = 0; j < pattern.length; j++) {
+        if (bytes[i + j] != pattern[j]) continue outer;
+      }
+      return i;
+    }
+    return -1;
   }
 
   public static PdfDocument open(Path file) throws IOException {

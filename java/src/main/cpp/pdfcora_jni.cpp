@@ -21,6 +21,8 @@
 #include "fpdf_signature.h"
 #include "fpdf_text.h"
 
+#include "pdfcora_docx.h"
+
 namespace {
 
 // Mirrors PdfError.Code in Java.
@@ -135,6 +137,29 @@ JNIEXPORT jlong JNICALL Java_com_pdfcora_Native_open(
     return (code == kPasswordRequired && password) ? kWrongPassword : code;
   }
   return reinterpret_cast<jlong>(loaded);
+}
+
+// DOCX in, PDF out. Null with error[0] unset means "not a DOCX"; null with it set, a failure.
+JNIEXPORT jbyteArray JNICALL Java_com_pdfcora_Native_convertDocx(
+    JNIEnv* env, jclass, jbyteArray data, jobjectArray error) {
+  const jsize size = env->GetArrayLength(data);
+  std::vector<uint8_t> bytes(static_cast<size_t>(size));
+  env->GetByteArrayRegion(data, 0, size, reinterpret_cast<jbyte*>(bytes.data()));
+
+  uint8_t* out = nullptr;
+  size_t outLength = 0;
+  char* message = nullptr;
+  const int32_t status = pdfcora_docx_convert(bytes.data(), bytes.size(), &out, &outLength, &message);
+  if (status == 2) {
+    env->SetObjectArrayElement(error, 0, env->NewStringUTF(message));
+    pdfcora_docx_free_error(message);
+    return nullptr;
+  }
+  if (status != 0) return nullptr;
+  jbyteArray pdf = env->NewByteArray(static_cast<jsize>(outLength));
+  if (pdf) env->SetByteArrayRegion(pdf, 0, static_cast<jsize>(outLength), reinterpret_cast<const jbyte*>(out));
+  pdfcora_docx_free(out, outLength);
+  return pdf;
 }
 
 JNIEXPORT void JNICALL Java_com_pdfcora_Native_close(JNIEnv*, jclass, jlong handle) {
