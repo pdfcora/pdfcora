@@ -16,6 +16,7 @@ code is readable end to end. API reference: https://pdfcora.com/developers.html
 | **UI** — the viewer component, custom toolbar and theme | `ui-ios` | `ui-android` | `ui-web` | — | — |
 | **Agents** — MCP server and WebMCP | — | — | `agents-web` | `agents-web` | — |
 | **Pipeline** — tag for accessibility, sign, countersign | — | — | — | — | `pipeline-java` |
+| **DOCX** — open a Word file as a PDF, render, save | — | — | — | — | `docx-java` |
 
 A server has no screen, so there is no UI sample for Node or Java, and the Java SDK has
 no AI package yet. `agents-web` covers both of its columns: its MCP client is a Node
