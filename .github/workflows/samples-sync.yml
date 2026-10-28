@@ -6,7 +6,7 @@ name: samples-sync
 on:
   push:
     branches: [master]
-    paths: ['samples/**', 'scripts/export-samples.sh', 'android/pdfcora/build.gradle.kts']
+    paths: ['samples/**', 'scripts/export-samples.sh', 'android/pdfcora/build.gradle.kts', 'java/build.gradle.kts']
   workflow_dispatch:
 permissions:
   contents: read

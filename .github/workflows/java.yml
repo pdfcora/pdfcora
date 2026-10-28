@@ -1,0 +1,37 @@
+name: java
+on: [push, pull_request]
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  # The DOCX converter's own tests, then the JNI library for macOS and the Java suite.
+  # The Linux libraries link with Chromium's lld and sysroot, which only the engine
+  # checkout has; scripts/build-jni.sh linux builds them locally.
+  test:
+    runs-on: macos-15
+    env:
+      # The engine predates the macOS 26 SDK; build-jni.sh links against the same Xcode.
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: '8.14.2' }
+      - uses: dtolnay/rust-toolchain@1.92
+        with: { targets: 'aarch64-apple-darwin,x86_64-apple-darwin' }
+      - uses: Swatinem/rust-cache@v2
+        with: { workspaces: java/src/main/rust }
+      - uses: ./.github/actions/fetch-vendor
+      - name: Converter tests
+        run: cd java/src/main/rust && cargo +1.92 test
+      - name: Build the JNI library
+        run: ./scripts/build-jni.sh macos
+      - name: Install veraPDF for the PDF/UA check
+        run: scripts/install-verapdf.sh
+      - name: Java tests
+        run: ./scripts/test-java.sh --console=plain
