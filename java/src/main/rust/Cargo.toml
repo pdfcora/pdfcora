@@ -1,0 +1,19 @@
+[package]
+name = "pdfcora-docx"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.92"
+publish = false
+
+[lib]
+name = "pdfcora_docx"
+crate-type = ["staticlib", "rlib"]
+
+[dependencies]
+docxide-pdf = { version = "=0.19.1", default-features = false }
+zip = "8.1.0"
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "unwind"

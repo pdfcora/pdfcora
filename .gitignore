@@ -48,3 +48,4 @@ site/api/
 
 # Wrangler (Cloudflare CLI) local cache: account and project IDs, not source.
 .wrangler/
+java/src/main/rust/target/
