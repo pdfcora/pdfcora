@@ -39,11 +39,18 @@ public final class PdfDocument implements AutoCloseable {
     this.openedLength = openedLength;
   }
 
-  /** Opens a document from bytes the caller owns; they are copied into the engine. */
+  /**
+   * Opens a document from bytes the caller owns; they are copied into the engine.
+   *
+   * <p>A DOCX is accepted too: it is converted to PDF first, and the document is that PDF
+   * from then on, so saving gives a PDF. An encrypted DOCX, or one that cannot be
+   * converted, raises {@link PdfError.Code#CORRUPT}.
+   */
   public static PdfDocument open(byte[] bytes) {
     return open(bytes, null);
   }
 
+  /** As {@link #open(byte[])}; the password applies to a PDF and is ignored for a DOCX. */
   public static PdfDocument open(byte[] bytes, String password) {
     ExecutorService engine = Executors.newSingleThreadExecutor(runnable -> {
       Thread thread = new Thread(runnable, "pdfcora-engine");
@@ -101,10 +108,12 @@ public final class PdfDocument implements AutoCloseable {
     return -1;
   }
 
+  /** Opens a PDF or DOCX file; see {@link #open(byte[])}. */
   public static PdfDocument open(Path file) throws IOException {
     return open(Files.readAllBytes(file), null);
   }
 
+  /** As {@link #open(byte[], String)}, from a file. */
   public static PdfDocument open(Path file, String password) throws IOException {
     return open(Files.readAllBytes(file), password);
   }

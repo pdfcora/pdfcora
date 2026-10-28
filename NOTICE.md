@@ -100,6 +100,51 @@ https://github.com/unicode-org/icu/blob/main/LICENSE
 
 ---
 
+## Java SDK only: the DOCX converter
+
+The Java SDK's native library (`libpdfcora_jni`) also statically links a Rust DOCX to PDF
+converter built from `java/src/main/rust`. The iOS, Android and web binaries do not
+contain it. Its main parts:
+
+- **docxide-pdf** 0.19.1 — Copyright the docxide-pdf authors
+  (github.com/sverrejb/docxide-pdf). Licensed under Apache-2.0.
+- **Zstandard** (C, through `zstd-sys` 2.1.2+zstd.1.5.7) — Copyright Meta Platforms, Inc.
+  and affiliates. Licensed under BSD-3-Clause.
+- **libbzip2-rs** (`libbz2-rs-sys` 0.2.5, a Rust port of bzip2 1.0.6) — under the
+  bzip2-1.0.6 licence (BSD-style).
+
+Every Rust crate linked in, with the licence its manifest declares (where a crate offers a
+choice, PDFCora takes the permissive option listed first):
+
+- **MIT OR Apache-2.0**: aes@0.9.3, arrayvec@0.7.8, bitflags@2.13.2, block-buffer@0.12.1, bumpalo@3.20.3, bzip2@0.6.1, cfg-if@1.0.5, cipher@0.5.2, cpubits@0.1.1, cpufeatures@0.3.1, crc32fast@1.5.3, crypto-common@0.2.2, deranged@0.5.9, digest@0.11.3, fdeflate@0.3.7, flate2@1.1.10, font-types@0.11.3, getrandom@0.4.3, gif@0.14.2, half@2.7.1, hashbrown@0.17.1, hmac@0.13.0, hybrid-array@0.4.15, image@0.25.10, inout@0.2.5, itoa@1.0.18, libc@0.2.191, log@0.4.34, memmap2@0.9.12, num-conv@0.2.2, num-traits@0.2.19, pbkdf2@0.13.0, pdf-writer@0.14.0, png@0.18.1, polycool@0.4.0, powerfmt@0.2.1, proc-macro2@1.0.107, quote@1.0.47, read-fonts@0.39.2, roxmltree@0.21.2, sha1@0.11.0, sha2@0.11.1, skrifa@0.42.1, smallvec@1.16.4, subsetter@0.2.6, syn@2.0.119, syn@3.0.9, time-core@0.1.9, time@0.3.55, ttf-parser@0.25.1, typed-path@0.12.4, typenum@1.20.1, weezl@0.1.12, write-fonts@0.48.1
+- **Apache-2.0 OR MIT**: cmov@0.5.4, const-oid@0.10.2, ctutils@0.4.6, equivalent@1.0.3, indexmap@2.14.2, kurbo@0.13.1, rustc-hash@2.1.3, zeroize@1.9.1
+- **MIT**: color_quant@1.1.0, deflate64@0.1.12, fax@0.2.7, simd-adler32@0.3.10, tiff@0.11.3, zip@8.6.0, zstd@0.13.3
+- **Apache-2.0**: docxide-pdf@0.19.1, lzma-rust2@0.16.5, unicode-linebreak@0.1.5, zopfli@0.8.4
+- **BSD-2-Clause OR Apache-2.0 OR MIT**: zerocopy-derive@0.8.63, zerocopy@0.8.63
+- **BSD-3-Clause**: zstd-safe@7.3.0, zstd-sys@2.1.2+zstd.1.5.7
+- **BSD-3-Clause OR Apache-2.0**: moxcms@0.8.1, pxfm@0.1.30
+- **MIT OR Apache-2.0 OR Zlib**: zune-core@0.5.3, zune-jpeg@0.5.15
+- **MIT OR Zlib OR Apache-2.0**: miniz_oxide@0.8.9, miniz_oxide@0.9.1
+- **Unlicense OR MIT**: byteorder-lite@0.1.0, memchr@2.8.3
+- **Zlib OR Apache-2.0 OR MIT**: bytemuck@1.25.2, bytemuck_derive@1.12.1
+- **(MIT OR Apache-2.0) AND Unicode-3.0**: unicode-ident@1.0.27
+- **0BSD OR MIT OR Apache-2.0**: adler2@2.0.1
+- **Apache-2.0 OR BSL-1.0**: ryu@1.0.23
+- **CC0-1.0 OR MIT-0**: ppmd-rust@1.5.2
+- **CC0-1.0 OR MIT-0 OR Apache-2.0**: constant_time_eq@0.4.2
+- **MIT/Apache-2.0**: quick-error@2.0.1
+- **Zlib**: zlib-rs@0.6.8
+- **bzip2-1.0.6**: libbz2-rs-sys@0.2.5
+
+Produced from the build, not by hand:
+
+```bash
+cd java/src/main/rust
+cargo +1.92 tree -e normal --target aarch64-apple-darwin --prefix none --format '{p}|{l}' | sort -u
+```
+
+The Linux targets resolve the same set.
+
 ## Verification
 
 The bundled set was confirmed against the shipped binary:

@@ -36,8 +36,8 @@ try (PdfDocument document = PdfDocument.open(Path.of("contract.pdf"))) {
 
 | Member | Description |
 | --- | --- |
-| `open(byte[])`, `open(byte[], String password)` | Opens from memory |
-| `open(Path)`, `open(Path, String password)` | Opens from a file |
+| `open(byte[])`, `open(byte[], String password)` | Opens a PDF or DOCX from memory |
+| `open(Path)`, `open(Path, String password)` | Opens a PDF or DOCX from a file |
 | `pageCount()` | Pages in the document |
 | `page(int index)` | A page reference; the page loads when used |
 | `metadata()` | Title, author, subject, keywords, creator, producer — absent entries omitted |
@@ -211,6 +211,48 @@ BufferedImage image = viewer.render();          // at the zoomed size, so text s
 follower.apply(viewer.state());                 // a fit is re-derived for the follower's window
 ```
 
+## Word documents
+
+`open` also accepts a DOCX. The SDK sees from the bytes that it is a Word file, converts
+it to PDF inside the process with [docxide-pdf](https://github.com/sverrejb/docxide-pdf),
+and from then on the document is that PDF: render, text, search, forms, redaction,
+signing and tagging all work as usual, and saving gives a PDF.
+
+```java
+try (PdfDocument document = PdfDocument.open(Path.of("letter.docx"))) {
+    document.writeTo(Path.of("letter.pdf"));
+}
+```
+
+- **DOCX only.** Not `.doc`, XLSX, PPTX, ODT or RTF; those fail as `CORRUPT`, as an
+  unreadable PDF does.
+- **Encrypted DOCX** is refused with `CORRUPT` and the message
+  "encrypted DOCX is not supported". A password passed with a DOCX is ignored.
+- **Limits.** At most 100 MiB in, and at most 512 MiB unpacked, as the ZIP declares it.
+  Past either, `open` raises `CORRUPT` with "the DOCX is too large". The conversion runs
+  in the JVM process: errors and Rust panics become a `PdfError`, but a hostile file can
+  still exhaust memory or the stack, as a hostile PDF can.
+
+### Fonts
+
+The PDF can only look like Word's if the fonts match. The converter uses, in order: fonts
+embedded in the DOCX, the folders in the `DOCXIDE_FONTS` environment variable
+(colon-separated), then the system font folders — `/Library/Fonts`,
+`/System/Library/Fonts` and `~/Library/Fonts` on macOS; `/usr/share/fonts`,
+`/usr/local/share/fonts` and `~/.local/share/fonts` on Linux. The SDK ships no fonts.
+
+A Linux server or container usually has few fonts. These packages give metric-compatible
+stand-ins for Arial, Times New Roman, Courier New, Calibri and Cambria, and Chinese,
+Japanese and Korean text:
+
+```bash
+apt-get install fonts-liberation2 fonts-crosextra-carlito fonts-crosextra-caladea fonts-noto-cjk
+```
+
+The converter keeps an index of the fonts it found in `$XDG_CACHE_HOME/docxide-pdf` or
+`~/.cache/docxide-pdf` (`~/Library/Caches/docxide-pdf` on macOS). Conversion works when
+that folder cannot be written.
+
 ## Threading
 
 The SDK is thread-safe. Every document owns one thread and every call runs on it, so
@@ -230,8 +272,8 @@ The jar carries a native library per platform, built from the vendored engine:
 ./scripts/test-java.sh            # the suite, against the shared fixtures
 ```
 
-`build-jni.sh macos` needs an Xcode whose SDK this PDFium revision understands, and
-`build-jni.sh linux` needs Docker. `-Dpdfcora.native.path=/path/to/lib` overrides the
+`build-jni.sh macos` needs an Xcode whose SDK this PDFium revision understands and Rust
+1.92 (the DOCX converter, `src/main/rust`), and `build-jni.sh linux` needs Docker. `-Dpdfcora.native.path=/path/to/lib` overrides the
 library the SDK loads, for a build that manages its own.
 
 ## What is not here yet
