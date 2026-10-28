@@ -69,8 +69,7 @@ type PdfRedactionCategory =
 page, then by `start`. Ids are stable for the same document and options, so a host can
 keep review state across a re-render.
 
-Asking for suggestions is gated as the `ai` license module; applying them goes through the
-core `redact()`, gated as `redaction`, as it already is.
+Applying suggestions goes through the core `redact()`, as it already does.
 
 ### 3.2 Text
 
@@ -185,10 +184,8 @@ const snapshot = await document.snapshot();   // PdfDocumentSnapshot
 const copy = await snapshot.open();           // a new PdfDocument as it was
 ```
 
-A snapshot is the document's full serialisation, **without** the trial watermark stamped
-in, held privately. Its bytes are never exposed: a public way to read unwatermarked bytes
-would bypass licensing. The document it opens needs the watermark if the original did. A
-snapshot lives until the host drops it.
+A snapshot is the document's full serialisation, held privately. A snapshot lives until the
+host drops it.
 
 ### 5.2 `apply`
 
@@ -211,7 +208,7 @@ const restored = await applied.undo();   // a new PdfDocument, as it was before 
    the documentation says so.
 
 The document must still be saved with the full save mode for the removal to reach the file,
-as for every redaction; a document needing the watermark is saved in full anyway.
+as for every redaction.
 
 ## 6. Testing
 
@@ -236,10 +233,8 @@ On all three platforms unless stated.
   wire. UI: the web browser test, the Android Compose test and the iOS demo UI test each
   cycle a mark and press Apply.
 - **Apply and undo.** Accepted text is absent from the saved bytes and rejected text present;
-  `remaining` is empty; an unknown id writes nothing; `undo` restores the original text; a
-  trial-mode document keeps exactly one watermark after undo and save.
-- **Snapshot.** Opening a snapshot of an edited document gives the edits; a snapshot of a
-  trial document saved after opening carries one watermark.
+  `remaining` is empty; an unknown id writes nothing; `undo` restores the original text.
+- **Snapshot.** Opening a snapshot of an edited document gives the edits.
 
 ## 7. Out of scope
 

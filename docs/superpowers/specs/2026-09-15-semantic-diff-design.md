@@ -57,7 +57,7 @@ For each `modified` pair, one request with both sentences, asking for
 only for meaning changes. The answer is used when `label` is one of the two; otherwise the pair
 stays `unclassified`. A `meaningChanged` label with an empty summary keeps the label and gets no
 summary. Without a route, or when every route fails, modified pairs are `unclassified` and
-`modelUsed` is false. Model text passes through the AI trial prefix.
+`modelUsed` is false.
 
 ## 5. API
 

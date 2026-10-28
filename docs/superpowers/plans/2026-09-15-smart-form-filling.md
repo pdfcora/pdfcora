@@ -16,7 +16,7 @@
 - Synonyms, normalisation and the matching rule: exactly spec §5.1.
 - Label rule: exactly spec §4 (±2 pt, 250 pt, 14 pt).
 - Fillable kinds: text, checkBox, radioButton, comboBox, listBox; read-only fields are skipped.
-- Proposal id: `"<pageIndex>:<annotationIndex>:<key>"`. Notice: `Check every value before filling in the form.` (through the AI trial prefix).
+- Proposal id: `"<pageIndex>:<annotationIndex>:<key>"`. Notice: `Check every value before filling in the form.`
 - `value`: string for text, option index for choices, `true` for toggles.
 - Test profile (used by every fixture): givenName `Anna`, familyName `Schmidt`, fullName `Anna Schmidt`, dateOfBirth `1985-03-14`, email `anna.schmidt@example.com`, phone `+44 20 7946 0958`, street `221B Baker Street`, postalCode `NW1 6XE`, city `London`, country `United Kingdom`, iban `GB29 NWBK 6016 1331 9268 19`, company `Example Holdings Ltd`.
 - Commands run from `/Users/daos/Projects/Lab/PdfiumKit-v2`; iOS selected tests via `./build/run-ios-tests.sh`, Android devices via `ANDROID_SERIAL=emulator-5554`.

@@ -70,14 +70,14 @@ const updated = await document.updateFigures([
 ]);   // a new PdfDocument; `document` is unchanged
 ```
 
-Gated as the `editing` license module. Every edit is resolved before anything is written;
+Every edit is resolved before anything is written;
 one that matches no figure, or more than one, throws `invalidOperation` and nothing is
 written (HIL-1).
 
 1. **Decorative, in PDFium.** On the edit's page, every top-level object whose content mark
    carries an `MCID` in the edit's ids loses that mark and gains an `Artifact` mark;
    `FPDFPage_GenerateContent` then rewrites the page.
-2. **Base bytes.** The document is serialised without the trial watermark — in full when
+2. **Base bytes.** The document is serialised — in full when
    step 1 changed a page (an incremental save drops regenerated content), incrementally
    otherwise, so existing signatures keep verifying for description-only edits.
 3. **Finding the element.** The writer walks `/Root /StructTreeRoot /K` depth-first (at most
@@ -89,8 +89,7 @@ written (HIL-1).
    removes the element's reference from its parent's `/K` (an inline array or a single
    reference; an indirect `/K` array object is rewritten as that object). The objects are
    appended with the existing `appendUpdate`.
-5. **Reopening.** The bytes open as the new document, which needs the watermark if the
-   original did.
+5. **Reopening.** The bytes open as the new document.
 
 **Reader fix this depends on.** The writer's dictionary readers returned literal strings as
 their escaped source text and, on web, hex strings as a placeholder object, so re-serialising
@@ -147,7 +146,6 @@ For each page in scope: `structure()`, flattened; figures per §2 with bounds.
 - No route answering leaves `kind: 'description'`, `text: ''`, `source: null`: the figure is
   still listed for a person to describe (ALT-1, ALT-2). A route that throws moves on to the
   next, as for every other feature.
-- Model text passes through the AI trial prefix.
 
 ### 5.3 Apply
 
@@ -178,7 +176,6 @@ accepted ids. Editing a description is the host's UI; the SDK takes the edited t
 - **updateFigures** on every platform: after writing descriptions for both photo figures and
   decorative for the rule, `structure()` on the result shows the alt texts and no rule figure,
   the rule's page object carries an `Artifact` mark, and the original document is unchanged.
-  A trial document's result reopens watermarked and stamps once on save.
 - **Proposals** on every platform: no provider → the three expected figures, the rule
   decorative by rules, the others with empty text, contexts containing their captions; a fake
   provider receives one PNG per described figure and its answer is used; a provider answering

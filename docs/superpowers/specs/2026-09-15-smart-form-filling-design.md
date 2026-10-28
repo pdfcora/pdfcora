@@ -134,8 +134,7 @@ const restored = await applied.undo();
 ```
 
 `value` is the text to write, the option index for choices, or `true` for toggles. The id is
-`"<pageIndex>:<annotationIndex>:<key>"`. Gated as the `ai` license module for proposing;
-writing goes through the core, gated as `forms`.
+`"<pageIndex>:<annotationIndex>:<key>"`. Writing goes through the core.
 
 Review uses the viewer marks, with `PdfMark.label` (new, optional) drawn inside each mark: the
 proposed value.

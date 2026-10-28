@@ -53,8 +53,7 @@ failure `invalidOperation`: the document is already tagged; a page index is out 
 object index is out of range or appears in two blocks; `altText` on a non-figure; no title
 (neither given nor in the document's metadata); no language (neither given nor in `/Lang`).
 
-1. **Marking, in PDFium** (a scratch copy of the document, saved in full without the
-   watermark). On each page, objects are visited in block order; every object of a block gets
+1. **Marking, in PDFium** (a scratch copy of the document, saved in full). On each page, objects are visited in block order; every object of a block gets
    a content mark named after the block type (`LBody` for list items) with an `MCID`
    parameter, one new id per object, counted from 0 per page. Objects in `Artifact` blocks and
    objects in no block get an `Artifact` mark. `FPDFPage_GenerateContent` rewrites the page;
@@ -68,7 +67,7 @@ object index is out of range or appears in two blocks; `altText` on a non-figure
    - the Catalog gains `/StructTreeRoot`, `/MarkInfo << /Marked true >>`, `/Lang`,
      `/ViewerPreferences` with `/DisplayDocTitle true` merged into any existing ones, and
      `/Metadata`, a new XMP stream with `dc:title` and `pdfuaid:part` 1.
-3. The bytes open as the new document, which needs the watermark if the original did.
+3. The bytes open as the new document.
 
 ## 4. Proposals
 
@@ -133,8 +132,7 @@ A block's `text` is its lines joined by a space. `rect` is the union of its obje
   numbered lists, a photo and a thin rule.
 - **Core** on every platform: `tagContent` with the expected blocks writes a document whose
   `structure()` has `Document` → `H1`, `P`, `H2`, `L` (3 `LI`), …; `isTagged()` is true; the
-  original is unchanged; every refusal in §3 throws and writes nothing; a trial document's
-  result stamps once.
+  original is unchanged; every refusal in §3 throws and writes nothing.
 - **Proposals** on every platform: exactly `untagged-expected.json`; an override changes a
   type; an unknown id throws; a tagged document reports `alreadyTagged`.
 - **PDF/UA.** Remediate the fixture, describe its figure with `updateFigures`, save: veraPDF
