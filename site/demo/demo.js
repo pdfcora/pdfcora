@@ -63,8 +63,16 @@ async function describe() {
 
   const facts = el('facts');
   facts.replaceChildren();
-  const fact = (term, value) => facts.insertAdjacentHTML('beforeend',
-    `<div><dt>${term}</dt><dd>${value}</dd></div>`);
+  // Title, producer and file name come from the document, so they are text, never HTML.
+  const fact = (term, value) => {
+    const row = document.createElement('div');
+    const dt = document.createElement('dt');
+    const dd = document.createElement('dd');
+    dt.textContent = term;
+    dd.textContent = String(value);
+    row.append(dt, dd);
+    facts.append(row);
+  };
   fact('File', name);
   fact('Pages', pages);
   fact('Title', metadata.title || '—');

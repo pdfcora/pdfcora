@@ -17,5 +17,6 @@ gradle run
 -->
 
 Saving gives a PDF, not a DOCX. Only DOCX is read: not `.doc`, XLSX or PPTX. The result
-looks best when the fonts the document names are installed; see the Java SDK README,
-"Word documents".
+looks best when the fonts the document names are installed; see
+["Word documents"](https://github.com/pdfcora/pdfcora/blob/master/java/README.md#word-documents)
+in the Java SDK README.

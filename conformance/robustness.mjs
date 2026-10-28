@@ -14,7 +14,7 @@ import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const DEFAULT_CORPUS = '/Users/daos/Projects/Lab/pdfiumkit/src/pdfium/testing/resources';
+const DEFAULT_CORPUS = `${process.env.PDFCORA_ARTIFACTS ?? '.'}/src/pdfium/testing/resources`;
 
 function findPdfs(dir) {
   const out = [];

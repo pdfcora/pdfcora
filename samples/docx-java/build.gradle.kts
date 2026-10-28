@@ -2,7 +2,7 @@ plugins {
     application
 }
 
-java { toolchain { languageVersion = JavaLanguageVersion.of(17) } }
+tasks.withType<JavaCompile> { options.release = 17 }
 
 dependencies { implementation("com.pdfcora:pdfcora-java:0.1.0") }
 

@@ -4,7 +4,7 @@ import UIKit
 @_implementationOnly import CPdfium
 
 extension PdfPage {
-    /// Renders the page at `width` points; height follows the page aspect ratio.
+    /// Renders the page `width` pixels wide; height follows the page aspect ratio.
     ///
     /// Runs on the document's actor, so it never blocks the caller's thread. Honours
     /// task cancellation between progressive render steps.

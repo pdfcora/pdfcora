@@ -13,7 +13,7 @@ there is nothing to compile and no native module to match to your platform.
 ## What it adds
 
 `@pdfcora/node` re-exports **everything** from `@pdfcora/web` — same classes, same
-methods, same errors — and adds four functions. Code moves between the two unchanged; a
+methods, same errors — and adds five functions. Code moves between the two unchanged; a
 test asserts that every web export is present here.
 
 | Function | What it does |
@@ -22,6 +22,7 @@ test asserts that every web export is present here.
 | `saveFile(document, path, mode?)` | Writes the document out; `mode` is `'full'` (default) or `'incremental'` |
 | `renderPng(page, options?)` | Renders a page and encodes it as PNG |
 | `renderRaw(page, options?)` | The raw RGBA, for callers that encode it themselves |
+| `encodePng(image)` | Encodes raw RGBA from `page.render()` as PNG |
 
 ## First render
 
@@ -62,4 +63,5 @@ documents in a `worker_thread` or a child process you can terminate.
 `await using` where your runtime supports explicit resource management.
 
 **Concurrency.** Each document serialises its own calls, so sharing one across requests is
-safe. Separate documents are independent and run in parallel.
+safe. Every document runs on the one engine, on the JavaScript thread, so calls on separate
+documents take turns. For CPU parallelism, open documents in separate `worker_threads`.

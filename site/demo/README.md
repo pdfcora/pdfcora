@@ -4,9 +4,9 @@ A self-contained copy of the web SDK, so `site/` can be deployed as static files
 build step and no server.
 
 `demo.js` is the whole demo, and most of it is the side panel. The viewer itself is one
-call: `PdfViewerElement.mount(host, pdf, { toolbar, theme, onSave })` builds the page,
-the toolbar, the gestures and the accessible layer. The demo adds page-back and
-page-forward to the shipped `defaultToolbar`, because the default leaves them out.
+call: `PdfViewerElement.mount(host, pdf, { theme, onSave, onChange })` builds the page,
+the default toolbar, the gestures and the accessible layer. `onChange` refreshes the side
+panel after an edit.
 
 `sdk/` and `engine/` are **copies**, not sources. Refresh them after changing the web SDK:
 

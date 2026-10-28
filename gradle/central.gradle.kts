@@ -15,7 +15,7 @@ configure<PublishingExtension> {
     }
     publications.withType<MavenPublication>().configureEach {
         pom {
-            url.set("https://pdfcora.com")
+            url.set("https://pdfcora.pages.dev")
             licenses {
                 license {
                     name.set("MIT License")
@@ -26,12 +26,12 @@ configure<PublishingExtension> {
                 developer {
                     id.set("pdfcora")
                     name.set("PDFCora")
-                    url.set("https://pdfcora.com")
+                    url.set("https://pdfcora.pages.dev")
                 }
             }
             scm {
-                url.set("https://github.com/pdfcora/samples")
-                connection.set("scm:git:https://github.com/pdfcora/samples.git")
+                url.set("https://github.com/pdfcora/pdfcora")
+                connection.set("scm:git:https://github.com/pdfcora/pdfcora.git")
             }
         }
     }
@@ -49,16 +49,27 @@ plugins.withId("com.android.library") {
     }
 }
 
-// Central requires a sources jar, and the source is not published, so every module ships
-// one holding only a note. Central accepts this for closed-source artifacts.
-val sourcesJar = tasks.register<Jar>("placeholderSourcesJar") {
-    archiveClassifier.set("sources")
-    from(resources.text.fromString("PDFCora is closed source. API reference: https://pdfcora.com/developers.html\n")) {
-        rename { "README.txt" }
-    }
+// The binaries link PDFium and its bundled libraries, whose licences ask for their notices
+// to travel with them, so every jar carries LICENSE.md and NOTICE.md under META-INF.
+val legalFiles = rootProject.projectDir.parentFile.let { listOf(it.resolve("LICENSE.md"), it.resolve("NOTICE.md")) }
+plugins.withId("java") {
+    tasks.named<Jar>("jar") { from(legalFiles) { into("META-INF") } }
 }
-configure<PublishingExtension> {
-    publications.withType<MavenPublication>().configureEach { artifact(sourcesJar) }
+plugins.withId("com.android.library") {
+    // Java resources of a library end up in the AAR's classes.jar.
+    val legalDir = layout.buildDirectory.dir("generated/legal")
+    val copyLegal = tasks.register<Copy>("copyLegalFiles") {
+        from(legalFiles)
+        into(legalDir.map { it.dir("META-INF") })
+    }
+    // Reflection, because a script applied with `apply(from = …)` cannot see AGP's types.
+    (extensions.getByName("android") as ExtensionAware).let { android ->
+        @Suppress("UNCHECKED_CAST")
+        val sourceSets = android.javaClass.getMethod("getSourceSets").invoke(android) as NamedDomainObjectContainer<Any>
+        val resources = sourceSets.getByName("main").javaClass.getMethod("getResources").invoke(sourceSets.getByName("main"))
+        resources.javaClass.getMethod("srcDir", Any::class.java).invoke(resources, legalDir)
+    }
+    tasks.matching { it.name == "preBuild" }.configureEach { dependsOn(copyLegal) }
 }
 
 providers.environmentVariable("PDFCORA_SIGNING_KEY").orNull?.let { key ->

@@ -26,7 +26,7 @@ android {
     }
     kotlinOptions { jvmTarget = "17" }
 
-    publishing { singleVariant("release") }
+    publishing { singleVariant("release") { withSourcesJar() } }
 
     // The contract answers are tested on, shared with the iOS and Web suites.
     sourceSets["androidTest"].assets.srcDirs(

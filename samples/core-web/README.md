@@ -9,6 +9,8 @@ fields, render a page to a canvas, save. Everything is in `main.js`.
 python3 -m http.server 8000 --directory ../..    # serve the repo root
 open http://localhost:8000/samples/core-web/
 ```
+
+Serve the repo root rather than this folder: the page imports the SDK from `web/dist`.
 <!-- /repo -->
 <!-- public
 ```bash
@@ -16,5 +18,3 @@ python3 -m http.server 8000
 open http://localhost:8000/
 ```
 -->
-
-Serve the repo root rather than this folder: the page imports the SDK from `web/dist`.

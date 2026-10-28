@@ -1,6 +1,6 @@
 # Where things stand
 
-Last updated: 2026-09-15. Everything described here is committed; `git log` is the
+Last updated: 2026-10-28. Everything described here is committed; `git log` is the
 detailed record and each commit message explains *why*, not just what.
 
 ## The name: PDFCora (formerly PdfiumKit)
@@ -18,9 +18,8 @@ PDFium" stays as attribution; everything about the engine itself keeps its name
 | `PdfiumAI`, `PdfiumAIOptions` | `PdfAI`, `PdfAIOptions` — a Swift type cannot share its module's name |
 | `PDFIUMKIT_*` environment variables | `PDFCORA_*` |
 
-Not renamed, on purpose, because they are real things outside the code: this repository's
-folder and GitHub name (`PdfiumKit-v2`), and the PDFium build tree at
-`/Users/daos/Projects/Lab/pdfiumkit`.
+Not renamed, on purpose, because they are real things outside the code: the local
+working folder (`PdfiumKit-v2`) and the PDFium engine checkout (`PDFCORA_ARTIFACTS`).
 The test signing identity and the test TSA certificate were regenerated as "PDFCora Test
 Signer" / "PDFCora Test TSA" with the password `pdfcora`; nothing committed was signed with
 the old ones. The iOS modules now carry `.docc` catalogs, so DocC names its pages
@@ -30,15 +29,19 @@ the old ones. The iOS modules now carry `.docc` catalogs, so DocC names its page
 
 The SDK is feature-complete for its stated scope on iOS, Android and Web: render, text,
 search, forms, annotations, digital signatures (read/verify/sign), redaction, and a
-viewer with cross-platform sync and an optional UI component.
+viewer with cross-platform sync and an optional UI component. The Node SDK re-exports the
+web one; the Java SDK covers the subset in §1, plus DOCX to PDF on open.
 
 `pdfcora-ai` Phase 1 — grounded answers and summaries — is built on all three platforms
-and has run against real models on Apple and on an Android phone; Chrome's has not.
+and has run against real models on Apple and on an Android phone; Chrome's Summarizer has
+run for summaries in Chrome 152 (§4).
 
-Small per-feature samples live in `samples/`: core, AI and UI for iOS, Android and web,
-plus agents (MCP and WebMCP) for Node and the browser. `samples/README.md` is the index.
+Small per-feature samples live in `samples/`: core for iOS, Android, web, Node and Java;
+AI for iOS, Android, web and Node; UI for iOS, Android and web; agents (MCP and WebMCP)
+for Node and the browser; pipeline and docx for Java. `samples/README.md` is the index.
 
-No known defects are open. §3 records what was fixed on 2026-09-14 and 2026-09-15,
+One known defect is open: remediation's nesting bug on pages that already hold marked
+content (7.1-1/7.1-2, §4). §3 records what was fixed on 2026-09-14 and 2026-09-15,
 because each lesson generalises. §4 lists what is open and what was parked.
 
 ## 1. What exists
@@ -52,10 +55,10 @@ because each lesson generalises. §4 lists what is open and what was parked.
 | Viewer: editing through the viewer, presenter rule | Done, three platforms |
 | UI layer: component, configurable toolbar, theme | Done, three platforms, adopted by all demos |
 | Engine watchdog: calls behind a hung PDFium call fail fast | Done, three platforms |
-| `pdfcora-ai` Phase 1: grounded answers, summaries | Built, three platforms; real-model tested on Apple and on an Android phone |
-| Samples: one small app per feature area (core, AI, UI, agents) | iOS, Android, web — `samples/` |
-| Node SDK (`@pdfcora/node`) | Done — a thin layer over the web package: whole API re-exported, plus file, PNG and env-key helpers |
-| Java SDK (`com.pdfcora:pdfcora-java`) | Core, annotations, form filling, redaction, tagging (veraPDF-validated), signatures (read, verify, sign), viewer state — over JNI on macOS and Linux. No timestamping, no AI |
+| `pdfcora-ai` Phase 1: grounded answers, summaries | Built, three platforms; real-model tested on Apple and on an Android phone, summaries also in Chrome 152 |
+| Samples: one small app per feature area (core, AI, UI, agents, pipeline, docx) | iOS, Android, web, Node, Java — `samples/` |
+| Node SDK (`@pdfcora/node`) | Done — a thin layer over the web package: whole API re-exported, plus file and PNG helpers |
+| Java SDK (`com.pdfcora:pdfcora-java`) | Core, annotations, form filling, redaction, tagging (veraPDF-validated), signatures (read, verify, sign), viewer state, DOCX to PDF on open (docxide-pdf) — over JNI on macOS and Linux, one engine thread per process. No timestamping, no AI |
 | `pdfcora-ai` Phase 2a: redaction suggestions, review marks in the viewer, undo | Done, three platforms, shared cases in `conformance/redaction/` |
 | `pdfcora-ai` Phase 2b: smart form filling from a profile, labelled marks, undo | Done, three platforms, shared cases in `conformance/forms/`; no on-device model (measured) |
 | Core structure tree read; figure alt text and decorative writes | Done, three platforms; written documents pass veraPDF PDF/UA-1 (`scripts/verapdf-ua1.sh`) |
@@ -67,11 +70,11 @@ because each lesson generalises. §4 lists what is open and what was parked.
 | `pdfcora-ai` semantic diff: sentence alignment, meaning vs wording labels | Done, three platforms, shared pair in `conformance/diff/`; Apple's model 3 of 3 runs right |
 | `pdfcora-ai` Phase 3a: alt text proposals for figures in tagged PDFs | Done, three platforms, shared document in `conformance/alt-text/`; ML Kit image description measured on a Samsung SM-F971B on 2026-09-16 |
 
-Test counts at the time of writing (2026-09-16): web 303, web-ai 128 (one Ollama test skipped),
-browser viewer 36 (includes the axe audit and WebMCP), MCP server 3, iOS 191 (sweep
-skipped) + hung-render pass + demo UI 14 + AI 75 (three Apple measurements skipped), Android 165
-instrumented (sweep skipped) + UI 7 + hung-render pass + JVM, AI JVM + 32 instrumented, Node 7,
-Java 50. pdfsig accepts the signed document on iOS, Android and the Java SDK; veraPDF passes the alt text and remediation output on all three, and the Java
+Test counts on 2026-10-28: web 270, web-ai 128 (one Ollama test skipped), Node 6, Java 61
+(10 DOCX, 1 multi-document threading). Counted from test declarations, so approximate: MCP
+server 3, iOS about 180 (sweep skipped) + hung-render pass + demo UI 14 + AI 75, Android about
+150 instrumented (sweep skipped) + UI 7 + hung-render pass + JVM, AI 33 JVM + 33 instrumented.
+The browser viewer suite (axe audit and WebMCP included): see CI. pdfsig accepts the signed document on iOS, Android and the Java SDK; veraPDF passes the alt text and remediation output on all three, and the Java
 SDK's tagged output.
 
 ## 2. Running things
@@ -82,11 +85,15 @@ cd web-ai && npm test                    # web AI
 ./scripts/test-web-browser.sh            # web viewer component in headless Chrome
 ./scripts/test-ios.sh                    # iOS  (simulator)
 ANDROID_SERIAL=emulator-5554 ./scripts/test-android.sh
+./scripts/test-node.sh                   # Node SDK
+./scripts/test-java.sh                   # Java SDK, then veraPDF (and pdfsig, if installed) on its output
 ./scripts/check-core-deps.sh             # the core must gain no AI dependency
 ```
 
 **CI on GitHub** runs web, web-ai, conformance, core-deps, the Android JVM tests and build,
-and the iOS SDK and AI suites. The Android emulator suite and the iOS demo UI tests stay
+the iOS SDK and AI suites, and java: a macOS runner builds the JNI library
+(`./scripts/build-jni.sh macos`) and runs `scripts/test-java.sh`, with veraPDF on the
+tagged output. The Android emulator suite and the iOS demo UI tests stay
 local (the gates above). The PDFium binaries come from the release `vendor-chromium-7243`,
 downloaded by `.github/actions/fetch-vendor`; a new PDFium build needs a new release
 archive in the layout `scripts/fetch-vendor.sh` reads (`out/…` and `src-android/…`).
@@ -99,13 +106,13 @@ empty message — which reads exactly like a flaky test and is not one.
 emulator -avd Pixel_9 -memory 4096 -no-window -gpu swiftshader_indirect -crash-report-mode never
 ```
 
-The extra flags are from a bad evening on a loaded Mac: a windowed emulator repeatedly
+The extra flags come from a heavily loaded Mac: a windowed emulator repeatedly
 stopped answering `adb shell` while still listed as `device`, Gradle then read its API
 level as 1 and refused to install, and a crashed emulator's relaunch sat on an invisible
 crash-report consent dialog. Headless with software GPU stayed responsive.
 
-**Releasing.** The source stays in this private repository; only packages and samples
-are public. In order:
+**Releasing.** The source is public at github.com/pdfcora/pdfcora under the MIT
+license; the packages are built from it. None is published yet. In order:
 
 ```bash
 ./scripts/publish-npm.sh [--publish]        # @pdfcora/web, web-ai, node, pdfcora-mcp
@@ -119,16 +126,16 @@ are public. In order:
   `PDFCORA_SIGNING_KEY`/`PDFCORA_SIGNING_PASSWORD` (a PGP key whose public half is on
   keys.openpgp.org) and `PDFCORA_CENTRAL_TOKEN`. The upload is user-managed: press
   Publish in the portal.
-- iOS: push `build/swift/repo` to github.com/pdfcora/pdfcora-swift, tag it with the
+- iOS: push `build/swift/repo` to github.com/pdfcora/pdfcora-swift (not created yet), tag it with the
   version, and attach the three zips to that tag's release. The checksums in
   `Package.swift` are for those exact zips, so rebuild and re-upload together.
 - Samples: `.github/workflows/samples-sync.yml` pushes the export to
-  github.com/pdfcora/samples once the `SAMPLES_DEPLOY_KEY` secret is set; set it only
+  github.com/pdfcora/samples (not created yet) once the `SAMPLES_DEPLOY_KEY` secret is set; set it only
   after the packages above are live.
 
-Published artifacts carry no source: the Maven sources jars hold a README only, and the
-Swift frameworks ship public interfaces only. The npm packages are compiled JavaScript,
-which is readable. `build/samples-public` was checked against the local packages on
+Published artifacts carry the licence and the third-party notices: the npm packages and
+the Maven jars include `LICENSE.md` and `NOTICE.md` (the jars under `META-INF`), and so does
+the Swift package repository. The Maven sources jars hold the real sources. `build/samples-public` was checked against the local packages on
 2026-09-17: Node and Java samples run, Android samples run on the emulator, iOS samples
 build and launch on the simulator.
 
@@ -220,7 +227,7 @@ needs the screen on, not merely a resumed activity. No custom provider has descr
 real; those tests use a fake. The writer finds a figure by page and marked-content ids, so a
 figure without marked content, or one whose type is role-mapped to `Figure`, is not listed.
 veraPDF (`scripts/install-verapdf.sh`, Java 11+) is the PDF/UA judge; CI runs it on the web
-output, the local gates on the iOS and Android output.
+and Java output, the local gates on the iOS and Android output.
 
 **Checkboxes are set through PDFium's form-fill environment** (a space key on the focused widget)
 since 2026-09-15. Before, `setChecked` wrote `/V` and `/AS` as strings: PDFium read them back, so
@@ -253,6 +260,12 @@ viewer state layer. `scripts/test-java.sh` puts both write paths in front of out
 judges: veraPDF for the tagged document's PDF/UA-1 claim, and poppler's `pdfsig` for the
 signed one, which reports *Signature is Valid, Total document signed*.
 
+It also opens DOCX: `PdfDocument.open` converts a Word file to PDF with docxide-pdf, a
+Rust static library built from `java/src/main/rust` and linked into the JNI library, so
+building that library needs Rust 1.92 (targets `aarch64-apple-darwin` and
+`x86_64-apple-darwin` on a Mac). Like iOS and Android, every PDFium call in the process runs
+on one engine thread, whatever the number of documents.
+
 What it does *not* have: **RFC 3161 timestamping** (a signature is PAdES B-B, not B-T), **the AI package**, and no
 Windows engine.
 
@@ -264,14 +277,16 @@ error instead of being half-written. PDFium also re-saves and normalises whateve
 writes — `/Lang(en)` for `/Lang (en)` — so tests that inspect the bytes allow either
 spacing, and marked content is only visible after inflating the content stream. It uses JNI rather than the Foreign Function API so it runs on
 Java 17; FFM would need 22+, and JDK 21 only offers it as a preview. The native library is
-built by `scripts/build-jni.sh` from `vendor/desktop`, which means the Java SDK depends on
-the desktop engines, and those are optional artifacts. macOS and Linux only: there is no
+built by `scripts/build-jni.sh` from `vendor/desktop` and the Rust converter, which means the
+Java SDK depends on the desktop engines, and those are optional artifacts. On a Mac,
+`./scripts/build-jni.sh macos` builds it; the Linux libraries build in Docker and need the
+PDFium engine checkout (`PDFCORA_ARTIFACTS`). macOS and Linux only: there is no
 Windows engine build. Every feature added to it is a feature to add four times, which is
 the cost to weigh before extending it.
 
 **The Node SDK is not a fourth implementation**, deliberately. `@pdfcora/node` re-exports
 `@pdfcora/web` — a test asserts every export is present — and adds only `openFile`,
-`saveFile`, `renderPng`, `renderRaw` and `useLicenseFromEnvironment`. The engine is the same
+`saveFile`, `renderPng`, `renderRaw` and `encodePng`. The engine is the same
 WebAssembly build. What a server does not get from it is `PdfWorker`: containing a stalled
 page needs a `worker_thread` or a child process.
 
@@ -307,8 +322,8 @@ German page are grounded, and a quota bug it exposed is fixed. `node web-ai/scri
 reruns it (the model stays in `~/.cache/pdfcora/chrome-ai-profile`). A real custom provider
 has run: Llama 3.2 3B through Ollama grounds 25 of 30 answers (`web-ai/test/ollama.test.ts`).
 
-**The code is on GitHub** at `github.com/indaos/PdfiumKit-v2`, a **private** repository,
-first pushed on 2026-09-15. Keep it private: the SDK's source includes the license check.
+**The code is on GitHub** at `github.com/pdfcora/pdfcora`, a public repository under the
+MIT license.
 
 **The PDFium corpus sweep** (293 test resources) runs on all three platforms:
 `node conformance/robustness.mjs`, `scripts/sweep-ios.sh`, and

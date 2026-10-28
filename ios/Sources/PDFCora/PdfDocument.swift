@@ -18,8 +18,8 @@ enum PdfEngine {
 /// An open PDF document.
 ///
 /// Every PDFium call for this document and anything reached through it runs on this
-/// actor, which is what makes the SDK safe to use from any task. Separate documents
-/// have separate actors, so unrelated documents render in parallel.
+/// actor, which is what makes the SDK safe to use from any task. Every document's actor
+/// runs on the same engine thread, so calls on separate documents take turns.
 public actor PdfDocument {
     /// Every document runs on the same engine thread. See ``EngineExecutor``: PDFium's
     /// global state is not thread-safe, so per-actor executors let two documents race it.

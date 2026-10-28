@@ -1,8 +1,8 @@
 package com.pdfcora;
 
 /**
- * The one exception this SDK throws. The cases are the same on iOS, Android, the web and
- * here, so error handling ports between platforms unchanged.
+ * The one exception this SDK throws. Its cases are a subset of the core cases that iOS,
+ * Android and the web share; those platforms add cases of their own.
  */
 public final class PdfError extends RuntimeException {
   public enum Code {

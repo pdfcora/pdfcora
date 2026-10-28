@@ -44,3 +44,32 @@ openssl req -x509 -newkey rsa:2048 -keyout tsa/tsa-key.pem -out tsa/tsa-cert.pem
 
 The certificate carries the `timeStamping` extended key usage, without which `openssl ts`
 refuses to act as an authority.
+
+`tsa/tsa-resp.cnf` is the `openssl ts -reply` configuration the web timestamping test
+(`web/test/timestamp.test.ts`) answers requests with: signer certificate and key, SHA-256,
+policy and accuracy. The test skips when it is missing.
+
+## contract.pdf
+
+The document grounded answers are tested on: three pages — clauses, the clause the
+acceptance test asks about, and a scanned-looking page with no text layer. It is written
+by hand by `node conformance/make-contract.mjs`, not by the SDK, so it cannot inherit a
+bug from the code it tests.
+
+## docx/
+
+The Java SDK's DOCX fixtures, made by `conformance/docx/make-fixtures.sh` from the XML in
+`conformance/docx/src`:
+
+| File | What it is |
+| --- | --- |
+| `hello.docx` | A small valid document |
+| `empty.docx` | A valid document with no content |
+| `not-docx.zip` | A ZIP that is not a DOCX |
+| `truncated.docx` | The first half of `hello.docx` |
+| `legacy.doc` | `hello.docx` converted to a legacy Word `.doc` (LibreOffice) |
+| `encrypted.docx` | `hello.docx` encrypted with the password `secret` (msoffcrypto-tool) |
+
+The first four are rebuilt on every run, with a fixed time stamp so the bytes do not
+change. `legacy.doc` and `encrypted.docx` are committed and made only when missing,
+because they need LibreOffice and `msoffcrypto-tool`.

@@ -8,7 +8,7 @@ package.
 npm install @pdfcora/web
 ```
 
-Documentation: https://pdfcora.com/developers.html
+Documentation: https://pdfcora.pages.dev/developers.html
 
 ## Point the SDK at its engine
 

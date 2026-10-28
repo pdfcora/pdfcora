@@ -5,8 +5,8 @@ Small apps, each doing one thing so the code is readable end to end. They are se
 from `ios/Demo` and `android/demo`, which show everything at once.
 <!-- /repo -->
 <!-- public
-Small apps for the [PDFCora](https://pdfcora.com) PDF SDK, each doing one thing so the
-code is readable end to end. API reference: https://pdfcora.com/developers.html
+Small apps for the [PDFCora](https://pdfcora.pages.dev) PDF SDK, each doing one thing so the
+code is readable end to end. API reference: https://pdfcora.pages.dev/developers.html
 -->
 
 | | iOS | Android | Web | Node | Java |

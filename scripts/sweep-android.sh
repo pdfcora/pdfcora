@@ -10,7 +10,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-CORPUS="${1:-/Users/daos/Projects/Lab/pdfiumkit/src/pdfium/testing/resources}"
+CORPUS="${1:-${PDFCORA_ARTIFACTS:-.}/src/pdfium/testing/resources}"
 ON_DEVICE=/data/local/tmp/pdfium-corpus
 PACKAGE=com.pdfcora.test
 work=$(mktemp -d)

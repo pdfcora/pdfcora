@@ -3,7 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const SRC = '/Users/daos/Projects/Lab/pdfiumkit/src/pdfium/testing/resources';
+const SRC = `${process.env.PDFCORA_ARTIFACTS ?? '.'}/src/pdfium/testing/resources`;
 const MAX_BYTES = 200 * 1024;
 
 const SELECTION = [

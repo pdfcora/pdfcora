@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PDFCora demos and samples</title>
-  <meta name="description" content="Fourteen small sample apps, one per feature area, for iOS, Android, the web, Node and Java, plus two full demo apps. Each opens a bundled PDF and shows one thing, so the code reads top to bottom.">
+  <meta name="description" content="Fifteen small sample apps, one per feature area, for iOS, Android, the web, Node and Java, plus two full demo apps. Each opens a bundled PDF and shows one thing, so the code reads top to bottom.">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#07080c">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -39,10 +39,10 @@
       <div class="wrap">
         <p class="eyebrow">Demos</p>
         <h1>Demos and samples</h1>
-        <p class="lede">Fourteen small samples, one per feature area on every SDK it exists for, plus a full demo app on iOS and Android. All of them run from the repository.</p>
+        <p class="lede">Fifteen small samples, one per feature area on every SDK it exists for, plus a full demo app on iOS and Android. All of them run from the repository.</p>
         <div class="cta">
           <a class="btn btn-primary" href="demo/index.html">Open the live demo <span aria-hidden="true">→</span></a>
-          <a class="btn btn-glass" href="https://github.com/pdfcora/samples">Samples on GitHub</a>
+          <a class="btn btn-glass" href="https://github.com/pdfcora/pdfcora/tree/master/samples">Samples on GitHub</a>
         </div>
         <p class="muted" style="margin-top:1rem">The live demo runs the SDK in your browser on a document you choose — nothing is uploaded.</p>
       </div>
@@ -61,7 +61,7 @@
             <thead><tr><th scope="col">Shows</th><th scope="col">iOS</th><th scope="col">Android</th><th scope="col">Web</th><th scope="col">Node</th><th scope="col">Java</th></tr></thead>
             <tbody>
               <tr><th scope="row">Core — open, text, search, form fields, render, save</th><td><code>samples/core-ios</code></td><td><code>samples/core-android</code></td><td><code>samples/core-web</code></td><td><code>samples/core-node</code></td><td><code>samples/core-java</code></td></tr>
-              <tr><th scope="row">AI — summarise, propose redactions, accept, undo</th><td><code>samples/ai-ios</code></td><td><code>samples/ai-android</code></td><td><code>samples/ai-web</code></td><td><code>samples/ai-node</code></td><td>—</td></tr>
+              <tr><th scope="row">AI — summarise, propose redactions, accept; undo on the web and Node</th><td><code>samples/ai-ios</code></td><td><code>samples/ai-android</code></td><td><code>samples/ai-web</code></td><td><code>samples/ai-node</code></td><td>—</td></tr>
               <tr><th scope="row">UI — the viewer with a custom toolbar and theme</th><td><code>samples/ui-ios</code></td><td><code>samples/ui-android</code></td><td><code>samples/ui-web</code></td><td>—</td><td>—</td></tr>
               <tr><th scope="row">Agents — an MCP client and a WebMCP page</th><td>—</td><td>—</td><td><code>samples/agents-web</code></td><td><code>samples/agents-web</code></td><td>—</td></tr>
               <tr><th scope="row">Pipeline — tag for accessibility, sign, countersign</th><td>—</td><td>—</td><td>—</td><td>—</td><td><code>samples/pipeline-java</code></td></tr>
@@ -86,6 +86,7 @@
 <pre tabindex="0"><code>./scripts/fetch-vendor.sh              <span class="c"># PDFium binaries, once</span>
 (<span class="k">cd</span> web    &amp;&amp; npm install &amp;&amp; npm run build)
 (<span class="k">cd</span> web-ai &amp;&amp; npm install &amp;&amp; npm run build)
+(<span class="k">cd</span> mcp    &amp;&amp; npm install &amp;&amp; npm run build)   <span class="c"># for agents-web's node mcp-client.mjs</span>
 python3 -m http.server 8000
 
 <span class="c"># then open</span>
@@ -142,7 +143,7 @@ gradle installDebug</code></pre>
       <div class="wrap">
         <header class="section-head reveal">
           <p class="eyebrow">Node and Java</p>
-          <h2 id="server-h">Four scripts, no screen.</h2>
+          <h2 id="server-h">Five scripts, no screen.</h2>
           <p>A server does not render for a person to look at. These read documents, change them under review, and produce files another system consumes.</p>
         </header>
         <div class="two-col reveal">
@@ -162,11 +163,11 @@ gradle installDebug</code></pre>
             <div class="code-card"><div class="code-head"><div class="tablist"><span class="panel-label-tab">Shell</span></div></div>
             <div class="panel">
 <pre tabindex="0"><code>./scripts/fetch-vendor.sh
-./scripts/build-jni.sh                 <span class="c"># the native engine for this platform</span>
+./scripts/build-jni.sh macos           <span class="c"># the native engine; needs Rust 1.92</span>
 <span class="k">cd</span> samples/core-java
 gradle run</code></pre>
             </div></div>
-            <p class="muted">Java 17+, macOS and Linux. The SDK is resolved from the repository through an included build.</p>
+            <p class="muted">A JDK 17 installed (Gradle builds with a Java 17 toolchain), macOS and Linux. <code>build-jni.sh</code> needs Rust 1.92: <code>rustup toolchain install 1.92</code>, with the <code>aarch64-apple-darwin</code> and <code>x86_64-apple-darwin</code> targets. The Linux libraries need the PDFium engine checkout and Docker, so only maintainers build them. The SDK is resolved from the repository through an included build.</p>
           </div>
         </div>
         <div class="cards">
@@ -174,6 +175,7 @@ gradle run</code></pre>
           <article class="card reveal"><h3>AI — Node</h3><p>Personal data found by patterns, a reviewer&rsquo;s accepted ids applied and nothing else, a report of what left the bytes, then undo. Patterns need no model, which is what makes them useful in a batch job.</p></article>
           <article class="card reveal"><h3>Core — Java</h3><p>The same core API on the JVM, rendering through <code>BufferedImage</code> and <code>ImageIO</code>.</p></article>
           <article class="card reveal"><h3>Pipeline — Java</h3><p>Tag an untagged document for accessibility, sign it, then sign it again &mdash; and watch the first signature keep verifying, because the update is appended rather than rewritten.</p></article>
+          <article class="card reveal"><h3>DOCX — Java</h3><p>A Word file opened with the same <code>PdfDocument.open</code> call as a PDF: its page text printed, page 1 rendered to a PNG, and the result saved as a PDF.</p></article>
         </div>
       </div>
     </section>

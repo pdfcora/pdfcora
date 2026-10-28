@@ -17,7 +17,13 @@ OUT="$ROOT/build/central"
 REPO="$OUT/repo"
 
 [ -n "${PDFCORA_SIGNING_KEY:-}" ] || { echo "PDFCORA_SIGNING_KEY is not set; Central rejects unsigned files" >&2; exit 1; }
-[ -d "$ROOT/java/src/main/resources/native" ] || { echo "no native engine for Java; run ./scripts/build-jni.sh" >&2; exit 1; }
+# The jar must carry all four engines, each with the DOCX converter linked in.
+for lib in macos-arm64/libpdfcora_jni.dylib macos-x86_64/libpdfcora_jni.dylib \
+           linux-x86_64/libpdfcora_jni.so linux-aarch64/libpdfcora_jni.so; do
+    f="$ROOT/java/src/main/resources/native/$lib"
+    [ -f "$f" ] || { echo "missing $lib; run ./scripts/build-jni.sh (Linux needs PDFCORA_ARTIFACTS)" >&2; exit 1; }
+    grep -q Java_com_pdfcora_Native_convertDocx "$f" || { echo "$lib has no DOCX converter; rebuild it" >&2; exit 1; }
+done
 if [ "${1:-}" = "--upload" ]; then
     [ -n "${PDFCORA_CENTRAL_TOKEN:-}" ] || { echo "PDFCORA_CENTRAL_TOKEN is not set" >&2; exit 1; }
 fi

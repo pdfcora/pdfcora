@@ -8,7 +8,7 @@ remediation, document diff, and tools for AI agents (MCP and WebMCP).
 npm install @pdfcora/web @pdfcora/web-ai
 ```
 
-Documentation: https://pdfcora.com/ai.html
+Documentation: https://pdfcora.pages.dev/developers.html
 
 ## Use
 

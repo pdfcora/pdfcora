@@ -3,7 +3,7 @@
 <body>
 <pre id="log">running…</pre>
 <script type="module">
-import { PdfWorker, PdfError } from '../dist/src/index.js';
+import { PdfWorker, PdfError } from '../dist/index.js';
 
 const log = [];
 const say = (m) => { log.push(m); document.getElementById('log').textContent = log.join('\n'); };

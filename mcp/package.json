@@ -3,7 +3,15 @@
   "version": "0.1.0",
   "description": "An MCP server that gives AI agents PDFCora's PDF tools",
   "license": "MIT",
-  "homepage": "https://pdfcora.com",
+  "homepage": "https://pdfcora.pages.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pdfcora/pdfcora.git",
+    "directory": "mcp"
+  },
+  "bugs": {
+    "url": "https://github.com/pdfcora/pdfcora/issues"
+  },
   "type": "module",
   "bin": { "pdfcora-mcp": "./dist/main.js" },
   "main": "./dist/server.js",

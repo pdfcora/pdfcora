@@ -1,6 +1,7 @@
 package com.pdfcora
 
-/// Errors raised by PDFCora. The cases match the iOS and Web SDKs exactly.
+/// Errors raised by PDFCora. The cases match the Web SDK; iOS adds cases of its own, and
+/// Java has a subset.
 sealed class PdfError(message: String) : Exception(message) {
     object PasswordRequired : PdfError("a password is required to open this document")
     object WrongPassword : PdfError("the supplied password is incorrect")

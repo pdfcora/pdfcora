@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PDFCora documentation</title>
-  <meta name="description" content="How PDFCora is put together: one engine behind five idiomatic APIs for iOS, Android, the Web, Node and Java, a serial executor per document, typed errors, explicit coordinates, and the limits stated up front.">
+  <meta name="description" content="How PDFCora is put together: one engine behind five idiomatic APIs for iOS, Android, the Web, Node and Java, one engine thread behind every call, typed errors, explicit coordinates, and the limits stated up front.">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#07080c">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -44,7 +44,7 @@
       <div class="wrap">
         <p class="eyebrow">Docs</p>
         <h1>Documentation</h1>
-        <p class="lede">PDFCora is PDFium, pinned to a known revision, wrapped so that Swift, Kotlin, TypeScript and Java each get the API their developers expect — with the same types, the same method names and the same error cases, on a phone, in a browser and on a server.</p>
+        <p class="lede">PDFCora is PDFium, pinned to a known revision, wrapped so that Swift, Kotlin, TypeScript and Java each get the API their developers expect — with the same types, the same method names and the same core error cases, on a phone, in a browser and on a server.</p>
         <nav class="page-nav" aria-label="On this page">
           <a href="#modules">Modules</a><a href="#threading">Threading</a><a href="#errors">Errors</a>
           <a href="#coordinates">Coordinates</a><a href="#viewer">Viewer</a><a href="#reference">Reference</a><a href="#limits">Limits</a>
@@ -57,7 +57,7 @@
         <header class="section-head reveal">
           <p class="eyebrow">Modules</p>
           <h2 id="modules-h">Take the core. Add the rest when you need it.</h2>
-          <p>The core never depends on the AI or UI packages — a build check enforces it — so an app that only renders PDFs ships only the engine. On a server there is no UI to take.</p>
+          <p>The core never depends on an AI runtime — a build check enforces it on iOS, Android and the web — so an app that only renders PDFs ships no model code. On iOS and Android the UI is its own package; on the web the viewer component is part of the core package. On a server there is no UI to take.</p>
         </header>
 
         <div class="table-scroll reveal">
@@ -68,12 +68,12 @@
               <tr><th scope="row">Core</th><td><code>PDFCora</code></td><td><code>com.pdfcora:pdfcora</code></td><td><code>@pdfcora/web</code></td><td><code>@pdfcora/node</code></td><td><code>com.pdfcora:pdfcora-java</code></td><td>Render, text, search, forms, annotations, signatures, redaction, tags, save; on Java, also opens DOCX by converting it to PDF</td></tr>
               <tr><th scope="row">AI</th><td><code>PDFCoraAI</code></td><td><code>com.pdfcora:pdfcora-ai</code></td><td><code>@pdfcora/web-ai</code></td><td><code>@pdfcora/web-ai</code></td><td>—</td><td>Answers, summaries, redaction and form proposals, alt text, remediation, diff</td></tr>
               <tr><th scope="row">UI</th><td><code>PDFCoraUI</code></td><td><code>com.pdfcora:pdfcora-ui</code></td><td><code>PdfViewerElement</code></td><td>—</td><td><code>PdfViewer</code> state only</td><td>A viewer component with a configurable toolbar, theme and review bar</td></tr>
-              <tr><th scope="row">Agents</th><td>—</td><td>—</td><td><code>pdfcora-mcp</code></td><td><code>pdfcora-mcp</code></td><td>—</td><td>An MCP server and WebMCP registration for AI agents</td></tr>
+              <tr><th scope="row">Agents</th><td>—</td><td>—</td><td><code>registerWebMcpTools</code> in <code>@pdfcora/web-ai</code></td><td><code>pdfcora-mcp</code></td><td>—</td><td>WebMCP registration for a browser’s agent; an MCP server over stdio for agents such as Claude Desktop</td></tr>
             </tbody>
           </table>
         </div>
         <p class="muted" style="margin-top:.9rem">Requirements: iOS 15+ with Swift 5.9 · Android minSdk 23 with all four ABIs · Web and Node as ESM with the <code>.wasm</code> inside the package, Node 18+ · Java 17+ on macOS and Linux, x86-64 and arm64, with the native engine in the jar.</p>
-        <p class="muted">Node is the web package with file and PNG helpers on top, not a second implementation, so anything written against the web SDK runs there unchanged. Java is its own implementation over the native engine: it carries the document API, annotations, form filling, redaction, tagging, signing and the viewer <em>state</em> layer — there is no component to draw, and no AI package yet.</p>
+        <p class="muted">Node is the web package with file and PNG helpers on top, not a second implementation, so anything written against the web SDK runs there unchanged. Java is its own implementation over the native engine: it carries the document API, annotations, form filling, redaction, tagging, signing, DOCX opening and the viewer <em>state</em> layer — there is no component to draw, and no AI package yet.</p>
       </div>
     </section>
 
@@ -84,11 +84,11 @@
           <h2 id="threading-h">Thread-safe, on every platform.</h2>
         </header>
         <div class="cards">
-          <article class="card reveal"><span class="tag">iOS</span><h3>An actor per document</h3><p>Every call hops onto the document’s actor, so concurrent calls serialise. <code>async</code>/<code>await</code> throughout.</p></article>
-          <article class="card reveal"><span class="tag">Android</span><h3>A single-threaded dispatcher</h3><p>Each document owns one dispatcher; suspending functions run there. Your coroutine scope stays yours.</p></article>
-          <article class="card reveal"><span class="tag">Web</span><h3>A promise chain, or a Worker</h3><p>In-process calls queue behind one chain. <code>PdfWorker</code> runs the whole SDK in a Worker behind the same API, so a stalled render can be terminated without taking the page down.</p></article>
-          <article class="card reveal"><span class="tag">Node &amp; Java</span><h3>One thread per document</h3><p>Node inherits the web SDK&rsquo;s promise chain. On Java each document owns a thread and every call runs on it, so a request pool can share one document and the calls simply serialise.</p></article>
-          <article class="card reveal card-lead"><span class="tag">Everywhere</span><h3>A watchdog for the calls that never return</h3><p>A malformed page can stall inside the engine where no cancellation reaches. Each document has its own executor, and a watchdog marks the engine unresponsive so later calls fail fast with a typed error rather than piling up behind it. A stalled document cannot take the others with it.</p></article>
+          <article class="card reveal"><span class="tag">iOS</span><h3>One engine thread, shared</h3><p>Each document is an actor, and every document’s actor runs on the same engine thread, because PDFium’s state is global. Calls on any document serialise. <code>async</code>/<code>await</code> throughout.</p></article>
+          <article class="card reveal"><span class="tag">Android</span><h3>One engine thread, shared</h3><p>Every document’s suspending functions run on one engine thread for the whole process, so calls on any document serialise. Your coroutine scope stays yours.</p></article>
+          <article class="card reveal"><span class="tag">Web</span><h3>A promise chain, or a Worker</h3><p>In-process calls run on the JavaScript thread, and each document queues them behind one chain. <code>PdfWorker</code> runs the whole SDK in a Worker behind the same API, so a stalled render can be terminated without taking the page down.</p></article>
+          <article class="card reveal"><span class="tag">Node &amp; Java</span><h3>Promise chain, or one engine thread</h3><p>Node inherits the web SDK&rsquo;s promise chain. On Java every call on every document runs on one engine thread for the whole process, so a request pool can share documents safely: the calls serialise, they do not run in parallel. DOCX conversion runs on the calling thread.</p></article>
+          <article class="card reveal card-lead"><span class="tag">iOS &amp; Android</span><h3>A watchdog for the calls that never return</h3><p>A malformed page can stall inside the engine where no cancellation reaches. One engine thread serves every document, so a watchdog makes the calls queued behind a stuck call fail fast with <code>engineUnresponsive</code> — on every document, not only the stuck one — rather than piling up behind it. They succeed again if the stuck call ever returns. Java has no watchdog yet. On the web, <code>PdfWorker</code> isolates a hang in its Worker.</p></article>
         </div>
       </div>
     </section>
@@ -97,21 +97,22 @@
       <div class="wrap">
         <header class="section-head reveal">
           <p class="eyebrow">Errors</p>
-          <h2 id="errors-h">A closed set of errors, identical everywhere.</h2>
-          <p>No native crashes, no untyped throws. The same case names appear in Swift, Kotlin, TypeScript and Java, so error handling ports between platforms unchanged.</p>
+          <h2 id="errors-h">A closed set of errors, the same core everywhere.</h2>
+          <p>No native crashes, no untyped throws. The first seven cases below exist in Swift, Kotlin, TypeScript and Java, each in its language’s spelling (<code>wrongPassword</code>, <code>WrongPassword</code>, <code>WRONG_PASSWORD</code>), so error handling ports between platforms. Java has only those seven. iOS, Android and the web add a few more, such as <code>unsupportedSecurity</code>, <code>cancelled</code>, <code>engine</code> and <code>engineUnresponsive</code>.</p>
         </header>
         <div class="table-scroll reveal">
           <table class="matrix">
             <caption class="sr">Error cases</caption>
             <thead><tr><th scope="col">Case</th><th scope="col">When it happens</th></tr></thead>
             <tbody>
-              <tr><th scope="row"><code>passwordRequired</code></th><td>The document is encrypted and the password was wrong or missing</td></tr>
+              <tr><th scope="row"><code>passwordRequired</code></th><td>The document is encrypted and no password was given</td></tr>
+              <tr><th scope="row"><code>wrongPassword</code></th><td>A password was given and the document refused it</td></tr>
               <tr><th scope="row"><code>corrupt</code></th><td>The file, or one page of it, cannot be parsed</td></tr>
               <tr><th scope="row"><code>pageOutOfRange</code></th><td>A page index outside the document</td></tr>
               <tr><th scope="row"><code>closed</code></th><td>The document was used after <code>close()</code> — raised instead of touching freed memory</td></tr>
               <tr><th scope="row"><code>invalidOperation</code></th><td>The call cannot apply: tagging a tagged document, a field that is read-only, alt text on a non-figure</td></tr>
-              <tr><th scope="row"><code>unresponsive</code></th><td>The engine stalled on an earlier call and this document is no longer usable</td></tr>
               <tr><th scope="row"><code>saveFailed</code></th><td>Writing the document failed</td></tr>
+              <tr><th scope="row"><code>engineUnresponsive</code></th><td>Not on Java. The engine is stuck on an earlier call, so this call fails instead of waiting: through the watchdog on iOS and Android, or when <code>PdfWorker</code> terminates a hung Worker on the web</td></tr>
             </tbody>
           </table>
         </div>
@@ -127,7 +128,7 @@
         <header class="section-head reveal">
           <p class="eyebrow">Coordinates</p>
           <h2 id="coords-h">PDF space in, view space out — explicitly.</h2>
-          <p><code>PdfRect</code> is always PDF space, with the origin bottom-left, normalised so <code>left &lt;= right</code> and <code>bottom &lt;= top</code>. The viewer’s <code>transform()</code> converts in both directions with <code>toView</code> and <code>toPdf</code>. There is no hidden Y-flip anywhere in the API.</p>
+          <p><code>PdfRect</code> is always PDF space, with the origin bottom-left, normalised so <code>left &lt;= right</code> and <code>bottom &lt;= top</code>. The viewer’s <code>transform()</code> converts in both directions with <code>toView</code>, <code>toViewRect</code> and <code>toPdf</code>. There is no hidden Y-flip anywhere in the API.</p>
         </header>
         <div class="code-card reveal">
           <div class="code-head"><div class="tablist"><span class="panel-label-tab">TypeScript</span></div></div>
@@ -135,7 +136,7 @@
             <span class="panel-label">Mapping a search hit onto the screen</span>
 <pre tabindex="0"><code><span class="k">const</span> hits = <span class="k">await</span> page.text.<span class="f">search</span>(<span class="s">'invoice'</span>)
 <span class="k">const</span> box  = <span class="k">await</span> page.text.<span class="f">boundingBox</span>(hits[<span class="n">0</span>].start)
-<span class="k">const</span> view = viewer.<span class="f">transform</span>().<span class="f">toView</span>(box)  <span class="c">// pixels, origin top-left</span></code></pre>
+<span class="k">const</span> view = viewer.<span class="f">transform</span>().<span class="f">toViewRect</span>(box)  <span class="c">// pixels, origin top-left</span></code></pre>
           </div>
         </div>
       </div>
@@ -235,7 +236,7 @@
           <li>Only the Java SDK opens Word files, and only DOCX — not <code>.doc</code>, XLSX or PPTX. The PDF matches Word’s only as far as the server has the document’s fonts; the Java README lists the packages to install.</li>
           <li>Java signs as PAdES B-B. A timestamp, which would make it B-T, needs a call to an authority and is not wired up there yet; iOS, Android and the Web take a <code>timestampUrl</code>.</li>
           <li>Cancelling a render mid-call is not possible on any platform; iOS cancels between progressive steps.</li>
-          <li>Recovering from an engine hang fully is Web-only, through <code>PdfWorker</code>; the other SDKs contain it rather than recover. <code>PdfWorker</code> is re-exported on Node but needs a browser <code>Worker</code>, which Node does not have.</li>
+          <li>Recovering from an engine hang fully is Web-only, through <code>PdfWorker</code>. On iOS and Android the watchdog makes every document’s calls fail fast with <code>engineUnresponsive</code> until the stuck call returns; Java has no watchdog, so a hang blocks every document. <code>PdfWorker</code> is re-exported on Node but needs a browser <code>Worker</code>, which Node does not have.</li>
           <li>Remediation writes tags from rules, not a model: tables become paragraphs, vector charts become artifacts, reading order is content order, and annotations and links are not tagged.</li>
           <li>There is no OCR, so a scanned page has nothing to tag or search.</li>
           <li>On an encrypted document, the features that append to the file — signing, tagging, alternate text, creating form fields and incremental saves — are refused, because appended strings would have to be encrypted with the document’s own key. Reading, rendering, filling existing fields, annotating, redacting and saving all work.</li>

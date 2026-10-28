@@ -9,10 +9,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * An open PDF document.
  *
- * Every PDFium call for this document and anything reached through it runs on this
- * document's single-threaded dispatcher, which is what makes the SDK safe to use from
- * any coroutine. Separate documents get separate dispatchers, so unrelated documents
- * render in parallel.
+ * Every PDFium call for this document and anything reached through it runs on the one
+ * engine thread ([EngineExecutor]), which is what makes the SDK safe to use from any
+ * coroutine. Every document shares that thread, so calls on separate documents take turns.
  *
  * Close it with [close], or use `document.use { ... }`.
  */

@@ -40,19 +40,19 @@ struct ContentView: View {
         do {
             // The document is an actor: every call below runs off the main thread.
             let document = try await PdfDocument(url: url)
-            let first = try document.page(0)
+            let first = try await document.page(0)
             facts = [
-                "Pages: \(document.pageCount)",
-                "Title: \(document.metadata.title ?? "(none)")",
-                "Signatures: \(try document.signatures().count)",
+                "Pages: \(await document.pageCount)",
+                "Title: \(try await document.metadata.title ?? "(none)")",
+                "Signatures: \(try await document.signatures().count)",
                 "Matches for \"the\" on page 1: \(try await first.text.search("the").count)",
                 "Form fields on page 1: \(try await first.formFields().count)",
-                "Saved size: \(try document.data().count) bytes",
+                "Saved size: \(try await document.data().count) bytes",
             ]
             text = String((try await first.text.string()).prefix(600))
             page = try await first.render(width: 900)
             // The document holds native memory; an app closes it when done with it.
-            document.close()
+            await document.close()
         } catch {
             facts = ["Could not read the PDF: \(error)"]
         }

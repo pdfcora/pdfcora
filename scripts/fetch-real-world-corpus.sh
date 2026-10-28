@@ -5,7 +5,7 @@
 set -euo pipefail
 
 DEST="${PDFCORA_CORPUS:-$HOME/pdfcora-corpus/real-world}"
-UA="PDFCora-corpus/0.1 (+https://github.com/indaos/PdfiumKit-v2; testing PDF accessibility remediation)"
+UA="PDFCora-corpus/0.1 (+https://github.com/pdfcora/pdfcora; testing PDF accessibility remediation)"
 mkdir -p "$DEST"/{contracts,papers,reports-de,forms-de,invoices,govdocs}
 
 get() { # url, output path

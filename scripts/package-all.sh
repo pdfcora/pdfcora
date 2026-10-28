@@ -137,8 +137,8 @@ if [ -d "$ROOT/java/src/main/resources/native" ]; then
     ( cd "$ROOT/java" && gradle jar publishMavenPublicationToDistRepository \
         -PdistRepo="$OUT/java/maven" --console=plain ) > "$WORK/java.log" 2>&1 \
         || { echo "gradle failed — see $WORK/java.log" >&2; exit 1; }
-    cp "$ROOT"/java/build/libs/*.jar "$OUT/java/"
-    JAR="$(ls "$OUT"/java/*.jar | grep -v -e -sources.jar -e -javadoc.jar | head -1)"
+    cp "$ROOT"/java/build/libs/pdfcora-java-*.jar "$OUT/java/"
+    JAR="$(ls "$OUT"/java/pdfcora-java-*.jar | grep -v -e -sources.jar -e -javadoc.jar | head -1)"
     echo "    platforms: $(unzip -l "$JAR" | grep -cE 'native/.*\.(so|dylib)$')"
 else
     # A jar without an engine would look like a release and fail at the first call.

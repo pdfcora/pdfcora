@@ -96,7 +96,7 @@ manifest() {
     local target
     cat <<EOF
 // swift-tools-version: 5.9
-// PDFCora for iOS, as prebuilt frameworks. https://pdfcora.com
+// PDFCora for iOS, as prebuilt frameworks. https://pdfcora.pages.dev
 import PackageDescription
 
 let package = Package(

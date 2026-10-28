@@ -4,13 +4,19 @@ PDFCora is distributed as a compiled binary that statically links PDFium and the
 third-party libraries PDFium bundles. The notices below cover everything verified to
 be present in the shipped artifacts.
 
-**How this list was produced:** by inspecting the shipped `libpdfium.a` — reading its
-exported symbols and constituent object files — rather than from the build
-configuration alone. Each entry below was confirmed to be compiled in. See
-"Verification" at the end for the commands, and "Scope" for what this does not cover.
+**How this list was produced:** the engine entries by inspecting the shipped
+`libpdfium.a` — reading its exported symbols and constituent object files — rather than
+from the build configuration alone, and each was confirmed to be compiled in. The Rust
+entries of the Java SDK come from `cargo tree`. See "Verification" at the end for the
+commands, and "Scope" for what this does not cover.
 
 Engine revision: PDFium `chromium/7243`, built with
-`pdf_enable_v8=false pdf_enable_xfa=false pdf_bundle_freetype=true pdf_is_complete_lib=true`.
+`pdf_enable_v8=false pdf_enable_xfa=false pdf_is_complete_lib=true`. The Android and
+Linux builds also pass `pdf_bundle_freetype=true`; the iOS and macOS builds do not set
+it, and FreeType is compiled into them all the same (see "Verification").
+`vendor.manifest.json` records the flag list with `pdf_bundle_freetype=true`.
+
+Full licence texts are in each project's repository or crate, at the links below.
 
 ---
 
@@ -151,7 +157,7 @@ The bundled set was confirmed against the shipped binary:
 
 ```bash
 A=vendor/ios/pdfium.xcframework/ios-arm64/libpdfium.a
-nm -gjU "$A" | grep -cE '^_FT_'      # FreeType:  258 symbols
+nm -gjU "$A" | grep -cE '^_FT_'      # FreeType:  217 symbols
 ar t "$A" | grep -E '^(agg|ft|cms|opj|jpeg)'   # object files by origin
 strings -a "$A" | grep -oE '(in|de)flate 1\.[0-9.]+'   # zlib 1.3.1
 ```
@@ -160,12 +166,13 @@ libpng is **not** linked (zero `png_*` symbols), so no libpng notice is required
 
 ## Scope and limits
 
-This list covers libraries verified to be compiled into the distributed binary. It was
-assembled by binary inspection, which is good evidence of what is actually shipped but
-is not a substitute for legal review before public distribution. In particular:
+This list covers the libraries in the distributed binaries: the engine libraries were
+verified by binary inspection, and the Rust crates are those `cargo tree` resolves for the
+converter's build. In particular:
 
-- Version numbers were taken from embedded strings and PDFium's `DEPS` where available;
-  only zlib (1.3.1) and FreeType (revision pin) are pinned precisely here.
+- For the engine libraries, version numbers were taken from embedded strings and
+  PDFium's `DEPS` where available; of those, only zlib (1.3.1) and FreeType (revision
+  pin) are pinned precisely here. Every Rust crate is listed at its exact version.
 - Symbols that are statically dead-stripped from a consumer's final application may
   mean some of these are not present in an end product, but the notices are retained
   because PDFCora itself ships them.
@@ -173,4 +180,4 @@ is not a substitute for legal review before public distribution. In particular:
   the FTL does — applies if you redistribute PDFium or FreeType sources, which
   PDFCora does not.
 
-Confirm this file with counsel before the first public release.
+This file is not legal advice; review it with counsel for your own distribution.

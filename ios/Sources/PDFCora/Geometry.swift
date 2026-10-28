@@ -92,8 +92,8 @@ public struct PdfColor: Equatable, Sendable {
 ///
 /// ```swift
 /// let transform = PdfViewTransform(page: try await page.size, fittingWidth: canvasWidth)
-/// let box = transform.toView(annotation.rect)          // draw it
-/// let tapped = transform.toPdf(gesture.location)       // hit-test it
+/// let box = transform.toView(annotation.base.rect)     // draw it
+/// let tapped = transform.toPdf(gesture.location(in: view)) // hit-test it
 /// ```
 public struct PdfViewTransform: Equatable, Sendable {
     public let pageSize: PdfSize

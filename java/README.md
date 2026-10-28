@@ -1,7 +1,7 @@
 # PDFCora for Java
 
-The PDF engine behind Chrome, on the JVM, with the same object model and the same error
-cases as the iOS, Android and web SDKs.
+The PDF engine behind Chrome, on the JVM, with the same object model and the core error
+cases of the iOS, Android and web SDKs.
 
 ```kotlin
 implementation("com.pdfcora:pdfcora-java:0.1.0")
@@ -104,7 +104,8 @@ for (PdfFormField field : page.formFields()) {
 
 One exception, with the case in `code()`: `PASSWORD_REQUIRED`, `WRONG_PASSWORD`,
 `CORRUPT`, `PAGE_OUT_OF_RANGE`, `CLOSED`, `INVALID_OPERATION`, `SAVE_FAILED`. These are
-the same cases the other platforms raise, so error handling ports unchanged.
+a subset of the core cases every platform shares; the other platforms add cases of their
+own, such as `cancelled` and `engineUnresponsive`.
 
 ```java
 try (PdfDocument document = PdfDocument.open(bytes)) { … }
@@ -177,6 +178,9 @@ certificate chain: that needs a trust store and a policy, which belong to the ap
 | `CmsSigner` | Implement it to sign with an HSM, a smart card or a remote service |
 
 ```java
+import com.pdfcora.sign.*;
+import java.nio.file.Files;
+
 Pkcs12Signer signer = new Pkcs12Signer(Files.readAllBytes(identity), password);
 byte[] signed = document.sign(PdfSignOptions.with(signer)
     .reason("I approve this contract")
@@ -188,7 +192,8 @@ placeholder, so the bytes underneath it are never rewritten and the `/ByteRange`
 naming what it signed. `document.sign` signs a **full save**, so everything done to the
 document in memory is inside the signature — but that save rewrites the file, and a
 signature already in it does not survive. To add a second signature, pass the original
-bytes to `PdfSigning.sign`, which appends and leaves the first one verifying.
+bytes to `PdfSigning.sign`, which appends and leaves the first one verifying. This differs
+from iOS, Android and the web, where `sign` signs the bytes as they were opened.
 
 `Pkcs12Signer` builds the CMS itself and adds the CAdES `signingCertificateV2` attribute,
 so the default `ETSI.CAdES.detached` sub-filter is honest about what the blob contains;
@@ -204,6 +209,9 @@ centre, tool and review marks. Its state is a value, so it can be sent to anothe
 and adopted there — which is how the iOS, Android and web viewers stay in step.
 
 ```java
+import com.pdfcora.view.*;
+import java.awt.image.BufferedImage;
+
 PdfViewer viewer = PdfViewer.open(document, 800, 1000);
 viewer.zoomIn();
 viewer.nextPage();

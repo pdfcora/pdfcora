@@ -211,23 +211,27 @@ and a conformance suite.</p>
 <a class='card' href='android/index.html'><b>Android</b><span>Kotlin, minSdk 23, coroutines</span></a>
 <a class='card' href='web/index.html'><b>Web</b><span>TypeScript, WebAssembly, ESM</span></a>
 <a class='card' href='node/index.html'><b>Node</b><span>The web SDK on the server, plus file and PNG helpers</span></a>
-<a class='card' href='java/index.html'><b>Java</b><span>JNI over the native engine, Java 17+, macOS and Linux</span></a>
+<a class='card' href='java/index.html'><b>Java</b><span>JNI over the native engine, Java 17+, macOS and Linux; also opens DOCX</span></a>
 <h2>Shared guarantees</h2>
 <ul>
   <li>One engine thread per process runs every call; concurrent use is safe, and calls serialise.</li>
-  <li>Errors are a closed set with the same cases on every platform.</li>
+  <li>Errors are a closed, typed set. The core cases &mdash; password required, wrong password,
+      corrupt, page out of range, closed, invalid operation, save failed &mdash; exist on every
+      platform. Java has only these; iOS, Android and the web add a few more.</li>
   <li>Coordinates are PDF space (bottom-left origin); <code>PdfViewTransform</code> converts.</li>
   <li>Redaction removes content from the file rather than covering it, and reports what
       it removed.</li>
-  <li>Signatures are read, verified and created (PAdES, optionally timestamped).
+  <li>Signatures are read, verified and created (PAdES; a timestamp,
+      for B-T, on iOS, Android and the web &mdash; Java signs B-B only).
       Integrity and trust are separate answers, and a signature reports whether it
       covers the whole file.</li>
 </ul>
 <h2>AI, separately</h2>
 <p><code>pdfcora-ai</code> is an optional package. The core has no AI dependency and
-never gains one &mdash; a CI check fails the build if it does. Today the package ships no
-feature: it provides the availability model, the custom-provider interface and the
-proposal/apply API that later features are built on.</p>
+never gains one &mdash; a CI check fails the build if it does. On iOS, Android and the web
+(which Node uses unchanged) it ships answers, summaries, redaction and form proposals, alt
+text, remediation and diff, on top of the availability model and a custom-provider
+interface. Java has no AI package yet.</p>
 <p>Three things worth knowing before you design around it. A feature reports availability
 <em>per feature</em> and re-checks on every call, because the user can turn the platform's
 AI off mid-session. Availability alone does not mean a model can be prompted &mdash; a
@@ -247,6 +251,7 @@ Run <code>./serve.sh</code> in the documentation directory.</p>
 <h2>Install</h2>
 <p>Embed <code>PDFCora.xcframework</code> from a release, or add the package:</p>
 <pre>.package(url: \"https://github.com/pdfcora/pdfcora-swift\", from: \"$VERSION\")</pre>
+<p class='meta'>The packages are not published yet. Until they are, build from source: see <a href='https://github.com/pdfcora/pdfcora#getting-a-working-checkout'>Getting a working checkout</a>.</p>
 <h2>Open and render</h2>
 <pre>import PDFCora
 
@@ -266,7 +271,7 @@ for field in try await page.formFields() {
     }
 }</pre>
 <h2>Verify it</h2>
-<pre>switch try await document.verify(signature, options: .init(trustAnchors: roots)) {
+<pre>switch await document.verify(signature, options: .init(trustAnchors: roots)) {
 case .valid(let signer, _):     print(\"signed by\", signer.commonName ?? \"?\")
 case .digestMismatch:           print(\"the bytes changed after signing\")
 case .untrusted(let chain, _):  print(\"intact, but not trusted\", chain.count)
@@ -292,7 +297,8 @@ let signed = try await document.sign(PdfSignOptions(
     timestampUrl: URL(string: \"https://your-tsa.example/tsr\")))   // optional, PAdES B-T</pre>
 <p class='meta'>Signing appends an incremental update, so a signature already on the
 document keeps verifying. The first release signs invisibly: a signature is valid
-without a visible appearance.</p>
+without a visible appearance. Signing uses the bytes the document was opened from, so edits made in memory, such as
+the redaction above, are not in the signed file. To sign edits, save, reopen, then sign.</p>
 <h2>Errors</h2>
 <pre>do { _ = try await PdfDocument(data: data) }
 catch PdfError.passwordRequired { /* prompt */ }
@@ -305,14 +311,21 @@ page "$OUT/android/index.html" "PDFCora for Android" "
 <a class='card' href='api-ui/index.html'><b>pdfcora-ui</b><span>The Compose viewer and its toolbar, theme and review bar</span></a>
 <a class='card' href='api-ai/index.html'><b>pdfcora-ai</b><span>Answers, summaries, proposals, alt text, remediation, diff</span></a>
 <h2>Install</h2>
-<pre>dependencies { implementation(\"com.pdfcora:pdfcora:$VERSION\") }</pre>
+<pre>dependencies {
+    implementation(\"com.pdfcora:pdfcora:$VERSION\")
+    implementation(\"com.pdfcora:pdfcora-ui:$VERSION\")   // optional, the viewer
+    implementation(\"com.pdfcora:pdfcora-ai:$VERSION\")   // optional, AI features
+}</pre>
+<p class='meta'>The packages are not published yet. Until they are, build from source: see <a href='https://github.com/pdfcora/pdfcora#getting-a-working-checkout'>Getting a working checkout</a>.</p>
 <p>Or drop <code>pdfcora-release.aar</code> into <code>libs/</code>. All four ABIs are included.</p>
 <h2>Open and render</h2>
 <pre>val document = PdfDocument.open(bytes)
 val page = document.page(0)
 val bitmap = page.render(width = 1024, options = PdfRenderOptions(annotations = true, forms = true))</pre>
-<p>Every call is <code>suspend</code> and runs on the document's own thread. Close it when done —
-<code>PdfDocument</code> is <code>Closeable</code>.</p>
+<p>Every engine call runs on one engine thread that all documents share, so concurrent use is
+safe and calls on separate documents take turns. Most calls are <code>suspend</code>;
+<code>close()</code>, <code>isClosed</code>, <code>fingerprint</code> and <code>page.text</code> are not.
+Close it when done — <code>PdfDocument</code> is <code>Closeable</code>.</p>
 <h2>Read a signature</h2>
 <pre>for (signature in document.signatures()) {
     if (!signature.coversWholeDocument) {
@@ -350,7 +363,8 @@ document cannot be redacted without breaking its signature.</p>
 )</pre>
 <p class='meta'>Signing appends an incremental update, so a signature already on the
 document keeps verifying. The first release signs invisibly: a signature is valid
-without a visible appearance.</p>
+without a visible appearance. Signing uses the bytes the document was opened from, so edits made in memory, such as
+the redaction above, are not in the signed file. To sign edits, save, reopen, then sign.</p>
 <h2>Place a control over a form field</h2>
 <pre>val transform = PdfViewTransform.fittingWidth(page.size(), viewportPx)
 page.formFields().forEach { field -> val box = transform.toView(field.base.rect) }</pre>
@@ -362,9 +376,16 @@ page "$OUT/web/index.html" "PDFCora for Web" "
 <a class='card' href='api-ai/index.html'><b>@pdfcora/web-ai</b><span>Answers, summaries, proposals, alt text, remediation, diff, and the agent tools</span></a>
 <h2>Install</h2>
 <pre>npm install @pdfcora/web</pre>
+<p class='meta'>The packages are not published yet. Until they are, build from source: see <a href='https://github.com/pdfcora/pdfcora#getting-a-working-checkout'>Getting a working checkout</a>.</p>
 <p>The <code>.wasm</code> ships inside the package and must be served from the same origin.</p>
 <h2>Open and render</h2>
-<pre>import { PdfDocument } from '@pdfcora/web';
+<pre>import { configureEngine, PdfDocument } from '@pdfcora/web';
+
+// Where your app serves the two engine files from the package's vendor/ folder.
+configureEngine({
+  factory: async (options) =&gt; (await import('/pdfcora/pdfium.esm.js')).default(options),
+  locateFile: (path) =&gt; (path.endsWith('.wasm') ? '/pdfcora/pdfium.esm.wasm' : path),
+});
 
 const doc = await PdfDocument.open(bytes);
 const page = await doc.page(0);
@@ -372,7 +393,15 @@ const image = await page.render({ width: 1024, annotations: true, forms: true })
 <h2>Survive a hung render</h2>
 <p>A malformed page can hang PDFium in native code, where it cannot be cancelled.
 Run it in a worker so the page can recover by terminating it:</p>
-<pre>import { PdfWorker } from '@pdfcora/web/worker';</pre>
+<pre>import { PdfWorker } from '@pdfcora/web';
+
+const worker = new PdfWorker({
+  workerUrl: '/pdfcora/worker/host.js',   // the @pdfcora/web/worker file, dist/worker/host.js
+  glueUrl: '/pdfcora/pdfium.esm.js',
+  wasmUrl: '/pdfcora/pdfium.esm.wasm',
+});
+const doc = await worker.open(bytes);   // the same API as PdfDocument
+// A call that hangs rejects with engineUnresponsive; worker.terminate() ends it by hand.</pre>
 <h2>Read a signature</h2>
 <pre>for (const signature of await doc.signatures()) {
   if (!signature.coversWholeDocument) {
@@ -399,14 +428,16 @@ Images overlapping the region are removed whole rather than repainted, and a sig
 document cannot be redacted without breaking its signature.</p>
 <h2>Sign it</h2>
 <p>The browser has no CMS API — WebCrypto provides the primitives but not the
-container — so signing takes an implementation you supply. iOS and Android sign
+container — so signing takes an implementation you supply. iOS, Android and Java sign
 natively and need nothing extra.</p>
 <pre>const signed = await doc.sign({
-  signer: { async sign(data) { /* return a detached DER PKCS#7 */ } },
+  // Return a CAdES-BES CMS, or pass subFilter: 'adbe.pkcs7.detached' for plain PKCS#7.
+  signer: { async sign(data) { /* ... */ } },
   reason: 'Approved',
 });</pre>
 <p class='meta'>Signing appends an incremental update, so a signature already on the
-document keeps verifying. The first release signs invisibly.</p>
+document keeps verifying. The first release signs invisibly. Signing uses the bytes the document was opened from, so edits made in memory, such as
+the redaction above, are not in the signed file. To sign edits, save, reopen, then sign.</p>
 <h2>Place a control over a form field</h2>
 <pre>const t = PdfViewTransform.fittingWidth(await page.size(), canvas.clientWidth);
 for (const field of await page.formFields()) { const box = t.toViewRect(field.rect); }</pre>
@@ -417,6 +448,7 @@ page "$OUT/node/index.html" "PDFCora for Node" "
 <a class='card' href='api/index.html'><b>API reference</b><span>Every public type, generated by TypeDoc</span></a>
 <h2>Install</h2>
 <pre>npm install @pdfcora/node</pre>
+<p class='meta'>The packages are not published yet. Until they are, build from source: see <a href='https://github.com/pdfcora/pdfcora#getting-a-working-checkout'>Getting a working checkout</a>.</p>
 <p>A thin layer over <code>@pdfcora/web</code> rather than a second implementation: the
 whole web API is re-exported, so anything the web SDK does &mdash; annotations, form
 filling, redaction, tagging, signatures, viewer state, the AI package, the agent tools
@@ -437,9 +469,12 @@ renderRaw(page, options?)       // the raw RGBA buffer, for sharp or canvas</pre
 <p>The web SDK takes a CMS implementation you supply; on Node that can be a JCA-style
 library, an HSM client or a remote signing service.</p>
 <pre>const signed = await doc.sign({
-  signer: { async sign(data) { /* return a detached DER PKCS#7 */ } },
+  // Return a CAdES-BES CMS, or pass subFilter: 'adbe.pkcs7.detached' for plain PKCS#7.
+  signer: { async sign(data) { /* ... */ } },
   reason: 'Approved',
 });</pre>
+<p class='meta'>As on the web, signing uses the bytes the document was opened from, so
+edits made in memory are not in the signed file. To sign edits, save, reopen, then sign.</p>
 <h2>Tools for AI agents</h2>
 <p>The MCP server in <code>mcp/</code> runs over stdio and exposes reading, proposals and
 an apply that takes only the ids a person accepted.</p>
@@ -450,6 +485,7 @@ page "$OUT/java/index.html" "PDFCora for Java" "
 <a class='card' href='api/index.html'><b>API reference</b><span>Every public type, generated by Javadoc</span></a>
 <h2>Install</h2>
 <pre>implementation(\"com.pdfcora:pdfcora-java:$VERSION\")</pre>
+<p class='meta'>The packages are not published yet. Until they are, build from source: see <a href='https://github.com/pdfcora/pdfcora#getting-a-working-checkout'>Getting a working checkout</a>.</p>
 <p>Java 17 or newer, macOS and Linux on x86-64 and arm64. The engine is a native library
 inside the jar, reached through <b>JNI, not the Foreign Function API</b>, so it runs on the
 JDK most teams already have rather than requiring 22+.</p>
@@ -460,6 +496,14 @@ JDK most teams already have rather than requiring 22+.</p>
 }</pre>
 <p>Every call on every document runs on one engine thread for the whole process, so calling
 from several threads is safe &mdash; the calls serialise rather than corrupting memory.</p>
+<h2>Open a Word file</h2>
+<pre>try (PdfDocument document = PdfDocument.open(Path.of(\"letter.docx\"))) {
+    document.writeTo(Path.of(\"letter.pdf\"));
+}</pre>
+<p class='meta'><code>open</code> converts a DOCX to PDF; from then on it is an ordinary
+document. DOCX only &mdash; not <code>.doc</code>, XLSX or PPTX. The result depends on the
+fonts installed: see \"Word documents\" in the
+<a href='https://github.com/pdfcora/pdfcora/tree/master/java#word-documents'>Java README</a>.</p>
 <h2>Read a signature</h2>
 <pre>for (PdfSignature signature : document.signatures()) {
     if (!signature.coversWholeDocument()) {
@@ -481,9 +525,12 @@ leave the file &mdash; a black box drawn over text would leave every one of them
 byte[] signed = document.sign(PdfSignOptions.with(signer).reason(\"Approved\"));</pre>
 <p class='meta'>The CMS is built with JCA &mdash; no Bouncy Castle &mdash; and carries the
 CAdES <code>signingCertificateV2</code> attribute, so the default
-<code>ETSI.CAdES.detached</code> sub-filter is honest about what it contains. Signing
-appends an incremental update; <code>PdfSigning.sign(bytes, options)</code> signs bytes as
-they are, which is how a second signature leaves the first one verifying.</p>
+<code>ETSI.CAdES.detached</code> sub-filter is honest about what it contains.
+<code>document.sign</code> signs a full save, so edits made in memory, such as the
+redaction above, are inside the signature; but that save rewrites the file, and a
+signature already in it does not survive. <code>PdfSigning.sign(bytes, options)</code>
+appends to bytes as they are, which is how a second signature leaves the first one
+verifying.</p>
 <h2>Tag an untagged document</h2>
 <pre>PdfDocument tagged = document.tagContent(blocks, \"Quarterly report\", \"en\");</pre>
 <p class='meta'>Objects in no block become artifacts, which is what makes the result

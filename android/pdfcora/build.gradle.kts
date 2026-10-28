@@ -51,7 +51,7 @@ android {
 
     packaging { jniLibs { useLegacyPackaging = false } }
 
-    publishing { singleVariant("release") }
+    publishing { singleVariant("release") { withSourcesJar() } }
 
     // The shared conformance corpus and expectations, so instrumented tests assert the
     // same contract as the iOS and Web SDKs.

@@ -5,6 +5,9 @@ expressed idiomatically in Swift, Kotlin, TypeScript and Java; thread-safe by
 construction; typed errors instead of native crashes. Free and open source under the
 [MIT license](LICENSE.md).
 
+**Website:** [pdfcora.pages.dev](https://pdfcora.pages.dev) · **Try it in the browser:**
+[live web demo](https://pdfcora.pages.dev/demo/)
+
 ```swift
 let doc  = try await PdfDocument(url: url)
 let page = try await doc.page(0)
@@ -35,6 +38,11 @@ npm test                                # host suite (Node + WASM)
 
 `vendor/` is never committed. `vendor.manifest.json` pins the engine revision and the
 SHA-256 of every artifact, and the fetch script refuses anything that does not match.
+With `PDFCORA_ARTIFACTS` unset, `fetch-vendor.sh` downloads `pdfium-artifacts.tar.gz`
+from the `vendor-chromium-7243` release of
+[github.com/pdfcora/pdfcora](https://github.com/pdfcora/pdfcora) with `curl`. With
+`PDFCORA_ARTIFACTS` set to a PDFium engine checkout that ran `build-pdfium.sh`, it copies
+the artifacts from there instead.
 
 **Desktop and server engines.** `scripts/build-pdfium.sh` also builds `macos` (a universal
 static library) and `linux` (x64 and arm64, in a container, against Chromium's own sysroot
@@ -52,15 +60,22 @@ relocations, and `/usr/bin/ld` rejects their `.eh_frame` sections. Chromium's ow
 in the checkout at `third_party/llvm-build/Release+Asserts/bin`, and `-fuse-ld=lld` is
 enough.
 
+**Building the Java SDK.** The JNI library also links a Rust DOCX converter
+(`java/src/main/rust`), so it needs Rust 1.92 with the targets `aarch64-apple-darwin` and
+`x86_64-apple-darwin`. On a Mac, `./scripts/build-jni.sh macos` builds both Mac
+libraries. The Linux libraries build in Docker and need the PDFium engine checkout:
+set `PDFCORA_ARTIFACTS` to one that ran `build-pdfium.sh linux release`, then run
+`./scripts/build-jni.sh linux`.
+
 ## Running each platform
 
 | | Build | Test |
 |---|---|---|
-| iOS | `xcodebuild build -scheme PDFCora -destination 'platform=iOS Simulator,name=<device>'` | same with `test` |
-| Android | `cd android && gradle :pdfcora:assembleDebug` | `gradle :pdfcora:connectedDebugAndroidTest` (needs a device or emulator) |
+| iOS | `xcodebuild build -scheme PDFCora -destination 'platform=iOS Simulator,name=<device>'` | `./scripts/test-ios.sh` (simulator from `PDFCORA_DESTINATION`) |
+| Android | `cd android && gradle :pdfcora:assembleDebug` | `ANDROID_SERIAL=<device> ./scripts/test-android.sh` (needs a device or emulator) |
 | Web | `cd web && npm run build` | `npm test` |
 | Node | `cd node && npm run build` | `./scripts/test-node.sh` |
-| Java | `./scripts/build-jni.sh && cd java && gradle build` | `./scripts/test-java.sh` |
+| Java | `./scripts/build-jni.sh macos && cd java && gradle build` | `./scripts/test-java.sh` |
 
 Demos: `ios/Demo` (SwiftUI, generate with `xcodegen`), `android/demo` (Compose),
 `web/demo` (serve the repo root and open `/web/demo/index.html`).
@@ -68,10 +83,10 @@ Demos: `ios/Demo` (SwiftUI, generate with `xcodegen`), `android/demo` (Compose),
 Samples: `samples/` holds one small app per feature area — **core** (open, text, search,
 form fields, render, save), **AI** (summarise, propose redactions a person accepts), **UI**
 (the viewer component with a custom toolbar and theme), **agents** (MCP server and WebMCP)
-and **pipeline** (tag for accessibility, sign, countersign). Core exists for all five SDKs,
-AI for everything but Java, UI for iOS, Android and web, agents on Node and in the browser,
-and pipeline on Java. Each consumes the SDK the way an app would and has a README;
-`samples/README.md` is the index.
+and **pipeline** (tag for accessibility, sign, countersign), plus **docx** (open a Word
+file as a PDF). Core exists for all five SDKs, AI for everything but Java, UI for iOS,
+Android and web, agents on Node and in the browser, and pipeline and docx on Java. Each
+consumes the SDK the way an app would and has a README; `samples/README.md` is the index.
 
 All three demos have an **Editor** screen — open a file and it lands there — where
 the page behaves like a form rather than a picture of one. Every field is a live
@@ -90,17 +105,25 @@ rects with `PdfViewTransform`.
 Each SDK has been verified by consuming it from a project **outside** this repo, not
 just by running its own tests.
 
+None of the packages below is published yet. Until they are, build from source (see
+[Getting a working checkout](#getting-a-working-checkout)).
+
 **Web** — `npm install @pdfcora/web`. The PDFium `.wasm` ships inside the package, so
 there is nothing else to host. Node resolves it automatically; in a browser pass URLs
 via `configureEngine` or `PdfWorker`.
 
-**iOS** — Swift Package Manager. `Package.swift` uses a *local* binary target for
-development. For a release the xcframework must be hosted, because `vendor/` is not
-committed and a consumer resolving from git would otherwise get no binary:
+**iOS** — Swift Package Manager, from
+[github.com/pdfcora/pdfcora-swift](https://github.com/pdfcora/pdfcora-swift) once it is
+published. That is a binary package: `PDFCora`, `PDFCoraUI` and `PDFCoraAI` as
+xcframeworks, attached to the release and pinned by checksum in its `Package.swift`.
+`./scripts/package-swift.sh` builds it:
 
 ```bash
-./scripts/package-ios.sh     # writes the zip, its checksum, and the snippet to paste
+./scripts/package-swift.sh   # build/swift: three xcframework zips, repo/ to push, local/ to try
 ```
+
+The root `Package.swift` is the source package, for working from a checkout. It uses the
+engine in `vendor/` as a *local* binary target, so run `fetch-vendor.sh` first.
 
 **Android** — Maven. `gradle :pdfcora:publishToMavenLocal` publishes
 `com.pdfcora:pdfcora:0.1.0`; the AAR is 9.3 MB and carries all four ABIs, of which
@@ -114,14 +137,16 @@ nothing to compile. See `node/README.md`.
 (x86-64 and arm64). This one *is* a separate implementation: a JNI layer over the native
 engine, carrying the document API — open, pages, render, text, search, metadata, save —
 plus annotations, form filling, redaction, tagging, signing and the viewer state layer.
+`PdfDocument.open` also accepts a DOCX and converts it to PDF on open, with
+[docxide-pdf](https://github.com/sverrejb/docxide-pdf) linked into the native library.
 `./scripts/build-jni.sh` builds the native libraries the jar carries. See `java/README.md`.
 
 **AI, separately and optionally** — `@pdfcora/web-ai` (npm), `PDFCoraAI` (SPM product),
 `com.pdfcora:pdfcora-ai` (Maven). The core has no AI dependency and never gains one:
 `scripts/check-core-deps.sh` reads the resolved graph on all three platforms and fails
-the build if it does. Today the package ships **no feature** — only the availability
-model, the custom-provider interface and the proposal/apply API that later features build
-on. Adding it does not raise your minimum OS.
+the build if it does. It ships grounded answers and summaries, redaction and form-value
+proposals, fields for flat forms, alt text proposals, remediation and semantic diff, each
+described below. Adding it does not raise your minimum OS.
 
 ## Feature coverage
 
@@ -131,7 +156,7 @@ same results on all three platforms. The Java suite tests against the same fixtu
 
 | | iOS | Android | Web | Java |
 |---|---|---|---|---|
-| Open from bytes / file, password | ✅ | ✅ | ✅ | ✅ |
+| Open from bytes / file, password | ✅ | ✅ | ✅ | ✅; correct password ⚠️ *untested* |
 | Open DOCX (converted to PDF on open) | — | — | — | ✅ |
 | Page count, size, rotation | ✅ | ✅ | ✅ | ✅ count, size |
 | Render (scaled or exact pixels) | ✅ | ✅ | ✅ | ✅ |
@@ -144,7 +169,7 @@ same results on all three platforms. The Java suite tests against the same fixtu
 | Page objects (text, path, image…) | ✅ | ✅ | ✅ | — |
 | Annotations: read (15 kinds) | ✅ | ✅ | ✅ | ✅ |
 | Annotations: ink, note, remove | ✅ | ✅ | ✅ | ✅ |
-| Annotations: highlight, underline, strikeout | ✅ | ✅ | ✅ | ✅ |
+| Annotations: highlight, underline, strikeout | ✅ | ✅ | ✅ | ✅ highlight, underline; strikeout ⚠️ *untested* |
 | Form fields: read (8 kinds) | ✅ | ✅ | ✅ | ✅ |
 | Form fields: set text, checkbox, option | ✅ | ✅ | ✅ | ✅ text, checkbox |
 | Outline / bookmarks | ✅ | ✅ | ✅ | — |
@@ -156,7 +181,7 @@ same results on all three platforms. The Java suite tests against the same fixtu
 | Signing (PAdES B-B), cross-checked with `pdfsig` | ✅ | ✅ | ✅ bring a CMS signer | ✅ |
 | Signature timestamps (PAdES B-T) | ⚠️ *untested* | ⚠️ *untested* | ✅ | — |
 | Redaction, checked in the saved bytes | ✅ | ✅ | ✅ | ✅ |
-| Viewer: state, zoom, events, sync, editing | ✅ | ✅ | ✅ | ✅ |
+| Viewer: state, zoom, events, sync, editing | ✅ | ✅ | ✅ | ✅ state, zoom, events, state transfer; no editing |
 | UI component with configurable toolbar | ✅ SwiftUI | ✅ Compose | ✅ DOM element | — |
 | Redaction suggestions, reviewed as marks in the viewer | ✅ | ✅ | ✅ | — |
 | Smart form filling from a profile, reviewed as labelled marks | ✅ | ✅ | ✅ | — |
@@ -167,7 +192,7 @@ same results on all three platforms. The Java suite tests against the same fixtu
 | Tagged content exposed to screen readers in the viewer component | ✅ VoiceOver | ✅ TalkBack | ✅ semantic HTML | — |
 | Semantic diff of two versions, meaning vs wording | ✅ Apple model, provider | ✅ provider | ✅ provider | — |
 | Tools for AI agents: MCP server, WebMCP in the browser | — | — | ✅ `mcp/`, `registerWebMcpTools` | — |
-| Automated accessibility audit in the gates (axe, Xcode, ATF) | ✅ | ✅ | ⚠️ view level only | — |
+| Automated accessibility audit in the gates (axe, Xcode, ATF) | ✅ | ✅ | ✅ axe | — |
 | Raw PDFium escape hatch | ✅ *untested* | — | — | — |
 
 ⚠️ iOS rendering is cancellable *between* progressive steps, which covers a slow
@@ -189,7 +214,7 @@ absent functions are XFA, V8, Skia, and the Windows-HDC renderer.
 Rebuilding is rarely needed:
 
 ```bash
-./scripts/build-pdfium.sh <macos|ios|android|wasm> release
+./scripts/build-pdfium.sh <macos|linux|ios|android|wasm> release
 ```
 
 ### Binary cost, measured
@@ -208,8 +233,8 @@ layer. See spec §3.1.
 ## Conformance
 
 `conformance/expectations.json` is the contract **all three SDKs are tested against**:
-page counts, page geometry, and open-failure modes for 18 corpus documents spanning
-basic, form, encrypted, annotation, text, and regression categories.
+page counts, page geometry, and open-failure modes for 20 corpus documents spanning
+basic, form, encrypted, annotation, text, regression, and signature categories.
 
 ```bash
 node conformance/select-corpus.mjs   # refresh corpus/ from the PDFium source tree
@@ -232,7 +257,10 @@ where an off-by-one on the string terminator would show up. Normalisation strips
 whitespace by explicit codepoint rather than `\s`, because `\s` is not portable —
 U+00A0 matches it in JavaScript but not in Java's `Character.isWhitespace`.
 
-**Test totals:** 29 iOS (simulator) · 28 Android (device) · 27 Web · 12 host.
+**Test totals (2026-10-28):** 270 Web · 128 web AI (1 skipped) · 6 Node · 61 Java. By a
+count of test declarations, so approximate: about 180 iOS SDK, 75 iOS AI and 14 iOS demo UI;
+about 150 Android instrumented and 16 Android JVM, plus 33 instrumented and 33 JVM for the
+Android AI module and 7 for the UI module.
 
 Two iOS test classes are excluded from normal runs — `HangProbeTests` and
 `BlastRadiusTests` — because they deliberately trigger the render hang, which spins
@@ -355,9 +383,11 @@ Full-corpus results, most recent run:
 
 ## Design notes worth knowing
 
-- **Threading.** Each document owns a serial executor — an `actor` on iOS, a
-  single-threaded dispatcher on Android, a promise chain on Web. You cannot corrupt
-  memory by calling from the wrong thread; misuse raises `PdfError.closed` instead.
+- **Threading.** PDFium's state is global, so one engine thread runs every call on every
+  document — an actor executor on iOS, a shared dispatcher on Android, one engine thread
+  in Java; on Web, calls run on the JS thread through a queue per document. You cannot
+  corrupt memory by calling from the wrong thread; calls serialise, and using a closed
+  document raises `PdfError.closed`.
 - **Coordinates.** `PdfRect` is always PDF space (bottom-left origin). Conversion is an
   explicit call in both directions — `PdfViewTransform.toView` to draw an overlay,
   `.toPdf` to work out what a tap hit — plus `PdfRect.contains` for hit-testing. There
@@ -519,25 +549,28 @@ evaluated, and what an independent audit still has to cover — it is a self-ass
 ## License
 
 PDFCora is MIT-licensed; see [`LICENSE.md`](LICENSE.md). It is distributed as a binary
-that statically links PDFium and six bundled third-party libraries. **FreeType is used under the FreeType License (FTL)**, not
+that statically links PDFium and seven bundled third-party libraries. **FreeType is used under the FreeType License (FTL)**, not
 GPLv2, which keeps the whole SDK permissively licensed.
+
+The Java SDK's native library also links a Rust DOCX converter,
+[docxide-pdf](https://github.com/sverrejb/docxide-pdf) (Apache-2.0), and the Rust crates it
+depends on. The iOS, Android and web binaries do not contain it.
 
 The FTL requires this credit in the documentation of any product using the SDK:
 
 > Portions of this software are copyright © 2024 The FreeType Project
 > (https://freetype.org). All rights reserved.
 
-Full notices for PDFium, FreeType, Little CMS, OpenJPEG, libjpeg-turbo, zlib, AGG,
-and ICU are in [`NOTICE.md`](NOTICE.md), assembled by inspecting the shipped binary
-rather than from build flags alone. That file needs a legal sign-off before the first
-public release.
+Third-party notices are in [`NOTICE.md`](NOTICE.md): the name, licence and a link for
+PDFium, FreeType, Little CMS, OpenJPEG, libjpeg-turbo, zlib, AGG and ICU, and for the
+DOCX converter, plus the version and licence of every Rust crate it links. The engine
+libraries were confirmed by inspecting the shipped binary rather than from build flags
+alone; the Rust list comes from `cargo tree`.
 
 ## Status
 
 Pre-release. The API is settled enough to build against and the conformance suite
 guards behaviour, but nothing is published to SPM, Maven Central, or npm yet.
-Outstanding before publishing: legal sign-off on `NOTICE.md`, and publishing the
-vendor artifacts as checksummed release assets.
 
 ## Documentation
 

@@ -4,9 +4,23 @@ set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 MANIFEST="$ROOT/vendor.manifest.json"
 VENDOR="$ROOT/vendor"
-SOURCE="${PDFCORA_ARTIFACTS:-/Users/daos/Projects/Lab/pdfiumkit}"
 VERIFY_ONLY=0
 [ "${1:-}" = "--verify-only" ] && VERIFY_ONLY=1
+
+# PDFCORA_ARTIFACTS points at a PDFium engine checkout that ran build-pdfium.sh. Without
+# it, the engines are downloaded from this repository's vendor release; either way every
+# file is checked against vendor.manifest.json below.
+RELEASE_URL="${PDFCORA_VENDOR_URL:-https://github.com/pdfcora/pdfcora/releases/download/vendor-chromium-7243/pdfium-artifacts.tar.gz}"
+if [ -n "${PDFCORA_ARTIFACTS:-}" ]; then
+  SOURCE="$PDFCORA_ARTIFACTS"
+elif [ "$VERIFY_ONLY" = "0" ]; then
+  SOURCE="$(mktemp -d)"
+  trap 'rm -rf "$SOURCE"' EXIT
+  echo "==> downloading the PDFium engines from $RELEASE_URL"
+  curl -fsSL "$RELEASE_URL" | tar xz -C "$SOURCE" || { echo "download failed: $RELEASE_URL" >&2; exit 1; }
+else
+  SOURCE=""
+fi
 
 [ -f "$MANIFEST" ] || { echo "no vendor.manifest.json; run: node scripts/make-vendor-manifest.mjs" >&2; exit 1; }
 

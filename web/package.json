@@ -3,7 +3,15 @@
   "version": "0.1.0",
   "description": "PDF SDK for the web, built on PDFium",
   "license": "MIT",
-  "homepage": "https://pdfcora.com",
+  "homepage": "https://pdfcora.pages.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pdfcora/pdfcora.git",
+    "directory": "web"
+  },
+  "bugs": {
+    "url": "https://github.com/pdfcora/pdfcora/issues"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

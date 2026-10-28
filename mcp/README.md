@@ -4,15 +4,25 @@ An MCP server that gives AI agents PDFCora's PDF tools: read text, search, list 
 read a page's accessible structure — and change documents only through proposals the user
 accepts (redactions, form values, fields for flat forms, alt text), with undo, saving to a new file.
 
+From the repository root:
+
 ```bash
-cd web && npm ci && npm run build && cd ../web-ai && npm ci && npm run build && cd ../mcp && npm ci && npm run build
+./scripts/fetch-vendor.sh && cd web && npm ci && npm run build && cd ../web-ai && npm ci && npm run build && cd ../mcp && npm ci && npm run build
 ```
 
 Configure it in an MCP client, for example:
 
 ```json
+{ "mcpServers": { "pdfcora": { "command": "npx", "args": ["-y", "pdfcora-mcp"] } } }
+```
+
+or, for the build above:
+
+```json
 { "mcpServers": { "pdfcora": { "command": "node", "args": ["/path/to/mcp/dist/main.js"] } } }
 ```
+
+The server talks over stdio and takes no arguments.
 
 Tools: `open_document`, `close_document`, `save_document`, `document_info`, `get_text`, `search`,
 `list_form_fields`, `get_page_structure`, `propose_redactions`, `propose_form_values`,

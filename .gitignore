@@ -6,6 +6,8 @@ build/
 .build/
 dist/
 web/dist/
+dist-test/
+*.tgz
 *.log
 
 # Generated Xcode project — project.yml is the source of truth

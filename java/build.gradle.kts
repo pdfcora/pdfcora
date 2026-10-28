@@ -15,7 +15,11 @@ java {
     // JNI, not the Foreign Function API, so the SDK runs on the JDK enterprises have.
     toolchain { languageVersion = JavaLanguageVersion.of(17) }
     withJavadocJar()
+    withSourcesJar()
 }
+
+// The sources jar would otherwise carry the native libraries from resources a second time.
+tasks.named<Jar>("sourcesJar") { exclude("native/**") }
 
 repositories { mavenCentral() }
 

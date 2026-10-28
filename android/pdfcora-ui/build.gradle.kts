@@ -28,7 +28,7 @@ android {
     }
     kotlinOptions { jvmTarget = "17" }
 
-    publishing { singleVariant("release") }
+    publishing { singleVariant("release") { withSourcesJar() } }
 
     // The test APK otherwise targets minSdk, and Android 16 covers it with a warning
     // dialog that hides the composition under test.

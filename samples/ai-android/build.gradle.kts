@@ -26,7 +26,7 @@ android {
 }
 
 dependencies {
-    // The core alone: no UI component, no AI.
+    // The AI package, which brings the core with it; no UI component.
     implementation("com.pdfcora:pdfcora-ai:0.1.0")
     implementation("androidx.activity:activity-compose:1.9.0")
     implementation(platform("androidx.compose:compose-bom:2024.06.00"))

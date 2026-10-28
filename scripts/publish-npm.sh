@@ -77,7 +77,8 @@ EOF
 if [ "${1:-}" = "--publish" ]; then
     npm whoami > /dev/null || { echo "not logged in; run npm login" >&2; exit 1; }
     for pkg in "${PACKAGES[@]}"; do
-        tarball="$(ls "$OUT"/*.tgz | grep -F "$(python3 -c "import json;print(json.load(open('$ROOT/$pkg/package.json'))['name'].replace('@','').replace('/','-'))")-[0-9]")"
+        tarball="$OUT/$(python3 -c "import json;p=json.load(open('$ROOT/$pkg/package.json'));print(p['name'].replace('@','').replace('/','-')+'-'+p['version'])").tgz"
+        [ -f "$tarball" ] || { echo "missing $tarball" >&2; exit 1; }
         echo "==> publishing $(basename "$tarball")"
         npm publish "$tarball" --access public
     done

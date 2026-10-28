@@ -1,6 +1,7 @@
 @_implementationOnly import CPdfium
 
-/// Errors raised by PDFCora. Cases are identical across the iOS, Android, and Web SDKs.
+/// Errors raised by PDFCora. The core cases are shared with the Android, Web and Java SDKs;
+/// `readOnlyFollower` and `documentMismatch` are iOS-only.
 public enum PdfError: Error, Equatable, Sendable {
     case passwordRequired
     case wrongPassword

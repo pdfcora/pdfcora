@@ -66,7 +66,7 @@ export const LAYOUT = [
 ];
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const source = process.argv[2] ?? '/Users/daos/Projects/Lab/pdfiumkit';
+  const source = process.argv[2] ?? process.env.PDFCORA_ARTIFACTS ?? '.';
   const root = join(dirname(fileURLToPath(import.meta.url)), '..');
   const manifest = buildManifest(source, LAYOUT);
   writeFileSync(

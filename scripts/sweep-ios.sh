@@ -10,7 +10,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-CORPUS="${1:-/Users/daos/Projects/Lab/pdfiumkit/src/pdfium/testing/resources}"
+CORPUS="${1:-${PDFCORA_ARTIFACTS:-.}/src/pdfium/testing/resources}"
 DESTINATION="${PDFCORA_DESTINATION:-platform=iOS Simulator,name=iPhone 17 Pro,OS=27.0}"
 work=$(mktemp -d)
 results="$work/results.jsonl"

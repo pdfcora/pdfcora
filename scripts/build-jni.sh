@@ -41,9 +41,10 @@ build_macos() {
     mkdir -p "$dest"
     echo "==> macOS $arch"
     # The same floor as the engine objects.
-    (cd "$DOCX" && MACOSX_DEPLOYMENT_TARGET=12.0 cargo $RUST build --release --target "$triple")
+    (cd "$DOCX" && MACOSX_DEPLOYMENT_TARGET=12.0 cargo $RUST build --release --locked --target "$triple")
     xcrun clang++ -std=c++17 -O2 -fPIC -dynamiclib \
-      -isysroot "$sdk" -arch "$arch" \
+      -isysroot "$sdk" -arch "$arch" -mmacosx-version-min=12.0 \
+      -install_name @rpath/libpdfcora_jni.dylib \
       $(jni_includes) -I"$HEADERS" -I"$DOCX/include" \
       "$GLUE" "$lib" "$DOCX/target/$triple/release/libpdfcora_docx.a" \
       -framework CoreGraphics -framework CoreFoundation -lc++ -liconv \
@@ -54,9 +55,9 @@ build_macos() {
 build_linux() {
   command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1 || {
     echo "the Linux JNI library builds in a container; start Docker" >&2; return 1; }
-  local engine="${PDFCORA_ARTIFACTS:-/Users/daos/Projects/Lab/pdfiumkit}"
-  [ -d "$engine/src-linux/pdfium" ] || {
-    echo "no Linux engine checkout at $engine/src-linux; run ./build-pdfium.sh linux release there" >&2; return 1; }
+  local engine="${PDFCORA_ARTIFACTS:-}"
+  [ -n "$engine" ] && [ -d "$engine/src-linux/pdfium" ] || {
+    echo "the Linux JNI library needs a PDFium engine checkout: set PDFCORA_ARTIFACTS to one that ran build-pdfium.sh linux release" >&2; return 1; }
   mkdir -p "$OUT/linux-x86_64" "$OUT/linux-aarch64"
 
   # The engine image has no JDK, and the glue needs jni.h; nor Rust, which the DOCX
@@ -93,7 +94,7 @@ DOCKERFILE
         (cd /sdk/java/src/main/rust && \
           env "CC_$triple=$B/clang" "CFLAGS_$triple=--target=$2 --sysroot=$sysroot" \
               "AR_$triple=$B/llvm-ar" CARGO_TARGET_DIR=/sdk/java/src/main/rust/target/linux \
-          cargo build --release --target "$2")
+          cargo build --release --locked --target "$2")
         # lld, not GNU ld: the engine objects carry CREL relocations.
         $B/clang++ -std=c++17 -O2 -fPIC -shared --target="$2" \
           --sysroot="build/linux/$3" -fuse-ld=lld -B "$B" \
@@ -101,7 +102,7 @@ DOCKERFILE
           /sdk/java/src/main/cpp/pdfcora_jni.cpp \
           "/sdk/vendor/desktop/$( [ "$1" = x86_64 ] && echo linux-x64 || echo linux-arm64 )/libpdfium.a" \
           "/sdk/java/src/main/rust/target/linux/$2/release/libpdfcora_docx.a" \
-          -lpthread -ldl -lm \
+          -lpthread -ldl -lm -Wl,--strip-debug \
           -o "/sdk/java/src/main/resources/native/$4/libpdfcora_jni.so"
       done'
 }
