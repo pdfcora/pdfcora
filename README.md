@@ -126,7 +126,7 @@ The root `Package.swift` is the source package, for working from a checkout. It 
 engine in `vendor/` as a *local* binary target, so run `fetch-vendor.sh` first.
 
 **Android** — Maven. `gradle :pdfcora:publishToMavenLocal` publishes
-`com.pdfcora:pdfcora:0.1.0`; the AAR is 9.3 MB and carries all four ABIs, of which
+`com.pdfcora:pdfcora:0.1.0`; the AAR is 9.7 MB and carries all four ABIs, of which
 Play delivers one per device.
 
 **Node** — `npm install @pdfcora/node`. A thin layer over the web package rather than a
@@ -219,11 +219,18 @@ Rebuilding is rarely needed:
 
 ### Binary cost, measured
 
-| | Size |
+What the core SDK adds to an app, measured on Release builds:
+
+| Platform | Added to the installed app |
 |---|---|
-| Android `.so`, arm64, full API | **4.77 MB** |
-| Android `.so`, armeabi-v7a | 3.29 MB |
-| Web `pdfium.wasm` | 3.8 MB raw → **1.5 MB brotli** |
+| iOS, arm64 | **~5.5 MB** (core sample vs. an empty SwiftUI app) |
+| Android, per device (arm64) | **~4.8 MB** native library + up to 0.5 MB code before R8 shrinking; armeabi-v7a 3.2 MB |
+| Web | **3.8 MB** engine in memory; the first visit downloads ~1.6 MB (1.5 MB brotli engine + 0.1 MB JS), then it is cached |
+| Node | 8.6 MB in `node_modules` (`@pdfcora/web`, which carries the engine for both ESM and CommonJS) |
+| Java | 36 MB jar with all four platforms; one native library of 19–25 MB is loaded, most of it the DOCX converter |
+
+The UI module adds about 0.1 MB on Android and 0.2 MB on iOS; the AI module about 0.35 MB
+on Android and 0.1 MB on the web.
 
 A separate "raw bindings" package was considered and rejected: linking the full API
 costs only ~0.6 MB on Android and ~0.2 MB on iOS over a minimal core, because
