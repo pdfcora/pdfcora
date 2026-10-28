@@ -7,7 +7,6 @@
 import { PdfDocument } from '../document.js';
 import { PdfError } from '../errors.js';
 import { configureEngine } from '../engine.js';
-import { setKeyForHost } from '../license/state.js';
 const documents = new Map();
 let nextDocId = 1;
 function reply(response, transfer) {
@@ -77,8 +76,6 @@ self.onmessage = async (event) => {
     try {
         switch (request.op) {
             case 'init': {
-                if (request.license)
-                    await setKeyForHost(request.license.key, request.license.host);
                 // A module worker cannot use importScripts, so this needs the ESM build of the
                 // glue (`pdfium.esm.js`), which default-exports the factory.
                 const glue = (await import(/* @vite-ignore */ request.glueUrl));

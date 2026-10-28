@@ -19,6 +19,3 @@ gradle installDebug
 The SDK comes from this repository through `includeBuild("../../android")`; an app outside
 the repo depends on the published artifact instead.
 <!-- /repo -->
-
-Pages show a "PDFCora trial" watermark: the sample runs without a license key. The
-commented line in `MainActivity.kt` shows where a key issued for this app goes.

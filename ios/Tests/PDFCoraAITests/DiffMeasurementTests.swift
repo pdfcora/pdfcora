@@ -4,7 +4,7 @@ import XCTest
 
 /// How Apple's on-device model labels the shared diff fixture's two reworded pairs.
 /// Opt-in: `TEST_RUNNER_PDFCORA_MEASURE_APPLE=1` in the environment of `xcodebuild test`.
-final class DiffMeasurementTests: LicensedTestCase {
+final class DiffMeasurementTests: XCTestCase {
     func testAppleModelOnTheDiffFixture() async throws {
         guard ProcessInfo.processInfo.environment["PDFCORA_MEASURE_APPLE"] == "1" else {
             throw XCTSkip("set TEST_RUNNER_PDFCORA_MEASURE_APPLE=1")

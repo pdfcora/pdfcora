@@ -3,7 +3,6 @@ import { findPatterns, PATTERN_CATEGORIES, type PdfPatternCategory } from './pat
 import { locateQuote } from '../quote.js';
 import { readPages, rectsForRange, sentencesOf, type PdfPageRange, type PdfPageText } from '../text.js';
 import { resolve, type PdfAiProvider, type PdfAiSource } from '../provider.js';
-import { trialText } from '../trial.js';
 
 export type PdfModelRedactionCategory = 'personName' | 'postalAddress' | 'dateOfBirth' | 'idNumber';
 export type PdfRedactionCategory = PdfPatternCategory | PdfModelRedactionCategory;
@@ -178,7 +177,7 @@ export async function suggestRedactions(
   }
 
   return {
-    suggestions, modelUsed, pagesWithoutText, notice: trialText(REDACTION_NOTICE),
+    suggestions, modelUsed, pagesWithoutText, notice: REDACTION_NOTICE,
     apply: (acceptedIds) => applyRedactions(document, suggestions, textOf, acceptedIds),
   };
 }

@@ -16,7 +16,7 @@ endif()
 add_library(pdfium STATIC IMPORTED GLOBAL)
 set_target_properties(pdfium PROPERTIES IMPORTED_LOCATION "${PDFIUM_LIB}")
 
-add_library(pdfcora SHARED pdfcora_jni.cpp watermark.cpp)
+add_library(pdfcora SHARED pdfcora_jni.cpp)
 
 target_include_directories(pdfcora PRIVATE "${PDFIUM_VENDOR_DIR}/include")
 

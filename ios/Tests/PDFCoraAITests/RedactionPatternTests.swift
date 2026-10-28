@@ -1,7 +1,7 @@
 import XCTest
 @testable import PDFCoraAI
 
-final class RedactionPatternTests: LicensedTestCase {
+final class RedactionPatternTests: XCTestCase {
     struct Case: Decodable { let text: String; let expected: [[String]] }
 
     static let root = URL(fileURLWithPath: #filePath)

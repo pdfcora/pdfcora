@@ -26,8 +26,6 @@
 #include "public/fpdf_structtree.h"
 #include "public/fpdf_catalog.h"
 
-#include "watermark.h"
-
 #define LOG_TAG "pdfcora"
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
@@ -208,7 +206,7 @@ Java_com_pdfcora_Native_setPageRotation(JNIEnv*, jclass, jlong handle, jint inde
 JNIEXPORT jboolean JNICALL
 Java_com_pdfcora_Native_renderPage(JNIEnv* env, jclass, jlong handle, jint index,
                                      jobject bitmap, jint flags, jint background,
-                                     jboolean drawForms, jboolean watermark) {
+                                     jboolean drawForms) {
     auto* d = asDoc(handle);
     FPDF_PAGE page = loadPage(d, index);
     if (!page) return JNI_FALSE;
@@ -250,10 +248,6 @@ Java_com_pdfcora_Native_renderPage(JNIEnv* env, jclass, jlong handle, jint index
     if (drawForms && d->form) {
         FPDF_FFLDraw(d->form, target, page, 0, 0, static_cast<int>(info.width),
                      static_cast<int>(info.height), 0, flags);
-    }
-    // Before the channel swap below, so the watermark's pixels are swapped with the rest.
-    if (watermark) {
-        pdfcora_draw_watermark(target, static_cast<int>(info.width), static_cast<int>(info.height));
     }
 
     // PDFium writes BGRA; Android's RGBA_8888 wants R and B the other way round.
@@ -981,21 +975,6 @@ Java_com_pdfcora_Native_saveDocument(JNIEnv* env, jclass, jlong handle, jint fla
     if (!FPDF_SaveAsCopy(d->doc, &collector.base, static_cast<FPDF_DWORD>(flags))) {
         return env->NewByteArray(0);
     }
-    jbyteArray result = env->NewByteArray(static_cast<jsize>(out.size()));
-    if (!out.empty()) {
-        env->SetByteArrayRegion(result, 0, static_cast<jsize>(out.size()),
-                                reinterpret_cast<const jbyte*>(out.data()));
-    }
-    return result;
-}
-
-/// A full save of `bytes` with the trial watermark in every page's content.
-JNIEXPORT jbyteArray JNICALL
-Java_com_pdfcora_Native_stampWatermark(JNIEnv* env, jclass, jbyteArray bytes) {
-    jsize size = env->GetArrayLength(bytes);
-    std::vector<uint8_t> input(static_cast<size_t>(size));
-    env->GetByteArrayRegion(bytes, 0, size, reinterpret_cast<jbyte*>(input.data()));
-    std::vector<uint8_t> out = pdfcora_stamp_watermark(input.data(), input.size());
     jbyteArray result = env->NewByteArray(static_cast<jsize>(out.size()));
     if (!out.empty()) {
         env->SetByteArrayRegion(result, 0, static_cast<jsize>(out.size()),

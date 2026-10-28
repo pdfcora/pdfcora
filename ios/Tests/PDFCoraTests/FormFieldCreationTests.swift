@@ -2,7 +2,7 @@ import XCTest
 @testable import PDFCora
 
 /// Mirrors `web/test/form-fields.test.ts`.
-final class FormFieldCreationTests: LicensedTestCase {
+final class FormFieldCreationTests: XCTestCase {
     private let fields = [
         PdfNewFormField(pageIndex: 0, kind: .text, rect: PdfRect(left: 179.5, bottom: 621.5, right: 500.5, top: 642.5), name: "Email", tooltip: "Email"),
         PdfNewFormField(pageIndex: 0, kind: .checkBox, rect: PdfRect(left: 71.5, bottom: 517.5, right: 84.5, top: 530.5), name: "I agree to the terms"),

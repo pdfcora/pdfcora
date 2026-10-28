@@ -2,7 +2,7 @@ import XCTest
 @testable import PDFCora
 @testable import PDFCoraAI
 
-final class RedactionSuggestTests: LicensedTestCase {
+final class RedactionSuggestTests: XCTestCase {
     struct Expected: Decodable, Equatable { let pageIndex: Int; let category: String; let text: String }
     static let dir = RedactionPatternTests.root.appendingPathComponent("conformance/redaction")
 

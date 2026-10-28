@@ -202,7 +202,7 @@ extension PdfAI {
                     id: id, category: s.category, source: s.source, pageIndex: s.pageIndex, range: s.range, text: text,
                     rects: try await TextLayer.rects(document, pageIndex: s.pageIndex, range: s.range)))
             }
-            return PdfRedactionReview(suggestions: suggestions, modelUsed: modelUsed, notice: Trial.text(redactionNotice),
+            return PdfRedactionReview(suggestions: suggestions, modelUsed: modelUsed, notice: redactionNotice,
                                       pagesWithoutText: pagesWithoutText, document: document, textBefore: textBefore)
         }
     }

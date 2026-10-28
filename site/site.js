@@ -86,14 +86,3 @@ if (!('IntersectionObserver' in window) || reduceMotion) {
   }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
   reveals.forEach((el) => observer.observe(el));
 }
-
-// Soft spotlight that follows the pointer across bento tiles
-if (!reduceMotion) {
-  for (const tile of document.querySelectorAll('.tile')) {
-    tile.addEventListener('pointermove', (event) => {
-      const r = tile.getBoundingClientRect();
-      tile.style.setProperty('--mx', `${event.clientX - r.left}px`);
-      tile.style.setProperty('--my', `${event.clientY - r.top}px`);
-    });
-  }
-}

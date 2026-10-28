@@ -33,10 +33,6 @@ application and was not scraped, so forms are represented only by GovDocs1.
 
 ## What happened
 
-The survey runs with the conformance fixture's licence key: without one every page carries
-the trial watermark, whose standard font can never be embedded, and *no* document could be
-compliant — which says more about the watermark than about remediation.
-
 | Documents | 238 |
 | --- | --- |
 | Opened without error | 238 |
@@ -96,15 +92,8 @@ an existing id, so the fix is to notice it before marking. Not attempted here.
 
 ## What this changed
 
-Two defects, both found only because real documents were used, both fixed on all three
-platforms in the same commit as this report.
-
-**The trial watermark broke PDF/UA on every page.** It was drawn as an ordinary text
-object, so a remediated trial document had one piece of untagged content per page
-(7.1-3) — a screen reader would read "PDFCora trial" in the middle of the content. The
-watermark is now marked as an `Artifact`. Its font is a standard one that no tagging can
-embed, so trial output still fails 7.21.4.1 and only that; `scripts/verapdf-ua1.sh --allow
-7.21.4.1` is how CI states this, and a licensed document is unaffected either way.
+A defect found only because real documents were used, fixed on all three platforms in
+the same commit as this report.
 
 **Heading levels started below H1 and skipped.** Levels were assigned by font size alone,
 so a document whose largest line is not its first heading — a total set large, an oversized

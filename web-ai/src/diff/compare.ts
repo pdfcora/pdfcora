@@ -1,7 +1,6 @@
 import type { PdfDocument, PdfRect } from '@pdfcora/web';
 import { resolve, type PdfAiProvider, type PdfAiSource } from '../provider.js';
 import { readPages, rectsForRange, sentencesOf, type PdfPageRange } from '../text.js';
-import { trialText } from '../trial.js';
 
 export const DIFF_NOTICE = 'Check the differences against both documents.';
 
@@ -190,11 +189,11 @@ export async function compareDocuments(
       : undefined;
     if (answer && 'value' in answer) {
       modelUsed = true;
-      const summary = answer.value.label === 'meaningChanged' && answer.value.summary ? { summary: trialText(answer.value.summary) } : {};
+      const summary = answer.value.label === 'meaningChanged' && answer.value.summary ? { summary: answer.value.summary } : {};
       changes.push({ id, kind: 'modified', label: answer.value.label, ...summary, original, revised: changed, source: answer.source });
     } else {
       changes.push({ id, kind: 'modified', label: 'unclassified', original, revised: changed, source: 'rules' });
     }
   }
-  return { changes, modelUsed, notice: trialText(DIFF_NOTICE) };
+  return { changes, modelUsed, notice: DIFF_NOTICE };
 }

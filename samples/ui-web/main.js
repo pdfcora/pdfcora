@@ -9,11 +9,6 @@ configureEngine({
   locateFile: (path) => (path.endsWith('.wasm') ? '../../web/vendor/pdfium.esm.wasm' : path),
 });
 
-// Without a license key the SDK works fully, but pages carry a "PDFCora trial"
-// watermark. With a key issued for this site's hostname, import PdfLicense above and set
-// it before opening documents:
-// await PdfLicense.setKey('pk1.…');
-
 const bytes = new Uint8Array(await (await fetch('sample.pdf')).arrayBuffer());
 const pdf = await PdfDocument.open(bytes);
 

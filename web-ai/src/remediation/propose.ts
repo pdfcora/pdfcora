@@ -1,7 +1,6 @@
 import type { PdfDocument, PdfPageObject, PdfRect, PdfTagBlock, PdfTagType } from '@pdfcora/web';
 import { looksDecorative } from '../alt-text/suggest.js';
 import type { PdfPageRange } from '../text.js';
-import { trialText } from '../trial.js';
 
 export const REMEDIATION_NOTICE = 'Check every tag and the reading order before they are written.';
 
@@ -166,7 +165,7 @@ export async function proposeRemediation(
   return {
     alreadyTagged,
     blocks,
-    notice: trialText(REMEDIATION_NOTICE),
+    notice: REMEDIATION_NOTICE,
     apply: async (applyOptions = {}) => {
       const known = new Set(blocks.map((b) => b.id));
       for (const id of Object.keys(applyOptions.types ?? {})) {

@@ -1,7 +1,7 @@
 import XCTest
 @testable import PDFCora
 
-final class SnapshotAndMarksTests: LicensedTestCase {
+final class SnapshotAndMarksTests: XCTestCase {
     private func read(_ name: String) throws -> Data { try Data(contentsOf: Repo.corpus.appendingPathComponent(name)) }
     private func rect(_ l: Double, _ b: Double, _ r: Double, _ t: Double) -> PdfRect { PdfRect(left: l, bottom: b, right: r, top: t) }
 
@@ -16,18 +16,6 @@ final class SnapshotAndMarksTests: LicensedTestCase {
         XCTAssertTrue(text.contains("Hello"))
         let annotations = try await copy.page(0).annotations()
         XCTAssertEqual(annotations.count, 1)
-    }
-
-    func testASnapshotOfAWatermarkedDocumentReopensWatermarked() async throws {
-        PdfLicense.configureForTesting(key: .some(nil))
-        defer { LicensedTestCase.installFullTestLicense() }
-        let document = try await PdfDocument(data: try read("hello_world.pdf"))
-        let copy = try await document.snapshot().open()
-        let needs = await copy.needsWatermark
-        XCTAssertTrue(needs)
-        let saved = try await PdfDocument(data: try await copy.data())
-        let text = try await saved.page(0).text.string()
-        XCTAssertEqual(text.components(separatedBy: "PDFCora trial").count - 1, 1)
     }
 
     private func viewer() async throws -> PdfViewer {

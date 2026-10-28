@@ -6,7 +6,7 @@ import PDFCora
 ///
 /// If a Swift test here needs different assertions than its TypeScript twin, the two
 /// implementations have diverged and one of them is wrong.
-final class ContractTests: LicensedTestCase {
+final class ContractTests: XCTestCase {
 
     private struct BrokenProvider: PdfAiProvider {
         struct Boom: Error {}

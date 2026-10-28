@@ -161,7 +161,7 @@ suspend fun compareDocuments(ai: PdfAI, revised: PdfDocument, pages: IntRange?, 
                 if (outcome is PdfAiOutcome.Answered) {
                     modelUsed = true
                     val answer = outcome.result.value
-                    val summary = if (answer.label == PdfDiffLabel.MEANING_CHANGED && answer.summary.isNotEmpty()) Trial.text(answer.summary) else null
+                    val summary = if (answer.label == PdfDiffLabel.MEANING_CHANGED && answer.summary.isNotEmpty()) answer.summary else null
                     changes += PdfDiffChange(id, PdfDiffKind.MODIFIED, answer.label, summary, original, changed, outcome.result.source)
                 } else {
                     changes += PdfDiffChange(id, PdfDiffKind.MODIFIED, PdfDiffLabel.UNCLASSIFIED, null, original, changed, PdfAiSource.RULES)
@@ -169,5 +169,5 @@ suspend fun compareDocuments(ai: PdfAI, revised: PdfDocument, pages: IntRange?, 
             }
         }
     }
-    return PdfDiff(changes, modelUsed, Trial.text(DIFF_NOTICE))
+    return PdfDiff(changes, modelUsed, DIFF_NOTICE)
 }

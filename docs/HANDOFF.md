@@ -17,12 +17,10 @@ PDFium" stays as attribution; everything about the engine itself keeps its name
 | `@pdfiumkit/web`, `@pdfiumkit/node`, `pdfiumkit-ai`, `pdfiumkit-mcp` | `@pdfcora/web`, `@pdfcora/node`, `@pdfcora/web-ai`, `pdfcora-mcp` |
 | `PdfiumAI`, `PdfiumAIOptions` | `PdfAI`, `PdfAIOptions` — a Swift type cannot share its module's name |
 | `PDFIUMKIT_*` environment variables | `PDFCORA_*` |
-| "PdfiumKit trial" watermark | "PDFCora trial" |
 
 Not renamed, on purpose, because they are real things outside the code: this repository's
-folder and GitHub name (`PdfiumKit-v2`), the production licence key at
-`~/.pdfiumkit-license`, and the PDFium build tree at `/Users/daos/Projects/Lab/pdfiumkit`.
-Licence keys already issued keep working: nothing in the key format carried the name.
+folder and GitHub name (`PdfiumKit-v2`), and the PDFium build tree at
+`/Users/daos/Projects/Lab/pdfiumkit`.
 The test signing identity and the test TSA certificate were regenerated as "PDFCora Test
 Signer" / "PDFCora Test TSA" with the password `pdfcora`; nothing committed was signed with
 the old ones. The iOS modules now carry `.docc` catalogs, so DocC names its pages
@@ -58,7 +56,6 @@ because each lesson generalises. §4 lists what is open and what was parked.
 | Samples: one small app per feature area (core, AI, UI, agents) | iOS, Android, web — `samples/` |
 | Node SDK (`@pdfcora/node`) | Done — a thin layer over the web package: whole API re-exported, plus file, PNG and env-key helpers |
 | Java SDK (`com.pdfcora:pdfcora-java`) | Core, annotations, form filling, redaction, tagging (veraPDF-validated), signatures (read, verify, sign), viewer state — over JNI on macOS and Linux. No timestamping, no AI |
-| License keys: offline, per module, trial watermark | Done, three platforms, shared cases in `conformance/license/` |
 | `pdfcora-ai` Phase 2a: redaction suggestions, review marks in the viewer, undo | Done, three platforms, shared cases in `conformance/redaction/` |
 | `pdfcora-ai` Phase 2b: smart form filling from a profile, labelled marks, undo | Done, three platforms, shared cases in `conformance/forms/`; no on-device model (measured) |
 | Core structure tree read; figure alt text and decorative writes | Done, three platforms; written documents pass veraPDF PDF/UA-1 (`scripts/verapdf-ua1.sh`) |
@@ -71,11 +68,10 @@ because each lesson generalises. §4 lists what is open and what was parked.
 | `pdfcora-ai` Phase 3a: alt text proposals for figures in tagged PDFs | Done, three platforms, shared document in `conformance/alt-text/`; ML Kit image description measured on a Samsung SM-F971B on 2026-09-16 |
 
 Test counts at the time of writing (2026-09-16): web 303, web-ai 128 (one Ollama test skipped),
-browser viewer 36 (includes the axe audit and WebMCP), MCP server 3, license tool 1, iOS 191 (sweep
+browser viewer 36 (includes the axe audit and WebMCP), MCP server 3, iOS 191 (sweep
 skipped) + hung-render pass + demo UI 14 + AI 75 (three Apple measurements skipped), Android 165
 instrumented (sweep skipped) + UI 7 + hung-render pass + JVM, AI JVM + 32 instrumented, Node 7,
-Java 50. pdfsig accepts both the licensed and the trial-signed document on iOS and Android and the
-Java SDK's own; veraPDF passes the alt text and remediation output on all three, and the Java
+Java 50. pdfsig accepts the signed document on iOS, Android and the Java SDK; veraPDF passes the alt text and remediation output on all three, and the Java
 SDK's tagged output.
 
 ## 2. Running things
@@ -107,23 +103,6 @@ The extra flags are from a bad evening on a loaded Mac: a windowed emulator repe
 stopped answering `adb shell` while still listed as `device`, Gradle then read its API
 level as 1 and refused to install, and a crashed emulator's relaunch sat on an invisible
 crash-report consent dialog. Headless with software GPU stayed responsive.
-
-**License keys.** Keys are issued with `node tools/license/issue.mjs sign --private-key
-~/.pdfiumkit-license/license-private.pem …`; that private key was generated on
-2026-09-15, lives only on this Mac, and must be backed up somewhere safe — losing it means
-every issued key has to be reissued against a new public key. The public key is in
-`LicenseBuild` on each platform. Before each release run
-`./scripts/set-release-date.sh YYYY-MM-DD`: a key covers every SDK released on or before
-its expiry. Every test suite installs a test key from `conformance/license/cases.json`;
-`node conformance/license/make-cases.mjs` regenerates it. The design is
-`docs/superpowers/specs/2026-09-15-licensing-design.md`.
-
-Checked in the release packages on 2026-09-15, each in a throwaway app: no key watermarks,
-a key for the app renders and saves clean, a key for another app reports `wrongApp`. The
-test hook is not reachable in any of them: internal on iOS (not in the interface, not
-exported), refused by the release AAR (Kotlin `internal` is a public JVM method, so it is
-gated on `BuildConfig.DEBUG`), and not exported by the npm package — though on web the file
-is still there to import by path, which is no worse than editing the JavaScript.
 
 **Releasing.** The source stays in this private repository; only packages and samples
 are public. In order:
@@ -204,7 +183,7 @@ a quote is now matched in any passage the model was shown; a reply with no citat
 refuses a background app. ML Kit's limits are 400 to 7,860 characters per call. Long
 documents are summarised in windows that carry the summary so far.
 
-**iOS could not sign a document PDFium had saved**, found while adding license keys. The
+**iOS could not sign a document PDFium had saved**. The
 writer and the signer counted Swift `Character`s and used the counts as byte offsets, but
 Swift joins `\r\n` into one Character, and PDFium's saves use CRLF. The trailer's
 `/Root 1 0 R` misread as a number, and once that was fixed the byte range and signature
@@ -274,9 +253,7 @@ viewer state layer. `scripts/test-java.sh` puts both write paths in front of out
 judges: veraPDF for the tagged document's PDF/UA-1 claim, and poppler's `pdfsig` for the
 signed one, which reports *Signature is Valid, Total document signed*.
 
-What it does *not* have: **licensing** — no key check and no trial watermark, so
-everything it writes is unwatermarked, which the other four SDKs would not do —
-**RFC 3161 timestamping** (a signature is PAdES B-B, not B-T), **the AI package**, and no
+What it does *not* have: **RFC 3161 timestamping** (a signature is PAdES B-B, not B-T), **the AI package**, and no
 Windows engine.
 
 Worth knowing for anyone extending it. The byte-level writer here is smaller than the
@@ -316,12 +293,9 @@ failing 7.1-1/7.1-2, is a nesting bug: the page's content stream already holds m
 tagging adds its own marks around it. `FPDFPageObj_GetMarkedContentID` reports the existing id, so
 the fix is to notice it before marking.
 
-The survey found two defects that are **fixed** on all three platforms: the trial watermark was
-untagged content on every page (7.1-3) and is now an `Artifact`, and heading levels came from font
+The survey found a defect that is **fixed** on all three platforms: heading levels came from font
 size alone, so a document whose largest line was not its first heading started below H1 and skipped
-levels (7.4.2). Trial output still fails 7.21.4.1 because the watermark's standard font cannot be
-embedded; `scripts/verapdf-ua1.sh --allow 7.21.4.1` is how CI states that, and licensed output is
-unaffected.
+levels (7.4.2).
 
 **Android builds with Kotlin 2.1.21 and AGP 8.7.3** since 2026-09-15 (the Compose compiler is the
 Kotlin plugin; the AI module no longer skips the metadata version check ML Kit's Kotlin 2.1 classes

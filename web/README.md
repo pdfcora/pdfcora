@@ -53,9 +53,6 @@ await PdfViewerElement.mount(document.getElementById('viewer'), pdf, {
 });
 ```
 
-## Licensing
+## License
 
-Everything works without a key; rendered pages and saved files then carry a
-"PDFCora trial" watermark. `await PdfLicense.setKey('pk1.…')` before opening documents
-removes it. Keys are checked offline. Terms: see `LICENSE.md`. Third-party licences:
-`NOTICE.md`.
+MIT. Third-party licences: `NOTICE.md`.

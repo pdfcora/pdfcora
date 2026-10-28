@@ -153,12 +153,12 @@ class PdfAI(
             if (passages.isEmpty()) {
                 return PdfAiOutcome.Answered(PdfAiResult(PdfAnswer.NotFound(index.pagesWithoutText), PdfAiSource.RULES))
             }
-            return Trial.answer(resolveRoutes(customProvider = {
+            return resolveRoutes(customProvider = {
                 val response = provider.generate(PdfAiRequest(
                     prompt = GroundedAnswers.prompt(question, passages), schema = GroundedAnswers.SCHEMA))
                 GroundedAnswers.parse(response.structured, response.text)
                     ?.let { GroundedAnswers.verify(it, document, index, passages) }
-            }))
+            })
         }
     }
 
@@ -201,7 +201,7 @@ class PdfAI(
             val texts = pageTexts.map { it.text }
             val provider = options.provider
 
-            return Trial.summary(resolveRoutes(
+            return resolveRoutes(
                 onDevice = {
                     MlKitSummarizer.open(options.context, style, language)?.let { summarise ->
                         SummaryText.summariseInWindows(texts, MlKitSummarizer.LIMIT_CHARS, MlKitSummarizer.MINIMUM_CHARS, summarise)
@@ -216,7 +216,7 @@ class PdfAI(
                         }!!, pagesWithoutText)
                     }
                 },
-            ))
+            )
         }
     }
 }

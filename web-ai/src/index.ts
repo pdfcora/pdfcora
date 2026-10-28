@@ -8,7 +8,6 @@ import { chromeSummarizerAvailability, openChromeSummarizer, prepareChromeSummar
 import { type PdfAiProvider, type PdfAiResult, resolve } from './provider.js';
 import { type PdfSummary, type PdfSummaryStyle, summariseInWindows, summaryPrompt } from './summaries.js';
 import { type PdfPageRange, type PdfTextIndex, indexDocument, readPages } from './text.js';
-import { trialText } from './trial.js';
 
 export * from './availability.js';
 export * from './provider.js';
@@ -192,7 +191,7 @@ export class PdfAI {
           const summarizer = await openChromeSummarizer(style, options.language, texts.join('\n'));
           if (!summarizer) return null;
           try {
-            return { text: trialText(await summariseInWindows(texts, summarizer.limitChars, summarizer.summarise)), pagesWithoutText };
+            return { text: await summariseInWindows(texts, summarizer.limitChars, summarizer.summarise), pagesWithoutText };
           } finally {
             summarizer.close();
           }
@@ -202,7 +201,7 @@ export class PdfAI {
               const limitChars = Math.floor((this.options.providerContextTokens ?? 4096) * 3 * 0.6);
               const text = await summariseInWindows(texts, limitChars, async (part) =>
                 (await provider.generate({ prompt: summaryPrompt(part, style) })).text.trim());
-              return { text: trialText(text), pagesWithoutText };
+              return { text, pagesWithoutText };
             }
           : undefined,
       });

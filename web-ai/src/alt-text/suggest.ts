@@ -2,7 +2,6 @@ import type { PdfDocument, PdfRect, PdfStructureElement } from '@pdfcora/web';
 import { encodePng } from './png.js';
 import type { PdfPageRange } from '../text.js';
 import { resolve, type PdfAiProvider, type PdfAiSource } from '../provider.js';
-import { trialText } from '../trial.js';
 
 export const ALT_TEXT_NOTICE = 'Check every description before it is written.';
 
@@ -122,7 +121,7 @@ export async function suggestAltText(
         items.push({
           ...base,
           kind: answer.value.decorative ? 'decorative' : 'description',
-          text: answer.value.decorative ? '' : trialText(answer.value.description),
+          text: answer.value.decorative ? '' : answer.value.description,
           source: answer.source,
         });
       } else {
@@ -132,7 +131,7 @@ export async function suggestAltText(
   }
 
   return {
-    untagged, items, modelUsed, notice: trialText(ALT_TEXT_NOTICE),
+    untagged, items, modelUsed, notice: ALT_TEXT_NOTICE,
     apply: async (decisions) => {
       const byId = new Map(items.map((item) => [item.id, item]));
       const edits = decisions.map((decision) => {

@@ -1,6 +1,5 @@
 package com.pdfcora
 
-import com.pdfcora.license.PdfLicenseModule
 import com.pdfcora.writer.PdfReader
 import com.pdfcora.writer.TagTreeWriter
 
@@ -33,7 +32,6 @@ data class PdfTagBlock(
  * @param language BCP 47, written to /Lang; defaults to the document's own /Lang.
  */
 suspend fun PdfDocument.tagContent(blocks: List<PdfTagBlock>, title: String? = null, language: String? = null): PdfDocument {
-    use(PdfLicenseModule.EDITING)
     if (isTagged()) throw PdfError.InvalidOperation("the document is already tagged")
     val pageCount = pageCount()
     val objectCounts = onDocument { h -> List(pageCount) { Native.pageObjectCount(h, it) } }
@@ -94,5 +92,4 @@ suspend fun PdfDocument.tagContent(blocks: List<PdfTagBlock>, title: String? = n
     }
 
     return PdfDocument.open(TagTreeWriter.write(base, TagTreeWriter.Tree(tagged, mcidCounts, resolvedTitle, language)))
-        .also { if (needsWatermark) it.needsWatermark = true }
 }

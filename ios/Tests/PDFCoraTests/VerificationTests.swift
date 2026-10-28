@@ -12,7 +12,7 @@ import XCTest
  Integrity and trust are separate answers. Collapsing them into one is the defect this
  whole phase exists to avoid, so it is the first test.
  */
-final class DerTests: LicensedTestCase {
+final class DerTests: XCTestCase {
     func testReadsAShortFormTlv() throws {
         let bytes: [UInt8] = [0x30, 0x03, 0x02, 0x01, 0x01]   // SEQUENCE { INTEGER 1 }
         let tlv = try Der.readTlv(bytes, 0)
@@ -53,7 +53,7 @@ final class DerTests: LicensedTestCase {
     }
 }
 
-final class CmsSignedDataTests: LicensedTestCase {
+final class CmsSignedDataTests: XCTestCase {
     private var pkcs7: [UInt8] = []
 
     override func setUp() async throws {
@@ -105,7 +105,7 @@ final class CmsSignedDataTests: LicensedTestCase {
     }
 }
 
-final class VerificationTests: LicensedTestCase {
+final class VerificationTests: XCTestCase {
     private var bytes = Data()
     private var document: PdfDocument!
     private var signature: PdfSignature!

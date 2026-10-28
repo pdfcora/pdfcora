@@ -22,6 +22,4 @@ jobs:
       - name: Install and test
         run: cd web && npm ci && npm test
       - name: PDF/UA-1 check of the documents the alt text and remediation tests wrote
-        run: |
-          scripts/verapdf-ua1.sh build/alt-text/written-web.pdf build/remediation/written-web.pdf
-          scripts/verapdf-ua1.sh --allow 7.21.4.1 build/remediation/written-web-trial.pdf
+        run: scripts/verapdf-ua1.sh build/alt-text/written-web.pdf build/remediation/written-web.pdf

@@ -11,11 +11,8 @@ cd web && npm ci && npm run build && cd ../web-ai && npm ci && npm run build && 
 Configure it in an MCP client, for example:
 
 ```json
-{ "mcpServers": { "pdfcora": { "command": "node", "args": ["/path/to/mcp/dist/main.js"],
-  "env": { "PDFCORA_LICENSE_KEY": "pk1...." } } } }
+{ "mcpServers": { "pdfcora": { "command": "node", "args": ["/path/to/mcp/dist/main.js"] } } }
 ```
-
-Without a license key, saved documents carry the trial watermark.
 
 Tools: `open_document`, `close_document`, `save_document`, `document_info`, `get_text`, `search`,
 `list_form_fields`, `get_page_structure`, `propose_redactions`, `propose_form_values`,

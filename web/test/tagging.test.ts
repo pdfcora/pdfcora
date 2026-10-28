@@ -2,9 +2,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { PdfDocument, PdfError, type PdfStructureElement, type PdfTagBlock } from '../dist/index.js';
-import { configureLicenseForTesting } from '../dist/license/state.js';
 
-const LICENSE = JSON.parse(readFileSync(new URL('../../conformance/license/cases.json', import.meta.url), 'utf8'));
 const EXPECTED: { pageIndex: number; type: PdfTagBlock['type']; objectCount: number }[] =
   JSON.parse(readFileSync(new URL('../../conformance/remediation/untagged-expected.json', import.meta.url), 'utf8'));
 const untagged = () => PdfDocument.open(new Uint8Array(readFileSync(new URL('../../conformance/remediation/untagged.pdf', import.meta.url))));
@@ -67,25 +65,5 @@ describe('tagging content', () => {
 
     const tagged = await document.tagContent(blocks, options);
     await assert.rejects(tagged.tagContent(blocks, options), invalid, 'already tagged');
-  });
-
-  test('a trial document writes a watermarked result that stamps once', async () => {
-    await configureLicenseForTesting({ key: null, host: null });
-    try {
-      const tagged = await (await untagged()).tagContent(expectedBlocks(), { title: 'T', language: 'en' });
-      assert.equal(tagged.needsWatermark, true);
-      const described = await tagged.updateFigures([
-        { pageIndex: 0, markedContentIds: [8], altText: 'The Berlin office at dusk' }]);
-      const bytes = await described.toBytes();
-      const saved = await PdfDocument.open(bytes);
-      assert.equal((await (await saved.page(0)).text.string()).split('PDFCora trial').length - 1, 1);
-      // Checked by veraPDF in CI: the watermark must be an artifact, or it is untagged
-      // content on every page (7.1-3). Its standard font is never embedded, so 7.21.4.1
-      // is allowed there and nothing else is.
-      mkdirSync(new URL('../../build/remediation/', import.meta.url), { recursive: true });
-      writeFileSync(new URL('../../build/remediation/written-web-trial.pdf', import.meta.url), bytes);
-    } finally {
-      await configureLicenseForTesting({ key: LICENSE.fullKey, host: null });
-    }
   });
 });

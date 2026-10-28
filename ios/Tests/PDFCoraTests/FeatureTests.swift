@@ -1,7 +1,7 @@
 import XCTest
 @testable import PDFCora
 
-final class FeatureTests: LicensedTestCase {
+final class FeatureTests: XCTestCase {
     private func open(_ name: String) async throws -> PdfDocument {
         let url = Repo.corpus.appendingPathComponent(name)
         return try await PdfDocument(data: try Data(contentsOf: url))
@@ -441,7 +441,7 @@ extension PdfFormField {
 /// paints the value, so a native control on top would double-draw. Without it the
 /// widget's static appearance is drawn but the value is not, leaving the field free
 /// for a live control.
-final class FormRenderFlagTests: LicensedTestCase {
+final class FormRenderFlagTests: XCTestCase {
     private func ink(_ image: UIImage, inside rect: PdfRect, page: PdfSize) -> Int {
         guard let cg = image.cgImage,
               let data = cg.dataProvider?.data as Data? else { return -1 }

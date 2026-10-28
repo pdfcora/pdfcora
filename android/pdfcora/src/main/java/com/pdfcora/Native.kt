@@ -19,7 +19,7 @@ internal object Native {
     @JvmStatic external fun setPageRotation(handle: Long, index: Int, rotation: Int)
     @JvmStatic external fun renderPage(
         handle: Long, index: Int, bitmap: android.graphics.Bitmap, flags: Int, background: Int,
-        drawForms: Boolean, watermark: Boolean
+        drawForms: Boolean
     ): Boolean
     @JvmStatic external fun pageText(handle: Long, index: Int): String
     @JvmStatic external fun charCount(handle: Long, index: Int): Int
@@ -66,7 +66,6 @@ internal object Native {
     @JvmStatic external fun attachmentName(handle: Long, index: Int): String
     @JvmStatic external fun attachmentData(handle: Long, index: Int): ByteArray
     @JvmStatic external fun saveDocument(handle: Long, flags: Int): ByteArray
-    @JvmStatic external fun stampWatermark(bytes: ByteArray): ByteArray
 
     @JvmStatic external fun signatureCount(handle: Long): Int
     @JvmStatic external fun documentByteLength(handle: Long): Long

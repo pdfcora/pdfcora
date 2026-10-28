@@ -2,7 +2,7 @@
   "name": "pdfcora-mcp",
   "version": "0.1.0",
   "description": "An MCP server that gives AI agents PDFCora's PDF tools",
-  "license": "SEE LICENSE IN LICENSE.md",
+  "license": "MIT",
   "homepage": "https://pdfcora.com",
   "type": "module",
   "bin": { "pdfcora-mcp": "./dist/main.js" },
@@ -13,7 +13,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "build:test": "tsc -p tsconfig.test.json",
-    "test": "npm run build && npm run build:test && node --import ./dist-test/license-setup.js --test \"dist-test/*.test.js\""
+    "test": "npm run build && npm run build:test && node --test \"dist-test/*.test.js\""
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",

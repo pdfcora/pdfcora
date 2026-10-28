@@ -80,7 +80,6 @@ suspend fun PdfPage.addInk(
     color: PdfColor = PdfColor.BLACK,
     lineWidth: Float = 2f,
 ): Int {
-    document.use(com.pdfcora.license.PdfLicenseModule.EDITING)
     return document.onDocument { h ->
         val points = strokes.flatten()
         val flat = FloatArray(points.size * 2)
@@ -106,7 +105,6 @@ suspend fun PdfPage.addStrikeout(quads: List<PdfQuad>, color: PdfColor = PdfColo
     addMarkup(SUBTYPE_STRIKEOUT, quads, color)
 
 private suspend fun PdfPage.addMarkup(subtype: Int, quads: List<PdfQuad>, color: PdfColor): Int {
-    document.use(com.pdfcora.license.PdfLicenseModule.EDITING)
     return document.onDocument { h ->
         val flat = FloatArray(quads.size * 8)
         quads.forEachIndexed { i, q ->
@@ -129,7 +127,6 @@ suspend fun PdfPage.addNote(
     contents: String,
     color: PdfColor = PdfColor.YELLOW,
 ): Int {
-    document.use(com.pdfcora.license.PdfLicenseModule.EDITING)
     return document.onDocument { h ->
         val result = Native.addNote(
             h, index, rect.left, rect.bottom, rect.right, rect.top,
@@ -141,7 +138,6 @@ suspend fun PdfPage.addNote(
 }
 
 suspend fun PdfPage.removeAnnotation(annotationIndex: Int) {
-    document.use(com.pdfcora.license.PdfLicenseModule.EDITING)
     document.onDocument { h ->
         if (!Native.removeAnnotation(h, index, annotationIndex)) {
             throw PdfError.PageOutOfRange(annotationIndex, Native.annotationCount(h, index))
@@ -227,7 +223,6 @@ private fun readChoices(
 
 /** Sets a text field's value. */
 suspend fun PdfPage.setText(value: String, fieldAt: Int) {
-    document.use(com.pdfcora.license.PdfLicenseModule.FORMS)
     document.onDocument { h ->
         if (!Native.setFormText(h, index, fieldAt, value)) {
             throw PdfError.InvalidOperation("field could not take focus")
@@ -237,7 +232,6 @@ suspend fun PdfPage.setText(value: String, fieldAt: Int) {
 
 /** Sets a checkbox or radio button to an explicit state. */
 suspend fun PdfPage.setChecked(checked: Boolean, fieldAt: Int) {
-    document.use(com.pdfcora.license.PdfLicenseModule.FORMS)
     document.onDocument { h ->
         if (!Native.setFormChecked(h, index, fieldAt, checked)) {
             throw PdfError.InvalidOperation("field state could not be set")
@@ -247,7 +241,6 @@ suspend fun PdfPage.setChecked(checked: Boolean, fieldAt: Int) {
 
 /** Selects or deselects one option of a combo or list box. */
 suspend fun PdfPage.setOption(optionIndex: Int, selected: Boolean, fieldAt: Int) {
-    document.use(com.pdfcora.license.PdfLicenseModule.FORMS)
     document.onDocument { h ->
         if (!Native.setFormOption(h, index, fieldAt, optionIndex, selected)) {
             throw PdfError.InvalidOperation("option $optionIndex could not be selected")

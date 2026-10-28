@@ -246,7 +246,6 @@ extension PdfDocument {
     // MARK: - Mutation
 
     func addMarkup(pageIndex: Int, subtype: FPDF_ANNOTATION_SUBTYPE, quads: [PdfQuad], color: PdfColor) throws -> Int {
-        use(.editing)
         let page = try loadedPage(pageIndex)
         guard let annot = FPDFPage_CreateAnnot(page, subtype) else {
             throw PdfError.engine(code: -1)
@@ -272,7 +271,6 @@ extension PdfDocument {
     }
 
     func addInk(pageIndex: Int, strokes: [[PdfPoint]], color: PdfColor, lineWidth: Double) throws -> Int {
-        use(.editing)
         let page = try loadedPage(pageIndex)
         guard let annot = FPDFPage_CreateAnnot(page, FPDF_ANNOT_INK) else {
             throw PdfError.engine(code: -1)
@@ -298,7 +296,6 @@ extension PdfDocument {
     }
 
     func addNote(pageIndex: Int, rect: PdfRect, contents: String, color: PdfColor) throws -> Int {
-        use(.editing)
         let page = try loadedPage(pageIndex)
         guard let annot = FPDFPage_CreateAnnot(page, FPDF_ANNOT_TEXT) else {
             throw PdfError.engine(code: -1)
@@ -317,7 +314,6 @@ extension PdfDocument {
     }
 
     func removeAnnotation(pageIndex: Int, annotationIndex: Int) throws {
-        use(.editing)
         let page = try loadedPage(pageIndex)
         let count = Int(FPDFPage_GetAnnotCount(page))
         guard annotationIndex >= 0 && annotationIndex < count else {

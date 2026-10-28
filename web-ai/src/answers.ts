@@ -3,7 +3,6 @@ import type { PdfDocument, PdfRect } from '@pdfcora/web';
 import { locateQuote } from './quote.js';
 import { retrieve } from './retrieval.js';
 import { type PdfPassage, type PdfTextIndex, rectsForRange } from './text.js';
-import { trialText } from './trial.js';
 
 /** A sentence in the document that supports an answer (ANS-5). */
 export interface PdfCitation {
@@ -145,7 +144,7 @@ export async function verifyReply(
 
   return {
     kind: 'answered',
-    text: trialText(reply.answer),
+    text: reply.answer,
     citations,
     grounded: verified === reply.citations.length,
     pagesWithoutText: index.pagesWithoutText,

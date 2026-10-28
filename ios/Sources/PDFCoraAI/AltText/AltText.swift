@@ -192,14 +192,14 @@ extension PdfAI {
                         modelUsed = true
                         items.append(result.value.decorative
                             ? item(.decorative, "", result.source)
-                            : item(.description, Trial.text(result.value.description), result.source))
+                            : item(.description, result.value.description, result.source))
                     } else {
                         items.append(item(.description, "", nil))
                     }
                 }
             }
             return PdfAltTextReview(untagged: untagged, items: items, modelUsed: modelUsed,
-                                    notice: Trial.text(altTextNotice), document: document)
+                                    notice: altTextNotice, document: document)
         }
     }
 

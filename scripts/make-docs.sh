@@ -423,9 +423,8 @@ filling, redaction, tagging, signatures, viewer state, the AI package, the agent
 &mdash; works unchanged on the server. The same WebAssembly engine, so nothing to compile.</p>
 <h2>Open and render</h2>
 <pre>import { writeFile } from 'node:fs/promises';
-import { openFile, renderPng, useLicenseFromEnvironment } from '@pdfcora/node';
+import { openFile, renderPng } from '@pdfcora/node';
 
-await useLicenseFromEnvironment();            // PDFCORA_LICENSE_KEY
 const doc = await openFile('contract.pdf');
 await writeFile('page-1.png', await renderPng(await doc.page(0), { width: 1024 }));</pre>
 <p class='meta'>The PNG encoder uses <code>node:zlib</code>; there is no image dependency.</p>
@@ -433,8 +432,7 @@ await writeFile('page-1.png', await renderPng(await doc.page(0), { width: 1024 }
 <pre>openFile(path, password?)       // read and open in one call
 saveFile(doc, path, mode?)      // save straight to disk
 renderPng(page, options?)       // encoded PNG bytes
-renderRaw(page, options?)       // the raw RGBA buffer, for sharp or canvas
-useLicenseFromEnvironment(name?) // a key from the environment, not the source</pre>
+renderRaw(page, options?)       // the raw RGBA buffer, for sharp or canvas</pre>
 <h2>Sign it</h2>
 <p>The web SDK takes a CMS implementation you supply; on Node that can be a JCA-style
 library, an HSM client or a remote signing service.</p>

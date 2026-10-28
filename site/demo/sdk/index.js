@@ -11,5 +11,4 @@ export { lightTheme, darkTheme } from './ui/theme.js';
 export { PdfViewer } from './view/viewer.js';
 export * from './view/state.js';
 export * from './view/zoom.js';
-export { PdfLicense } from './license/state.js';
 //# sourceMappingURL=index.js.map

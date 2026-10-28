@@ -68,7 +68,6 @@ extension PdfDocument {
     /// regenerates the page, so earlier signatures stop verifying. Description-only edits are
     /// appended as an incremental update.
     public func updateFigures(_ edits: [PdfFigureEdit]) async throws -> PdfDocument {
-        use(.editing)
         let handle = try requireHandle()
         let pages = Int(FPDF_GetPageCount(handle))
         for edit in edits where edit.pageIndex < 0 || edit.pageIndex >= pages {
@@ -93,20 +92,15 @@ extension PdfDocument {
                     let ids = Set(decorative.filter { $0.pageIndex == pageIndex }.flatMap(\.markedContentIds))
                     try await scratch.markArtifacts(pageIndex: pageIndex, ids: ids)
                 }
-                base = try await scratch.unwatermarkedData()
+                base = try await scratch.data()
                 await scratch.close()
             }
 
             let updated = try await PdfDocument(data: try FigureWriter.write(base, writes))
-            if needsWatermark { await updated.markNeedsWatermark() }
             return updated
         } catch let error as FigureWriter.NotFound {
             throw PdfError.invalidOperation(reason: error.reason)
         }
-    }
-
-    func unwatermarkedData() throws -> Data {
-        try Self.serialise(try requireHandle(), flags: FPDF_DWORD(FPDF_NO_INCREMENTAL))
     }
 
     /// Re-marks every top-level object whose marked content has one of `ids` as an artifact,

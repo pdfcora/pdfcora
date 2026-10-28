@@ -35,8 +35,7 @@ private let writeBlock: @convention(c) (UnsafeMutablePointer<FPDF_FILEWRITE>?, U
 }
 
 extension PdfDocument {
-    /// Serialises the document, including any edits made through this SDK. A document
-    /// that needs the watermark is always saved in full.
+    /// Serialises the document, including any edits made through this SDK.
     public func data(mode: PdfSaveMode = .full) throws -> Data {
         let handle = try requireHandle()
 
@@ -44,11 +43,7 @@ extension PdfDocument {
         // into is silently omitted.
         if let form { FORM_ForceToKillFocus(form) }
 
-        guard needsWatermark else {
-            return try Self.serialise(handle, flags: FPDF_DWORD(mode == .incremental ? FPDF_INCREMENTAL : FPDF_NO_INCREMENTAL))
-        }
-        noteWatermarked()
-        return try Watermark.stamp(try Self.serialise(handle, flags: FPDF_DWORD(FPDF_NO_INCREMENTAL)))
+        return try Self.serialise(handle, flags: FPDF_DWORD(mode == .incremental ? FPDF_INCREMENTAL : FPDF_NO_INCREMENTAL))
     }
 
     static func serialise(_ handle: FPDF_DOCUMENT, flags: FPDF_DWORD) throws -> Data {

@@ -182,7 +182,6 @@ extension PdfDocument {
     /// PDFium applies text edits through the focused-widget path, so focus first,
     /// select everything, then replace.
     func setFormText(pageIndex: Int, annotationIndex: Int, value: String) throws {
-        use(.forms)
         guard let form else { throw PdfError.invalidOperation(reason: "document has no form") }
         let page = try loadedPage(pageIndex)
         guard let annot = FPDFPage_GetAnnot(page, Int32(annotationIndex)) else {
@@ -205,7 +204,6 @@ extension PdfDocument {
     /// this writes the field value (`V`) and appearance state (`AS`) directly, which is
     /// the PDF data model rather than a simulated interaction.
     func setFormChecked(pageIndex: Int, annotationIndex: Int, checked: Bool) throws {
-        use(.forms)
         guard let form else { throw PdfError.invalidOperation(reason: "document has no form") }
         let page = try loadedPage(pageIndex)
         guard let annot = FPDFPage_GetAnnot(page, Int32(annotationIndex)) else {
@@ -240,7 +238,6 @@ extension PdfDocument {
     }
 
     func toggleFormField(pageIndex: Int, annotationIndex: Int) throws {
-        use(.forms)
         guard let form else { throw PdfError.invalidOperation(reason: "document has no form") }
         let page = try loadedPage(pageIndex)
         guard let annot = FPDFPage_GetAnnot(page, Int32(annotationIndex)) else {
@@ -252,7 +249,6 @@ extension PdfDocument {
     }
 
     func setFormOption(pageIndex: Int, annotationIndex: Int, optionIndex: Int, selected: Bool) throws {
-        use(.forms)
         guard let form else { throw PdfError.invalidOperation(reason: "document has no form") }
         let page = try loadedPage(pageIndex)
         guard let annot = FPDFPage_GetAnnot(page, Int32(annotationIndex)) else {

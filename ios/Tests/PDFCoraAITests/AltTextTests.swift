@@ -2,7 +2,7 @@ import XCTest
 @testable import PDFCora
 @testable import PDFCoraAI
 
-final class AltTextTests: LicensedTestCase {
+final class AltTextTests: XCTestCase {
     static let dir = RedactionPatternTests.root.appendingPathComponent("conformance/alt-text")
 
     struct Expected: Decodable {

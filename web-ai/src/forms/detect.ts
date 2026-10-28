@@ -1,7 +1,6 @@
 import type { PdfDocument, PdfRect } from '@pdfcora/web';
 import { labelFor } from './describe.js';
 import type { PdfPageRange } from '../text.js';
-import { trialText } from '../trial.js';
 
 export const DETECT_NOTICE = 'Check every field before it is added.';
 
@@ -122,7 +121,7 @@ export async function detectFields(document: PdfDocument, range?: PdfPageRange):
 
   return {
     items,
-    notice: trialText(DETECT_NOTICE),
+    notice: DETECT_NOTICE,
     apply: async (acceptedIds) => {
       const known = new Set(items.map((i) => i.id));
       const unknown = acceptedIds.find((id) => !known.has(id));

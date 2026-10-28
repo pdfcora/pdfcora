@@ -94,8 +94,7 @@ if command -v pdfsig > /dev/null; then
     fi
     [ -n "$device" ] || { echo "cross-check: no device" >&2; exit 1; }
 
-    # The second file is signed without a signing license, so it is watermarked first.
-    for name in signed trial-signed; do
+    for name in signed; do
         file="/tmp/pdfcora-android-$name.pdf"
         adb -s "$device" exec-out run-as com.pdfcora.test \
             cat "files/pdfcora-android-$name.pdf" > "$file" 2>/dev/null

@@ -61,8 +61,7 @@ class AltTextTest {
             assertNotNull(BitmapFactory.decodeByteArray(request.images[0], 0, request.images[0].size))
         }
         assertTrue(review.modelUsed)
-        // This module's instrumented tests run without a license, so model text carries the trial prefix.
-        assertEquals(listOf(Trial.text("Office building at dusk"), "", Trial.text("Red circle logo")), review.items.map { it.text })
+        assertEquals(listOf("Office building at dusk", "", "Red circle logo"), review.items.map { it.text })
         assertEquals(listOf(PdfAiSource.CUSTOM_PROVIDER, PdfAiSource.RULES, PdfAiSource.CUSTOM_PROVIDER), review.items.map { it.source })
     }
 
@@ -84,7 +83,7 @@ class AltTextTest {
             PdfAltTextDecision(review.items[2].id, text = "Company logo"),
         ))
         val chart = expected.getJSONArray("figuresWithAlt").getJSONObject(0).getString("altText")
-        assertEquals(listOf(chart, Trial.text("Office building")), figures(updated, 0).map { it.altText })
+        assertEquals(listOf(chart, "Office building"), figures(updated, 0).map { it.altText })
         assertEquals(listOf("Company logo"), figures(updated, 1).map { it.altText })
         assertEquals(0, PdfAI(updated).altText.suggest().items.size)
     }

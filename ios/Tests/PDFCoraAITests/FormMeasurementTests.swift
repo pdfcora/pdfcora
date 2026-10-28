@@ -4,7 +4,7 @@ import XCTest
 
 /// How Apple's on-device model matches form fields, which is why forms do not use it. Opt-in:
 /// `TEST_RUNNER_PDFCORA_MEASURE_APPLE=1` in the environment of `xcodebuild test`.
-final class FormMeasurementTests: LicensedTestCase {
+final class FormMeasurementTests: XCTestCase {
     func testAppleModelMatchingFields() async throws {
         guard ProcessInfo.processInfo.environment["PDFCORA_MEASURE_APPLE"] == "1" else {
             throw XCTSkip("set TEST_RUNNER_PDFCORA_MEASURE_APPLE=1")

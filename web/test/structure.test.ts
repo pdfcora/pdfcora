@@ -2,12 +2,10 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { PdfDocument, PdfError, type PdfStructureElement } from '../dist/index.js';
-import { configureLicenseForTesting } from '../dist/license/state.js';
 import { appendUpdate } from '../dist/writer/incremental.js';
 import { findFigures } from '../dist/writer/structure.js';
 import { raw } from '../dist/writer/values.js';
 
-const LICENSE = JSON.parse(readFileSync(new URL('../../conformance/license/cases.json', import.meta.url), 'utf8'));
 const EXPECTED = JSON.parse(readFileSync(new URL('../../conformance/alt-text/tagged-expected.json', import.meta.url), 'utf8'));
 const tagged = () => new Uint8Array(readFileSync(new URL('../../conformance/alt-text/tagged.pdf', import.meta.url)));
 const corpus = (name: string) => new Uint8Array(readFileSync(new URL(`../../conformance/corpus/${name}`, import.meta.url)));
@@ -104,18 +102,5 @@ describe('writing figures', () => {
     assert.equal(photoFigure.title, 'a (b)');
     assert.equal(photoFigure.language, 'en');
     assert.equal(photoFigure.altText, EDITS[0]!.altText);
-  });
-
-  test('a trial document writes a watermarked result that stamps once', async () => {
-    await configureLicenseForTesting({ key: null, host: null });
-    try {
-      const updated = await (await PdfDocument.open(tagged())).updateFigures([EDITS[0]!]);
-      assert.equal(updated.needsWatermark, true);
-      const saved = await PdfDocument.open(await updated.toBytes());
-      const words = await (await saved.page(0)).text.string();
-      assert.equal(words.split('PDFCora trial').length - 1, 1);
-    } finally {
-      await configureLicenseForTesting({ key: LICENSE.fullKey, host: null });
-    }
   });
 });

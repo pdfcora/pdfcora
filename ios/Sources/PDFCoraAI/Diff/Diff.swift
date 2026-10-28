@@ -195,7 +195,7 @@ extension PdfAI {
                     }
                     if case .answered(let result)? = outcome {
                         modelUsed = true
-                        let summary = result.value.label == .meaningChanged && !result.value.summary.isEmpty ? Trial.text(result.value.summary) : nil
+                        let summary = result.value.label == .meaningChanged && !result.value.summary.isEmpty ? result.value.summary : nil
                         changes.append(PdfDiffChange(id: id, kind: .modified, label: result.value.label, summary: summary,
                                                      original: original, revised: changed, source: result.source))
                     } else {
@@ -204,7 +204,7 @@ extension PdfAI {
                     }
                 }
             }
-            return PdfDiff(changes: changes, modelUsed: modelUsed, notice: Trial.text(diffNotice))
+            return PdfDiff(changes: changes, modelUsed: modelUsed, notice: diffNotice)
         }
     }
 

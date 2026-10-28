@@ -180,11 +180,11 @@ suspend fun suggestAltText(ai: PdfAI, pages: IntRange?): PdfAltTextReview {
                 modelUsed = true
                 val answer = outcome.result.value
                 items += if (answer.decorative) item(PdfAltTextKind.DECORATIVE, "", outcome.result.source)
-                else item(PdfAltTextKind.DESCRIPTION, Trial.text(answer.description), outcome.result.source)
+                else item(PdfAltTextKind.DESCRIPTION, answer.description, outcome.result.source)
             } else {
                 items += item(PdfAltTextKind.DESCRIPTION, "", null)
             }
         }
     }
-    return PdfAltTextReview(untagged, items, modelUsed, Trial.text(ALT_TEXT_NOTICE), document)
+    return PdfAltTextReview(untagged, items, modelUsed, ALT_TEXT_NOTICE, document)
 }

@@ -162,7 +162,7 @@ extension PdfAI {
                 PdfRemediationBlock(id: "\(d.pageIndex):\(d.objects[0].index)", order: i + 1, pageIndex: d.pageIndex,
                                     type: d.type, objectIndices: d.objects.map(\.index), rect: d.rect, text: d.text)
             }
-            return PdfRemediationReview(alreadyTagged: alreadyTagged, blocks: blocks, notice: Trial.text(remediationNotice), document: document)
+            return PdfRemediationReview(alreadyTagged: alreadyTagged, blocks: blocks, notice: remediationNotice, document: document)
         }
     }
 

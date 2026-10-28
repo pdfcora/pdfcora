@@ -4,7 +4,7 @@ import XCTest
 
 /// How much personal data Apple's on-device model adds on the shared document, per language.
 /// Opt-in: `TEST_RUNNER_PDFCORA_MEASURE_APPLE=1` in the environment of `xcodebuild test`.
-final class RedactionMeasurementTests: LicensedTestCase {
+final class RedactionMeasurementTests: XCTestCase {
     func testAppleModelOnThePiiDocument() async throws {
         guard ProcessInfo.processInfo.environment["PDFCORA_MEASURE_APPLE"] == "1" else {
             throw XCTSkip("set TEST_RUNNER_PDFCORA_MEASURE_APPLE=1")

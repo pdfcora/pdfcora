@@ -1,7 +1,7 @@
 import XCTest
 @testable import PDFCora
 
-final class StructureTests: LicensedTestCase {
+final class StructureTests: XCTestCase {
     private var tagged: Data {
         get throws { try Data(contentsOf: Repo.root.appendingPathComponent("conformance/alt-text/tagged.pdf")) }
     }
@@ -101,16 +101,5 @@ final class StructureTests: LicensedTestCase {
         let written = latin1([UInt8](PdfValue.serialize(.dictionary([("T", value["T"]!)]))))
         XCTAssertEqual(written, "<</T (a \\(b\\) c\\\\ \u{e9})>>")
         XCTAssertEqual(latin1([UInt8](PdfValue.serialize(value["Lang"]!))), "<FEFF0064>")
-    }
-
-    func testATrialDocumentWritesAWatermarkedResult() async throws {
-        PdfLicense.configureForTesting(key: .some(nil))
-        defer { LicensedTestCase.installFullTestLicense() }
-        let updated = try await PdfDocument(data: try tagged).updateFigures([edits[0]])
-        let needs = await updated.needsWatermark
-        XCTAssertTrue(needs)
-        let saved = try await PdfDocument(data: try await updated.data())
-        let text = try await saved.page(0).text.string()
-        XCTAssertEqual(text.components(separatedBy: "PDFCora trial").count - 1, 1)
     }
 }

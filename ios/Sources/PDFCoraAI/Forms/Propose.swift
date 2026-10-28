@@ -196,7 +196,7 @@ extension PdfAI {
                     annotationIndex: f.base.annotationIndex, fieldName: f.base.name, key: match.key, value: value,
                     source: match.source, rect: f.base.rect))
             }
-            return PdfFormProposals(items: items, modelUsed: modelUsed, notice: Trial.text(formNotice), document: document)
+            return PdfFormProposals(items: items, modelUsed: modelUsed, notice: formNotice, document: document)
         }
     }
 

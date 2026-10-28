@@ -167,5 +167,5 @@ suspend fun proposeFormValues(ai: PdfAI, profile: Map<PdfProfileKey, String>, pa
         val value = FormProposer.value(f, key, raw) ?: return@mapNotNull null
         PdfFormProposal("${id(f)}:${key.id}", f.pageIndex, f.field.base.annotationIndex, f.field.base.name, key, value, source, f.field.base.rect)
     }
-    return PdfFormProposals(items, modelUsed, Trial.text(FORM_NOTICE), document)
+    return PdfFormProposals(items, modelUsed, FORM_NOTICE, document)
 }

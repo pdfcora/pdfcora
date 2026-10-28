@@ -148,8 +148,6 @@ export class PdfPage {
             [form, bitmap, page, 0, 0, width, height, 0, flags]);
         }
 
-        this.document.watermarkBitmap(m, bitmap, width, height);
-
         const buffer = m.ccall('FPDFBitmap_GetBuffer', 'number', ['number'], [bitmap]) as number;
         if (!buffer) throw PdfError.engine(-1);
 
@@ -205,7 +203,6 @@ export class PdfPage {
    * index.
    */
   addInk(strokes: readonly (readonly PdfPoint[])[], color: PdfColor = { red: 0, green: 0, blue: 0 }, lineWidth = 2): Promise<number> {
-    this.document.use('editing');
     return this.document.withPage(this.index, (page, m) => {
       const annot = m.ccall('FPDFPage_CreateAnnot', 'number', ['number', 'number'], [page, SUBTYPE.ink]) as number;
       if (!annot) throw PdfError.invalidOperation('ink annotation could not be created');
@@ -252,7 +249,6 @@ export class PdfPage {
   }
 
   private addMarkup(subtype: number, quads: readonly PdfQuad[], color: PdfColor): Promise<number> {
-    this.document.use('editing');
     return this.document.withPage(this.index, (page, m) => {
       const annot = m.ccall('FPDFPage_CreateAnnot', 'number', ['number', 'number'], [page, subtype]) as number;
       if (!annot) throw PdfError.invalidOperation('markup annotation could not be created');
@@ -285,7 +281,6 @@ export class PdfPage {
 
   /** Adds a sticky note. Resolves to the new annotation's index. */
   addNote(rect: PdfRect, contents: string, color: PdfColor = { red: 255, green: 255, blue: 0, alpha: 128 }): Promise<number> {
-    this.document.use('editing');
     return this.document.withPage(this.index, (page, m) => {
       const annot = m.ccall('FPDFPage_CreateAnnot', 'number', ['number', 'number'], [page, SUBTYPE.text]) as number;
       if (!annot) throw PdfError.invalidOperation('note annotation could not be created');
@@ -305,7 +300,6 @@ export class PdfPage {
   }
 
   removeAnnotation(annotationIndex: number): Promise<void> {
-    this.document.use('editing');
     return this.document.withPage(this.index, (page, m) => {
       const count = m.ccall('FPDFPage_GetAnnotCount', 'number', ['number'], [page]) as number;
       if (annotationIndex < 0 || annotationIndex >= count) {
@@ -347,7 +341,6 @@ export class PdfPage {
 
   /** Sets a text field's value. */
   setText(value: string, fieldAt: number): Promise<void> {
-    this.document.use('forms');
     return this.withFormAnnotation(fieldAt, (m, form, page, annot) => {
       if (!m.ccall('FORM_SetFocusedAnnot', 'number', ['number', 'number'], [form, annot])) {
         throw PdfError.invalidOperation('field could not take focus');
@@ -370,7 +363,6 @@ export class PdfPage {
    * as strings.
    */
   setChecked(checked: boolean, fieldAt: number): Promise<void> {
-    this.document.use('forms');
     return this.withFormAnnotation(fieldAt, (m, form, page, annot) => {
       const isChecked = () => (m.ccall('FPDFAnnot_IsChecked', 'number', ['number', 'number'], [form, annot]) as number) !== 0;
       if (isChecked() === checked) return;
@@ -402,7 +394,6 @@ export class PdfPage {
 
   /** Selects or deselects one option of a combo or list box. */
   setOption(optionIndex: number, selected: boolean, fieldAt: number): Promise<void> {
-    this.document.use('forms');
     return this.withFormAnnotation(fieldAt, (m, form, page, annot) => {
       if (!m.ccall('FORM_SetFocusedAnnot', 'number', ['number', 'number'], [form, annot])) {
         throw PdfError.invalidOperation('field could not take focus');

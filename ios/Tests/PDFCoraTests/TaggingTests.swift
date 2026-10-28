@@ -2,7 +2,7 @@ import XCTest
 @testable import PDFCora
 
 /// Mirrors `web/test/tagging.test.ts`.
-final class TaggingTests: LicensedTestCase {
+final class TaggingTests: XCTestCase {
     struct Expected: Decodable { let pageIndex: Int; let type: String; let objectCount: Int }
 
     private func untagged() async throws -> PdfDocument {
@@ -72,16 +72,5 @@ final class TaggingTests: LicensedTestCase {
             XCTFail("expected already tagged")
         } catch PdfError.invalidOperation {
         }
-    }
-
-    func testATrialDocumentWritesAWatermarkedResult() async throws {
-        PdfLicense.configureForTesting(key: .some(nil))
-        defer { LicensedTestCase.installFullTestLicense() }
-        let tagged = try await untagged().tagContent(try expectedBlocks(), title: "T", language: "en")
-        let needs = await tagged.needsWatermark
-        XCTAssertTrue(needs)
-        let saved = try await PdfDocument(data: try await tagged.data())
-        let text = try await saved.page(0).text.string()
-        XCTAssertEqual(text.components(separatedBy: "PDFCora trial").count - 1, 1)
     }
 }

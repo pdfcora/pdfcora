@@ -2,7 +2,7 @@
   "name": "@pdfcora/node",
   "version": "0.1.0",
   "description": "PDF SDK for Node, built on PDFium",
-  "license": "SEE LICENSE IN LICENSE.md",
+  "license": "MIT",
   "homepage": "https://pdfcora.com",
   "type": "module",
   "main": "./dist/index.js",

@@ -85,7 +85,6 @@ suspend fun PdfDocument.pageObjects(pageIndex: Int): List<PdfPageObject> = onDoc
  * regenerated content stream at all, so the removed content stays in the file.
  */
 suspend fun PdfDocument.redact(targets: List<PdfRedactionTarget>): PdfRedactionReport {
-    use(com.pdfcora.license.PdfLicenseModule.REDACTION)
     val pages = pageCount()
     targets.filterIsInstance<PdfRedactionTarget.Region>().forEach {
         if (it.pageIndex < 0 || it.pageIndex >= pages) {

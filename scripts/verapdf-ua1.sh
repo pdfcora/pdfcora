@@ -4,8 +4,7 @@
 # Usage: scripts/verapdf-ua1.sh [--allow CLAUSE]... file.pdf...
 #
 # --allow names a clause whose failures do not fail the run, for output that cannot be
-# compliant by design: trial output carries a watermark in a standard font, which no
-# amount of tagging embeds (7.21.4.1). Every other clause still fails the run.
+# compliant by design. Every other clause still fails the run.
 #
 # veraPDF is found on PATH, then at $VERAPDF, then where scripts/install-verapdf.sh puts it.
 set -euo pipefail

@@ -27,7 +27,6 @@ extension PdfDocument {
     /// Throws ``PdfError/invalidOperation(reason:)``, writing nothing, when a name is empty or already
     /// used. Appended as an incremental update.
     public func addFormFields(_ fields: [PdfNewFormField]) async throws -> PdfDocument {
-        use(.forms)
         let handle = try requireHandle()
         let pageCount = Int(FPDF_GetPageCount(handle))
         var names = Set<String>()
@@ -46,7 +45,6 @@ extension PdfDocument {
         if let form { FORM_ForceToKillFocus(form) }
         let base = try Self.serialise(handle, flags: FPDF_DWORD(FPDF_INCREMENTAL))
         let updated = try await PdfDocument(data: try FormFieldWriter.write(base, fields))
-        if needsWatermark { await updated.markNeedsWatermark() }
         return updated
     }
 }

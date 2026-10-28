@@ -3,7 +3,7 @@ import XCTest
 @testable import PDFCoraAI
 
 /// Mirrors `web-ai/test/diff.test.ts`.
-final class DiffTests: LicensedTestCase {
+final class DiffTests: XCTestCase {
     static let dir = RedactionPatternTests.root.appendingPathComponent("conformance/diff")
     private func open(_ name: String) async throws -> PdfDocument {
         try await PdfDocument(data: try Data(contentsOf: Self.dir.appendingPathComponent(name)))

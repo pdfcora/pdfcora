@@ -1,6 +1,5 @@
 package com.pdfcora
 
-import com.pdfcora.license.PdfLicenseModule
 import com.pdfcora.writer.FigureWriter
 
 /** An element of a tagged PDF's structure tree, as seen from one page. */
@@ -80,7 +79,6 @@ private fun union(a: PdfRect, b: PdfRect) =
  * incremental update.
  */
 suspend fun PdfDocument.updateFigures(edits: List<PdfFigureEdit>): PdfDocument {
-    use(PdfLicenseModule.EDITING)
     val pages = pageCount()
     edits.firstOrNull { it.pageIndex !in 0 until pages }?.let { throw PdfError.PageOutOfRange(it.pageIndex, pages) }
     val writes = edits.map {
@@ -106,7 +104,7 @@ suspend fun PdfDocument.updateFigures(edits: List<PdfFigureEdit>): PdfDocument {
             }
         }
 
-        return PdfDocument.open(FigureWriter.write(base, writes)).also { if (needsWatermark) it.needsWatermark = true }
+        return PdfDocument.open(FigureWriter.write(base, writes))
     } catch (e: FigureWriter.NotFound) {
         throw PdfError.InvalidOperation(e.message ?: "no such figure")
     }

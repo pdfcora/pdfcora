@@ -12,16 +12,6 @@ import { mkdtempSync, readFileSync, readdirSync, statSync, writeFileSync } from 
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join, extname, relative } from 'node:path';
-import { configureLicenseForTesting } from '../web/dist/license/state.js';
-
-// Without a key every page carries the trial watermark, whose standard font is not
-// embedded, so every document fails 7.21.4.1 and none can be compliant. The survey is
-// about what a licensed app produces, so it uses the conformance fixture's test key.
-const LICENSE = JSON.parse(readFileSync(new URL('../conformance/license/cases.json', import.meta.url), 'utf8'));
-await configureLicenseForTesting({
-  publicKey: LICENSE.publicKey, revoked: LICENSE.revoked, releaseDate: LICENSE.releaseDate,
-  host: null, key: LICENSE.fullKey,
-});
 
 const { PdfDocument } = await import('../web/dist/index.js');
 const { PdfAI } = await import('../web-ai/dist/index.js');

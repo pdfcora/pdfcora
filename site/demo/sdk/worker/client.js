@@ -7,7 +7,6 @@
  * cancellation can interrupt, and terminating the worker is the only way out.
  */
 import { PdfError } from '../errors.js';
-import { currentKey } from '../license/state.js';
 /** Owns the Worker and multiplexes calls onto it. */
 export class PdfWorker {
     worker;
@@ -26,7 +25,6 @@ export class PdfWorker {
             op: 'init',
             glueUrl: String(options.glueUrl),
             wasmUrl: String(options.wasmUrl),
-            license: { key: currentKey(), host: typeof location === 'undefined' ? null : location.hostname },
         });
     }
     settle(response) {

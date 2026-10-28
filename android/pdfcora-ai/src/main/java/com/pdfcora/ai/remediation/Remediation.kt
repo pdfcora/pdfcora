@@ -7,7 +7,6 @@ import com.pdfcora.PdfRect
 import com.pdfcora.PdfTagBlock
 import com.pdfcora.PdfTagType
 import com.pdfcora.ai.PdfAI
-import com.pdfcora.ai.Trial
 import com.pdfcora.ai.UnknownProposalException
 import com.pdfcora.ai.alttext.AltTextProposer
 import com.pdfcora.isTagged
@@ -163,5 +162,5 @@ suspend fun suggestRemediation(ai: PdfAI, pages: IntRange?): PdfRemediationRevie
     val blocks = drafts.mapIndexed { i, d ->
         PdfRemediationBlock("${d.pageIndex}:${d.objects[0].index}", i + 1, d.pageIndex, d.type, d.objects.map { it.index }, d.rect, d.text)
     }
-    return PdfRemediationReview(alreadyTagged, blocks, Trial.text(REMEDIATION_NOTICE), document)
+    return PdfRemediationReview(alreadyTagged, blocks, REMEDIATION_NOTICE, document)
 }

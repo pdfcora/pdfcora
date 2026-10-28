@@ -2,7 +2,8 @@
 
 A PDF SDK for **iOS, Android, Web and the server**, built on PDFium. One object model,
 expressed idiomatically in Swift, Kotlin, TypeScript and Java; thread-safe by
-construction; typed errors instead of native crashes.
+construction; typed errors instead of native crashes. Free and open source under the
+[MIT license](LICENSE.md).
 
 ```swift
 let doc  = try await PdfDocument(url: url)
@@ -106,9 +107,8 @@ committed and a consumer resolving from git would otherwise get no binary:
 Play delivers one per device.
 
 **Node** — `npm install @pdfcora/node`. A thin layer over the web package rather than a
-second implementation: it re-exports the whole API and adds file and PNG helpers and a
-licence key from the environment. Same WebAssembly engine, so nothing to compile. See
-`node/README.md`.
+second implementation: it re-exports the whole API and adds file and PNG helpers. Same WebAssembly engine, so
+nothing to compile. See `node/README.md`.
 
 **Java** — Maven, `com.pdfcora:pdfcora-java:0.1.0`, Java 17 or newer on macOS and Linux
 (x86-64 and arm64). This one *is* a separate implementation: a JNI layer over the native
@@ -127,48 +127,48 @@ on. Adding it does not raise your minimum OS.
 
 ✅ means built and covered by tests on that platform; rows marked *untested* are built but
 have no test yet. The core rows also run through the shared conformance suite, which asserts the
-same results on all three platforms.
+same results on all three platforms. The Java suite tests against the same fixtures.
 
-| | iOS | Android | Web |
-|---|---|---|---|
-| Open from bytes / file, password | ✅ | ✅ | ✅ |
-| Page count, size, rotation | ✅ | ✅ | ✅ |
-| Render (scaled or exact pixels) | ✅ | ✅ | ✅ |
-| Cancellable progressive render | ⚠️ *untested* | — | — |
-| A hung render does not take the app down | ⚠️ watchdog | ⚠️ watchdog | ✅ Worker |
-| Text extraction, char count | ✅ | ✅ | ✅ |
-| Text hash-verified vs reference engine | ✅ | ✅ | ✅ |
-| Search with rects | ✅ | ✅ | ✅ |
-| Character bounding boxes | ✅ | ✅ | ✅ |
-| Page objects (text, path, image…) | ✅ | ✅ | ✅ |
-| Annotations: read (15 kinds) | ✅ | ✅ | ✅ |
-| Annotations: ink, note, remove | ✅ | ✅ | ✅ |
-| Annotations: highlight, underline, strikeout | ✅ | ✅ | ✅ |
-| Form fields: read (8 kinds) | ✅ | ✅ | ✅ |
-| Form fields: set text, checkbox, option | ✅ | ✅ | ✅ |
-| Outline / bookmarks | ✅ | ✅ | ✅ |
-| Links | ✅ | ✅ | ✅ |
-| Metadata, permissions | ✅ | ✅ | ✅ |
-| Attachments: list, extract bytes | ✅ | ✅ | ✅ |
-| Save (full / incremental) | ✅ | ✅ | ✅ |
-| Signatures: read and verify | ✅ | ✅ | ✅ |
-| Signing (PAdES B-B), cross-checked with `pdfsig` | ✅ | ✅ | ✅ bring a CMS signer |
-| Signature timestamps (PAdES B-T) | ⚠️ *untested* | ⚠️ *untested* | ✅ |
-| Redaction, checked in the saved bytes | ✅ | ✅ | ✅ |
-| Viewer: state, zoom, events, sync, editing | ✅ | ✅ | ✅ |
-| UI component with configurable toolbar | ✅ SwiftUI | ✅ Compose | ✅ DOM element |
-| License keys and trial watermark | ✅ | ✅ | ✅ |
-| Redaction suggestions, reviewed as marks in the viewer | ✅ | ✅ | ✅ |
-| Smart form filling from a profile, reviewed as labelled marks | ✅ | ✅ | ✅ |
-| Create form fields; detect blanks on flat PDFs (lines, boxes, underscores, squares) | ✅ | ✅ | ✅ |
-| Structure tree read; figure alt text and decorative marking, checked with veraPDF | ✅ | ✅ | ✅ |
-| Alt text proposals for figures | ✅ provider | ✅ ML Kit, provider | ✅ provider |
-| Remediation: tag untagged content, rule-based proposals, checked with veraPDF | ✅ | ✅ | ✅ |
-| Tagged content exposed to screen readers in the viewer component | ✅ VoiceOver | ✅ TalkBack | ✅ semantic HTML |
-| Semantic diff of two versions, meaning vs wording | ✅ Apple model, provider | ✅ provider | ✅ provider |
-| Tools for AI agents: MCP server, WebMCP in the browser | — | — | ✅ `mcp/`, `registerWebMcpTools` |
-| Automated accessibility audit in the gates (axe, Xcode, ATF) | ✅ | ✅ | ⚠️ view level only |
-| Raw PDFium escape hatch | ✅ *untested* | — | — |
+| | iOS | Android | Web | Java |
+|---|---|---|---|---|
+| Open from bytes / file, password | ✅ | ✅ | ✅ | ✅ |
+| Open DOCX (converted to PDF on open) | — | — | — | ✅ |
+| Page count, size, rotation | ✅ | ✅ | ✅ | ✅ count, size |
+| Render (scaled or exact pixels) | ✅ | ✅ | ✅ | ✅ |
+| Cancellable progressive render | ⚠️ *untested* | — | — | — |
+| A hung render does not take the app down | ⚠️ watchdog | ⚠️ watchdog | ✅ Worker | — |
+| Text extraction, char count | ✅ | ✅ | ✅ | ✅ |
+| Text hash-verified vs reference engine | ✅ | ✅ | ✅ | — |
+| Search with rects | ✅ | ✅ | ✅ | ✅ offsets, no rects |
+| Character bounding boxes | ✅ | ✅ | ✅ | — |
+| Page objects (text, path, image…) | ✅ | ✅ | ✅ | — |
+| Annotations: read (15 kinds) | ✅ | ✅ | ✅ | ✅ |
+| Annotations: ink, note, remove | ✅ | ✅ | ✅ | ✅ |
+| Annotations: highlight, underline, strikeout | ✅ | ✅ | ✅ | ✅ |
+| Form fields: read (8 kinds) | ✅ | ✅ | ✅ | ✅ |
+| Form fields: set text, checkbox, option | ✅ | ✅ | ✅ | ✅ text, checkbox |
+| Outline / bookmarks | ✅ | ✅ | ✅ | — |
+| Links | ✅ | ✅ | ✅ | — |
+| Metadata, permissions | ✅ | ✅ | ✅ | ✅ |
+| Attachments: list, extract bytes | ✅ | ✅ | ✅ | — |
+| Save (full / incremental) | ✅ | ✅ | ✅ | ✅ full |
+| Signatures: read and verify | ✅ | ✅ | ✅ | ✅ |
+| Signing (PAdES B-B), cross-checked with `pdfsig` | ✅ | ✅ | ✅ bring a CMS signer | ✅ |
+| Signature timestamps (PAdES B-T) | ⚠️ *untested* | ⚠️ *untested* | ✅ | — |
+| Redaction, checked in the saved bytes | ✅ | ✅ | ✅ | ✅ |
+| Viewer: state, zoom, events, sync, editing | ✅ | ✅ | ✅ | ✅ |
+| UI component with configurable toolbar | ✅ SwiftUI | ✅ Compose | ✅ DOM element | — |
+| Redaction suggestions, reviewed as marks in the viewer | ✅ | ✅ | ✅ | — |
+| Smart form filling from a profile, reviewed as labelled marks | ✅ | ✅ | ✅ | — |
+| Create form fields; detect blanks on flat PDFs (lines, boxes, underscores, squares) | ✅ | ✅ | ✅ | — |
+| Structure tree read; figure alt text and decorative marking, checked with veraPDF | ✅ | ✅ | ✅ | — |
+| Alt text proposals for figures | ✅ provider | ✅ ML Kit, provider | ✅ provider | — |
+| Remediation: tag untagged content, rule-based proposals, checked with veraPDF | ✅ | ✅ | ✅ | ✅ tag untagged content |
+| Tagged content exposed to screen readers in the viewer component | ✅ VoiceOver | ✅ TalkBack | ✅ semantic HTML | — |
+| Semantic diff of two versions, meaning vs wording | ✅ Apple model, provider | ✅ provider | ✅ provider | — |
+| Tools for AI agents: MCP server, WebMCP in the browser | — | — | ✅ `mcp/`, `registerWebMcpTools` | — |
+| Automated accessibility audit in the gates (axe, Xcode, ATF) | ✅ | ✅ | ⚠️ view level only | — |
+| Raw PDFium escape hatch | ✅ *untested* | — | — | — |
 
 ⚠️ iOS rendering is cancellable *between* progressive steps, which covers a slow
 render. It cannot interrupt a render that hangs *inside* a single PDFium call. On iOS and
@@ -516,37 +516,10 @@ accessibility audit on the iOS demo, and the Accessibility Test Framework's chec
 component. `docs/accessibility/conformance-report.md` records what passes, what is not yet
 evaluated, and what an independent audit still has to cover — it is a self-assessment, not a VPAT®.
 
-## License keys
+## License
 
-Without a license key every feature works, and rendered pages, saved files and AI output
-carry a "PDFCora trial" watermark. A key unlocks the modules it lists — `editing`,
-`forms`, `signing`, `redaction`, `ai` — for the app IDs and web hosts it names. Viewing,
-text, search, verifying signatures, the viewer and sync need only a valid key.
-
-```swift
-PdfLicense.setKey("pk1.…")                  // iOS, before opening documents
-```
-```kotlin
-PdfLicense.setKey(context, "pk1.…")         // Android, in Application.onCreate
-```
-```ts
-await PdfLicense.setKey('pk1.…');           // web, before opening documents or creating a PdfWorker
-```
-
-`PdfLicense.status` says whether the key is valid, which modules it covers, and why a key
-was rejected. A key never makes the SDK throw.
-
-While a document needs the watermark it is always saved in full, even when an incremental
-save is requested, and signing it rewrites the file first — so signatures already in that
-file no longer verify. A licensed document keeps incremental saves and earlier signatures.
-
-Keys are checked offline. The check deters use beyond a license; it is not copy protection.
-Keys are issued with `tools/license/issue.mjs`; see `docs/superpowers/specs/2026-09-15-licensing-design.md`.
-
-## Licensing
-
-PDFCora is distributed as a binary that statically links PDFium and six bundled
-third-party libraries. **FreeType is used under the FreeType License (FTL)**, not
+PDFCora is MIT-licensed; see [`LICENSE.md`](LICENSE.md). It is distributed as a binary
+that statically links PDFium and six bundled third-party libraries. **FreeType is used under the FreeType License (FTL)**, not
 GPLv2, which keeps the whole SDK permissively licensed.
 
 The FTL requires this credit in the documentation of any product using the SDK:

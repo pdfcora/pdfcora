@@ -27,10 +27,6 @@ import android.widget.Toast
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Without a license key the SDK works fully, but pages carry a "PDFCora trial"
-        // watermark. With a key issued for this app's package name, set it before opening
-        // documents (an app would do this in Application.onCreate):
-        // com.pdfcora.license.PdfLicense.setKey(this, "pk1.…")
         setContent {
             var document by remember { mutableStateOf<PdfDocument?>(null) }
             LaunchedEffect(Unit) {

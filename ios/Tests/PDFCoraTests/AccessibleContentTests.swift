@@ -2,7 +2,7 @@ import XCTest
 @testable import PDFCora
 
 /// Mirrors `web/test/accessible.test.ts`.
-final class AccessibleContentTests: LicensedTestCase {
+final class AccessibleContentTests: XCTestCase {
     private func open(_ path: String) async throws -> PdfDocument {
         try await PdfDocument(data: try Data(contentsOf: Repo.root.appendingPathComponent("conformance/\(path)")))
     }

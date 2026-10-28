@@ -1,12 +1,10 @@
 package com.pdfcora.sign
 
 import com.pdfcora.PdfDocument
-import com.pdfcora.Native
 import com.pdfcora.PdfError
 import com.pdfcora.cms.CertificateReader
 import com.pdfcora.cms.CmsSignedData
 import com.pdfcora.cms.DerEncode
-import com.pdfcora.license.PdfLicenseModule
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.security.KeyStore
@@ -50,18 +48,10 @@ data class PdfSignOptions(
  * Signs the document, returning the signed bytes.
  *
  * The original bytes are never modified: the signature is appended as an incremental
- * update, so any signature already present keeps verifying. Without a signing license the
- * bytes are first watermarked, which is a full rewrite, so earlier signatures in the
- * result no longer verify.
+ * update, so any signature already present keeps verifying.
  */
 suspend fun PdfDocument.sign(options: PdfSignOptions): ByteArray {
-    use(PdfLicenseModule.SIGNING)
-    val base = if (!needsWatermark) originalBytes() else onDocument {
-        noteWatermarked()
-        Native.stampWatermark(originalBytes()).also {
-            if (it.isEmpty()) throw PdfError.SaveFailed("the document could not be watermarked")
-        }
-    }
+    val base = originalBytes()
     val placed = SignatureField.place(
         base,
         SignatureField.Options(

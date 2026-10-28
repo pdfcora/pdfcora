@@ -5,7 +5,7 @@ import XCTest
 import FoundationModels
 #endif
 
-final class AvailabilityTests: LicensedTestCase {
+final class AvailabilityTests: XCTestCase {
 
     func testOnlyAvailableIsUsable() {
         XCTAssertTrue(PdfAiAvailability.available.isUsable)

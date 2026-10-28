@@ -56,8 +56,6 @@ check_pdfsig() {
 
 if command -v pdfsig > /dev/null; then
     check_pdfsig /tmp/pdfcora-ios-signed.pdf iOS-signed
-    # Signed without a signing license, so it is watermarked first.
-    check_pdfsig /tmp/pdfcora-ios-trial-signed.pdf iOS-trial-signed
 else
     echo "cross-check:   skipped, pdfsig is not installed" >&2
 fi

@@ -39,6 +39,3 @@ Each folder has its own README with the command to run it. The SDK comes from th
 package registries: Swift Package Manager, Maven Central and npm.
 -->
 
-The iOS, Android, web and Node samples run without a license key, so their output
-carries the "PDFCora trial" watermark; each README says where a key goes. The Java SDK
-has no licensing module yet, so its samples produce unwatermarked output.

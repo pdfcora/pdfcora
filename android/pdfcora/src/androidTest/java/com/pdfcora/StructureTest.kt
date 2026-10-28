@@ -3,11 +3,9 @@ package com.pdfcora
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.pdfcora.cms.PdfSignatureValidity
-import com.pdfcora.license.PdfLicense
 import com.pdfcora.writer.PdfDictionaryReader
 import com.pdfcora.writer.PdfValue
 import kotlinx.coroutines.runBlocking
-import org.junit.After
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -16,7 +14,6 @@ import java.io.File
 /** Mirrors `web/test/structure.test.ts` and `ios/Tests/PDFCoraTests/StructureTests.swift`. */
 @RunWith(AndroidJUnit4::class)
 class StructureTest {
-    @After fun restore() = LicenseFixture.installFullKey()
 
     private fun asset(path: String) =
         InstrumentationRegistry.getInstrumentation().context.assets.open(path).use { it.readBytes() }
@@ -104,13 +101,5 @@ class StructureTest {
         assertEquals("<</T (a \\(b\\) c\\\\ é)>>",
             PdfValue.serialize(PdfValue.Dictionary(listOf("T" to value.getValue("T")))).toString(Charsets.ISO_8859_1))
         assertEquals("<FEFF0064>", PdfValue.serialize(value.getValue("Lang")).toString(Charsets.ISO_8859_1))
-    }
-
-    @Test fun aTrialDocumentWritesAWatermarkedResult() = runBlocking {
-        PdfLicense.configureForTesting(key = null, setKey = true)
-        val updated = PdfDocument.open(tagged()).updateFigures(listOf(edits[0]))
-        assertTrue(updated.needsWatermark)
-        val text = PdfDocument.open(updated.toByteArray()).page(0).text.string()
-        assertEquals(1, text.split("PDFCora trial").size - 1)
     }
 }

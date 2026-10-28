@@ -6,7 +6,6 @@ import com.pdfcora.PdfPageObject
 import com.pdfcora.PdfPageObjectKind
 import com.pdfcora.PdfRect
 import com.pdfcora.addFormFields
-import com.pdfcora.ai.Trial
 import com.pdfcora.ai.UnknownProposalException
 import com.pdfcora.boundingBox
 import com.pdfcora.formFields
@@ -128,5 +127,5 @@ suspend fun detectFields(document: PdfDocument, pages: IntRange?): PdfDetectedFi
             }
         }
     }
-    return PdfDetectedFields(items, Trial.text(DETECT_NOTICE), document)
+    return PdfDetectedFields(items, DETECT_NOTICE, document)
 }

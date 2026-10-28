@@ -143,6 +143,6 @@ extension PdfAI.Forms {
                 }
             }
         }
-        return PdfDetectedFields(items: items, notice: Trial.text(detectNotice), document: document)
+        return PdfDetectedFields(items: items, notice: detectNotice, document: document)
     }
 }

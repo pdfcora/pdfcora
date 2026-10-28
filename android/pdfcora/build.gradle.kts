@@ -18,7 +18,7 @@ android {
     defaultConfig {
         minSdk = 23
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64") }
-        testInstrumentationRunner = "com.pdfcora.LicensedTestRunner"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // Tests that leak spinning native threads poison every test after them in the
         // same process. scripts/test-android.sh runs them separately.
         testInstrumentationRunnerArguments["notAnnotation"] = "com.pdfcora.LeaksNativeThreads"
@@ -52,9 +52,6 @@ android {
     packaging { jniLibs { useLegacyPackaging = false } }
 
     publishing { singleVariant("release") }
-
-    // BuildConfig.DEBUG keeps the license test hook out of the release AAR.
-    buildFeatures { buildConfig = true }
 
     // The shared conformance corpus and expectations, so instrumented tests assert the
     // same contract as the iOS and Web SDKs.

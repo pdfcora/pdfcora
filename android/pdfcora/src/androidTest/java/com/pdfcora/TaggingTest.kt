@@ -2,10 +2,8 @@ package com.pdfcora
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.pdfcora.license.PdfLicense
 import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
-import org.junit.After
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -14,7 +12,6 @@ import java.io.File
 /** Mirrors `web/test/tagging.test.ts` and `ios/Tests/PDFCoraTests/TaggingTests.swift`. */
 @RunWith(AndroidJUnit4::class)
 class TaggingTest {
-    @After fun restore() = LicenseFixture.installFullKey()
 
     private fun asset(path: String) =
         InstrumentationRegistry.getInstrumentation().context.assets.open(path).use { it.readBytes() }
@@ -78,13 +75,5 @@ class TaggingTest {
             fail("expected already tagged")
         } catch (e: PdfError.InvalidOperation) {
         }
-    }
-
-    @Test fun aTrialDocumentWritesAWatermarkedResult() = runBlocking {
-        PdfLicense.configureForTesting(key = null, setKey = true)
-        val tagged = untagged().tagContent(expectedBlocks(), "T", "en")
-        assertTrue(tagged.needsWatermark)
-        val text = PdfDocument.open(tagged.toByteArray()).page(0).text.string()
-        assertEquals(1, text.split("PDFCora trial").size - 1)
     }
 }

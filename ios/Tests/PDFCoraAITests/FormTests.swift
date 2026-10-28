@@ -2,7 +2,7 @@ import XCTest
 @testable import PDFCora
 @testable import PDFCoraAI
 
-final class FormTests: LicensedTestCase {
+final class FormTests: XCTestCase {
     static let dir = RedactionPatternTests.root.appendingPathComponent("conformance/forms")
     static let profile: [PdfProfileKey: String] = [
         .givenName: "Anna", .familyName: "Schmidt", .fullName: "Anna Schmidt", .dateOfBirth: "1985-03-14",

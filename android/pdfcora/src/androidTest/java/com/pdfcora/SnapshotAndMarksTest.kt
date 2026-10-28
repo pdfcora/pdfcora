@@ -2,7 +2,6 @@ package com.pdfcora
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.pdfcora.license.PdfLicense
 import com.pdfcora.view.*
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -10,14 +9,12 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
-import org.junit.After
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class SnapshotAndMarksTest {
-    @After fun restore() = LicenseFixture.installFullKey()
     private fun corpus(name: String) =
         InstrumentationRegistry.getInstrumentation().context.assets.open("corpus/$name").use { it.readBytes() }
 
@@ -29,14 +26,6 @@ class SnapshotAndMarksTest {
         val copy = snapshot.open()
         assertTrue(copy.page(0).text.string().contains("Hello"))
         assertEquals(1, copy.page(0).annotations().size)
-    }
-
-    @Test fun aSnapshotOfAWatermarkedDocumentReopensWatermarked() = runBlocking {
-        PdfLicense.configureForTesting(key = null, setKey = true)
-        val copy = PdfDocument.open(corpus("hello_world.pdf")).snapshot().open()
-        assertTrue(copy.needsWatermark)
-        val text = PdfDocument.open(copy.toByteArray()).page(0).text.string()
-        assertEquals(1, text.split("PDFCora trial").size - 1)
     }
 
     private suspend fun viewer() = PdfViewer.open(PdfDocument.open(corpus("hello_world.pdf")), PdfViewport(400f, 600f))

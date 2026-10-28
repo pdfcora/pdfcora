@@ -178,8 +178,7 @@ class AnswersTest {
         val prompts = mutableListOf<String>()
         val ai = PdfAI(document, PdfAIOptions(PdfAiProvider { prompts += it.prompt; PdfAiResponse(" A contract. ") }))
         val outcome = ai.summaries.summarize(pages = 0..0)
-        // This module's instrumented tests run without a license key, so output is marked.
-        assertEquals(PdfAiOutcome.Answered(PdfAiResult(PdfSummary(Trial.PREFIX + "A contract.", emptyList()), PdfAiSource.CUSTOM_PROVIDER)),
+        assertEquals(PdfAiOutcome.Answered(PdfAiResult(PdfSummary("A contract.", emptyList()), PdfAiSource.CUSTOM_PROVIDER)),
                      outcome)
         assertTrue(prompts.joinToString().contains("1. Parties"))
         assertFalse(prompts.joinToString().contains("12. Termination"))

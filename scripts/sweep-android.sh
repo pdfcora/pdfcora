@@ -33,7 +33,7 @@ device_cat() { adb exec-out run-as "$PACKAGE" sh -c "cat $1 2>/dev/null" || true
 start=0
 while [ "$start" -lt "$total" ]; do
     adb shell am instrument -w -e class com.pdfcora.CorpusSweepTest -e sweepCorpus "$ON_DEVICE" \
-        -e sweepStart "$start" "$PACKAGE/com.pdfcora.LicensedTestRunner" > "$work/run.log" 2>&1 || true
+        -e sweepStart "$start" "$PACKAGE/androidx.test.runner.AndroidJUnitRunner" > "$work/run.log" 2>&1 || true
     device_cat files/sweep.jsonl > "$work/results.jsonl"
     started=$(device_cat files/sweep.started)
     # A run that never reached the test is a broken setup, not a crash in a document.

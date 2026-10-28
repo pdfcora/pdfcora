@@ -7,7 +7,7 @@ import XCTest
 /// actor gets its own executor, so two documents run on two threads, and PDFium's global
 /// state is not thread-safe. The same arrangement killed the Android process
 /// reproducibly.
-final class CrossDocumentStressTests: LicensedTestCase {
+final class CrossDocumentStressTests: XCTestCase {
 
     private let files = ["hello_world.pdf", "text_form.pdf", "rectangles.pdf",
                          "many_rectangles.pdf", "text_font.pdf", "find_text_consecutive.pdf"]

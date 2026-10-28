@@ -3,7 +3,7 @@ import XCTest
 @testable import PDFCoraAI
 
 /// Mirrors `web-ai/test/remediation.test.ts`.
-final class RemediationTests: LicensedTestCase {
+final class RemediationTests: XCTestCase {
     static let dir = RedactionPatternTests.root.appendingPathComponent("conformance/remediation")
     struct Expected: Decodable, Equatable { let pageIndex: Int; let type: String; let objectCount: Int; let text: String }
 

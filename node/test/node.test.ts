@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { openFile, saveFile, renderPng, renderRaw, encodePng, useLicenseFromEnvironment, PdfDocument, PdfError } from '../src/index.js';
+import { openFile, saveFile, renderPng, renderRaw, encodePng, PdfDocument, PdfError } from '../src/index.js';
 
 // Compiled to dist-test/test/, so the repository root is three levels up.
 const ROOT = new URL('../../../conformance/', import.meta.url).pathname;
@@ -55,11 +55,6 @@ describe('@pdfcora/node', () => {
     assert.equal(await reopened.pageCount(), 3);
     await reopened.close();
     await document.close();
-  });
-
-  test('a licence key is taken from the environment, and its absence is not an error', async () => {
-    delete process.env.PDFCORA_TEST_KEY;
-    assert.equal(await useLicenseFromEnvironment('PDFCORA_TEST_KEY'), false);
   });
 
   test('the whole web API is re-exported, so code moves between the two unchanged', async () => {

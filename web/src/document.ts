@@ -18,9 +18,6 @@ import { readCatalog } from './writer/read.js';
 import { entryOf } from './writer/values.js';
 import { FigureNotFoundError, findFigures, writeFigures } from './writer/structure.js';
 import { PdfPage } from './page.js';
-import { licenseReady, noteWatermark, PdfLicense } from './license/state.js';
-import type { PdfLicenseModule } from './license/key.js';
-import { drawWatermark, stampWatermark } from './license/watermark.js';
 import { saveHandle } from './save.js';
 
 /**
@@ -40,7 +37,6 @@ export class PdfDocument {
   private form = 0;
   private formInfo = 0;
   private closedFlag = false;
-  private marked = false;
 
   /** Serialises work; also what makes `await`ed calls ordered and non-overlapping. */
   private queue: Promise<unknown> = Promise.resolve();
@@ -89,7 +85,6 @@ export class PdfDocument {
 
   static async open(bytes: Uint8Array, password?: string): Promise<PdfDocument> {
     const m = await engine();
-    const license = await licenseReady();
     const ptr = m._malloc(bytes.length);
     m.HEAPU8.set(bytes, ptr);
 
@@ -103,9 +98,7 @@ export class PdfDocument {
       m._free(ptr);
       throw PdfError.fromEngine(lastError, password !== undefined);
     }
-    const document = new PdfDocument(m, handle, ptr, bytes);
-    document.marked = license.kind === 'trial';
-    return document;
+    return new PdfDocument(m, handle, ptr, bytes);
   }
 
   /** @internal Runs `body` with the document handle, serialised and closed-checked. */
@@ -121,29 +114,6 @@ export class PdfDocument {
 
   get isClosed(): boolean {
     return this.closedFlag;
-  }
-
-  /** @internal True once anything this document produces must carry the watermark. */
-  get needsWatermark(): boolean {
-    return this.marked;
-  }
-
-  /** @internal Every paid entry point calls this first. The operation runs either way. */
-  use(module: PdfLicenseModule): void {
-    if (!PdfLicense.covers(module)) this.marked = true;
-  }
-
-  /** @internal Called whenever watermarked output is produced. */
-  noteWatermarked(): void {
-    const status = PdfLicense.status;
-    noteWatermark(status.kind === 'trial' ? status.message : 'the license key does not cover every module used');
-  }
-
-  /** @internal Draws the watermark when this document needs it. */
-  watermarkBitmap(m: PdfiumModule, bitmap: number, width: number, height: number): void {
-    if (!this.marked) return;
-    this.noteWatermarked();
-    drawWatermark(m, bitmap, width, height);
   }
 
   pageCount(): Promise<number> {
@@ -232,7 +202,6 @@ export class PdfDocument {
   }
 
   async setRotation(pageIndex: number, rotation: PdfPageRotation): Promise<void> {
-    this.use('editing');
     const raw = { 0: 0, 90: 1, 180: 2, 270: 3 }[rotation];
     await this.withPage(pageIndex, (page, m) => {
       m.ccall('FPDFPage_SetRotation', null, ['number', 'number'], [page, raw]);
@@ -330,16 +299,9 @@ export class PdfDocument {
    *
    * The caller supplies the CMS implementation. WebCrypto has primitives but not CMS,
    * and bundling a library would burden every consumer including those that only read.
-   *
-   * Without a signing license the bytes are first watermarked, which is a full rewrite,
-   * so signatures already in the file no longer verify in the result.
    */
   async sign(options: PdfSignOptions): Promise<Uint8Array> {
-    this.use('signing');
-    if (!this.marked) return signDocument(this.originalBytes, options);
-    this.noteWatermarked();
-    const stamped = await this.run((_, m) => stampWatermark(m, this.originalBytes));
-    return signDocument(stamped, options);
+    return signDocument(this.originalBytes, options);
   }
 
   /**
@@ -350,7 +312,6 @@ export class PdfDocument {
    * stream in the file, and the removed content with it.
    */
   async redact(targets: readonly PdfRedactionTarget[]): Promise<PdfRedactionReport> {
-    this.use('redaction');
     const counts = emptyCounts();
     const pageCount = await this.pageCount();
 
@@ -408,7 +369,6 @@ export class PdfDocument {
    * Appended as an incremental update, so earlier signatures keep verifying their ranges.
    */
   async addFormFields(fields: readonly PdfNewFormField[]): Promise<PdfDocument> {
-    this.use('forms');
     const pageCount = await this.pageCount();
     const names = new Set<string>();
     for (let pageIndex = 0; pageIndex < pageCount; pageIndex++) {
@@ -425,9 +385,7 @@ export class PdfDocument {
       if (form) m.ccall('FORM_ForceToKillFocus', 'number', ['number'], [form]);
       return saveHandle(m, h, 1);
     });
-    const updated = await PdfDocument.open(await writeFormFields(base, fields));
-    if (this.marked) updated.marked = true;
-    return updated;
+    return PdfDocument.open(await writeFormFields(base, fields));
   }
 
   /** True when the document declares itself tagged (`/MarkInfo /Marked`). */
@@ -447,7 +405,6 @@ export class PdfDocument {
    * appended as an incremental update.
    */
   async updateFigures(edits: readonly PdfFigureEdit[]): Promise<PdfDocument> {
-    this.use('editing');
     const pageCount = await this.pageCount();
     for (const edit of edits) {
       if (edit.pageIndex < 0 || edit.pageIndex >= pageCount) throw PdfError.pageOutOfRange(edit.pageIndex, pageCount);
@@ -476,9 +433,7 @@ export class PdfDocument {
         }
       }
 
-      const updated = await PdfDocument.open(await writeFigures(base, figureEdits));
-      if (this.marked) updated.marked = true;
-      return updated;
+      return await PdfDocument.open(await writeFigures(base, figureEdits));
     } catch (error) {
       if (error instanceof FigureNotFoundError) throw PdfError.invalidOperation(error.message);
       throw error;
@@ -497,7 +452,6 @@ export class PdfDocument {
    * signatures stop verifying.
    */
   async tagContent(blocks: readonly PdfTagBlock[], options: PdfTagOptions = {}): Promise<PdfDocument> {
-    this.use('editing');
     if (await this.isTagged()) throw PdfError.invalidOperation('the document is already tagged');
     const pageCount = await this.pageCount();
     const objectCounts = await this.run((h, m) => Array.from({ length: pageCount }, (_, i) => {
@@ -560,11 +514,9 @@ export class PdfDocument {
       await scratch.close();
     }
 
-    const updated = await PdfDocument.open(await writeTagTree(base, {
+    return PdfDocument.open(await writeTagTree(base, {
       blocks: tagged, mcidCounts, title, ...(options.language ? { language: options.language } : {}),
     }));
-    if (this.marked) updated.marked = true;
-    return updated;
   }
 
   /** The document outline, or an empty array when there is none. */
@@ -572,34 +524,18 @@ export class PdfDocument {
     return this.run((h, m) => readBookmarks(m, h, 0, 0));
   }
 
-  /**
-   * Serialises the document, including any edits made through this SDK. A document that
-   * needs the watermark is always saved in full.
-   */
+  /** Serialises the document, including any edits made through this SDK. */
   toBytes(mode: PdfSaveMode = 'full'): Promise<Uint8Array> {
-    return this.run((h, m) => {
-      if (!this.marked) return saveHandle(m, h, mode === 'incremental' ? 1 : 2);
-      this.noteWatermarked();
-      return stampWatermark(m, saveHandle(m, h, 2));
-    });
+    return this.run((h, m) => saveHandle(m, h, mode === 'incremental' ? 1 : 2));
   }
 
   /**
    * A copy of the document as it is now, to reopen later — for undoing a change that
    * cannot be undone in place, such as a redaction.
-   *
-   * The copy's bytes are never exposed: they are not watermarked, and handing them out
-   * would be a way round the license. The reopened document needs the watermark if this
-   * one does.
    */
   async snapshot(): Promise<PdfDocumentSnapshot> {
     const bytes = await this.run((h, m) => saveHandle(m, h, 2));
-    const marked = this.marked;
-    return new PdfDocumentSnapshot(async () => {
-      const document = await PdfDocument.open(bytes);
-      if (marked) document.marked = true;
-      return document;
-    });
+    return new PdfDocumentSnapshot(() => PdfDocument.open(bytes));
   }
 
   /** Releases the document. Further use rejects with a `closed` {@link PdfError}. */

@@ -49,8 +49,7 @@ class DiffTest {
         assertTrue(diff.modelUsed)
         assertEquals(listOf(PdfDiffLabel.WORDING_ONLY, PdfDiffLabel.MEANING_CHANGED, PdfDiffLabel.MEANING_CHANGED, PdfDiffLabel.MEANING_CHANGED),
             diff.changes.map { it.label })
-        // This module's instrumented tests run without a license, so model text carries the trial prefix.
-        assertEquals(listOf(null, null, Trial.text("The notice period doubles to 60 days."), null), diff.changes.map { it.summary })
+        assertEquals(listOf(null, null, "The notice period doubles to 60 days.", null), diff.changes.map { it.summary })
 
         val flakyCalls = AtomicInteger()
         val flaky = PdfAiProvider { if (flakyCalls.getAndIncrement() == 0) PdfAiResponse("""{"label":"maybe"}""") else error("offline") }

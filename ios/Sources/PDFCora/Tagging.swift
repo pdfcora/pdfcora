@@ -39,7 +39,6 @@ extension PdfDocument {
     ///   - title: written to the XMP metadata; defaults to the document's title.
     ///   - language: BCP 47, written to `/Lang`; defaults to the document's own `/Lang`.
     public func tagContent(_ blocks: [PdfTagBlock], title: String? = nil, language: String? = nil) async throws -> PdfDocument {
-        use(.editing)
         let handle = try requireHandle()
         if FPDFCatalog_IsTagged(handle) != 0 { throw PdfError.invalidOperation(reason: "the document is already tagged") }
         let pageCount = Int(FPDF_GetPageCount(handle))
@@ -99,12 +98,11 @@ extension PdfDocument {
         for pageIndex in 0..<pageCount {
             try await scratch.markTags(pageIndex: pageIndex, marks: marks[pageIndex].map { MarkedObject(index: $0.index, tag: $0.tag, mcid: $0.mcid) })
         }
-        base = try await scratch.unwatermarkedData()
+        base = try await scratch.data()
         await scratch.close()
 
         let updated = try await PdfDocument(data: try TagTreeWriter.write(base, .init(
             blocks: tagged, mcidCounts: mcidCounts, title: title, language: language)))
-        if needsWatermark { await updated.markNeedsWatermark() }
         return updated
     }
 

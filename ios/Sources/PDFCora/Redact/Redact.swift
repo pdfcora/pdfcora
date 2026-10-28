@@ -59,7 +59,6 @@ extension PdfDocument {
     /// **Save with ``PdfSaveMode/full`` afterwards.** An incremental save does not write
     /// the regenerated content stream at all, so the removed content stays in the file.
     public func redact(_ targets: [PdfRedactionTarget]) throws -> PdfRedactionReport {
-        use(.redaction)
         let document = try requireHandle()
         var counts = Redactor.Counts()
 

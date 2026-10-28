@@ -1,6 +1,5 @@
 package com.pdfcora
 
-import com.pdfcora.license.PdfLicenseModule
 import com.pdfcora.writer.FormFieldWriter
 
 /** A form field to create, for [addFormFields]. [name] must be unique; [tooltip] is `/TU`. */
@@ -20,7 +19,6 @@ data class PdfNewFormField(
  * Appended as an incremental update.
  */
 suspend fun PdfDocument.addFormFields(fields: List<PdfNewFormField>): PdfDocument {
-    use(PdfLicenseModule.FORMS)
     val pageCount = pageCount()
     val names = mutableSetOf<String>()
     for (pageIndex in 0 until pageCount) page(pageIndex).formFields().mapNotNullTo(names) { it.base.name }
@@ -31,5 +29,5 @@ suspend fun PdfDocument.addFormFields(fields: List<PdfNewFormField>): PdfDocumen
     }
     val base = onDocument { Native.saveDocument(it, PdfSaveMode.INCREMENTAL.flag) }
     if (base.isEmpty()) throw PdfError.SaveFailed("no bytes were produced")
-    return PdfDocument.open(FormFieldWriter.write(base, fields)).also { if (needsWatermark) it.needsWatermark = true }
+    return PdfDocument.open(FormFieldWriter.write(base, fields))
 }

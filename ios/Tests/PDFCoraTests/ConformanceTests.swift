@@ -50,7 +50,7 @@ private func isValid(_ verdict: PdfSignatureValidity) -> Bool {
     return false
 }
 
-final class ConformanceTests: LicensedTestCase {
+final class ConformanceTests: XCTestCase {
     private static var expectations: Expectations = {
         let data = try! Data(contentsOf: Repo.expectationsURL)
         return try! JSONDecoder().decode(Expectations.self, from: data)

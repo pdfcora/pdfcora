@@ -32,6 +32,6 @@ hosted model passes `new PdfAI(pdf, { provider })`.
 
 Every change is a proposal a person accepts, and it can be undone.
 
-## Licensing
+## License
 
-See `LICENSE.md`. Without a key, output carries a "PDFCora trial" watermark.
+MIT.

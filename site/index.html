@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PDFCora — a PDF SDK for iOS, Android, Web, Node and Java</title>
-  <meta name="description" content="A PDF SDK for iOS, Android, the Web, Node and Java. Render, search, annotate, fill forms, sign, redact and tag for accessibility — on a phone, in a browser or on a server, with the same results everywhere.">
+  <title>PDFCora — an open-source PDF SDK for iOS, Android, Web, Node and Java</title>
+  <meta name="description" content="A free, open-source (MIT) PDF SDK for iOS, Android, the Web, Node and Java, built on PDFium. Render, search, annotate, fill forms, sign, redact and tag for accessibility.">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#07080c">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -16,7 +16,7 @@
 
   <header class="site-header">
     <div class="wrap header-inner">
-      <a class="brand" href="#top" aria-label="PDFCora home">
+      <a class="brand" href="index.html" aria-label="PDFCora home">
         <img src="favicon.svg" alt="" width="28" height="28">
         <span>PDFCora</span>
       </a>
@@ -24,405 +24,106 @@
         <span class="sr">Menu</span><span class="bars" aria-hidden="true"></span>
       </button>
       <nav id="site-nav" class="site-nav" aria-label="Primary">
-        <a href="#features">Features</a>
-        <a href="developers.html">Developers</a>
-        <a href="ai.html">AI</a>
-        <a href="accessibility.html">Accessibility</a>
-        <a href="agents.html">Agents</a>
-        <a href="demo/index.html">Live demo</a>
+        <a href="index.html" aria-current="page">Home</a>
         <a href="demos.html">Demos</a>
-        <a class="nav-cta" href="download.html">Get the SDK</a>
+        <a href="developers.html">Docs</a>
+        <a class="nav-cta" href="https://github.com/pdfcora/pdfcora">GitHub</a>
       </nav>
     </div>
   </header>
 
   <main id="main">
-
-    <!-- ============================== HERO ============================== -->
     <section class="hero" id="top">
       <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
       <div class="grid-bg" aria-hidden="true"></div>
-
-      <div class="wrap hero-grid">
-        <div class="hero-copy">
-          <p class="pill"><span class="pill-tag">0.1.0</span>Pre-release · iOS, Android, Web, Node, Java</p>
-          <h1>One PDF engine.<br><span class="grad">Five native SDKs.</span></h1>
-          <p class="lede">Render, extract, search, annotate, fill forms, sign, redact and tag for accessibility — in Swift, Kotlin, TypeScript and Java, with the same API and the same results on all of them. Built on <strong>the engine Chrome uses to display PDFs</strong>, so it opens the files your users actually send.</p>
-          <div class="cta">
-            <a class="btn btn-primary" href="demo/index.html">Open a PDF in your browser <span aria-hidden="true">→</span></a>
-            <a class="btn btn-glass" href="download.html">Get the SDK</a>
-          </div>
-          <ul class="platforms" aria-label="Supported platforms">
-            <li><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>iOS · Swift</li>
-            <li><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2"/><path d="M6 5.5h12M6 17.5h12"/></svg>Android · Kotlin</li>
-            <li><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="4" width="19" height="16" rx="2.5"/><path d="M2.5 8.5h19M6 6.3h.01M8.5 6.3h.01"/></svg>Web · TypeScript</li>
-            <li><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="6" rx="1.8"/><rect x="3.5" y="13.5" width="17" height="6" rx="1.8"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>Node · TypeScript</li>
-            <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 19 7.5v9L12 20.5 5 16.5v-9z"/><path d="M12 12v8.5M12 12l7-4.5M12 12 5 7.5"/></svg>Java · JVM</li>
-          </ul>
-        </div>
-
-        <!-- Animated product mockup (decorative) -->
-        <div class="mock-wrap" aria-hidden="true">
-          <div class="mock">
-            <div class="mock-bar">
-              <span class="dots"><i></i><i></i><i></i></span>
-              <span class="mock-file">contract.pdf</span>
-              <span class="mock-tabs"><b class="on">iOS</b><b>Android</b><b>Web</b></span>
-            </div>
-            <div class="mock-tools">
-              <div class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg><span class="typed">invoice</span><span class="caret"></span></div>
-              <span class="count">3 results</span>
-            </div>
-            <div class="mock-stage">
-              <div class="page">
-                <div class="doc-title"></div>
-                <div class="doc-sub"></div>
-                <div class="lines">
-                  <i style="--w:92%"></i><i style="--w:86%"><em class="hit" style="--x:38%;--hw:22%"></em></i><i style="--w:95%"></i><i style="--w:70%"></i>
-                  <i style="--w:90%"><em class="hit" style="--x:8%;--hw:24%"></em></i><i style="--w:82%"></i><i style="--w:94%"><em class="hit" style="--x:56%;--hw:21%"></em></i><i style="--w:60%"></i>
-                </div>
-                <svg class="ink" viewBox="0 0 220 70"><path d="M8 48c18-26 34-30 42-12s20 22 34 0 26-26 38-6 22 22 40 4 30-18 46-10"/></svg>
-                <div class="note"><b>Note</b>Check clause 4.2</div>
-                <div class="form">
-                  <div class="field"><label>Full name</label><div class="input"><span class="typed-name">Jane Doe</span></div></div>
-                  <div class="check"><span class="box"><svg viewBox="0 0 12 12"><path d="M2 6.3 4.8 9 10 3"/></svg></span>I agree to the terms</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </section>
-
-    <!-- ============================== AT A GLANCE ============================== -->
-    <section class="section" id="glance" aria-labelledby="glance-h">
       <div class="wrap">
-        <header class="section-head reveal">
-          <p class="eyebrow">Platforms</p>
-          <h2 id="glance-h">Requirements, and what it costs your app.</h2>
-        </header>
-
-        <div class="table-scroll reveal">
-          <table class="matrix">
-            <caption class="sr">Language, minimum version, download size and package manager per platform</caption>
-            <thead><tr><th scope="col">Platform</th><th scope="col">You write</th><th scope="col">Runs on</th><th scope="col">Adds to your app</th><th scope="col">Install with</th></tr></thead>
-            <tbody>
-              <tr><th scope="row">iOS</th><td>Swift 5.9, async/await</td><td>iOS 15 and later</td><td>~4 MB, one architecture per device</td><td>Swift Package Manager</td></tr>
-              <tr><th scope="row">Android</th><td>Kotlin, coroutines</td><td>Android 6.0, API 23</td><td>4.77 MB on arm64; Play sends one ABI per device</td><td>Maven</td></tr>
-              <tr><th scope="row">Web</th><td>TypeScript, ESM</td><td>Any browser with WebAssembly</td><td>1.5 MB over the wire, cached after the first load</td><td>npm</td></tr>
-              <tr><th scope="row">Node</th><td>TypeScript, ESM</td><td>Node 18 and later</td><td>Nothing to compile, any OS Node runs on</td><td>npm</td></tr>
-              <tr><th scope="row">Java</th><td>Java, blocking calls</td><td>Java 17 and later</td><td>macOS and Linux, Intel and ARM</td><td>Maven</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <p class="muted" style="margin-top:.9rem">Java runs on JDK 17, not 22+, so it fits the runtime most teams already have. Windows is not supported yet.</p>
-
-        <div class="callout info reveal">
-          <h3>A PDF cannot run code in your app</h3>
-          <p>JavaScript embedded in a document is never executed — the interpreter is not in the build at all, so a hostile file has nothing to reach. Fonts are rendered by a copy inside the SDK rather than by the host, so a document cannot reach the system font stack either, and a page looks the same on every device. The trade is XFA: those forms are not supported. AcroForm, which is what almost every real form is, is.</p>
+        <p class="pill"><span class="pill-tag">MIT</span>Free and open source</p>
+        <h1>One PDF engine.<br><span class="grad">Five native SDKs.</span></h1>
+        <p class="lede">PDFCora is a PDF SDK for iOS, Android, the Web, Node and Java, built on PDFium. The same API and the same results in Swift, Kotlin, TypeScript and Java.</p>
+        <div class="cta">
+          <a class="btn btn-primary" href="https://github.com/pdfcora/pdfcora">View on GitHub <span aria-hidden="true">→</span></a>
+          <a class="btn btn-glass" href="demo/index.html">Live demo</a>
+          <a class="btn btn-glass" href="developers.html">Docs</a>
         </div>
       </div>
     </section>
 
-
-    <!-- ============================== CAPABILITIES ============================== -->
     <section class="section section-tint" id="features" aria-labelledby="features-h">
       <div class="wrap">
-        <header class="section-head section-head-center reveal">
+        <header class="section-head">
           <p class="eyebrow">Features</p>
           <h2 id="features-h">What it does.</h2>
-          <p>All of it is implemented; the coverage table below breaks it down by platform.</p>
         </header>
-
-        <ul class="features">
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="m20.5 16-4.5-4.5-8 8"/></svg></span><h3>Render</h3><p>Any size or exact pixel dimensions, annotations and form widgets on or off.</p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></svg></span><h3>Text &amp; search</h3><p>Extraction in reading order, search with result rectangles, per-character bounding boxes.</p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19.5 8.5a2.8 2.8 0 0 0-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg></span><h3>Annotate</h3><p>Read 15 kinds — anything else as <code>unknown</code>, never dropped. Write ink, notes, highlight, underline, strikeout.</p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="m7 9.5 1.5 1.5 3-3M13.5 10h4M7 15.5h10.5"/></svg></span><h3>Fill forms</h3><p>Read 8 field kinds; set values the way Acrobat does, so every other viewer shows them — or put native controls over the field rectangles and let people type.</p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h10a1.5 1.5 0 0 1 1.5 1.5v15.5L12 17l-6.5 3.5V5A1.5 1.5 0 0 1 7 3.5z"/></svg></span><h3>Navigate &amp; inspect</h3><p>Outlines, bookmarks, links, page objects, embedded attachments, metadata and permissions.</p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/></svg></span><h3>Open &amp; save</h3><p>Password-protected files open with a typed error, not a guess. Save in full, or incrementally to leave existing signatures verifying.</p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19.5 8.5a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M4 20h16"/></svg></span><h3>Sign &amp; verify</h3><p>Read and verify signatures; sign as PAdES B-T with a timestamp, or B-B unattended on the JVM. Cross-checked against <code>pdfsig</code>.</p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="6" rx="1.5"/><path d="M4 15h9M4 19h6"/></svg></span><h3>Redact for real</h3><p>Content leaves the saved bytes. A partly covered text run is rewritten without the covered characters — not boxed over.</p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16M4 10h11M4 14.5h16M4 19h8"/></svg></span><h3>Tag for accessibility</h3><p>Turn an untagged PDF into one built to PDF/UA-1 — tags, reading order and alternate text, reviewed by a person before anything is written, and veraPDF’s verdict in the gates. <a href="accessibility.html">More →</a></p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 13.9 9l5.6 1.9-5.6 1.9L12 18.3 10.1 12.8 4.5 10.9 10.1 9z"/><path d="M18.5 16.5 19.3 19l2.2.8-2.2.8-.8 2.2"/></svg></span><h3>AI where it helps</h3><p>Answers, summaries, redaction and form proposals, alt text, semantic diff — on device, your model, or rules alone. <a href="ai.html">More →</a></p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="7.5" width="15" height="11" rx="2.5"/><path d="M12 7.5V4.5M8.5 12.5h.01M15.5 12.5h.01M9.5 15.5h5"/></svg></span><h3>Tools for agents</h3><p>MCP and WebMCP. An agent reads freely and changes a document only through proposals a person accepts. <a href="agents.html">More →</a></p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 9h17M7 13h6"/></svg></span><h3>A viewer, included</h3><p>A component with a configurable toolbar, theme and review bar, and the page’s structure exposed to VoiceOver, TalkBack and screen readers — or drive the state layer yourself.</p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="6" rx="1.8"/><rect x="3.5" y="13.5" width="17" height="6" rx="1.8"/><path d="M7 7.5h.01M7 16.5h.01"/></svg></span><h3>Runs on your server</h3><p><code>@pdfcora/node</code> re-exports the whole web API; the Java SDK puts the native engine on the JVM for batch work.</p></li>
-          <li class="reveal"><span class="f-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9.5" r="5"/><path d="m9 14-1.5 6 4.5-2.4 4.5 2.4L15 14"/></svg></span><h3>Offline licensing</h3><p>Keys verified with no network, per app ID or host. Without one everything still works, watermarked. <a href="download.html">More →</a></p></li>
+        <ul class="checks">
+          <li>Render pages at any size, with annotations and form widgets on or off</li>
+          <li>Text extraction in reading order, search with result rectangles</li>
+          <li>Read and write annotations: ink, notes, highlight, underline, strikeout</li>
+          <li>Read and fill AcroForm fields</li>
+          <li>Outlines, links, attachments, metadata; save in full or incrementally</li>
+          <li>Sign (PAdES B-B / B-T) and verify signatures</li>
+          <li>Real redaction: content leaves the saved bytes</li>
+          <li>Tag untagged PDFs for accessibility (PDF/UA-1)</li>
+          <li>A viewer component for iOS, Android and the Web</li>
+          <li>Optional AI module (summaries, redaction and form proposals, alt text) and an MCP server for agents</li>
         </ul>
-        <div class="table-scroll reveal" style="margin-top:1.6rem">
-          <table class="matrix">
-            <caption class="sr">Standards the SDK reads and writes to</caption>
-            <thead><tr><th scope="col">Standard</th><th scope="col">Where it applies</th></tr></thead>
-            <tbody>
-              <tr><th scope="row">PDF/UA-1 (ISO 14289-1)</th><td>Tagged documents it produces, verifiable with veraPDF before you ship them.</td></tr>
-              <tr><th scope="row">PAdES B-B and B-T</th><td>Signatures it creates. B-T adds an RFC 3161 timestamp; Java is B-B only.</td></tr>
-              <tr><th scope="row">CMS / PKCS#7, PKCS#12</th><td>The signature container, and the identity it is made with. Verification recomputes the digest over the <code>/ByteRange</code>.</td></tr>
-              <tr><th scope="row">WCAG 2.1 A and AA · EN 301 549 v3.2.1</th><td>The viewer components, on iOS, Android and the Web.</td></tr>
-              <tr><th scope="row">AcroForm</th><td>Form fields. XFA is not supported — it is compiled out of the engine.</td></tr>
-            </tbody>
-          </table>
-        </div>
       </div>
     </section>
 
-    <!-- ============================== SHOWCASE ============================== -->
-    <section class="section" id="showcase" aria-labelledby="showcase-h">
-      <div class="wrap showcase">
-        <header class="section-head reveal">
-          <p class="eyebrow">Developer experience</p>
-          <h2 id="showcase-h">Your first render in four lines.</h2>
-          <ul class="checks">
-            <li><code>async</code>/<code>await</code> on iOS, coroutines on Android, promises on the Web and Node, a thread per document on Java</li>
-            <li>Unmodelled annotation and field types surface as <code>unknown</code> rather than vanishing</li>
-            <li>Explicit coordinates — no hidden Y-flip</li>
-          </ul>
+    <section class="section" id="install" aria-labelledby="install-h">
+      <div class="wrap">
+        <header class="section-head">
+          <p class="eyebrow">Install</p>
+          <h2 id="install-h">Add it to your project.</h2>
         </header>
-
-        <div class="code-card reveal" data-tabs>
+        <div class="code-card code-card-install" data-tabs>
           <div class="code-head">
-            <div class="tablist" role="tablist" aria-label="Language">
-              <button role="tab" id="t-swift" aria-controls="p-swift" aria-selected="true">Swift</button>
-              <button role="tab" id="t-kotlin" aria-controls="p-kotlin" aria-selected="false" tabindex="-1">Kotlin</button>
-              <button role="tab" id="t-ts" aria-controls="p-ts" aria-selected="false" tabindex="-1">TypeScript</button>
-              <button role="tab" id="t-java-lang" aria-controls="p-java-lang" aria-selected="false" tabindex="-1">Java</button>
+            <div class="tablist" role="tablist" aria-label="Platform">
+              <button role="tab" id="t-ios" aria-controls="p-ios" aria-selected="true">iOS</button>
+              <button role="tab" id="t-android" aria-controls="p-android" aria-selected="false" tabindex="-1">Android</button>
+              <button role="tab" id="t-web" aria-controls="p-web" aria-selected="false" tabindex="-1">Web</button>
+              <button role="tab" id="t-node" aria-controls="p-node" aria-selected="false" tabindex="-1">Node</button>
+              <button role="tab" id="t-java" aria-controls="p-java" aria-selected="false" tabindex="-1">Java</button>
             </div>
             <button class="copy" type="button" data-copy aria-label="Copy code">Copy</button>
           </div>
-          <div role="tabpanel" id="p-swift" aria-labelledby="t-swift" class="panel">
-            <span class="panel-label">Swift</span>
-<pre tabindex="0"><code><span class="k">let</span> doc  = <span class="k">try await</span> <span class="t">PdfDocument</span>(url: url)
-<span class="k">let</span> page = <span class="k">try await</span> doc.<span class="f">page</span>(<span class="n">0</span>)
-<span class="k">let</span> img  = <span class="k">try await</span> page.<span class="f">render</span>(width: <span class="n">1200</span>)
-<span class="k">let</span> hits = <span class="k">try await</span> page.text.<span class="f">search</span>(<span class="s">"invoice"</span>)</code></pre>
-          </div>
-          <div role="tabpanel" id="p-kotlin" aria-labelledby="t-kotlin" class="panel">
-            <span class="panel-label">Kotlin</span>
-<pre tabindex="0"><code><span class="t">PdfDocument</span>.<span class="f">open</span>(file).<span class="f">use</span> { doc <span class="k">-&gt;</span>
-    <span class="k">val</span> page = doc.<span class="f">page</span>(<span class="n">0</span>)
-    <span class="k">val</span> bmp  = page.<span class="f">render</span>(width = <span class="n">1200</span>)
-    <span class="k">val</span> hits = page.text.<span class="f">search</span>(<span class="s">"invoice"</span>)
-}</code></pre>
-          </div>
-          <div role="tabpanel" id="p-ts" aria-labelledby="t-ts" class="panel">
-            <span class="panel-label">TypeScript</span>
-<pre tabindex="0"><code><span class="k">const</span> doc  = <span class="k">await</span> <span class="t">PdfDocument</span>.<span class="f">open</span>(bytes)
-<span class="k">const</span> page = <span class="k">await</span> doc.<span class="f">page</span>(<span class="n">0</span>)
-<span class="k">const</span> img  = <span class="k">await</span> page.<span class="f">render</span>({ width: <span class="n">1200</span> })
-<span class="k">const</span> hits = <span class="k">await</span> page.text.<span class="f">search</span>(<span class="s">'invoice'</span>)</code></pre>
-          </div>
-          <div role="tabpanel" id="p-java-lang" aria-labelledby="t-java-lang" class="panel">
-            <span class="panel-label">Java</span>
-<pre tabindex="0"><code><span class="k">try</span> (<span class="t">PdfDocument</span> doc = <span class="t">PdfDocument</span>.<span class="f">open</span>(path)) {
-    <span class="t">PdfPage</span> page = doc.<span class="f">page</span>(<span class="n">0</span>);
-    <span class="t">BufferedImage</span> img = page.<span class="f">render</span>(<span class="n">1200</span>);
-    <span class="t">List</span>&lt;<span class="t">Match</span>&gt; hits = page.<span class="f">search</span>(<span class="s">"invoice"</span>);
-}</code></pre>
-          </div>
-          <div class="code-foot"><span class="ok-dot"></span>Page rendered at 1200px · search results with page rectangles</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============================== ENGINEERS ============================== -->
-    <section class="section section-tint" id="engineers" aria-labelledby="eng-h">
-      <div class="wrap">
-        <header class="section-head reveal">
-          <p class="eyebrow">For engineers</p>
-          <h2 id="eng-h">Coverage and cost, measured.</h2>
-          <p>Sizes and timings are measured, not estimated; the method is under each table.</p>
-        </header>
-
-        <div class="accordion">
-          <details class="reveal" open>
-            <summary><span>Feature coverage by SDK</span><span class="chev" aria-hidden="true"></span></summary>
-            <div class="details-body">
-              <div class="table-scroll">
-                <table class="coverage">
-                  <caption class="sr">Feature coverage by SDK</caption>
-                  <thead><tr><th scope="col">Capability</th><th scope="col">iOS</th><th scope="col">Android</th><th scope="col">Web</th><th scope="col">Node</th><th scope="col">Java</th></tr></thead>
-                  <tbody>
-                    <tr><th scope="row">Open from bytes / file, password</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
-                    <tr><th scope="row">Page count, size, rotation</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="p"><span class="sr">Partial</span></td></tr>
-                    <tr><th scope="row">Render (scaled or exact pixels)</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
-                    <tr><th scope="row">Cancellable progressive render</th><td class="p"><span class="sr">Partial</span></td><td class="n"><span class="sr">Not yet</span></td><td class="n"><span class="sr">Not yet</span></td><td class="n"><span class="sr">Not yet</span></td><td class="n"><span class="sr">Not yet</span></td></tr>
-                    <tr><th scope="row">Recoverable from an engine hang</th><td class="n"><span class="sr">Not yet</span></td><td class="n"><span class="sr">Not yet</span></td><td class="y"><span class="sr">Supported, via Worker</span></td><td class="n"><span class="sr">Not yet</span></td><td class="n"><span class="sr">Not yet</span></td></tr>
-                    <tr><th scope="row">Text extraction, character count</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
-                    <tr><th scope="row">Search with rects</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="p"><span class="sr">Partial</span></td></tr>
-                    <tr><th scope="row">Character bounding boxes</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="n"><span class="sr">Not yet</span></td></tr>
-                    <tr><th scope="row">Annotations: read (15 kinds)</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
-                    <tr><th scope="row">Annotations: ink, note, remove</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
-                    <tr><th scope="row">Annotations: highlight / underline / strikeout</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
-                    <tr><th scope="row">Form fields: read (8 kinds)</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
-                    <tr><th scope="row">Form fields: set text, checkbox, option</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="p"><span class="sr">Partial</span></td></tr>
-                    <tr><th scope="row">Outline / bookmarks</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="n"><span class="sr">Not yet</span></td></tr>
-                    <tr><th scope="row">Links</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="n"><span class="sr">Not yet</span></td></tr>
-                    <tr><th scope="row">Metadata, permissions</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td></tr>
-                    <tr><th scope="row">Attachments: list</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="n"><span class="sr">Not yet</span></td></tr>
-                    <tr><th scope="row">Attachments: extract bytes</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="n"><span class="sr">Not yet</span></td></tr>
-                    <tr><th scope="row">Save (full / incremental)</th><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="y"><span class="sr">Supported</span></td><td class="p"><span class="sr">Partial</span></td></tr>
-                    <tr><th scope="row">Raw PDFium escape hatch</th><td class="y"><span class="sr">Supported</span></td><td class="n"><span class="sr">Not yet</span></td><td class="n"><span class="sr">Not yet</span></td><td class="n"><span class="sr">Not yet</span></td><td class="n"><span class="sr">Not yet</span></td></tr>
-                  </tbody>
-                </table>
-              </div>
-              <ul class="legend" aria-label="Legend">
-                <li><span class="mark y" aria-hidden="true"></span>Supported</li>
-                <li><span class="mark p" aria-hidden="true"></span>Partial — see the note below the table</li>
-                <li><span class="mark n" aria-hidden="true"></span>Not yet</li>
-              </ul>
-              <p class="muted">iOS cancels a render between progressive steps, not inside a single engine call. Node re-exports the web SDK, so it matches it row for row — except recovery from a hang, which needs a browser <code>Worker</code>. Java is a separate implementation over the native engine: it renders, extracts, annotates, fills, redacts, tags and signs, and does not yet read outlines, links or attachments, report page rotation, return search rectangles, or save incrementally except when appending a signature or a structure tree.</p>
-            </div>
-          </details>
-
-          <details class="reveal">
-            <summary><span>Performance and binary size</span><span class="chev" aria-hidden="true"></span></summary>
-            <div class="details-body two-col">
-              <div>
-                <h3 class="table-title">Binary cost</h3>
-                <div class="table-scroll">
-                  <table class="data data-compact">
-                    <caption class="sr">Binary size by platform</caption>
-                    <thead><tr><th scope="col">Artifact</th><th scope="col" class="num">Size</th></tr></thead>
-                    <tbody>
-                      <tr><th scope="row">Android <code>.so</code>, arm64, full API</th><td class="num">4.77 MB</td></tr>
-                      <tr><th scope="row">Android <code>.so</code>, armeabi-v7a</th><td class="num">3.29 MB</td></tr>
-                      <tr><th scope="row">Web <code>pdfium.wasm</code></th><td class="num">3.8 MB → 1.5 MB <span class="muted">brotli</span></td></tr>
-                    </tbody>
-                  </table>
-                </div>
-                <p class="note">Linking the full API costs only ~0.6 MB on Android and ~0.2 MB on iOS over a minimal core.</p>
-              </div>
-              <div>
-                <h3 class="table-title">At scale</h3>
-                <div class="table-scroll">
-                  <table class="data">
-                    <caption class="sr">Timings for large generated documents</caption>
-                    <thead><tr><th scope="col">Operation</th><th scope="col" class="num">200 pages<br><span class="muted">18.8 MB</span></th><th scope="col" class="num">400 pages<br><span class="muted">2.4 MB</span></th><th scope="col" class="num">300 pages<br><span class="muted">1.2 MB</span></th></tr></thead>
-                    <tbody>
-                      <tr><th scope="row">Open</th><td class="num">26 ms</td><td class="num">&lt;1 ms</td><td class="num">&lt;1 ms</td></tr>
-                      <tr><th scope="row">Thumbnail every page (120px)</th><td class="num">0.3 s</td><td class="num">0.1 s</td><td class="num">0.6 s</td></tr>
-                      <tr><th scope="row">Per page, mean / p95</th><td class="num">1.6 / 2.0 ms</td><td class="num">0.2 / 0.3 ms</td><td class="num">1.9 / 2.0 ms</td></tr>
-                      <tr><th scope="row">Single 1600px render</th><td class="num">14 ms</td><td class="num">8 ms</td><td class="num">18 ms</td></tr>
-                      <tr><th scope="row">Text, all pages</th><td class="num">65 ms</td><td class="num">6 ms</td><td class="num">153 ms</td></tr>
-                      <tr><th scope="row">Save</th><td class="num">181 ms</td><td class="num">11 ms</td><td class="num">2 ms</td></tr>
-                    </tbody>
-                  </table>
-                </div>
-                <p class="note">Measured with WebAssembly on Node — native iOS and Android are faster. No memory leak: 40 open–render–close cycles of the 18.8 MB document leave the WASM heap flat at 25.6 MB.</p>
-              </div>
-            </div>
-          </details>
-
-        </div>
-      </div>
-    </section>
-
-
-    <!-- ============================== BEHAVIOUR ============================== -->
-    <section class="section" id="why" aria-labelledby="why-h">
-      <div class="wrap">
-        <header class="section-head reveal">
-          <p class="eyebrow">Behaviour</p>
-          <h2 id="why-h">How it behaves under load, and under attack.</h2>
-        </header>
-
-        <div class="bento">
-
-          <article class="tile tile-tall reveal">
-            <div class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.1 8.3 7.5 9.5 4.4-1.2 7.5-4.9 7.5-9.5V6z"/><path d="m8.8 12 2.2 2.2 4.3-4.4"/></svg></div>
-            <h3>Bad files arrive as errors, not crashes.</h3>
-            <p>Truncated downloads, generator bugs, decades-old scanners, files that were never valid. They come back as a closed set of typed errors with the same names on every SDK — <code>passwordRequired</code>, <code>corrupt</code>, <code>pageOutOfRange</code> — not as a native crash inside the engine.</p>
-          </article>
-
-          <article class="tile reveal">
-            <div class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.2"/><path d="M12 3.5v5.3M20.2 14.5l-4.7-1.4M4.1 14.9l4.6-1.6"/></svg></div>
-            <h3>Predictable memory.</h3>
-            <p>Documents are closed deterministically, not when a collector decides. Forty open–render–close cycles of an 18.8 MB file leave the heap flat at 25.6 MB — a queue can run for days without drifting.</p>
-          </article>
-
-          <article class="tile reveal">
-            <div class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M4 12h16M4 17h7"/><circle cx="17" cy="7" r="2.3"/><circle cx="14" cy="17" r="2.3"/></svg></div>
-            <h3>Thread-safe.</h3>
-            <p>Call a document from anywhere — a background queue, a request handler, a worker pool. Each one serialises its own work internally, so there is no lock to take and nothing to get wrong.</p>
-          </article>
-
-
-          <article class="tile tile-wide tile-glow reveal">
-            <div class="tile-copy">
-              <h3>The same document, the same answer.</h3>
-              <p>The text you extract, the rectangles a search returns, the values a form reads back and the report a redaction gives are the same on an iPhone, an Android tablet, in a browser and in a batch job. A document processed on your server and opened in your app agrees with itself.</p>
-            </div>
-            <pre class="mini-code"><code><span class="k">const</span> doc = <span class="k">await</span> worker.<span class="f">open</span>(bytes)
-<span class="c">// same API as in-process</span>
-worker.<span class="f">terminate</span>() <span class="c">// page keeps running</span></code></pre>
-          </article>
-        </div>
-
-        <aside class="honest reveal" aria-labelledby="honest-h">
-          <div>
-            <p class="eyebrow eyebrow-warn">The worst case, stated plainly</p>
-            <h3 id="honest-h">One bad page cannot take your app with it.</h3>
-            <p>A malformed page can stall any PDF renderer deep in native code, where no cancellation reaches. So the damage is contained instead: that document fails fast with a typed error, every other document keeps working, and your app stays responsive. On the Web it is fully recoverable — the whole SDK runs in a Worker behind the same API, and a stuck render is simply terminated.</p>
-          </div>
-          <a class="btn btn-glass" href="developers.html">Read the engineering details</a>
-        </aside>
-      </div>
-    </section>
-
-    <!-- ============================== GET STARTED ============================== -->
-    <section class="section" id="start" aria-labelledby="start-h">
-      <div class="wrap">
-        <div class="final reveal">
-          <div class="aurora aurora-final" aria-hidden="true"><span></span><span></span></div>
-          <div class="final-copy">
-            <p class="eyebrow">Get started</p>
-            <h2 id="start-h">Installing.</h2>
-            <p>Every sample runs with no account and no key — output simply carries a trial watermark. Packages for Swift Package Manager, Maven and npm arrive with the first release; until then the SDK is built from the repository, which is how the samples consume it. <a href="download.html">What a trial gives you, and what a key unlocks →</a></p>
-            <div class="cta" style="margin-top:1.1rem">
-              <a class="btn btn-primary" href="demo/index.html">Try it in your browser <span aria-hidden="true">→</span></a>
-              <a class="btn btn-glass" href="developers.html">Read the engineering details</a>
-            </div>
-          </div>
-
-          <div class="code-card code-card-install" data-tabs>
-            <div class="code-head">
-              <div class="tablist" role="tablist" aria-label="Platform">
-                <button role="tab" id="t-ios" aria-controls="p-ios" aria-selected="true">iOS</button>
-                <button role="tab" id="t-android" aria-controls="p-android" aria-selected="false" tabindex="-1">Android</button>
-                <button role="tab" id="t-web" aria-controls="p-web" aria-selected="false" tabindex="-1">Web</button>
-                <button role="tab" id="t-node" aria-controls="p-node" aria-selected="false" tabindex="-1">Node</button>
-                <button role="tab" id="t-java" aria-controls="p-java" aria-selected="false" tabindex="-1">Java</button>
-              </div>
-              <button class="copy" type="button" data-copy aria-label="Copy code">Copy</button>
-            </div>
-            <div role="tabpanel" id="p-ios" aria-labelledby="t-ios" class="panel">
-              <span class="panel-label">iOS — Swift Package Manager</span>
+          <div role="tabpanel" id="p-ios" aria-labelledby="t-ios" class="panel">
+            <span class="panel-label">iOS — Swift Package Manager</span>
 <pre tabindex="0"><code>.<span class="f">package</span>(url: <span class="s">"https://github.com/pdfcora/pdfcora-swift"</span>, from: <span class="s">"0.1.0"</span>)
-.<span class="f">product</span>(name: <span class="s">"PDFCora"</span>, package: <span class="s">"pdfcora-swift"</span>)</code></pre>
-              <p class="reqs">iOS 15+ · Swift 5.9 · async/await</p>
-            </div>
-            <div role="tabpanel" id="p-android" aria-labelledby="t-android" class="panel">
-              <span class="panel-label">Android — Gradle</span>
-<pre tabindex="0"><code><span class="f">implementation</span>(<span class="s">"com.pdfcora:pdfcora:0.1.0"</span>)</code></pre>
-              <p class="reqs">minSdk 23 · Kotlin coroutines · all four ABIs</p>
-            </div>
-            <div role="tabpanel" id="p-web" aria-labelledby="t-web" class="panel">
-              <span class="panel-label">Web — npm</span>
-<pre tabindex="0"><code>npm install <span class="s">@pdfcora/web</span></code></pre>
-              <p class="reqs">TypeScript · WebAssembly · ESM · Node 18+ · the .wasm ships inside the package</p>
-            </div>
-            <div role="tabpanel" id="p-node" aria-labelledby="t-node" class="panel">
-              <span class="panel-label">Node — npm</span>
-<pre tabindex="0"><code>npm install <span class="s">@pdfcora/node</span></code></pre>
-              <p class="reqs">Node 18+ · the whole web API, plus file and PNG helpers · nothing to compile</p>
-            </div>
-            <div role="tabpanel" id="p-java" aria-labelledby="t-java" class="panel">
-              <span class="panel-label">Java — Gradle</span>
-<pre tabindex="0"><code><span class="f">implementation</span>(<span class="s">"com.pdfcora:pdfcora-java:0.1.0"</span>)</code></pre>
-              <p class="reqs">Java 17+ · macOS and Linux, x86-64 and arm64 · the engine is in the jar</p>
-            </div>
+.<span class="f">product</span>(name: <span class="s">"PDFCora"</span>,   package: <span class="s">"pdfcora-swift"</span>)
+.<span class="f">product</span>(name: <span class="s">"PDFCoraUI"</span>, package: <span class="s">"pdfcora-swift"</span>)
+.<span class="f">product</span>(name: <span class="s">"PDFCoraAI"</span>, package: <span class="s">"pdfcora-swift"</span>)</code></pre>
+            <p class="reqs">iOS 15+ · Swift 5.9 · async/await</p>
           </div>
+          <div role="tabpanel" id="p-android" aria-labelledby="t-android" class="panel">
+            <span class="panel-label">Android — Gradle</span>
+<pre tabindex="0"><code><span class="f">implementation</span>(<span class="s">"com.pdfcora:pdfcora:0.1.0"</span>)
+<span class="f">implementation</span>(<span class="s">"com.pdfcora:pdfcora-ui:0.1.0"</span>)
+<span class="f">implementation</span>(<span class="s">"com.pdfcora:pdfcora-ai:0.1.0"</span>)</code></pre>
+            <p class="reqs">minSdk 23 · Kotlin coroutines · all four ABIs</p>
+          </div>
+          <div role="tabpanel" id="p-web" aria-labelledby="t-web" class="panel">
+            <span class="panel-label">Web — npm</span>
+<pre tabindex="0"><code>npm install <span class="s">@pdfcora/web</span>
+npm install <span class="s">@pdfcora/web-ai</span>     <span class="c"># optional</span>
+npm install <span class="s">pdfcora-mcp</span>         <span class="c"># optional, for agents</span></code></pre>
+            <p class="reqs">TypeScript · WebAssembly · ESM · the .wasm ships inside the package</p>
+          </div>
+          <div role="tabpanel" id="p-node" aria-labelledby="t-node" class="panel">
+            <span class="panel-label">Node — npm</span>
+<pre tabindex="0"><code>npm install <span class="s">@pdfcora/node</span>
+npm install <span class="s">@pdfcora/web-ai</span>     <span class="c"># optional</span>
+npm install <span class="s">pdfcora-mcp</span>         <span class="c"># optional, for agents</span></code></pre>
+            <p class="reqs">Node 18+ · the whole web API, plus file and PNG helpers · nothing to compile</p>
+          </div>
+          <div role="tabpanel" id="p-java" aria-labelledby="t-java" class="panel">
+            <span class="panel-label">Java — Gradle</span>
+<pre tabindex="0"><code><span class="f">implementation</span>(<span class="s">"com.pdfcora:pdfcora-java:0.1.0"</span>)</code></pre>
+            <p class="reqs">Java 17+ · macOS and Linux, x86-64 and arm64 · the engine is in the jar</p>
+          </div>
+        </div>
+        <div class="cta" style="margin-top:1.6rem">
+          <a class="btn btn-glass" href="demos.html">Demos and samples</a>
+          <a class="btn btn-glass" href="developers.html">Documentation</a>
         </div>
       </div>
     </section>
@@ -431,12 +132,12 @@ worker.<span class="f">terminate</span>() <span class="c">// page keeps running<
   <footer class="site-footer">
     <div class="wrap footer-inner">
       <div>
-        <a class="brand" href="#top"><img src="favicon.svg" alt="" width="24" height="24"><span>PDFCora</span></a>
-        <p class="footer-tag">One PDF SDK. Every platform.</p>
-        <p class="muted">0.1.0 · Pre-release</p>
+        <a class="brand" href="index.html"><img src="favicon.svg" alt="" width="24" height="24"><span>PDFCora</span></a>
+        <p class="footer-tag">Free and open source (MIT).</p>
+        <p class="muted">0.1.0</p>
       </div>
       <nav class="footer-nav" aria-label="Footer">
-        <a href="#features">Features</a><a href="developers.html">Developers</a><a href="ai.html">AI</a><a href="accessibility.html">Accessibility</a><a href="agents.html">Agents</a><a href="demos.html">Demos</a><a href="download.html">Get the SDK</a>
+        <a href="index.html">Home</a><a href="demos.html">Demos</a><a href="developers.html">Docs</a><a href="https://github.com/pdfcora/pdfcora">GitHub</a>
       </nav>
       <div class="attrib">
         <p>Built on <a href="https://pdfium.googlesource.com/pdfium/">PDFium</a> (<code>chromium/7243</code>), licensed under BSD-3-Clause.</p>

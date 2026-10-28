@@ -13,7 +13,7 @@ import XCTest
      Signed Ranges: [0 - 151484], [156392 - 297957]
      Total document signed
  */
-final class SignatureTests: LicensedTestCase {
+final class SignatureTests: XCTestCase {
     private func read(_ name: String) throws -> Data {
         try Data(contentsOf: Repo.corpus.appendingPathComponent(name))
     }

@@ -3,7 +3,7 @@ import XCTest
 @testable import PDFCoraAI
 
 /// Mirrors `web-ai/test/forms-detect.test.ts`.
-final class FormDetectTests: LicensedTestCase {
+final class FormDetectTests: XCTestCase {
     struct Expected: Decodable {
         struct Rect: Decodable { let left, bottom, right, top: Double }
         let pageIndex: Int; let kind: String; let label: String; let rect: Rect

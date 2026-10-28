@@ -170,5 +170,5 @@ suspend fun suggestRedactions(ai: PdfAI, pages: IntRange?, categories: Set<PdfRe
                 it.pageIndex, it.start, it.end, textBefore.getValue(it.pageIndex).substring(it.start, it.end),
                 TextLayer.rects(document, it.pageIndex, it.start, it.end))
         }
-    return PdfRedactionReview(suggestions, modelUsed, Trial.text(REDACTION_NOTICE), pagesWithoutText, document, textBefore)
+    return PdfRedactionReview(suggestions, modelUsed, REDACTION_NOTICE, pagesWithoutText, document, textBefore)
 }

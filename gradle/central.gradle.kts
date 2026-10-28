@@ -18,8 +18,8 @@ configure<PublishingExtension> {
             url.set("https://pdfcora.com")
             licenses {
                 license {
-                    name.set("PDFCora Commercial License")
-                    url.set("https://pdfcora.com/download.html")
+                    name.set("MIT License")
+                    url.set("https://opensource.org/licenses/MIT")
                 }
             }
             developers {

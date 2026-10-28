@@ -3,7 +3,6 @@ import { describeFields, type PdfFieldDescription } from './describe.js';
 import { formatHintOf, matchField, normalise, PROFILE_KEYS, type PdfProfileKey } from './synonyms.js';
 import type { PdfPageRange } from '../text.js';
 import { resolve, type PdfAiProvider, type PdfAiSource } from '../provider.js';
-import { trialText } from '../trial.js';
 
 export type PdfProfile = Partial<Record<PdfProfileKey, string>>;
 export const FORM_NOTICE = 'Check every value before filling in the form.';
@@ -158,7 +157,7 @@ export async function proposeFormValues(
   }
 
   return {
-    items, modelUsed, notice: trialText(FORM_NOTICE),
+    items, modelUsed, notice: FORM_NOTICE,
     apply: async (acceptedIds) => {
       const known = new Set(items.map((p) => p.id));
       for (const id of acceptedIds) if (!known.has(id)) throw new Error(`unknown proposal: ${id}`);

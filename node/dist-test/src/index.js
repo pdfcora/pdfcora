@@ -2,13 +2,13 @@
  * PDFCora for Node.
  *
  * The engine, the object model and every method are the web package's: this adds only
- * what a server needs and a browser does not — reading and writing files, PNG output,
- * and a licence key from the environment. Anything not re-exported here is available
+ * what a server needs and a browser does not — reading and writing files and PNG
+ * output. Anything not re-exported here is available
  * from `@pdfcora/web` directly, and behaves identically.
  */
 export * from '@pdfcora/web';
 import { readFile, writeFile } from 'node:fs/promises';
-import { PdfDocument, PdfLicense } from '@pdfcora/web';
+import { PdfDocument } from '@pdfcora/web';
 import { encodePng } from './png.js';
 /** Opens a PDF from a path. The bytes are read into memory, as the engine needs them there. */
 export async function openFile(path, password) {
@@ -30,18 +30,6 @@ export async function renderPng(page, options = {}) {
 /** The raw RGBA of a rendered page, for callers that encode it themselves. */
 export async function renderRaw(page, options = {}) {
     return page.render(options);
-}
-/**
- * Applies a licence key from the environment. Without one every feature still works and
- * output carries the trial watermark. Returns whether a key was found, not whether it
- * was valid — `PdfLicense.status` answers that.
- */
-export async function useLicenseFromEnvironment(variable = 'PDFCORA_LICENSE_KEY') {
-    const key = process.env[variable];
-    if (!key)
-        return false;
-    await PdfLicense.setKey(key);
-    return true;
 }
 export { encodePng };
 //# sourceMappingURL=index.js.map

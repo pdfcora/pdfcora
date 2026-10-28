@@ -43,9 +43,6 @@ public actor PdfDocument {
     let backing: Data
     private var cachedFingerprint: String?
 
-    /// Set at open in trial mode, or by ``use(_:)`` when a feature is not licensed.
-    var needsWatermark = PdfLicense.status.isTrial
-
     /// A stable identifier for the bytes this document was opened from.
     ///
     /// Two documents opened from identical bytes share it; any difference changes it.
@@ -163,18 +160,6 @@ public actor PdfDocument {
     }
 
     public var isClosed: Bool { handle == nil }
-
-    /// Every paid entry point calls this first. The operation runs either way.
-    func use(_ module: PdfLicenseModule) {
-        if !PdfLicense.status.covers(module) { needsWatermark = true }
-    }
-
-    func noteWatermarked() {
-        switch PdfLicense.status {
-        case .trial(_, let message): PdfLicense.noteWatermark(message)
-        case .licensed: PdfLicense.noteWatermark("the license key does not cover every module used")
-        }
-    }
 
     /// Zero when the document is closed or the engine is unresponsive.
     public var pageCount: Int {
