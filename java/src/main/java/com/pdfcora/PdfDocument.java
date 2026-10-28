@@ -15,16 +15,21 @@ import java.util.LinkedHashMap;
 /**
  * An open PDF.
  *
- * PDFium is not thread-safe, so every document owns one thread and every call runs on it
- * — the same rule the other platforms keep with an actor on iOS and a single-threaded
- * dispatcher on Android. Calling from several threads is therefore safe: the calls
- * serialise instead of corrupting memory.
+ * PDFium's state is global, not per document, so every call on every document runs on one
+ * engine thread for the whole process — the same rule iOS and Android keep. Calling from
+ * several threads, on one document or several, is therefore safe: the calls serialise
+ * instead of corrupting memory. They do not run in parallel.
  *
  * Closing releases native memory. Using a closed document raises {@link PdfError.Code#CLOSED}
  * rather than touching freed memory, and closing twice is harmless.
  */
 public final class PdfDocument implements AutoCloseable {
-  private final ExecutorService engine;
+  private static final ExecutorService ENGINE = Executors.newSingleThreadExecutor(runnable -> {
+    Thread thread = new Thread(runnable, "pdfcora-engine");
+    thread.setDaemon(true);
+    return thread;
+  });
+
   /**
    * How long the file was when it was opened. A signature's ByteRange indexes *those*
    * bytes, and re-saving the document changes its length, so the original is what says
@@ -33,9 +38,8 @@ public final class PdfDocument implements AutoCloseable {
   private final long openedLength;
   private volatile long handle;
 
-  private PdfDocument(long handle, ExecutorService engine, long openedLength) {
+  private PdfDocument(long handle, long openedLength) {
     this.handle = handle;
-    this.engine = engine;
     this.openedLength = openedLength;
   }
 
@@ -52,28 +56,13 @@ public final class PdfDocument implements AutoCloseable {
 
   /** As {@link #open(byte[])}; the password applies to a PDF and is ignored for a DOCX. */
   public static PdfDocument open(byte[] bytes, String password) {
-    ExecutorService engine = Executors.newSingleThreadExecutor(runnable -> {
-      Thread thread = new Thread(runnable, "pdfcora-engine");
-      thread.setDaemon(true);
-      return thread;
-    });
-    byte[][] pdf = {bytes};
-    long handle;
-    try {
-      handle = await(engine, () -> {
-        pdf[0] = asPdf(bytes);
-        // A password belongs to a PDF; a DOCX that arrives with one opens without it.
-        return Native.open(pdf[0], pdf[0] == bytes ? password : null);
-      });
-    } catch (PdfError error) {
-      engine.shutdown();
-      throw error;
-    }
-    if (handle < 0) {
-      engine.shutdown();
-      throw PdfError.fromNative((int) handle);
-    }
-    return new PdfDocument(handle, engine, pdf[0].length);
+    // The DOCX converter does not touch PDFium, so it runs here rather than holding up the
+    // engine thread every document shares.
+    byte[] pdf = asPdf(bytes);
+    // A password belongs to a PDF; a DOCX that arrives with one opens without it.
+    long handle = await(() -> Native.open(pdf, pdf == bytes ? password : null));
+    if (handle < 0) throw PdfError.fromNative((int) handle);
+    return new PdfDocument(handle, pdf.length);
   }
 
   private static final byte[] CFB = {(byte) 0xD0, (byte) 0xCF, 0x11, (byte) 0xE0, (byte) 0xA1, (byte) 0xB1, 0x1A, (byte) 0xE1};
@@ -313,27 +302,23 @@ public final class PdfDocument implements AutoCloseable {
     if (handle == 0) return;
     long closing = handle;
     handle = 0;
-    try {
-      await(engine, () -> { Native.close(closing); return null; });
-    } finally {
-      engine.shutdown();
-    }
+    await(() -> { Native.close(closing); return null; });
   }
 
   // ---- internals ------------------------------------------------------------------
 
   interface Work<T> { T run(long handle); }
 
-  /** Runs on the document's own thread, with the handle checked first. */
+  /** Runs on the engine thread, with the handle checked first. */
   <T> T call(Work<T> work) {
     long current = handle;
     if (current == 0) throw new PdfError(PdfError.Code.CLOSED, "the document is closed");
-    return await(engine, () -> work.run(current));
+    return await(() -> work.run(current));
   }
 
-  private static <T> T await(ExecutorService engine, Callable<T> work) {
+  private static <T> T await(Callable<T> work) {
     try {
-      return engine.submit(work).get();
+      return ENGINE.submit(work).get();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new PdfError(PdfError.Code.INVALID_OPERATION, "interrupted while waiting for the engine");

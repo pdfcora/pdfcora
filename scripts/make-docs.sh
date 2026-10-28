@@ -214,7 +214,7 @@ and a conformance suite.</p>
 <a class='card' href='java/index.html'><b>Java</b><span>JNI over the native engine, Java 17+, macOS and Linux</span></a>
 <h2>Shared guarantees</h2>
 <ul>
-  <li>Every document owns a serial executor; concurrent use is safe across documents.</li>
+  <li>One engine thread per process runs every call; concurrent use is safe, and calls serialise.</li>
   <li>Errors are a closed set with the same cases on every platform.</li>
   <li>Coordinates are PDF space (bottom-left origin); <code>PdfViewTransform</code> converts.</li>
   <li>Redaction removes content from the file rather than covering it, and reports what
@@ -458,8 +458,8 @@ JDK most teams already have rather than requiring 22+.</p>
     BufferedImage image = document.page(0).render(1024);
     ImageIO.write(image, \"png\", new File(\"page-1.png\"));
 }</pre>
-<p>Every document owns one thread and every call runs on it, so calling from several
-threads is safe &mdash; the calls serialise rather than corrupting memory.</p>
+<p>Every call on every document runs on one engine thread for the whole process, so calling
+from several threads is safe &mdash; the calls serialise rather than corrupting memory.</p>
 <h2>Read a signature</h2>
 <pre>for (PdfSignature signature : document.signatures()) {
     if (!signature.coversWholeDocument()) {

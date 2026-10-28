@@ -255,12 +255,14 @@ that folder cannot be written.
 
 ## Threading
 
-The SDK is thread-safe. Every document owns one thread and every call runs on it, so
-calling from several threads is safe — the calls serialise.
-This mirrors the actor on iOS and the single-threaded dispatcher on Android. A test drives
-one document from eight threads and asserts they all read the same text.
+The SDK is thread-safe. PDFium's state is global, so every call on every document runs on
+one engine thread for the whole process, as on iOS and Android. Calling from several
+threads, on one document or several, is safe — the calls serialise; they do not run in
+parallel. Tests drive one document from eight threads, and six documents from six threads
+at once.
 
-Separate documents are independent, so throughput comes from opening several.
+Converting a DOCX happens on the calling thread, before the engine is involved, so several
+conversions do run in parallel.
 
 ## Building it
 

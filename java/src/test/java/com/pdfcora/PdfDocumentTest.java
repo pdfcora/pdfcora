@@ -158,4 +158,32 @@ class PdfDocumentTest {
       assertTrue(expected[0] > 0 && expected[1] > 0);
     }
   }
+
+  @Test
+  void separateDocumentsCanBeUsedFromSeparateThreadsAtOnce() throws Exception {
+    // PDFium's global state is shared by every document, so this crashed the JVM when each
+    // document had its own engine thread.
+    String[] files = { "hello_world.pdf", "text_form.pdf", "rectangles.pdf",
+                       "many_rectangles.pdf", "text_font.pdf", "find_text_consecutive.pdf" };
+    ExecutorService pool = Executors.newFixedThreadPool(files.length);
+    try {
+      for (int round = 0; round < 50; round++) {
+        List<Future<Integer>> results = new ArrayList<>();
+        for (String name : files) {
+          byte[] bytes = Files.readAllBytes(CONFORMANCE.resolve("corpus").resolve(name));
+          results.add(pool.submit(() -> {
+            try (PdfDocument document = PdfDocument.open(bytes)) {
+              PdfPage page = document.page(0);
+              page.search("e");
+              page.render(120);
+              return page.text().length();
+            }
+          }));
+        }
+        for (Future<Integer> result : results) assertTrue(result.get() >= 0);
+      }
+    } finally {
+      pool.shutdown();
+    }
+  }
 }
