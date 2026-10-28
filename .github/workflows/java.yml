@@ -23,7 +23,9 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with: { gradle-version: '8.14.2' }
       - uses: dtolnay/rust-toolchain@1.92
-        with: { targets: 'aarch64-apple-darwin,x86_64-apple-darwin' }
+      # build-jni.sh runs `cargo +1.92`, a toolchain name the action does not add targets to.
+      - name: Rust targets for both Mac architectures
+        run: rustup target add --toolchain 1.92 aarch64-apple-darwin x86_64-apple-darwin
       - uses: Swatinem/rust-cache@v2
         with: { workspaces: java/src/main/rust }
       - uses: ./.github/actions/fetch-vendor
