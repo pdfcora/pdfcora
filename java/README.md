@@ -44,6 +44,8 @@ try (PdfDocument document = PdfDocument.open(Path.of("contract.pdf"))) {
 | `permissions()` | The permission flags the document declares |
 | `toByteArray()` | The document as bytes (a full save) |
 | `writeTo(Path)` | The same, written to a file |
+| `exportXfdf()` | Form values and annotations as XFDF (ISO 19444-1) |
+| `importXfdf(String)` | Applies XFDF: field values plus ink, note, highlight, underline and strikeout annotations; returns a `PdfXfdfReport` listing what was skipped and why |
 | `isClosed()`, `close()` | Releases native memory; closing twice is harmless |
 
 `PdfDocument` is `AutoCloseable`, so try-with-resources is the intended shape.

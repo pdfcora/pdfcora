@@ -181,6 +181,7 @@ same results on all three platforms. The Java suite tests against the same fixtu
 | Metadata, permissions | ✅ | ✅ | ✅ | ✅ |
 | Attachments: list, extract bytes | ✅ | ✅ | ✅ | — |
 | Save (full / incremental) | ✅ | ✅ | ✅ | ✅ full |
+| XFDF export / import (annotations and form values) | ✅ | ✅ | ✅ | ✅ |
 | Signatures: read and verify | ✅ | ✅ | ✅ | ✅ |
 | Signing (PAdES B-B), cross-checked with `pdfsig` | ✅ | ✅ | ✅ bring a CMS signer | ✅ |
 | Signature timestamps (PAdES B-T) | ⚠️ *untested* | ⚠️ *untested* | ✅ | — |
@@ -547,6 +548,29 @@ on them.
 ```ts
 const detected = await new PdfAI(document).forms.detect();
 const withFields = await detected.apply(detected.items.map((i) => i.id));
+```
+
+## XFDF
+
+`exportXfdf()` writes a document's form values and annotations as XFDF (ISO 19444-1), the format
+Acrobat and other PDF tools use to exchange them without the PDF; `importXfdf(xml)` applies one.
+Every SDK writes byte-identical XFDF for the same document, checked against
+`conformance/xfdf/`.
+
+- **Export:** text, check box, radio, combo and list values (radio groups and fields with several
+  widgets become one field), and every annotation except widgets and links, with its colour,
+  opacity, flags, name, author, dates, text and geometry.
+- **Import:** field values, and ink, note, highlight, underline and strikeout annotations with
+  their author, name and dates. Other annotation types, unknown or read-only fields and values a
+  field cannot take are listed in the report's `skipped`, each with a reason.
+- **Safety:** XFDF is untrusted input. A DOCTYPE or entity declaration, malformed XML or more than
+  10 MiB is refused before anything is written. PDFium has no transactions, so a write it refuses
+  afterwards is reported as `writeFailed` and earlier writes stay. Import adds annotations; it
+  does not merge with ones already there.
+
+```ts
+const xfdf = await document.exportXfdf();
+const report = await other.importXfdf(xfdf);   // { fieldsSet, annotationsAdded, skipped }
 ```
 
 ## Accessibility

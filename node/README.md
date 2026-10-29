@@ -45,7 +45,7 @@ await document.close();
 
 The rest of the API is the web one, documented in that package's README: text extraction
 and per-character boxes, search, form fields, annotations, signatures, redaction, the
-structure tree and tagging, page operations and saving.
+structure tree and tagging, XFDF export and import, page operations and saving.
 
 ```ts
 import { PdfDocument } from '@pdfcora/node';

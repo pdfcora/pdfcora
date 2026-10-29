@@ -73,6 +73,17 @@ Edits refer to annotations by index, so this suits one presenter and any number 
 followers; it does not resolve two people editing at once. Try it:
 [follow-me demo](https://pdfcora.pages.dev/demo/collab.html).
 
+## XFDF
+
+```js
+const xfdf = await pdf.exportXfdf();               // form values and annotations, as XML
+const report = await other.importXfdf(xfdf);       // { fieldsSet, annotationsAdded, skipped }
+```
+
+Import sets field values and adds ink, note, highlight, underline and strikeout annotations;
+anything else is listed in `report.skipped` with a reason. Malformed XML, a DOCTYPE or more than
+10 MiB is refused before anything is written. Save with a full save to keep added annotations.
+
 ## License
 
 MIT. Third-party licences: `NOTICE.md`.
