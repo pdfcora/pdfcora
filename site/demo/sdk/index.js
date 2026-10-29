@@ -10,5 +10,6 @@ export { defaultToolbar, viewingToolbar, toolbarItems } from './ui/toolbar.js';
 export { lightTheme, darkTheme } from './ui/theme.js';
 export { PdfViewer } from './view/viewer.js';
 export * from './view/state.js';
+export { encodeEvent, decodeEvent, WIRE_VERSION } from './view/codec.js';
 export * from './view/zoom.js';
 //# sourceMappingURL=index.js.map

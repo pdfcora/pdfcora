@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PDFCora — follow-me demo</title>
+  <meta name="description" content="Two PDFCora viewers side by side, kept in step by the events the SDK emits: scroll, zoom, page and annotations travel as JSON from one to the other.">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#07080c">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    .demo-wrap { max-width: 92rem; margin: 0 auto; padding: 1.4rem 1.25rem 3rem; }
+    .demo-head { display: flex; flex-wrap: wrap; align-items: center; gap: .7rem 1.3rem; margin-bottom: 1.1rem; }
+    .demo-head h1 { font-size: 1.35rem; margin: 0; font-weight: 600; }
+    .demo-head .grow { flex: 1 }
+    .demo-head a:not(.brand) { color: var(--ink-2); font-size: .9rem; }
+
+    .lede { color: var(--ink-2); font-size: .92rem; max-width: 60rem; margin: 0 0 1rem; }
+    .controls { display: flex; flex-wrap: wrap; gap: .6rem 1.4rem; align-items: center; margin-bottom: 1rem;
+                font-size: .9rem; color: var(--ink-2); }
+    .controls select { font: inherit; font-size: .88rem; color: var(--ink); background: var(--panel-2);
+                       border: 1px solid var(--line-2); border-radius: 7px; padding: .35rem .55rem; }
+
+    .pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; }
+    @media (max-width: 900px) { .pair { grid-template-columns: minmax(0, 1fr); } }
+    .side h2 { font-size: .82rem; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-2);
+               margin: 0 0 .45rem; font-weight: 600; }
+    /* The component fills whatever box it is given, so the host is what sets its size. */
+    .viewer { height: min(70vh, 820px); min-height: 24rem; border: 1px solid var(--line-2);
+              border-radius: var(--r); overflow: hidden; background: var(--panel); }
+
+    .panel { border: 1px solid var(--line-2); border-radius: var(--r); background: var(--panel);
+             padding: .9rem 1rem; margin-top: 1rem; }
+    .panel h2 { font-size: .82rem; letter-spacing: .04em; text-transform: uppercase;
+                color: var(--ink-2); margin: 0 0 .6rem; font-weight: 600; }
+    #log { list-style: none; margin: 0; padding: 0; max-height: 14rem; overflow-y: auto;
+           font: .76rem/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    #log li { padding: .25rem 0; border-bottom: 1px solid var(--line-2); color: var(--ink-2);
+              overflow-wrap: anywhere; }
+    #log b { color: var(--ink); margin-right: .5rem; }
+    #status { font-size: .85rem; color: var(--ink-2); margin: .7rem 0 0; min-height: 1.2em; }
+    #status.bad { color: var(--warn); }
+
+    #offline { display: none; border: 1px solid rgb(251 191 36 / 30%); border-left: 3px solid var(--warn);
+               border-radius: var(--r); background: rgb(251 191 36 / 7%); padding: 1rem 1.2rem; margin-bottom: 1.3rem; }
+    #offline h2 { font-size: 1.05rem; margin: 0 0 .5rem; }
+    #offline p { margin: 0 0 .6rem; font-size: .9rem; color: var(--ink-2); }
+    #offline pre { margin: 0; background: var(--panel-2); border: 1px solid var(--line-2);
+                   border-radius: 7px; padding: .7rem .9rem; font-size: .84rem; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <div class="demo-wrap" id="main">
+    <div class="demo-head">
+      <a class="brand" href="../index.html"><img src="../favicon.svg" alt="" width="24" height="24"><span>PDFCora</span></a>
+      <h1>Follow-me demo</h1>
+      <span class="grow"></span>
+      <a href="index.html">Live demo</a>
+      <a href="../demos.html">Demos</a>
+      <a href="../developers.html">Docs</a>
+      <a href="https://github.com/pdfcora/pdfcora">GitHub</a>
+    </div>
+
+    <div id="offline">
+      <h2>This demo needs to be served over http://</h2>
+      <p>Browsers refuse to load ES modules or fetch files from <code>file://</code>, so the engine
+        cannot start. Serve the folder and open the address it prints:</p>
+      <pre><code>cd site &amp;&amp; python3 -m http.server 8000
+# then open http://localhost:8000/demo/collab.html</code></pre>
+    </div>
+    <script>if (location.protocol === 'file:') document.getElementById('offline').style.display = 'block';</script>
+
+    <p class="lede">Two viewers, as if on two devices: each opened its own copy of the same file. Scroll,
+      zoom, turn a page or annotate on one side, and the other follows. Every change leaves one viewer
+      as an event, travels as JSON — here through a pretend network with a short delay — and the other
+      viewer replays it with <code>apply</code>. A real app sends the same JSON over a WebSocket.</p>
+
+    <div class="controls">
+      <label><input id="sync" type="checkbox" checked> Keep the two viewers in step</label>
+      <label for="sample">Document</label>
+      <select id="sample">
+        <option value="sample.pdf">Contract — 3 pages of text</option>
+        <option value="forms.pdf">Form — 27 fields</option>
+      </select>
+    </div>
+
+    <div class="pair">
+      <section class="side" aria-labelledby="left-h">
+        <h2 id="left-h">Alice</h2>
+        <div id="left" class="viewer"></div>
+      </section>
+      <section class="side" aria-labelledby="right-h">
+        <h2 id="right-h">Bob</h2>
+        <div id="right" class="viewer"></div>
+      </section>
+    </div>
+    <p id="status">Starting the engine…</p>
+
+    <div class="panel">
+      <h2>Messages on the wire</h2>
+      <ol id="log" reversed></ol>
+    </div>
+  </div>
+
+  <script type="module" src="collab.js"></script>
+</body>
+</html>

@@ -20,6 +20,7 @@ export class PdfViewerElement {
     onSave;
     review;
     onChange;
+    onEvent;
     viewer;
     tool = 'select';
     created = 0;
@@ -37,7 +38,9 @@ export class PdfViewerElement {
     reviewBar = document.createElement('div');
     accessible = document.createElement('div');
     accessiblePage = -1;
-    constructor(host, pdf, toolbar, theme, onSave, review, onChange) {
+    /** A scroll this component made itself, so its scroll event is not reported as the user's. */
+    ownScroll = null;
+    constructor(host, pdf, toolbar, theme, onSave, review, onChange, onEvent) {
         this.host = host;
         this.pdf = pdf;
         this.toolbar = toolbar;
@@ -45,9 +48,10 @@ export class PdfViewerElement {
         this.onSave = onSave;
         this.review = review;
         this.onChange = onChange;
+        this.onEvent = onEvent;
     }
     static async mount(host, pdf, options = {}) {
-        const element = new PdfViewerElement(host, pdf, options.toolbar ?? defaultToolbar, options.theme ?? lightTheme, options.onSave, options.review, options.onChange);
+        const element = new PdfViewerElement(host, pdf, options.toolbar ?? defaultToolbar, options.theme ?? lightTheme, options.onSave, options.review, options.onChange, options.onEvent);
         await element.build();
         return element;
     }
@@ -56,7 +60,11 @@ export class PdfViewerElement {
         this.viewer = await PdfViewer.open(this.pdf, { width, height: this.host.clientHeight || 600 });
         if (this.review)
             this.viewer.setMarks(this.review.marks);
-        Object.assign(this.host.style, { background: this.theme.background, display: 'block' });
+        if (this.onEvent)
+            this.viewer.on(this.onEvent);
+        // A column: the toolbar keeps its height and the page takes the rest and scrolls, so a
+        // zoomed page can be scrolled within the host instead of being clipped by it.
+        Object.assign(this.host.style, { background: this.theme.background, display: 'flex', flexDirection: 'column' });
         // A visible focus indicator for every control, marks included (A11Y-3).
         this.host.classList.add('pdf-viewer-element');
         const focus = document.createElement('style');
@@ -67,11 +75,11 @@ export class PdfViewerElement {
         // that bug once, and a configurable toolbar makes it likelier because apps add items.
         Object.assign(this.bar.style, {
             display: 'flex', gap: '4px', alignItems: 'center',
-            minHeight: this.theme.toolbarHeight, padding: '0 8px',
+            minHeight: this.theme.toolbarHeight, padding: '0 8px', flex: 'none',
             background: this.theme.toolbarBackground, color: this.theme.toolbarForeground,
             overflowX: 'auto', overflowY: 'hidden', whiteSpace: 'nowrap',
         });
-        Object.assign(this.stage.style, { overflow: 'auto', position: 'relative' });
+        Object.assign(this.stage.style, { overflow: 'auto', position: 'relative', flex: '1 1 auto', minHeight: '0' });
         Object.assign(this.status.style, { margin: '4px 8px', font: '0.75rem sans-serif', color: '#6e6e73' });
         Object.assign(this.overlay.style, { position: 'absolute', left: '0', top: '0', pointerEvents: 'none' });
         // Screen readers get the page's structure from a hidden layer; the bitmap says nothing.
@@ -105,6 +113,7 @@ export class PdfViewerElement {
         this.stage.setAttribute('role', 'group');
         this.stage.setAttribute('aria-label', 'Page');
         this.stage.onkeydown = (event) => { void this.key(event); };
+        this.stage.onscroll = () => this.scrolled();
         this.host.replaceChildren(focus, this.bar, this.stage, ...(this.review ? [this.reviewBar] : []), this.status);
         this.renderToolbar();
         this.renderReview();
@@ -255,6 +264,57 @@ export class PdfViewerElement {
         }
         event.preventDefault();
         await this.refresh();
+        this.showCenter();
+    }
+    /**
+     * Replays another viewer's event — sent through `onEvent` — and redraws.
+     *
+     * Emits nothing, so two components wired to each other do not echo.
+     */
+    async apply(event) {
+        const viewer = this.viewer;
+        if (!viewer)
+            return;
+        await viewer.apply(event);
+        if (event.change.kind === 'tool') {
+            this.tool = viewer.tool;
+            this.renderToolbar();
+        }
+        await this.refresh();
+        if (event.change.kind === 'viewport')
+            this.showCenter();
+        if (event.change.kind === 'edit')
+            this.onChange?.();
+    }
+    viewportSize() {
+        return { width: this.stage.clientWidth, height: this.stage.clientHeight };
+    }
+    /** The user scrolled: the point now in the middle is the view state other viewers follow. */
+    scrolled() {
+        const viewer = this.viewer;
+        if (!viewer)
+            return;
+        const own = this.ownScroll;
+        this.ownScroll = null;
+        if (own && Math.abs(own.left - this.stage.scrollLeft) <= 1 && Math.abs(own.top - this.stage.scrollTop) <= 1)
+            return;
+        viewer.scrollTo(viewer.transform().centerForScrollOffset({ x: this.stage.scrollLeft, y: this.stage.scrollTop }, this.viewportSize()));
+    }
+    /** Scrolls so the view state's centre is in the middle, without reporting it as the user's scroll. */
+    showCenter() {
+        const viewer = this.viewer;
+        if (!viewer)
+            return;
+        const offset = viewer.transform().scrollOffsetCentering(viewer.state.center, this.viewportSize());
+        const clamp = (value, max) => Math.round(Math.max(0, Math.min(value, max)));
+        const left = clamp(offset.x, this.stage.scrollWidth - this.stage.clientWidth);
+        const top = clamp(offset.y, this.stage.scrollHeight - this.stage.clientHeight);
+        // No scroll event fires when nothing moves, and a stale marker would swallow the next real one.
+        if (Math.abs(left - this.stage.scrollLeft) <= 1 && Math.abs(top - this.stage.scrollTop) <= 1)
+            return;
+        this.ownScroll = { left, top };
+        this.stage.scrollLeft = left;
+        this.stage.scrollTop = top;
     }
     async perform(item) {
         const viewer = this.viewer;
@@ -302,6 +362,8 @@ export class PdfViewerElement {
         }
         this.renderToolbar();
         await this.refresh();
+        if (item.item.kind !== 'undo')
+            this.showCenter();
         if (item.item.kind === 'undo')
             this.onChange?.();
     }

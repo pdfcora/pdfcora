@@ -53,6 +53,26 @@ await PdfViewerElement.mount(document.getElementById('viewer'), pdf, {
 });
 ```
 
+### Following another viewer
+
+Every change a user makes — scroll, zoom, page, tool, selection, annotations, form values —
+comes out of `onEvent`. Send it as JSON; the other side replays it with `apply`, which emits
+nothing back. The wire format is the one iOS and Android use, so the peers can be on any
+platform. The SDK does not move the messages: use your own WebSocket or channel.
+
+```js
+import { PdfViewerElement, encodeEvent, decodeEvent } from '@pdfcora/web';
+
+const viewer = await PdfViewerElement.mount(host, pdf, {
+  onEvent: (event) => socket.send(encodeEvent(event)),
+});
+socket.onmessage = (message) => viewer.apply(decodeEvent(message.data));
+```
+
+Edits refer to annotations by index, so this suits one presenter and any number of
+followers; it does not resolve two people editing at once. Try it:
+[follow-me demo](https://pdfcora.pages.dev/demo/collab.html).
+
 ## License
 
 MIT. Third-party licences: `NOTICE.md`.

@@ -1,7 +1,7 @@
 // Tests for PdfViewerElement that need a real DOM and canvas, which Node has neither of.
 // Run by scripts/test-web-browser.sh in headless Chrome at a device pixel ratio of 2; the
 // outcome is shown in #result and posted back to the runner.
-import { configureEngine, defaultToolbar, PdfDocument, PdfViewerElement } from '../dist/index.js';
+import { configureEngine, decodeEvent, defaultToolbar, encodeEvent, PdfDocument, PdfViewerElement } from '../dist/index.js';
 
 configureEngine({
   factory: async (options) => (await import('../vendor/pdfium.esm.js')).default(options),
@@ -252,6 +252,64 @@ try {
   check('axe finds no WCAG 2.1 A/AA violations in the components', audit.violations.length === 0,
     audit.violations.map((v) => `${v.id} (${v.impact}): ${v.nodes.slice(0, 3).map((n) => n.target.join(' ')).join('; ')}`).join(' | '));
   window.__axe = audit.violations;
+
+  // Two components on one document, wired the way two apps would be: events out as JSON,
+  // `apply` on the other side. A follow-me session needs nothing more than this.
+  {
+    const contract = async () => PdfDocument.open(new Uint8Array(await (await fetch('../../conformance/fixtures/contract.pdf')).arrayBuffer()));
+    const makeHost = () => {
+      const h = document.createElement('div');
+      Object.assign(h.style, { width: '320px', height: '480px', overflow: 'hidden' });
+      document.body.append(h);
+      return h;
+    };
+    const sent = [];
+    const echoed = [];
+    const hostA = makeHost();
+    const hostB = makeHost();
+    const pdfB = await contract();
+    const a = await PdfViewerElement.mount(hostA, await contract(), { onEvent: (e) => sent.push(encodeEvent(e)) });
+    const b = await PdfViewerElement.mount(hostB, pdfB, { onEvent: (e) => echoed.push(e) });
+    const settle = () => new Promise((resolve) => setTimeout(resolve, 150));
+    const deliver = async () => { for (const wire of sent.splice(0)) await b.apply(decodeEvent(wire)); await settle(); };
+    const stageA = hostA.querySelector('[role="group"]');
+    const stageB = hostB.querySelector('[role="group"]');
+
+    stageA.focus();
+    stageA.dispatchEvent(new KeyboardEvent('keydown', { key: '+', bubbles: true }));
+    await settle();
+    check('a zoom in one component is sent as an event', sent.length > 0, `sent=${sent.length}`);
+    await deliver();
+    const canvasA = hostA.querySelector('canvas');
+    const canvasB = hostB.querySelector('canvas');
+    check('the other component zooms to the same size', canvasA.width === canvasB.width && canvasA.width > 0,
+      `a=${canvasA.width} b=${canvasB.width}`);
+
+    stageA.scrollTop = 150;
+    stageA.scrollLeft = 40;
+    stageA.dispatchEvent(new Event('scroll'));
+    await settle();
+    check('a zoomed page scrolls inside the component', stageA.scrollTop >= 140 && stageA.scrollLeft >= 30,
+      `scroll=${stageA.scrollLeft},${stageA.scrollTop} height=${stageA.clientHeight}/${stageA.scrollHeight}`);
+    check('scrolling one component is sent as an event', sent.length > 0, `sent=${sent.length}`);
+    await deliver();
+    check('the other component scrolls to the same place',
+      Math.abs(stageB.scrollTop - stageA.scrollTop) <= 2 && Math.abs(stageB.scrollLeft - stageA.scrollLeft) <= 2,
+      `a=${stageA.scrollLeft},${stageA.scrollTop} b=${stageB.scrollLeft},${stageB.scrollTop}`);
+
+    const before = (await (await pdfB.page(0)).annotations()).length;
+    await b.apply({
+      sequence: 1, sessionId: 'peer', origin: 'local',
+      change: { kind: 'edit', edit: { kind: 'inkAdded', page: 0, strokes: [[{ x: 100, y: 500 }, { x: 300, y: 600 }]],
+        color: { red: 220, green: 0, blue: 0, alpha: 255 }, lineWidth: 3 } },
+    });
+    check('a replayed edit lands in the other document',
+      (await (await pdfB.page(0)).annotations()).length === before + 1);
+    await settle();
+    check('applying remote events echoes nothing back', echoed.length === 0, `echoed=${echoed.map((e) => e.change.kind)}`);
+    hostA.remove();
+    hostB.remove();
+  }
 
   // WebMCP (Chrome behind --enable-blink-features=WebMCP): the agent tools are registered and run.
   check('the browser has WebMCP', Boolean(document.modelContext));

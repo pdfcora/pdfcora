@@ -16,4 +16,5 @@ export { defaultToolbar, viewingToolbar, toolbarItems,
 export { lightTheme, darkTheme, type PdfViewerTheme } from './ui/theme.js';
 export { PdfViewer, type PdfViewerOptions } from './view/viewer.js';
 export * from './view/state.js';
+export { encodeEvent, decodeEvent, WIRE_VERSION } from './view/codec.js';
 export * from './view/zoom.js';

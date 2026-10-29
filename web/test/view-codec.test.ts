@@ -132,3 +132,10 @@ describe('the view event wire format', () => {
     assert.ok(nonZero);
   });
 });
+
+test('the codec is part of the public package, as on iOS and Android', async () => {
+  const sdk = await import('../dist/index.js');
+  assert.equal(typeof (sdk as Record<string, unknown>).encodeEvent, 'function');
+  assert.equal(typeof (sdk as Record<string, unknown>).decodeEvent, 'function');
+  assert.equal((sdk as Record<string, unknown>).WIRE_VERSION, WIRE_VERSION);
+});

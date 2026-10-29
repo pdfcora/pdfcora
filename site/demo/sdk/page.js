@@ -30,7 +30,6 @@ export class PdfPage {
     size() {
         return this.document.pageSize(this.index);
     }
-    /** Text extraction and search for this page. */
     /**
      * The objects this page is drawn from, in drawing order.
      *
@@ -68,6 +67,7 @@ export class PdfPage {
         ]);
         return accessibleNodes(read.roots, read.text.byId, read.text.all, { left: 0, bottom: 0, right: size.width, top: size.height }, fields);
     }
+    /** Text extraction and search for this page. */
     get text() {
         return new PdfTextPage(this.document, this.index);
     }
