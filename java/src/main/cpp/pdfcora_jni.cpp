@@ -385,11 +385,20 @@ JNIEXPORT jint JNICALL Java_com_pdfcora_Native_addInk(
   env->GetFloatArrayRegion(points, 0, static_cast<jsize>(flat.size()), flat.data());
 
   size_t at = 0;
+  FS_RECTF bounds{};
+  bool any = false;
   for (jint length : strokeLengths) {
     std::vector<FS_POINTF> stroke(static_cast<size_t>(length));
-    for (jint i = 0; i < length; i++) { stroke[i].x = flat[at++]; stroke[i].y = flat[at++]; }
+    for (jint i = 0; i < length; i++) {
+      stroke[i].x = flat[at++]; stroke[i].y = flat[at++];
+      if (!any) { bounds = { stroke[i].x, stroke[i].y, stroke[i].x, stroke[i].y }; any = true; }
+      bounds.left = std::min(bounds.left, stroke[i].x); bounds.right = std::max(bounds.right, stroke[i].x);
+      bounds.bottom = std::min(bounds.bottom, stroke[i].y); bounds.top = std::max(bounds.top, stroke[i].y);
+    }
     if (length > 0) FPDFAnnot_AddInkStroke(annot, stroke.data(), stroke.size());
   }
+  // Without a /Rect the annotation sits at the origin, and PDFium grows that, not the strokes.
+  if (any) FPDFAnnot_SetRect(annot, &bounds);
   FPDFAnnot_SetColor(annot, FPDFANNOT_COLORTYPE_Color,
                      static_cast<unsigned int>(red), static_cast<unsigned int>(green),
                      static_cast<unsigned int>(blue), 255);
@@ -972,6 +981,210 @@ JNIEXPORT jint JNICALL Java_com_pdfcora_Native_objectInfo(
   env->SetFloatArrayRegion(out, 0, 5, values);
   FPDF_ClosePage(page);
   return kOk;
+}
+
+}  // extern "C"
+
+// ---- XFDF ------------------------------------------------------------------------
+// Internal: the annotation and form details XFDF carries that the public Java model does
+// not. Every call loads the page and closes it again, like the rest of this file.
+
+namespace {
+
+jobjectArray stringArray(JNIEnv* env, const std::vector<std::string>& values) {
+  jobjectArray out = env->NewObjectArray(static_cast<jsize>(values.size()), env->FindClass("java/lang/String"), nullptr);
+  for (size_t i = 0; i < values.size(); i++) {
+    jstring s = env->NewStringUTF(values[i].c_str());
+    env->SetObjectArrayElement(out, static_cast<jsize>(i), s);
+    env->DeleteLocalRef(s);
+  }
+  return out;
+}
+
+std::string annotString(FPDF_ANNOTATION annot, const char* key) {
+  const unsigned long size = FPDFAnnot_GetStringValue(annot, key, nullptr, 0);
+  if (size <= 2) return "";
+  std::vector<unsigned short> units(size / 2 + 1, 0);
+  FPDFAnnot_GetStringValue(annot, key, reinterpret_cast<FPDF_WCHAR*>(units.data()), size);
+  return utf16ToUtf8(units);
+}
+
+}  // namespace
+
+extern "C" {
+
+/**
+ * Fills `numbers` with subtype, flags, hasOpacity, /CA, hasBorder, border width, hasLine,
+ * x1, y1, x2, y2, quad count and ink stroke count; returns Contents, NM, T, M, CreationDate,
+ * DA and Name, empty when absent. Null when the annotation does not exist.
+ */
+JNIEXPORT jobjectArray JNICALL Java_com_pdfcora_Native_xfdfAnnotation(
+    JNIEnv* env, jclass, jlong handle, jint index, jint at, jfloatArray numbers) {
+  auto* loaded = reinterpret_cast<Loaded*>(handle);
+  if (!loaded) return nullptr;
+  FPDF_PAGE page = FPDF_LoadPage(loaded->document, index);
+  if (!page) return nullptr;
+  FPDF_ANNOTATION annot = FPDFPage_GetAnnot(page, at);
+  if (!annot) { FPDF_ClosePage(page); return nullptr; }
+
+  jfloat values[13] = {0};
+  values[0] = static_cast<jfloat>(FPDFAnnot_GetSubtype(annot));
+  values[1] = static_cast<jfloat>(FPDFAnnot_GetFlags(annot));
+  float opacity = 0;
+  if (FPDFAnnot_GetNumberValue(annot, "CA", &opacity)) { values[2] = 1; values[3] = opacity; }
+  float h = 0, v = 0, w = 0;
+  if (FPDFAnnot_GetBorder(annot, &h, &v, &w)) { values[4] = 1; values[5] = w; }
+  FS_POINTF start{}, end{};
+  if (FPDFAnnot_GetLine(annot, &start, &end)) {
+    values[6] = 1; values[7] = start.x; values[8] = start.y; values[9] = end.x; values[10] = end.y;
+  }
+  values[11] = static_cast<jfloat>(FPDFAnnot_CountAttachmentPoints(annot));
+  values[12] = static_cast<jfloat>(FPDFAnnot_GetInkListCount(annot));
+  env->SetFloatArrayRegion(numbers, 0, 13, values);
+
+  std::vector<std::string> strings;
+  for (const char* key : {"Contents", "NM", "T", "M", "CreationDate", "DA", "Name"}) strings.push_back(annotString(annot, key));
+  FPDFPage_CloseAnnot(annot);
+  FPDF_ClosePage(page);
+  return stringArray(env, strings);
+}
+
+/** Quads as 8 floats each, in /QuadPoints order. */
+JNIEXPORT jfloatArray JNICALL Java_com_pdfcora_Native_annotationQuads(
+    JNIEnv* env, jclass, jlong handle, jint index, jint at) {
+  auto* loaded = reinterpret_cast<Loaded*>(handle);
+  std::vector<jfloat> values;
+  FPDF_PAGE page = loaded ? FPDF_LoadPage(loaded->document, index) : nullptr;
+  if (page) {
+    if (FPDF_ANNOTATION annot = FPDFPage_GetAnnot(page, at)) {
+      const size_t count = FPDFAnnot_CountAttachmentPoints(annot);
+      for (size_t i = 0; i < count; i++) {
+        FS_QUADPOINTSF q{};
+        if (FPDFAnnot_GetAttachmentPoints(annot, i, &q)) values.insert(values.end(), {q.x1, q.y1, q.x2, q.y2, q.x3, q.y3, q.x4, q.y4});
+      }
+      FPDFPage_CloseAnnot(annot);
+    }
+    FPDF_ClosePage(page);
+  }
+  jfloatArray out = env->NewFloatArray(static_cast<jsize>(values.size()));
+  env->SetFloatArrayRegion(out, 0, static_cast<jsize>(values.size()), values.data());
+  return out;
+}
+
+/** One ink stroke as x,y pairs. */
+JNIEXPORT jfloatArray JNICALL Java_com_pdfcora_Native_inkStroke(
+    JNIEnv* env, jclass, jlong handle, jint index, jint at, jint stroke) {
+  auto* loaded = reinterpret_cast<Loaded*>(handle);
+  std::vector<jfloat> values;
+  FPDF_PAGE page = loaded ? FPDF_LoadPage(loaded->document, index) : nullptr;
+  if (page) {
+    if (FPDF_ANNOTATION annot = FPDFPage_GetAnnot(page, at)) {
+      const unsigned long n = FPDFAnnot_GetInkListPath(annot, stroke, nullptr, 0);
+      std::vector<FS_POINTF> points(n);
+      if (n > 0) FPDFAnnot_GetInkListPath(annot, stroke, points.data(), n);
+      for (const auto& p : points) values.insert(values.end(), {p.x, p.y});
+      FPDFPage_CloseAnnot(annot);
+    }
+    FPDF_ClosePage(page);
+  }
+  jfloatArray out = env->NewFloatArray(static_cast<jsize>(values.size()));
+  env->SetFloatArrayRegion(out, 0, static_cast<jsize>(values.size()), values.data());
+  return out;
+}
+
+/**
+ * A widget's export value, then its options, each prefixed "1" when selected and "0" when
+ * not. Null when the annotation is not a widget.
+ */
+JNIEXPORT jobjectArray JNICALL Java_com_pdfcora_Native_formFieldChoices(
+    JNIEnv* env, jclass, jlong handle, jint index, jint at) {
+  auto* loaded = reinterpret_cast<Loaded*>(handle);
+  if (!loaded) return nullptr;
+  FPDF_FORMHANDLE form = formHandle(loaded);
+  FPDF_PAGE page = FPDF_LoadPage(loaded->document, index);
+  if (!page || !form) { if (page) FPDF_ClosePage(page); return nullptr; }
+  FORM_OnAfterLoadPage(page, form);
+  FPDF_ANNOTATION annot = FPDFPage_GetAnnot(page, at);
+  jobjectArray result = nullptr;
+  if (annot && FPDFAnnot_GetSubtype(annot) == FPDF_ANNOT_WIDGET) {
+    std::vector<std::string> values;
+    const unsigned long size = FPDFAnnot_GetFormFieldExportValue(form, annot, nullptr, 0);
+    std::vector<unsigned short> units(size / 2 + 1, 0);
+    if (size > 0) FPDFAnnot_GetFormFieldExportValue(form, annot, reinterpret_cast<FPDF_WCHAR*>(units.data()), size);
+    values.push_back(size > 2 ? utf16ToUtf8(units) : "");
+    const int count = FPDFAnnot_GetOptionCount(form, annot);
+    for (int i = 0; i < count; i++) {
+      const unsigned long n = FPDFAnnot_GetOptionLabel(form, annot, i, nullptr, 0);
+      std::vector<unsigned short> label(n / 2 + 1, 0);
+      if (n > 0) FPDFAnnot_GetOptionLabel(form, annot, i, reinterpret_cast<FPDF_WCHAR*>(label.data()), n);
+      values.push_back(std::string(FPDFAnnot_IsOptionSelected(form, annot, i) ? "1" : "0") + utf16ToUtf8(label));
+    }
+    result = stringArray(env, values);
+  }
+  if (annot) FPDFPage_CloseAnnot(annot);
+  FORM_OnBeforeClosePage(page, form);
+  FPDF_ClosePage(page);
+  return result;
+}
+
+JNIEXPORT jint JNICALL Java_com_pdfcora_Native_setFieldOption(
+    JNIEnv*, jclass, jlong handle, jint index, jint at, jint option, jboolean selected) {
+  auto* loaded = reinterpret_cast<Loaded*>(handle);
+  if (!loaded) return kCorrupt;
+  FPDF_FORMHANDLE form = formHandle(loaded);
+  FPDF_PAGE page = FPDF_LoadPage(loaded->document, index);
+  if (!page || !form) { if (page) FPDF_ClosePage(page); return kCorrupt; }
+  FORM_OnAfterLoadPage(page, form);
+  FPDF_ANNOTATION annot = FPDFPage_GetAnnot(page, at);
+  jint result = kInvalidOperation;
+  if (annot && FORM_SetFocusedAnnot(form, annot)) {
+    if (FORM_SetIndexSelected(form, page, option, selected)) result = kOk;
+    FORM_ForceToKillFocus(form);
+  }
+  if (annot) FPDFPage_CloseAnnot(annot);
+  FORM_OnBeforeClosePage(page, form);
+  FPDF_ClosePage(page);
+  return result;
+}
+
+/** A sticky note with an explicit rectangle and colour; returns its index. */
+JNIEXPORT jint JNICALL Java_com_pdfcora_Native_addNoteInRect(
+    JNIEnv* env, jclass, jlong handle, jint index, jfloat left, jfloat bottom, jfloat right, jfloat top,
+    jstring contents, jint red, jint green, jint blue, jint alpha) {
+  auto* loaded = reinterpret_cast<Loaded*>(handle);
+  if (!loaded) return kCorrupt;
+  FPDF_PAGE page = FPDF_LoadPage(loaded->document, index);
+  if (!page) return kPageOutOfRange;
+  FPDF_ANNOTATION annot = FPDFPage_CreateAnnot(page, FPDF_ANNOT_TEXT);
+  if (!annot) { FPDF_ClosePage(page); return kCorrupt; }
+  FS_RECTF rect{ left, top, right, bottom };
+  FPDFAnnot_SetRect(annot, &rect);
+  FPDFAnnot_SetColor(annot, FPDFANNOT_COLORTYPE_Color, red, green, blue, alpha);
+  std::vector<unsigned short> units = toUtf16(env, contents);
+  FPDFAnnot_SetStringValue(annot, "Contents", reinterpret_cast<FPDF_WIDESTRING>(units.data()));
+  FPDFPage_CloseAnnot(annot);
+  const int created = FPDFPage_GetAnnotCount(page) - 1;
+  FPDF_ClosePage(page);
+  return created;
+}
+
+JNIEXPORT jint JNICALL Java_com_pdfcora_Native_setAnnotationString(
+    JNIEnv* env, jclass, jlong handle, jint index, jint at, jstring key, jstring value) {
+  auto* loaded = reinterpret_cast<Loaded*>(handle);
+  if (!loaded) return kCorrupt;
+  FPDF_PAGE page = FPDF_LoadPage(loaded->document, index);
+  if (!page) return kPageOutOfRange;
+  FPDF_ANNOTATION annot = FPDFPage_GetAnnot(page, at);
+  jint result = kInvalidOperation;
+  if (annot) {
+    const char* k = env->GetStringUTFChars(key, nullptr);
+    std::vector<unsigned short> units = toUtf16(env, value);
+    if (FPDFAnnot_SetStringValue(annot, k, reinterpret_cast<FPDF_WIDESTRING>(units.data()))) result = kOk;
+    env->ReleaseStringUTFChars(key, k);
+    FPDFPage_CloseAnnot(annot);
+  }
+  FPDF_ClosePage(page);
+  return result;
 }
 
 }  // extern "C"

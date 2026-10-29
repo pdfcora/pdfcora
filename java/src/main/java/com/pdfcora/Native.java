@@ -117,6 +117,25 @@ final class Native {
 
   static native int setFieldChecked(long handle, int index, int at, boolean checked);
 
+  // ---- XFDF (internal) -------------------------------------------------------------
+
+  /** Numbers in `out` (13); returns Contents, NM, T, M, CreationDate, DA, Name. */
+  static native String[] xfdfAnnotation(long handle, int index, int at, float[] out);
+
+  static native float[] annotationQuads(long handle, int index, int at);
+
+  static native float[] inkStroke(long handle, int index, int at, int stroke);
+
+  /** Export value, then options prefixed "1" when selected and "0" when not; null for a non-widget. */
+  static native String[] formFieldChoices(long handle, int index, int at);
+
+  static native int setFieldOption(long handle, int index, int at, int option, boolean selected);
+
+  static native int addNoteInRect(long handle, int index, float left, float bottom, float right, float top,
+                                  String contents, int red, int green, int blue, int alpha);
+
+  static native int setAnnotationString(long handle, int index, int at, String key, String value);
+
   /** Redacts one page; fills `counts` with text, split, image, path and annotation totals. */
   static native int redactPage(long handle, int index, float[] regions, int[] counts);
 

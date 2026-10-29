@@ -293,6 +293,28 @@ public final class PdfDocument implements AutoCloseable {
     return com.pdfcora.sign.PdfSigning.sign(toByteArray(), options);
   }
 
+  /**
+   * The form values and annotations as XFDF (ISO 19444-1), for other PDF tools or a backend.
+   * Widgets and links are not included; neither are appearances or rich text.
+   */
+  public String exportXfdf() {
+    if (isClosed()) throw new PdfError(PdfError.Code.CLOSED, "the document is closed");
+    return Xfdf.export(this);
+  }
+
+  /**
+   * Applies XFDF: sets the form values it names and adds the ink, note, highlight, underline
+   * and strikeout annotations it carries, keeping their author, name and dates. Everything
+   * else is listed in the report's {@code skipped}, with a reason. Malformed XML, a DOCTYPE,
+   * or input over 10 MiB is refused with {@code INVALID_OPERATION} before anything is
+   * written; a write PDFium refuses afterwards is reported as {@code WRITE_FAILED}, and
+   * earlier writes stay. Save with a full save to keep the added annotations.
+   */
+  public PdfXfdfReport importXfdf(String xml) {
+    if (isClosed()) throw new PdfError(PdfError.Code.CLOSED, "the document is closed");
+    return Xfdf.importXfdf(this, xml);
+  }
+
   public boolean isClosed() {
     return handle == 0;
   }

@@ -16,6 +16,18 @@ class PdfEditingTest {
   private static final Path ANNOTATED = CONFORMANCE.resolve("corpus/annots_action_handling.pdf");
 
   @Test
+  void anInkAnnotationsRectangleCoversItsStrokes() throws IOException {
+    try (PdfDocument document = PdfDocument.open(CONTRACT)) {
+      PdfPage page = document.page(0);
+      int created = page.addInk(List.of(List.of(new PdfPage.Point(300, 600), new PdfPage.Point(400, 700))), 0, 0, 0, 2);
+      PdfAnnotation.Rect rect = page.annotations().get(created).rect();
+      // PDFium grows the rectangle by half the line width when it draws the appearance.
+      assertTrue(rect.left() <= 300 && rect.bottom() <= 600 && rect.right() >= 400 && rect.top() >= 700, rect.toString());
+      assertTrue(rect.left() >= 298 && rect.right() <= 402, rect.toString());
+    }
+  }
+
+  @Test
   void readsTheAnnotationsAlreadyOnAPage() throws IOException {
     try (PdfDocument document = PdfDocument.open(ANNOTATED)) {
       List<PdfAnnotation> annotations = document.page(0).annotations();
