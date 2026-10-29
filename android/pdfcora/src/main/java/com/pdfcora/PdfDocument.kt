@@ -158,6 +158,12 @@ class PdfDocument private constructor(
         }
     }
 
+    /**
+     * The form values and annotations as XFDF (ISO 19444-1), for other PDF tools or a backend.
+     * Widgets and links are not included; neither are appearances or rich text.
+     */
+    suspend fun exportXfdf(): String = com.pdfcora.xfdf.exportXfdf(this)
+
     suspend fun writeTo(file: File, mode: PdfSaveMode = PdfSaveMode.FULL) {
         val bytes = toByteArray(mode)
         try {

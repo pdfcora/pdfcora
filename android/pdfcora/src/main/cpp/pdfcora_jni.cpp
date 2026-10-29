@@ -408,6 +408,75 @@ Java_com_pdfcora_Native_annotationInfo(JNIEnv* env, jclass, jlong handle,
     return out;
 }
 
+// A markup annotation's quads, 8 floats each in /QuadPoints order.
+JNIEXPORT jfloatArray JNICALL
+Java_com_pdfcora_Native_annotationQuads(JNIEnv* env, jclass, jlong handle, jint pageIndex, jint annotIndex) {
+    auto* d = asDoc(handle);
+    std::vector<jfloat> values;
+    FPDF_PAGE page = loadPage(d, pageIndex);
+    if (page) {
+        FPDF_ANNOTATION annot = FPDFPage_GetAnnot(page, annotIndex);
+        if (annot) {
+            const size_t count = FPDFAnnot_CountAttachmentPoints(annot);
+            for (size_t i = 0; i < count; i++) {
+                FS_QUADPOINTSF q{};
+                if (!FPDFAnnot_GetAttachmentPoints(annot, i, &q)) continue;
+                values.insert(values.end(), {q.x1, q.y1, q.x2, q.y2, q.x3, q.y3, q.x4, q.y4});
+            }
+            FPDFPage_CloseAnnot(annot);
+        }
+        unloadPage(d, page);
+    }
+    jfloatArray out = env->NewFloatArray(static_cast<jsize>(values.size()));
+    env->SetFloatArrayRegion(out, 0, static_cast<jsize>(values.size()), values.data());
+    return out;
+}
+
+// For XFDF: [hasOpacity, /CA, hasBorder, border width, hasLine, x1, y1, x2, y2].
+JNIEXPORT jfloatArray JNICALL
+Java_com_pdfcora_Native_annotationXfdfNumbers(JNIEnv* env, jclass, jlong handle, jint pageIndex, jint annotIndex) {
+    auto* d = asDoc(handle);
+    jfloat values[9] = {0};
+    FPDF_PAGE page = loadPage(d, pageIndex);
+    if (page) {
+        FPDF_ANNOTATION annot = FPDFPage_GetAnnot(page, annotIndex);
+        if (annot) {
+            float opacity = 0;
+            if (FPDFAnnot_GetNumberValue(annot, "CA", &opacity)) { values[0] = 1; values[1] = opacity; }
+            float h = 0, v = 0, w = 0;
+            if (FPDFAnnot_GetBorder(annot, &h, &v, &w)) { values[2] = 1; values[3] = w; }
+            FS_POINTF start{}, end{};
+            if (FPDFAnnot_GetLine(annot, &start, &end)) {
+                values[4] = 1; values[5] = start.x; values[6] = start.y; values[7] = end.x; values[8] = end.y;
+            }
+            FPDFPage_CloseAnnot(annot);
+        }
+        unloadPage(d, page);
+    }
+    jfloatArray out = env->NewFloatArray(9);
+    env->SetFloatArrayRegion(out, 0, 9, values);
+    return out;
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_pdfcora_Native_setAnnotationString(JNIEnv* env, jclass, jlong handle, jint pageIndex, jint annotIndex,
+                                             jstring key, jstring value) {
+    auto* d = asDoc(handle);
+    FPDF_PAGE page = loadPage(d, pageIndex);
+    if (!page) return JNI_FALSE;
+    FPDF_ANNOTATION annot = FPDFPage_GetAnnot(page, annotIndex);
+    jboolean ok = JNI_FALSE;
+    if (annot) {
+        const char* k = env->GetStringUTFChars(key, nullptr);
+        std::u16string text = toU16(env, value);
+        ok = FPDFAnnot_SetStringValue(annot, k, reinterpret_cast<FPDF_WIDESTRING>(text.c_str())) ? JNI_TRUE : JNI_FALSE;
+        env->ReleaseStringUTFChars(key, k);
+        FPDFPage_CloseAnnot(annot);
+    }
+    unloadPage(d, page);
+    return ok;
+}
+
 JNIEXPORT jstring JNICALL
 Java_com_pdfcora_Native_annotationString(JNIEnv* env, jclass, jlong handle,
                                            jint pageIndex, jint annotIndex, jstring key) {

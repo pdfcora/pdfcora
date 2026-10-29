@@ -45,10 +45,10 @@ suspend fun PdfPage.annotations(): List<PdfAnnotation> = document.onDocument { h
         )
 
         when (val subtype = info[0].toInt()) {
-            SUBTYPE_HIGHLIGHT -> PdfAnnotation.Highlight(base, emptyList())
-            SUBTYPE_UNDERLINE -> PdfAnnotation.Underline(base, emptyList())
-            SUBTYPE_STRIKEOUT -> PdfAnnotation.Strikeout(base, emptyList())
-            SUBTYPE_SQUIGGLY -> PdfAnnotation.Squiggly(base, emptyList())
+            SUBTYPE_HIGHLIGHT -> PdfAnnotation.Highlight(base, readQuads(h, index, annotIndex))
+            SUBTYPE_UNDERLINE -> PdfAnnotation.Underline(base, readQuads(h, index, annotIndex))
+            SUBTYPE_STRIKEOUT -> PdfAnnotation.Strikeout(base, readQuads(h, index, annotIndex))
+            SUBTYPE_SQUIGGLY -> PdfAnnotation.Squiggly(base, readQuads(h, index, annotIndex))
             SUBTYPE_INK -> PdfAnnotation.Ink(base, readInkStrokes(h, index, annotIndex, info[10].toInt()))
             SUBTYPE_FREETEXT -> PdfAnnotation.FreeText(base)
             SUBTYPE_SQUARE -> PdfAnnotation.Square(base)
@@ -63,6 +63,15 @@ suspend fun PdfPage.annotations(): List<PdfAnnotation> = document.onDocument { h
             )
             else -> PdfAnnotation.Unknown(base, subtype)
         }
+    }
+}
+
+private fun readQuads(handle: Long, pageIndex: Int, annotIndex: Int): List<PdfQuad> {
+    val flat = Native.annotationQuads(handle, pageIndex, annotIndex)
+    return (0 until flat.size / 8).map { q ->
+        val v = q * 8
+        PdfQuad(PdfPoint(flat[v], flat[v + 1]), PdfPoint(flat[v + 2], flat[v + 3]),
+                PdfPoint(flat[v + 4], flat[v + 5]), PdfPoint(flat[v + 6], flat[v + 7]))
     }
 }
 
