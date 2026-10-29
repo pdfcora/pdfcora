@@ -197,7 +197,7 @@ extension PdfDocument {
                         blue: UInt8(truncatingIfNeeded: b), alpha: UInt8(truncatingIfNeeded: a))
     }
 
-    private func annotString(_ annot: FPDF_ANNOTATION, key: String) -> String? {
+    func annotString(_ annot: FPDF_ANNOTATION, key: String) -> String? {
         let byteCount = FPDFAnnot_GetStringValue(annot, key, nil, 0)
         guard byteCount > 2 else { return nil }
         var buffer = [UInt16](repeating: 0, count: Int(byteCount) / 2)
