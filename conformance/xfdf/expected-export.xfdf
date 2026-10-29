@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xfdf xmlns="http://ns.adobe.com/xfdf/" xml:space="preserve">
+  <fields>
+    <field name="customer">
+      <field name="name">
+        <value>Zoë &amp; "Co" &lt;ok&gt;</value>
+      </field>
+    </field>
+    <field name="agree">
+      <value>Yes</value>
+    </field>
+    <field name="country">
+      <value>Germany</value>
+    </field>
+    <field name="size">
+      <value>M</value>
+    </field>
+    <field name="ref">
+      <value>R-17</value>
+    </field>
+  </fields>
+  <annots>
+    <highlight page="0" rect="72,700,200,714" color="#FFFF00" flags="print" name="pdfcora-1" title="Zoë &amp; &quot;Co&quot; &lt;ok&gt;" date="D:20261029120000Z" creationdate="D:20261028090000Z" coords="72,714,200,714,72,700,200,700">
+      <contents>Check this</contents>
+    </highlight>
+    <underline page="0" rect="72,680,200,694" color="#0000FF" flags="print" name="pdfcora-2" title="Zoë &amp; &quot;Co&quot; &lt;ok&gt;" date="D:20261029120000Z" creationdate="D:20261028090000Z" coords="72,694,200,694,72,680,200,680">
+      <contents>Underlined</contents>
+    </underline>
+    <strikeout page="0" rect="72,660,200,674" color="#FF0000" flags="print" name="pdfcora-3" title="Zoë &amp; &quot;Co&quot; &lt;ok&gt;" date="D:20261029120000Z" creationdate="D:20261028090000Z" coords="72,674,200,674,72,660,200,660">
+      <contents>Struck</contents>
+    </strikeout>
+    <squiggly page="0" rect="72,640,200,654" color="#00FF00" flags="print" name="pdfcora-4" title="Zoë &amp; &quot;Co&quot; &lt;ok&gt;" date="D:20261029120000Z" creationdate="D:20261028090000Z" coords="72,654,200,654,72,640,200,640">
+      <contents>Wavy</contents>
+    </squiggly>
+    <ink page="0" rect="300,600,400,700" color="#000000" flags="print" name="pdfcora-5" title="Zoë &amp; &quot;Co&quot; &lt;ok&gt;" date="D:20261029120000Z" creationdate="D:20261028090000Z" width="2">
+      <inklist>
+        <gesture>300,600;350,650;400,700</gesture>
+        <gesture>300,700;400,600</gesture>
+      </inklist>
+      <contents>Signed off</contents>
+    </ink>
+    <text page="0" rect="450,700,470,720" color="#FFFF00" flags="print" name="pdfcora-6" title="Zoë &amp; &quot;Co&quot; &lt;ok&gt;" date="D:20261029120000Z" creationdate="D:20261028090000Z" icon="Comment">
+      <contents>A note &amp; a &lt;tag&gt;</contents>
+    </text>
+    <square page="0" rect="72,500,172,560" color="#FF0000" flags="print" name="pdfcora-7" title="Zoë &amp; &quot;Co&quot; &lt;ok&gt;" date="D:20261029120000Z" creationdate="D:20261028090000Z">
+      <contents>Box</contents>
+    </square>
+    <circle page="0" rect="200,500,260,560" color="#0000FF" flags="print" name="pdfcora-8" title="Zoë &amp; &quot;Co&quot; &lt;ok&gt;" date="D:20261029120000Z" creationdate="D:20261028090000Z">
+      <contents>Ring</contents>
+    </circle>
+    <line page="1" rect="72,600,300,700" color="#000000" flags="print" name="pdfcora-9" title="Zoë &amp; &quot;Co&quot; &lt;ok&gt;" date="D:20261029120000Z" creationdate="D:20261028090000Z" start="72,600" end="300,700">
+      <contents>Arrow</contents>
+    </line>
+    <freetext page="1" rect="72,500,300,540" color="#000000" flags="print" name="pdfcora-10" title="Zoë &amp; &quot;Co&quot; &lt;ok&gt;" date="D:20261029120000Z" creationdate="D:20261028090000Z">
+      <contents>Typed text</contents>
+      <defaultappearance>/Helv 12 Tf 0 g</defaultappearance>
+    </freetext>
+    <stamp page="1" rect="350,500,500,560" color="#FF0000" flags="print" name="pdfcora-11" title="Zoë &amp; &quot;Co&quot; &lt;ok&gt;" date="D:20261029120000Z" creationdate="D:20261028090000Z">
+      <contents>Approved</contents>
+    </stamp>
+    <highlight page="1" rect="72,300,200,314" color="#FFFF00" opacity="0.5" name="pdfcora-13" title="Zoë &amp; &quot;Co&quot; &lt;ok&gt;" date="D:20261029120000Z" creationdate="D:20261028090000Z" coords="72,314,200,314,72,300,200,300">
+      <contents>Faint</contents>
+    </highlight>
+  </annots>
+</xfdf>

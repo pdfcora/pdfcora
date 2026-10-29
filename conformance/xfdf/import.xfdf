@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xfdf xmlns="http://ns.adobe.com/xfdf/" xml:space="preserve">
+  <fields>
+    <field name="customer">
+      <field name="name">
+        <value>Anna &amp; Ben &lt;team&gt;</value>
+      </field>
+    </field>
+    <field name="agree"><value>Yes</value></field>
+    <field name="country"><value>Switzerland</value></field>
+    <field name="size"><value>L</value></field>
+    <field name="ref"><value>R-99</value></field>
+    <field name="nope"><value>x</value></field>
+    <field name="size"><value>XL</value></field>
+  </fields>
+  <annots>
+    <ink page="0" rect="300,600,400,700" color="#FF0000" name="imp-ink" title="Imported &amp; signed" date="D:20261030100000Z" creationdate="D:20261030090000Z" width="3">
+      <inklist>
+        <gesture>300,600;350,650;400,700</gesture>
+        <gesture>300,700;400,600</gesture>
+      </inklist>
+      <contents>Imported ink</contents>
+    </ink>
+    <text page="0" rect="450,700,470,720" color="#00FF00" name="imp-note" title="Reviewer" date="D:20261030100000Z" creationdate="D:20261030090000Z" icon="Comment">
+      <contents>Note with "quotes" &amp; ümlauts</contents>
+    </text>
+    <highlight page="0" rect="72,700,200,714" color="#FFFF00" name="imp-hl" title="Reviewer" date="D:20261030100000Z" creationdate="D:20261030090000Z" coords="72,714,200,714,72,700,200,700">
+      <contents>Imported highlight</contents>
+    </highlight>
+    <underline page="1" rect="72,680,200,694" color="#0000FF" name="imp-ul" title="Reviewer" coords="72,694,200,694,72,680,200,680"/>
+    <strikeout page="1" rect="72,660,200,674" color="#FF0000" name="imp-so" title="Reviewer" coords="72,674,200,674,72,660,200,660"/>
+    <square page="0" rect="72,500,172,560" color="#FF0000"/>
+    <line page="1" rect="72,600,300,700" start="72,600" end="300,700"/>
+    <freetext page="1" rect="72,500,300,540"><contents>Typed</contents></freetext>
+    <highlight page="9" rect="72,700,200,714" coords="72,714,200,714,72,700,200,700"/>
+    <ink page="0" rect="300,600,400,700"/>
+  </annots>
+</xfdf>

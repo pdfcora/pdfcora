@@ -1,0 +1,16 @@
+{
+  "note": "Importing import.xfdf into source-blank.pdf. Skipped entries are in the order they appear in the XFDF: fields first, then annotations. fieldsSet counts XFDF fields, not widgets; ref has two widgets and counts once.",
+  "report": {
+    "fieldsSet": 5,
+    "annotationsAdded": 5,
+    "skipped": [
+      { "element": "field", "reason": "unknownField" },
+      { "element": "field", "reason": "invalidValue" },
+      { "element": "square", "page": 0, "reason": "unsupportedType" },
+      { "element": "line", "page": 1, "reason": "unsupportedType" },
+      { "element": "freetext", "page": 1, "reason": "unsupportedType" },
+      { "element": "highlight", "page": 9, "reason": "pageOutOfRange" },
+      { "element": "ink", "page": 0, "reason": "missingAttribute" }
+    ]
+  }
+}
