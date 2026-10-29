@@ -110,8 +110,21 @@ function parseValue(text: string, start: number): [PdfValue, number] {
 function matchingBracket(text: string, start: number): number {
   let depth = 0;
   for (let i = start; i < text.length - 1; i++) {
-    if (text.startsWith('<<', i)) { depth++; i++; }
+    if (text[i] === '(') {
+      // A literal string may hold ">>" or "<<"; skip it, honouring escapes and nesting.
+      let parens = 0;
+      for (; i < text.length; i++) {
+        if (text[i] === '\\') { i++; continue; }
+        if (text[i] === '(') parens++;
+        else if (text[i] === ')' && --parens === 0) break;
+      }
+    } else if (text.startsWith('<<', i)) { depth++; i++; }
     else if (text.startsWith('>>', i)) { if (--depth === 0) return i + 2; i++; }
+    else if (text[i] === '<') {
+      const end = text.indexOf('>', i);
+      if (end < 0) break;
+      i = end;
+    }
   }
   throw new Error('unterminated dictionary');
 }

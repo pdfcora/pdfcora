@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xfdf xmlns="http://ns.adobe.com/xfdf/" xml:space="preserve">
+  <annots>
+    <highlight page="0" rect="72.03125,700,200,714" color="#FF0000" name="edge-1" title="Zoë 👍 &#13;&#10;two lines" coords="72.03125,714,200,714,72.03125,700,200,700">
+      <contents>a &gt;&gt; b &lt;&lt; c (paren&#13;next line	tab</contents>
+    </highlight>
+    <highlight page="0" rect="72,680,200,694" color="#0000FF" name="edge-2" title="after" coords="72,694,200,694,72,680,200,680"/>
+  </annots>
+</xfdf>

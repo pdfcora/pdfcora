@@ -9,6 +9,8 @@ export interface XmlElement {
 }
 
 export const XFDF_MAX_BYTES = 10 * 1024 * 1024;
+/** Real XFDF nests a handful of levels; a limit keeps hostile input from exhausting the stack. */
+export const XFDF_MAX_DEPTH = 64;
 
 const ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" };
 
@@ -21,8 +23,10 @@ const fail = (why: string): never => { throw PdfError.invalidOperation(`not vali
  * Node has no DOMParser, and XFDF comes from outside, so anything that could reach beyond
  * the text — a DOCTYPE, an entity declaration, an unknown entity — is refused outright.
  */
-export function parseXml(input: string): XmlElement {
-  if (new TextEncoder().encode(input).length > XFDF_MAX_BYTES) fail('larger than 10 MiB');
+export function parseXml(text: string): XmlElement {
+  if (new TextEncoder().encode(text).length > XFDF_MAX_BYTES) fail('larger than 10 MiB');
+  // XML reads every literal CR and CRLF as LF; a CR meant as data is written &#13;.
+  const input = text.replace(/\r\n?/g, '\n');
   if (input.includes('<!DOCTYPE') || input.includes('<!ENTITY')) fail('DOCTYPE and entity declarations are not allowed');
 
   let at = 0;
@@ -73,6 +77,7 @@ export function parseXml(input: string): XmlElement {
       const selfClosing = input[end - 1] === '/';
       const body = input.slice(open + 1, selfClosing ? end - 1 : end);
       const element = parseTag(body, decode);
+      if (stack.length >= XFDF_MAX_DEPTH) fail(`nested deeper than ${XFDF_MAX_DEPTH} levels`);
       const parent = stack[stack.length - 1];
       if (parent) parent.children.push(element);
       else if (root) fail('more than one root element');
@@ -115,17 +120,23 @@ function parseTag(body: string, decode: (raw: string) => string): XmlElement {
     if (!match) fail(`malformed attributes in <${name}>`);
     const key = match![1]!;
     if (key in attributes) fail(`duplicate attribute ${key}`);
-    attributes[key] = decode(match![3] ?? match![4] ?? '');
+    // XML turns literal newlines and tabs in an attribute into spaces; character
+    // references survive, which is how this writer stores them.
+    attributes[key] = decode((match![3] ?? match![4] ?? '').replace(/[\n\t]/g, ' '));
     at = pattern.lastIndex;
   }
   return { name, attributes, children: [], text: '' };
 }
 
+// Line breaks and tabs are written as character references, because an XML reader would
+// otherwise turn a CR into LF, and a newline or tab in an attribute into a space.
 export const escapeAttribute = (s: string): string =>
-  s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[c]!));
+  s.replace(/[&<>"'\r\n\t]/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;', '\r': '&#13;', '\n': '&#10;', '\t': '&#9;',
+  }[c]!));
 
 export const escapeText = (s: string): string =>
-  s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]!));
+  s.replace(/[&<>\r]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\r': '&#13;' }[c]!));
 
 /** At most four decimals, no trailing zeros, no exponent, and never "-0". */
 export function formatNumber(n: number): string {

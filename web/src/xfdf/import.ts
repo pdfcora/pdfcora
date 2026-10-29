@@ -52,52 +52,59 @@ async function widgetsByName(document: PdfDocument): Promise<Map<string, { page:
   return byName;
 }
 
-/** Sets one XFDF field on every widget with its name. Resolves to a skip reason, or undefined when set. */
+/**
+ * Sets one XFDF field on every widget with its name. Everything is checked before the first
+ * write, so a value no widget can take changes nothing. Resolves to a skip reason, or
+ * undefined when set.
+ */
 async function setField(widgets: { page: PdfPage; field: PdfFormField }[], values: string[]): Promise<PdfXfdfSkipReason | undefined> {
   if (widgets.some((w) => w.field.isReadOnly)) return 'readOnlyField';
-  const value = values[0] ?? '';
   const first = widgets[0]!.field;
-  try {
-    switch (first.kind) {
-      case 'text':
-        for (const { page, field } of widgets) await page.setText(value, field.annotationIndex);
-        return undefined;
-      case 'checkBox': {
-        for (const { page, field } of widgets) {
-          if (field.kind !== 'checkBox') return 'invalidValue';
-          const on = field.exportValue ?? 'Yes';
-          if (value === 'Off') await page.setChecked(false, field.annotationIndex);
-          else if (value === on || (field.exportValue === undefined && value === 'On')) await page.setChecked(true, field.annotationIndex);
-          else return 'invalidValue';
-        }
-        return undefined;
-      }
-      case 'radioButton': {
-        if (value === 'Off') {
-          for (const { page, field } of widgets) await page.setChecked(false, field.annotationIndex);
-          return undefined;
-        }
-        const match = widgets.find((w) => w.field.kind === 'radioButton' && w.field.exportValue === value);
-        if (!match) return 'invalidValue';
-        await match.page.setChecked(true, match.field.annotationIndex);
-        return undefined;
-      }
-      case 'comboBox':
-      case 'listBox': {
-        const options = first.options;
-        if (values.some((v) => !options.includes(v))) return 'invalidValue';
-        for (const { page, field } of widgets) {
-          if (first.kind === 'comboBox') await page.setOption(options.indexOf(value), true, field.annotationIndex);
-          else for (const [i, option] of options.entries()) await page.setOption(i, values.includes(option), field.annotationIndex);
-        }
-        return undefined;
-      }
-      default:
-        return 'invalidValue';
+  if (widgets.some((w) => w.field.kind !== first.kind)) return 'invalidValue';
+  const value = values[0] ?? '';
+  const exportOf = (f: PdfFormField) => (f.kind === 'checkBox' || f.kind === 'radioButton' ? f.exportValue : undefined);
+
+  let writes: (() => Promise<void>)[];
+  switch (first.kind) {
+    case 'text':
+      writes = widgets.map(({ page, field }) => () => page.setText(value, field.annotationIndex));
+      break;
+    case 'checkBox': {
+      // Check boxes sharing a name each carry their own export value; the value turns on the
+      // ones it names and off the rest.
+      const on = (f: PdfFormField) => value === (exportOf(f) ?? 'Yes') || (exportOf(f) === undefined && value === 'On');
+      if (value !== 'Off' && !widgets.some((w) => on(w.field))) return 'invalidValue';
+      writes = widgets.map(({ page, field }) => () => page.setChecked(value !== 'Off' && on(field), field.annotationIndex));
+      break;
     }
+    case 'radioButton': {
+      if (value === 'Off') {
+        writes = widgets.map(({ page, field }) => () => page.setChecked(false, field.annotationIndex));
+        break;
+      }
+      const match = widgets.find((w) => exportOf(w.field) === value);
+      if (!match) return 'invalidValue';
+      writes = [() => match.page.setChecked(true, match.field.annotationIndex)];
+      break;
+    }
+    case 'comboBox':
+    case 'listBox': {
+      const options = first.options;
+      if (values.some((v) => !options.includes(v))) return 'invalidValue';
+      writes = widgets.flatMap(({ page, field }) => first.kind === 'comboBox'
+        ? [() => page.setOption(options.indexOf(value), true, field.annotationIndex)]
+        : options.map((option, i) => () => page.setOption(i, values.includes(option), field.annotationIndex)));
+      break;
+    }
+    default:
+      return 'invalidValue';
+  }
+  try {
+    for (const write of writes) await write();
   } catch {
     return 'writeFailed';
   }
+  return undefined;
 }
 
 /** Creates one annotation. Resolves to a skip reason, or undefined when added. */

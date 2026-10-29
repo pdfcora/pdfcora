@@ -56,3 +56,19 @@ test('a saved and reopened document keeps imported author and dates', async () =
   assert.ok(xfdf.includes('date="D:20261030100000Z"'));
   assert.ok(xfdf.includes('name="imp-ink"'));
 });
+
+test('edge cases round-trip: >> and << in text, CR, LF, tab, emoji, 72.03125', async () => {
+  const document = await blank();
+  const report = await document.importXfdf(text('xfdf/edge.xfdf'));
+  assert.equal(report.annotationsAdded, 2);
+  const exported = await document.exportXfdf();
+  assert.equal(exported, text('xfdf/expected-edge-export.xfdf'));
+  const again = await blank();
+  await again.importXfdf(exported);
+  assert.equal(await again.exportXfdf(), exported, 'export → import → export is stable');
+});
+
+test('rejects XFDF nested deeper than the limit', async () => {
+  const deep = '<xfdf><fields>' + '<field name="a">'.repeat(300) + '</field>'.repeat(300) + '</fields></xfdf>';
+  await assert.rejects((await blank()).importXfdf(deep), invalid);
+});

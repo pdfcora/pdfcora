@@ -34,3 +34,8 @@ test('formatNumber trims to 4 decimals', () => {
   assert.equal(formatNumber(-0.00001), '0');
   assert.equal(formatNumber(72), '72');
 });
+
+test('formatNumber rounds halves away from zero, as every platform must', () => {
+  assert.equal(formatNumber(72.03125), '72.0313');
+  assert.equal(formatNumber(-72.03125), '-72.0313');
+});

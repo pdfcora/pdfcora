@@ -150,7 +150,7 @@ export async function exportXfdf(document: PdfDocument): Promise<string> {
   const pageCount = await document.pageCount();
   const byName = new Map<string, PdfFormField[]>();
   const annots: string[] = [];
-  const colors = await annotationColors(document);
+  let colors: Map<string, PdfColor> | undefined;
 
   for (let pageIndex = 0; pageIndex < pageCount; pageIndex++) {
     const page = await document.page(pageIndex);
@@ -163,6 +163,8 @@ export async function exportXfdf(document: PdfDocument): Promise<string> {
     for (const annotation of await page.annotations()) {
       const element = ELEMENT[annotation.kind];
       if (!element) continue;
+      // The save behind the colour lookup is only paid when there is something to export.
+      colors ??= await annotationColors(document);
       writeAnnotation(annotation, element, await readAnnotationEntries(document, pageIndex, annotation.index),
         colors.get(`${pageIndex}:${annotation.index}`) ?? annotation.color, annots);
     }
