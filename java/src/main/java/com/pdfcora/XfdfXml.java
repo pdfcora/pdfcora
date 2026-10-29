@@ -17,6 +17,8 @@ import org.xml.sax.InputSource;
 /** The XML side of XFDF: an element tree, the canonical number format and escaping. */
 final class XfdfXml {
   static final int MAX_BYTES = 10 * 1024 * 1024;
+  /** Real XFDF nests a handful of levels; a limit keeps hostile input from exhausting the stack. */
+  static final int MAX_DEPTH = 64;
 
   private XfdfXml() {}
 
@@ -47,7 +49,7 @@ final class XfdfXml {
       factory.setNamespaceAware(false);
       var builder = factory.newDocumentBuilder();
       builder.setErrorHandler(null);
-      return convert(builder.parse(new InputSource(new StringReader(text))).getDocumentElement());
+      return convert(builder.parse(new InputSource(new StringReader(text))).getDocumentElement(), 1);
     } catch (PdfError e) {
       throw e;
     } catch (Exception e) {
@@ -55,7 +57,8 @@ final class XfdfXml {
     }
   }
 
-  private static Element convert(org.w3c.dom.Element node) {
+  private static Element convert(org.w3c.dom.Element node, int depth) {
+    if (depth > MAX_DEPTH) throw invalid("nested deeper than " + MAX_DEPTH + " levels");
     Map<String, String> attributes = new LinkedHashMap<>();
     NamedNodeMap map = node.getAttributes();
     for (int i = 0; i < map.getLength(); i++) attributes.put(map.item(i).getNodeName(), map.item(i).getNodeValue());
@@ -63,7 +66,7 @@ final class XfdfXml {
     StringBuilder text = new StringBuilder();
     for (Node child = node.getFirstChild(); child != null; child = child.getNextSibling()) {
       switch (child.getNodeType()) {
-        case Node.ELEMENT_NODE -> children.add(convert((org.w3c.dom.Element) child));
+        case Node.ELEMENT_NODE -> children.add(convert((org.w3c.dom.Element) child, depth + 1));
         case Node.TEXT_NODE, Node.CDATA_SECTION_NODE -> text.append(child.getNodeValue());
         case Node.ENTITY_REFERENCE_NODE -> throw invalid("unknown entity &" + child.getNodeName() + ";");
         default -> { }
@@ -88,6 +91,11 @@ final class XfdfXml {
         case '>' -> out.append("&gt;");
         case '"' -> out.append("&quot;");
         case '\'' -> out.append("&apos;");
+        // Written as character references: an XML reader would turn a CR into LF, and a
+        // newline or tab in an attribute into a space.
+        case '\r' -> out.append("&#13;");
+        case '\n' -> out.append("&#10;");
+        case '\t' -> out.append("&#9;");
         default -> out.append(c);
       }
     }
@@ -101,6 +109,7 @@ final class XfdfXml {
         case '&' -> out.append("&amp;");
         case '<' -> out.append("&lt;");
         case '>' -> out.append("&gt;");
+        case '\r' -> out.append("&#13;");
         default -> out.append(c);
       }
     }

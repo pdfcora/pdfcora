@@ -34,6 +34,8 @@ final class XfdfExportTests: XCTestCase {
         XCTAssertEqual(Xfdf.format(-0.0), "0")
         XCTAssertEqual(Xfdf.format(-0.00001), "0")
         XCTAssertEqual(Xfdf.format(72), "72")
+        XCTAssertEqual(Xfdf.format(72.03125), "72.0313")
+        XCTAssertEqual(Xfdf.format(-72.03125), "-72.0313")
     }
 
     func testParserRejectsDoctype() {

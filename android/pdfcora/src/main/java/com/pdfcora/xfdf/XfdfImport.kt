@@ -62,42 +62,50 @@ private fun colorOf(attributes: Map<String, String>): PdfColor? {
     return PdfColor((v shr 16) and 255, (v shr 8) and 255, v and 255, (opacity.coerceIn(0.0, 1.0) * 255).roundToInt())
 }
 
+/**
+ * Sets one XFDF field on every widget with its name. Everything is checked before the first
+ * write, so a value no widget can take changes nothing; null when set.
+ */
 private suspend fun setField(widgets: List<Pair<PdfPage, PdfFormField>>, values: List<String>): PdfXfdfSkipReason? {
     if (widgets.any { it.second.base.isReadOnly }) return PdfXfdfSkipReason.READ_ONLY_FIELD
+    val first = widgets.first().second
+    if (widgets.any { it.second::class != first::class }) return PdfXfdfSkipReason.INVALID_VALUE
     val value = values.firstOrNull() ?: ""
-    try {
-        when (val first = widgets.first().second) {
-            is PdfFormField.Text -> widgets.forEach { (page, f) -> page.setText(value, f.base.annotationIndex) }
-            is PdfFormField.CheckBox -> for ((page, f) in widgets) {
-                if (f !is PdfFormField.CheckBox) return PdfXfdfSkipReason.INVALID_VALUE
-                when {
-                    value == "Off" -> page.setChecked(false, f.base.annotationIndex)
-                    value == (f.exportValue ?: "Yes") || (f.exportValue == null && value == "On") ->
-                        page.setChecked(true, f.base.annotationIndex)
-                    else -> return PdfXfdfSkipReason.INVALID_VALUE
-                }
-            }
-            is PdfFormField.RadioButton -> {
-                if (value == "Off") {
-                    widgets.forEach { (page, f) -> page.setChecked(false, f.base.annotationIndex) }
-                } else {
-                    val (page, f) = widgets.firstOrNull { (it.second as? PdfFormField.RadioButton)?.exportValue == value }
-                        ?: return PdfXfdfSkipReason.INVALID_VALUE
-                    page.setChecked(true, f.base.annotationIndex)
-                }
-            }
-            is PdfFormField.ComboBox -> {
-                if (values.any { it !in first.options }) return PdfXfdfSkipReason.INVALID_VALUE
-                widgets.forEach { (page, f) -> page.setOption(first.options.indexOf(value), true, f.base.annotationIndex) }
-            }
-            is PdfFormField.ListBox -> {
-                if (values.any { it !in first.options }) return PdfXfdfSkipReason.INVALID_VALUE
-                for ((page, f) in widgets) {
-                    first.options.forEachIndexed { i, option -> page.setOption(i, option in values, f.base.annotationIndex) }
-                }
-            }
-            else -> return PdfXfdfSkipReason.INVALID_VALUE
+    fun exportOf(f: PdfFormField) = when (f) {
+        is PdfFormField.CheckBox -> f.exportValue
+        is PdfFormField.RadioButton -> f.exportValue
+        else -> null
+    }
+
+    val writes: List<suspend () -> Unit> = when (first) {
+        is PdfFormField.Text -> widgets.map { (page, f) -> suspend { page.setText(value, f.base.annotationIndex) } }
+        is PdfFormField.CheckBox -> {
+            // Check boxes sharing a name each carry their own export value; the value turns on
+            // the ones it names and off the rest.
+            fun on(f: PdfFormField) = value == (exportOf(f) ?: "Yes") || (exportOf(f) == null && value == "On")
+            if (value != "Off" && widgets.none { on(it.second) }) return PdfXfdfSkipReason.INVALID_VALUE
+            widgets.map { (page, f) -> suspend { page.setChecked(value != "Off" && on(f), f.base.annotationIndex) } }
         }
+        is PdfFormField.RadioButton -> if (value == "Off") {
+            widgets.map { (page, f) -> suspend { page.setChecked(false, f.base.annotationIndex) } }
+        } else {
+            val (page, f) = widgets.firstOrNull { exportOf(it.second) == value } ?: return PdfXfdfSkipReason.INVALID_VALUE
+            listOf(suspend { page.setChecked(true, f.base.annotationIndex) })
+        }
+        is PdfFormField.ComboBox -> {
+            if (values.any { it !in first.options }) return PdfXfdfSkipReason.INVALID_VALUE
+            widgets.map { (page, f) -> suspend { page.setOption(first.options.indexOf(value), true, f.base.annotationIndex) } }
+        }
+        is PdfFormField.ListBox -> {
+            if (values.any { it !in first.options }) return PdfXfdfSkipReason.INVALID_VALUE
+            widgets.flatMap { (page, f) ->
+                first.options.mapIndexed { i, option -> suspend { page.setOption(i, option in values, f.base.annotationIndex) } }
+            }
+        }
+        else -> return PdfXfdfSkipReason.INVALID_VALUE
+    }
+    try {
+        for (write in writes) write()
     } catch (e: Exception) {
         return PdfXfdfSkipReason.WRITE_FAILED
     }

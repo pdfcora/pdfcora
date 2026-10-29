@@ -518,14 +518,19 @@ JNIEXPORT jstring JNICALL Java_com_pdfcora_Native_formField(
     const unsigned long size = fn(form, annot, nullptr, 0);
     std::vector<unsigned short> units(size / 2 + 1, 0);
     fn(form, annot, reinterpret_cast<FPDF_WCHAR*>(units.data()), size);
-    return utf16ToUtf8(units);
+    while (!units.empty() && units.back() == 0) units.pop_back();
+    return units;
   };
-  const std::string both = read(FPDFAnnot_GetFormFieldName) + "\n" + read(FPDFAnnot_GetFormFieldValue);
+  // Built as UTF-16: NewStringUTF would mangle a character outside the BMP.
+  std::vector<unsigned short> both = read(FPDFAnnot_GetFormFieldName);
+  both.push_back(u'\n');
+  const std::vector<unsigned short> value = read(FPDFAnnot_GetFormFieldValue);
+  both.insert(both.end(), value.begin(), value.end());
 
   FPDFPage_CloseAnnot(annot);
   FORM_OnBeforeClosePage(page, form);
   FPDF_ClosePage(page);
-  return env->NewStringUTF(both.c_str());
+  return env->NewString(reinterpret_cast<const jchar*>(both.data()), static_cast<jsize>(both.size()));
 }
 
 JNIEXPORT jint JNICALL Java_com_pdfcora_Native_setFieldText(
@@ -991,22 +996,34 @@ JNIEXPORT jint JNICALL Java_com_pdfcora_Native_objectInfo(
 
 namespace {
 
-jobjectArray stringArray(JNIEnv* env, const std::vector<std::string>& values) {
+using Utf16 = std::vector<unsigned short>;
+
+/**
+ * A Java string straight from UTF-16. NewStringUTF wants modified UTF-8, which encodes a
+ * character outside the BMP (an emoji) differently from standard UTF-8 and mangles it.
+ */
+jstring javaString(JNIEnv* env, const Utf16& units) {
+  size_t length = 0;
+  while (length < units.size() && units[length] != 0) length++;
+  return env->NewString(reinterpret_cast<const jchar*>(units.data()), static_cast<jsize>(length));
+}
+
+jobjectArray stringArray(JNIEnv* env, const std::vector<Utf16>& values) {
   jobjectArray out = env->NewObjectArray(static_cast<jsize>(values.size()), env->FindClass("java/lang/String"), nullptr);
   for (size_t i = 0; i < values.size(); i++) {
-    jstring s = env->NewStringUTF(values[i].c_str());
+    jstring s = javaString(env, values[i]);
     env->SetObjectArrayElement(out, static_cast<jsize>(i), s);
     env->DeleteLocalRef(s);
   }
   return out;
 }
 
-std::string annotString(FPDF_ANNOTATION annot, const char* key) {
+Utf16 annotString(FPDF_ANNOTATION annot, const char* key) {
   const unsigned long size = FPDFAnnot_GetStringValue(annot, key, nullptr, 0);
-  if (size <= 2) return "";
-  std::vector<unsigned short> units(size / 2 + 1, 0);
+  if (size <= 2) return {};
+  Utf16 units(size / 2 + 1, 0);
   FPDFAnnot_GetStringValue(annot, key, reinterpret_cast<FPDF_WCHAR*>(units.data()), size);
-  return utf16ToUtf8(units);
+  return units;
 }
 
 }  // namespace
@@ -1042,7 +1059,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_pdfcora_Native_xfdfAnnotation(
   values[12] = static_cast<jfloat>(FPDFAnnot_GetInkListCount(annot));
   env->SetFloatArrayRegion(numbers, 0, 13, values);
 
-  std::vector<std::string> strings;
+  std::vector<Utf16> strings;
   for (const char* key : {"Contents", "NM", "T", "M", "CreationDate", "DA", "Name"}) strings.push_back(annotString(annot, key));
   FPDFPage_CloseAnnot(annot);
   FPDF_ClosePage(page);
@@ -1107,17 +1124,18 @@ JNIEXPORT jobjectArray JNICALL Java_com_pdfcora_Native_formFieldChoices(
   FPDF_ANNOTATION annot = FPDFPage_GetAnnot(page, at);
   jobjectArray result = nullptr;
   if (annot && FPDFAnnot_GetSubtype(annot) == FPDF_ANNOT_WIDGET) {
-    std::vector<std::string> values;
+    std::vector<Utf16> values;
     const unsigned long size = FPDFAnnot_GetFormFieldExportValue(form, annot, nullptr, 0);
-    std::vector<unsigned short> units(size / 2 + 1, 0);
+    Utf16 units(size / 2 + 1, 0);
     if (size > 0) FPDFAnnot_GetFormFieldExportValue(form, annot, reinterpret_cast<FPDF_WCHAR*>(units.data()), size);
-    values.push_back(size > 2 ? utf16ToUtf8(units) : "");
+    values.push_back(size > 2 ? units : Utf16{});
     const int count = FPDFAnnot_GetOptionCount(form, annot);
     for (int i = 0; i < count; i++) {
       const unsigned long n = FPDFAnnot_GetOptionLabel(form, annot, i, nullptr, 0);
-      std::vector<unsigned short> label(n / 2 + 1, 0);
+      Utf16 label(n / 2 + 1, 0);
       if (n > 0) FPDFAnnot_GetOptionLabel(form, annot, i, reinterpret_cast<FPDF_WCHAR*>(label.data()), n);
-      values.push_back(std::string(FPDFAnnot_IsOptionSelected(form, annot, i) ? "1" : "0") + utf16ToUtf8(label));
+      label.insert(label.begin(), FPDFAnnot_IsOptionSelected(form, annot, i) ? u'1' : u'0');
+      values.push_back(label);
     }
     result = stringArray(env, values);
   }

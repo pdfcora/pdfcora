@@ -88,51 +88,66 @@ extension PdfDocument {
         }
     }
 
-    /// Sets one XFDF field on every widget with its name; nil when set.
+    /// Sets one XFDF field on every widget with its name. Everything is checked before the first
+    /// write, so a value no widget can take changes nothing; nil when set.
     private func setField(_ widgets: [PdfFormField], values: [String]) -> PdfXfdfSkipReason? {
         if widgets.contains(where: { $0.base.isReadOnly }) { return .readOnlyField }
-        let value = values.first ?? ""
-        do {
-            switch widgets[0] {
-            case .text:
-                for w in widgets { try setFormText(pageIndex: w.base.pageIndex, annotationIndex: w.base.annotationIndex, value: value) }
-            case .checkBox:
-                for w in widgets {
-                    guard case .checkBox(let t) = w else { return .invalidValue }
-                    let on = t.exportValue ?? "Yes"
-                    if value == "Off" {
-                        try setFormChecked(pageIndex: w.base.pageIndex, annotationIndex: w.base.annotationIndex, checked: false)
-                    } else if value == on || (t.exportValue == nil && value == "On") {
-                        try setFormChecked(pageIndex: w.base.pageIndex, annotationIndex: w.base.annotationIndex, checked: true)
-                    } else {
-                        return .invalidValue
-                    }
-                }
-            case .radioButton:
-                if value == "Off" {
-                    for w in widgets { try setFormChecked(pageIndex: w.base.pageIndex, annotationIndex: w.base.annotationIndex, checked: false) }
-                } else {
-                    let match = widgets.first { if case .radioButton(let t) = $0 { return t.exportValue == value } else { return false } }
-                    guard let match else { return .invalidValue }
-                    try setFormChecked(pageIndex: match.base.pageIndex, annotationIndex: match.base.annotationIndex, checked: true)
-                }
-            case .comboBox(let choice), .listBox(let choice):
-                guard values.allSatisfy(choice.options.contains) else { return .invalidValue }
-                let isCombo: Bool = { if case .comboBox = widgets[0] { return true } else { return false } }()
-                for w in widgets {
-                    if isCombo, let index = choice.options.firstIndex(of: value) {
-                        try setFormOption(pageIndex: w.base.pageIndex, annotationIndex: w.base.annotationIndex,
-                                          optionIndex: index, selected: true)
-                    } else if !isCombo {
-                        for (index, option) in choice.options.enumerated() {
-                            try setFormOption(pageIndex: w.base.pageIndex, annotationIndex: w.base.annotationIndex,
-                                              optionIndex: index, selected: values.contains(option))
-                        }
-                    }
-                }
-            case .pushButton, .signature, .unknown:
-                return .invalidValue
+        func kind(_ f: PdfFormField) -> Int {
+            switch f {
+            case .text: return 0
+            case .checkBox: return 1
+            case .radioButton: return 2
+            case .comboBox: return 3
+            case .listBox: return 4
+            case .pushButton, .signature, .unknown: return 5
             }
+        }
+        guard widgets.allSatisfy({ kind($0) == kind(widgets[0]) }) else { return .invalidValue }
+        func exportOf(_ f: PdfFormField) -> String? {
+            switch f {
+            case .checkBox(let t), .radioButton(let t): return t.exportValue
+            default: return nil
+            }
+        }
+        let value = values.first ?? ""
+        var writes: [() throws -> Void] = []
+        switch widgets[0] {
+        case .text:
+            writes = widgets.map { w in { try self.setFormText(pageIndex: w.base.pageIndex, annotationIndex: w.base.annotationIndex, value: value) } }
+        case .checkBox:
+            // Check boxes sharing a name each carry their own export value; the value turns on the
+            // ones it names and off the rest.
+            func on(_ f: PdfFormField) -> Bool { value == (exportOf(f) ?? "Yes") || (exportOf(f) == nil && value == "On") }
+            if value != "Off" && !widgets.contains(where: on) { return .invalidValue }
+            writes = widgets.map { w in {
+                try self.setFormChecked(pageIndex: w.base.pageIndex, annotationIndex: w.base.annotationIndex,
+                                        checked: value != "Off" && on(w))
+            } }
+        case .radioButton:
+            if value == "Off" {
+                writes = widgets.map { w in { try self.setFormChecked(pageIndex: w.base.pageIndex, annotationIndex: w.base.annotationIndex, checked: false) } }
+            } else {
+                guard let match = widgets.first(where: { exportOf($0) == value }) else { return .invalidValue }
+                writes = [{ try self.setFormChecked(pageIndex: match.base.pageIndex, annotationIndex: match.base.annotationIndex, checked: true) }]
+            }
+        case .comboBox(let choice), .listBox(let choice):
+            guard values.allSatisfy(choice.options.contains) else { return .invalidValue }
+            let isCombo: Bool = { if case .comboBox = widgets[0] { return true } else { return false } }()
+            for w in widgets {
+                if isCombo, let index = choice.options.firstIndex(of: value) {
+                    writes.append { try self.setFormOption(pageIndex: w.base.pageIndex, annotationIndex: w.base.annotationIndex, optionIndex: index, selected: true) }
+                } else if !isCombo {
+                    for (index, option) in choice.options.enumerated() {
+                        writes.append { try self.setFormOption(pageIndex: w.base.pageIndex, annotationIndex: w.base.annotationIndex,
+                                                               optionIndex: index, selected: values.contains(option)) }
+                    }
+                }
+            }
+        case .pushButton, .signature, .unknown:
+            return .invalidValue
+        }
+        do {
+            for write in writes { try write() }
         } catch {
             return .writeFailed
         }

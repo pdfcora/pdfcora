@@ -11,6 +11,8 @@ class XfdfXmlTest {
         assertEquals("0", XfdfXml.format(-0.00001))
         assertEquals("72", XfdfXml.format(72.0))
         assertEquals("100", XfdfXml.format(100.0))
+        assertEquals("72.0313", XfdfXml.format(72.03125))
+        assertEquals("-72.0313", XfdfXml.format(-72.03125))
     }
 
     @Test fun escapesAttributesAndText() {

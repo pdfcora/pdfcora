@@ -48,6 +48,8 @@ class XfdfExportTest {
     assertEquals("0", XfdfXml.format(-0.0));
     assertEquals("0", XfdfXml.format(-0.00001));
     assertEquals("72", XfdfXml.format(72));
+    assertEquals("72.0313", XfdfXml.format(72.03125));
+    assertEquals("-72.0313", XfdfXml.format(-72.03125));
   }
 
   @Test

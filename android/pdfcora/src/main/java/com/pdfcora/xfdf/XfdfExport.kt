@@ -190,7 +190,7 @@ private fun colorOf(value: PdfValue?): PdfColor? {
 }
 
 internal suspend fun exportXfdf(document: PdfDocument): String {
-    val colors = annotationColors(document)
+    var colors: Map<String, PdfColor>? = null
     val byName = linkedMapOf<String, MutableList<PdfFormField>>()
     val annots = mutableListOf<String>()
     for (pageIndex in 0 until document.pageCount()) {
@@ -201,8 +201,10 @@ internal suspend fun exportXfdf(document: PdfDocument): String {
         }
         for (annotation in page.annotations()) {
             val element = elementOf(annotation) ?: continue
+            // The save behind the colour lookup is only paid when there is something to export.
+            val known = colors ?: annotationColors(document).also { colors = it }
             writeAnnotation(annotation, element, readEntries(document, pageIndex, annotation.base.index),
-                colors["$pageIndex:${annotation.base.index}"] ?: annotation.base.color, annots)
+                known["$pageIndex:${annotation.base.index}"] ?: annotation.base.color, annots)
         }
     }
     val out = mutableListOf("<?xml version=\"1.0\" encoding=\"UTF-8\"?>",

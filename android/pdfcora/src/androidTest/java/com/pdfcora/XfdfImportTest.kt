@@ -78,4 +78,20 @@ class XfdfImportTest {
         assertTrue(xfdf.contains("date=\"D:20261030100000Z\""))
         assertTrue(xfdf.contains("name=\"imp-ink\""))
     }
+
+    @Test fun edgeCasesRoundTrip() = runBlocking {
+        val document = blank()
+        assertEquals(2, document.importXfdf(text("xfdf/edge.xfdf")).annotationsAdded)
+        val exported = document.exportXfdf()
+        assertEquals(text("xfdf/expected-edge-export.xfdf"), exported)
+        val again = blank()
+        again.importXfdf(exported)
+        assertEquals(exported, again.exportXfdf())
+    }
+
+    @Test fun rejectsDeepNesting() = runBlocking {
+        val deep = "<xfdf><fields>" + "<field name=\"a\">".repeat(300) + "</field>".repeat(300) + "</fields></xfdf>"
+        val document = blank()
+        assertInvalid { document.importXfdf(deep) }
+    }
 }

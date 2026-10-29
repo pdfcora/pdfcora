@@ -14,6 +14,8 @@ internal class XfdfElement(val name: String, val attributes: Map<String, String>
 
 internal object XfdfXml {
     const val MAX_BYTES = 10 * 1024 * 1024
+    /** Real XFDF nests a handful of levels; a limit keeps hostile input from exhausting the stack. */
+    const val MAX_DEPTH = 64
 
     private fun invalid(why: String) = PdfError.InvalidOperation("not valid XFDF: $why")
 
@@ -39,6 +41,7 @@ internal object XfdfXml {
                     XmlPullParser.START_TAG -> {
                         val attributes = (0 until parser.attributeCount)
                             .associate { parser.getAttributeName(it) to parser.getAttributeValue(it) }
+                        if (stack.size >= MAX_DEPTH) throw invalid("nested deeper than $MAX_DEPTH levels")
                         val element = XfdfElement(parser.name, attributes)
                         val parent = stack.lastOrNull()
                         if (parent != null) parent.children += element
@@ -70,11 +73,16 @@ internal object XfdfXml {
         return text
     }
 
+    // Line breaks and tabs are written as character references, because an XML reader would
+    // otherwise turn a CR into LF, and a newline or tab in an attribute into a space.
     fun escapeAttribute(s: String): String = buildString {
-        for (c in s) append(when (c) { '&' -> "&amp;"; '<' -> "&lt;"; '>' -> "&gt;"; '"' -> "&quot;"; '\'' -> "&apos;"; else -> c })
+        for (c in s) append(when (c) {
+            '&' -> "&amp;"; '<' -> "&lt;"; '>' -> "&gt;"; '"' -> "&quot;"; '\'' -> "&apos;"
+            '\r' -> "&#13;"; '\n' -> "&#10;"; '\t' -> "&#9;"; else -> c
+        })
     }
 
     fun escapeText(s: String): String = buildString {
-        for (c in s) append(when (c) { '&' -> "&amp;"; '<' -> "&lt;"; '>' -> "&gt;"; else -> c })
+        for (c in s) append(when (c) { '&' -> "&amp;"; '<' -> "&lt;"; '>' -> "&gt;"; '\r' -> "&#13;"; else -> c })
     }
 }

@@ -111,4 +111,23 @@ class XfdfImportTest {
       assertTrue(xfdf.contains("name=\"imp-ink\""));
     }
   }
+
+  @Test
+  void edgeCasesRoundTrip() throws IOException {
+    try (PdfDocument document = blank(); PdfDocument again = blank()) {
+      assertEquals(2, document.importXfdf(text("xfdf/edge.xfdf")).annotationsAdded());
+      String exported = document.exportXfdf();
+      assertEquals(text("xfdf/expected-edge-export.xfdf"), exported);
+      again.importXfdf(exported);
+      assertEquals(exported, again.exportXfdf());
+    }
+  }
+
+  @Test
+  void rejectsDeepNesting() throws IOException {
+    String deep = "<xfdf><fields>" + "<field name=\"a\">".repeat(300) + "</field>".repeat(300) + "</fields></xfdf>";
+    try (PdfDocument document = blank()) {
+      assertInvalid(() -> document.importXfdf(deep));
+    }
+  }
 }

@@ -22,7 +22,7 @@ extension PdfDocument {
     public func exportXFDF() throws -> String {
         _ = try requireHandle()
         let pages = pageCount
-        let colors = try annotationColors()
+        var colors: [String: PdfColor]?
         var widgetsByName: [(String, [PdfFormField])] = []
         var annots: [String] = []
 
@@ -39,8 +39,10 @@ extension PdfDocument {
                 guard let element = Self.xfdfElement(annotation) else { continue }
                 let base = annotation.base
                 let entries = try annotationEntries(pageIndex: pageIndex, index: base.index)
+                // The save behind the colour lookup is only paid when there is something to export.
+                if colors == nil { colors = try annotationColors() }
                 write(annotation, element: element, entries: entries,
-                      color: colors["\(pageIndex):\(base.index)"] ?? base.color, into: &annots)
+                      color: colors?["\(pageIndex):\(base.index)"] ?? base.color, into: &annots)
             }
         }
 

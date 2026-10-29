@@ -142,8 +142,19 @@ final class Xfdf {
         int depth = 0;
         int i = at;
         for (; i < body.length() - 1; i++) {
-          if (body.startsWith("<<", i)) { depth++; i++; }
+          char c = body.charAt(i);
+          if (c == '(') {
+            // A literal string may hold ">>" or "<<"; skip it, honouring escapes and nesting.
+            int parens = 0;
+            for (; i < body.length(); i++) {
+              char d = body.charAt(i);
+              if (d == '\\') { i++; continue; }
+              if (d == '(') parens++;
+              else if (d == ')' && --parens == 0) break;
+            }
+          } else if (body.startsWith("<<", i)) { depth++; i++; }
           else if (body.startsWith(">>", i)) { depth--; i++; if (depth == 0) break; }
+          else if (c == '<') { int end = body.indexOf('>', i); if (end < 0) break; i = end; }
         }
         out.add(body.substring(at, i + 1));
         at = i + 1;
@@ -179,7 +190,7 @@ final class Xfdf {
   private static int channel(double v) { return (int) Math.round(Math.min(1, Math.max(0, v)) * 255); }
 
   static String export(PdfDocument document) {
-    Map<String, int[]> colors = annotationColors(document);
+    Map<String, int[]> colors = null;
     Map<String, List<Widget>> byName = new LinkedHashMap<>();
     for (Widget w : widgets(document)) {
       if (w.field().name().isEmpty()) continue;
@@ -206,6 +217,8 @@ final class Xfdf {
       for (PdfAnnotation a : document.page(p).annotations()) {
         String element = ELEMENT.get(a.kind());
         if (element == null) continue;
+        // The save behind the colour lookup is only paid when there is something to export.
+        if (colors == null) colors = annotationColors(document);
         writeAnnotation(document, page, a, element, colors.get(page + ":" + a.index()), annots);
       }
     }
@@ -315,47 +328,57 @@ final class Xfdf {
     return new int[] { (v >> 16) & 255, (v >> 8) & 255, v & 255, channel(opacity) };
   }
 
+  /**
+   * Sets one XFDF field on every widget with its name. Everything is checked before the
+   * first write, so a value no widget can take changes nothing; null when set.
+   */
   private static PdfXfdfSkip.Reason setField(PdfDocument document, List<Widget> widgets, List<String> values) {
     for (Widget w : widgets) if (w.field().readOnly()) return PdfXfdfSkip.Reason.READ_ONLY_FIELD;
-    String value = values.get(0);
     Widget first = widgets.get(0);
-    try {
-      switch (first.field().kind()) {
-        case TEXT_FIELD -> { for (Widget w : widgets) document.page(w.page()).setFieldText(w.field().index(), value); }
-        case CHECK_BOX -> {
-          for (Widget w : widgets) {
-            String on = w.exportValue() == null ? "Yes" : w.exportValue();
-            if (value.equals("Off")) document.page(w.page()).setFieldChecked(w.field().index(), false);
-            else if (value.equals(on) || (w.exportValue() == null && value.equals("On"))) {
-              document.page(w.page()).setFieldChecked(w.field().index(), true);
-            } else return PdfXfdfSkip.Reason.INVALID_VALUE;
-          }
+    for (Widget w : widgets) if (w.field().kind() != first.field().kind()) return PdfXfdfSkip.Reason.INVALID_VALUE;
+    String value = values.get(0);
+    List<Runnable> writes = new ArrayList<>();
+    switch (first.field().kind()) {
+      case TEXT_FIELD -> { for (Widget w : widgets) writes.add(() -> document.page(w.page()).setFieldText(w.field().index(), value)); }
+      case CHECK_BOX -> {
+        // Check boxes sharing a name each carry their own export value; the value turns on the
+        // ones it names and off the rest.
+        java.util.function.Predicate<Widget> on = w -> value.equals(w.exportValue() == null ? "Yes" : w.exportValue())
+            || (w.exportValue() == null && value.equals("On"));
+        if (!value.equals("Off") && widgets.stream().noneMatch(on)) return PdfXfdfSkip.Reason.INVALID_VALUE;
+        for (Widget w : widgets) {
+          boolean checked = !value.equals("Off") && on.test(w);
+          writes.add(() -> document.page(w.page()).setFieldChecked(w.field().index(), checked));
         }
-        case RADIO_BUTTON -> {
-          if (value.equals("Off")) {
-            for (Widget w : widgets) document.page(w.page()).setFieldChecked(w.field().index(), false);
-          } else {
-            Widget match = null;
-            for (Widget w : widgets) if (value.equals(w.exportValue())) match = w;
-            if (match == null) return PdfXfdfSkip.Reason.INVALID_VALUE;
-            document.page(match.page()).setFieldChecked(match.field().index(), true);
-          }
-        }
-        case COMBO_BOX, LIST_BOX -> {
-          if (!first.options().containsAll(values)) return PdfXfdfSkip.Reason.INVALID_VALUE;
-          for (Widget w : widgets) {
-            for (int i = 0; i < first.options().size(); i++) {
-              boolean on = first.field().kind() == PdfFormField.Kind.COMBO_BOX
-                  ? first.options().get(i).equals(value) : values.contains(first.options().get(i));
-              if (!on && first.field().kind() == PdfFormField.Kind.COMBO_BOX) continue;
-              final int option = i;
-              int code = document.call(h -> Native.setFieldOption(h, w.page(), w.field().index(), option, on));
-              if (code != 0) return PdfXfdfSkip.Reason.WRITE_FAILED;
-            }
-          }
-        }
-        default -> { return PdfXfdfSkip.Reason.INVALID_VALUE; }
       }
+      case RADIO_BUTTON -> {
+        if (value.equals("Off")) {
+          for (Widget w : widgets) writes.add(() -> document.page(w.page()).setFieldChecked(w.field().index(), false));
+        } else {
+          Widget match = widgets.stream().filter(w -> value.equals(w.exportValue())).findFirst().orElse(null);
+          if (match == null) return PdfXfdfSkip.Reason.INVALID_VALUE;
+          writes.add(() -> document.page(match.page()).setFieldChecked(match.field().index(), true));
+        }
+      }
+      case COMBO_BOX, LIST_BOX -> {
+        if (!first.options().containsAll(values)) return PdfXfdfSkip.Reason.INVALID_VALUE;
+        boolean combo = first.field().kind() == PdfFormField.Kind.COMBO_BOX;
+        for (Widget w : widgets) {
+          for (int i = 0; i < first.options().size(); i++) {
+            boolean selected = combo ? first.options().get(i).equals(value) : values.contains(first.options().get(i));
+            if (combo && !selected) continue;
+            final int option = i;
+            writes.add(() -> {
+              int code = document.call(h -> Native.setFieldOption(h, w.page(), w.field().index(), option, selected));
+              if (code != 0) throw PdfError.fromNative(code);
+            });
+          }
+        }
+      }
+      default -> { return PdfXfdfSkip.Reason.INVALID_VALUE; }
+    }
+    try {
+      for (Runnable write : writes) write.run();
     } catch (PdfError e) {
       return PdfXfdfSkip.Reason.WRITE_FAILED;
     }

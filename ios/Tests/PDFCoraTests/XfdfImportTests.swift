@@ -83,4 +83,29 @@ final class XfdfImportTests: XCTestCase {
         XCTAssertTrue(xfdf.contains("date=\"D:20261030100000Z\""))
         XCTAssertTrue(xfdf.contains("name=\"imp-ink\""))
     }
+
+    func testEdgeCasesRoundTrip() async throws {
+        let document = try await blank()
+        let report = try await document.importXFDF(text("xfdf/edge.xfdf"))
+        XCTAssertEqual(report.annotationsAdded, 2)
+        let exported = try await document.exportXFDF()
+        XCTAssertEqual(exported, try text("xfdf/expected-edge-export.xfdf"))
+        let again = try await blank()
+        _ = try await again.importXFDF(exported)
+        let reExported = try await again.exportXFDF()
+        XCTAssertEqual(reExported, exported)
+    }
+
+    func testRejectsDeepNesting() async throws {
+        let deep = "<xfdf><fields>" + String(repeating: "<field name=\"a\">", count: 300)
+            + String(repeating: "</field>", count: 300) + "</fields></xfdf>"
+        do { _ = try await blank().importXFDF(deep); XCTFail("accepted deep nesting") }
+        catch { XCTAssertTrue(isInvalid(error), "\(error)") }
+    }
+
+    func testRejectsADoctypeHiddenByAnotherEncoding() async throws {
+        let utf7 = "<?xml version=\"1.0\" encoding=\"UTF-7\"?>+ADw-+ACE-DOCTYPE x +AFs-+ADw-+ACE-ENTITY s SYSTEM +ACI-file:///etc/hosts+ACI-+AD4-+AF0-+AD4-<xfdf/>"
+        do { _ = try await blank().importXFDF(utf7); XCTFail("accepted a hidden DOCTYPE") }
+        catch { XCTAssertTrue(isInvalid(error), "\(error)") }
+    }
 }
