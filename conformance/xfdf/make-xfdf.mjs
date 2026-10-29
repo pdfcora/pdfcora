@@ -171,7 +171,10 @@ function expectedExport() {
   out.push('  <annots>');
   ANNOTS.filter((a) => a.xfdf).forEach((a) => {
     const i = ANNOTS.indexOf(a);
-    const attrs = [['page', a.page], ['rect', a.rect.map(num).join(',')], ['color', hex(a.color)]];
+    // PDFium generates an ink appearance when the page is loaded and grows /Rect by half the
+    // line width as it does, so every PDFium-based SDK reads the larger rectangle.
+    const rect = a.strokes ? [a.rect[0] - a.width / 2, a.rect[1] - a.width / 2, a.rect[2] + a.width / 2, a.rect[3] + a.width / 2] : a.rect;
+    const attrs = [['page', a.page], ['rect', rect.map(num).join(',')], ['color', hex(a.color)]];
     if (a.opacity !== undefined) attrs.push(['opacity', num(a.opacity)]);
     if ((a.flags ?? 4) !== 0) attrs.push(['flags', 'print']);
     attrs.push(['name', `pdfcora-${i + 1}`], ['title', AUTHOR], ['date', MODIFIED], ['creationdate', CREATED]);

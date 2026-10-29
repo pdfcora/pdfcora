@@ -32,7 +32,7 @@
     <squiggly page="0" rect="72,640,200,654" color="#00FF00" flags="print" name="pdfcora-4" title="Zoë &amp; &quot;Co&quot; &lt;ok&gt;" date="D:20261029120000Z" creationdate="D:20261028090000Z" coords="72,654,200,654,72,640,200,640">
       <contents>Wavy</contents>
     </squiggly>
-    <ink page="0" rect="300,600,400,700" color="#000000" flags="print" name="pdfcora-5" title="Zoë &amp; &quot;Co&quot; &lt;ok&gt;" date="D:20261029120000Z" creationdate="D:20261028090000Z" width="2">
+    <ink page="0" rect="299,599,401,701" color="#000000" flags="print" name="pdfcora-5" title="Zoë &amp; &quot;Co&quot; &lt;ok&gt;" date="D:20261029120000Z" creationdate="D:20261028090000Z" width="2">
       <inklist>
         <gesture>300,600;350,650;400,700</gesture>
         <gesture>300,700;400,600</gesture>

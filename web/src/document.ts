@@ -19,6 +19,7 @@ import { entryOf } from './writer/values.js';
 import { FigureNotFoundError, findFigures, writeFigures } from './writer/structure.js';
 import { PdfPage } from './page.js';
 import { saveHandle } from './save.js';
+import { exportXfdf } from './xfdf/export.js';
 
 /**
  * An open PDF document.
@@ -361,6 +362,14 @@ export class PdfDocument {
     }
 
     return toReport(counts);
+  }
+
+  /**
+   * The form values and annotations as XFDF (ISO 19444-1), for other PDF tools or a backend.
+   * Widgets and links are not included; neither are appearances or rich text.
+   */
+  exportXfdf(): Promise<string> {
+    return exportXfdf(this);
   }
 
   /**
