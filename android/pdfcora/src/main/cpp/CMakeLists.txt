@@ -24,6 +24,9 @@ target_include_directories(pdfcora PRIVATE "${PDFIUM_VENDOR_DIR}/include")
 target_link_options(pdfcora PRIVATE
     "-Wl,--exclude-libs,ALL"
     "-Wl,--gc-sections"
+    # Android 15+ devices may use 16 KB memory pages; a library aligned for 4 KB pages
+    # fails to load there, and Google Play requires 16 KB support.
+    "-Wl,-z,max-page-size=16384"
 )
 
 target_link_libraries(pdfcora pdfium android log jnigraphics)

@@ -131,7 +131,8 @@ engine in `vendor/` as a *local* binary target, so run `fetch-vendor.sh` first.
 
 **Android** — Maven. `gradle :pdfcora:publishToMavenLocal` publishes
 `com.pdfcora:pdfcora:0.1.0`; the AAR is 9.7 MB and carries all four ABIs, of which
-Play delivers one per device.
+Play delivers one per device. The native library is aligned for 16 KB memory pages, so it
+loads on Android 15+ devices that use them, as Google Play requires.
 
 **Node** — `npm install @pdfcora/node`. A thin layer over the web package rather than a
 second implementation: it re-exports the whole API and adds file and PNG helpers. Same WebAssembly engine, so
