@@ -9,7 +9,7 @@ import type {
   PdfAttachment, PdfMetadata, PdfOutlineItem, PdfPermissions, PdfSaveMode, PdfSize,
   PdfPageRotation,
   PdfSignature, PdfSignatureValidity, PdfVerifyOptions,
-  PdfRedactionReport, PdfRedactionTarget, PdfFigureEdit, PdfTagBlock, PdfTagOptions, PdfNewFormField,
+  PdfRedactionReport, PdfRedactionTarget, PdfFigureEdit, PdfTagBlock, PdfTagOptions, PdfNewFormField, PdfXfdfReport,
 } from './types.js';
 import { writeFormFields } from './writer/formFields.js';
 import { markArtifacts, markTags } from './structure.js';
@@ -20,6 +20,7 @@ import { FigureNotFoundError, findFigures, writeFigures } from './writer/structu
 import { PdfPage } from './page.js';
 import { saveHandle } from './save.js';
 import { exportXfdf } from './xfdf/export.js';
+import { importXfdf } from './xfdf/import.js';
 
 /**
  * An open PDF document.
@@ -370,6 +371,18 @@ export class PdfDocument {
    */
   exportXfdf(): Promise<string> {
     return exportXfdf(this);
+  }
+
+  /**
+   * Applies XFDF: sets the form values it names and adds the ink, note, highlight, underline
+   * and strikeout annotations it carries, keeping their author, name and dates. Everything
+   * else is listed in the report's `skipped`, with a reason. Malformed XML, a DOCTYPE, or
+   * input over 10 MiB is refused with `invalidOperation` before anything is written; a
+   * write PDFium refuses afterwards is reported as `writeFailed`, and earlier writes stay.
+   * Save with a full save to keep the added annotations.
+   */
+  importXfdf(xml: string): Promise<PdfXfdfReport> {
+    return importXfdf(this, xml);
   }
 
   /**

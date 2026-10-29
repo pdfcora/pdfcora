@@ -66,7 +66,7 @@ export function readAnnotationEntries(document: PdfDocument, pageIndex: number, 
 /** Writes the string entries XFDF carries onto annotation `index`. Absent values are left alone. */
 export function writeAnnotationStrings(
   document: PdfDocument, pageIndex: number, index: number,
-  values: Readonly<Record<'NM' | 'T' | 'M' | 'CreationDate', string | undefined>>,
+  values: Readonly<Record<'NM' | 'T' | 'M' | 'CreationDate' | 'Contents', string | undefined>>,
 ): Promise<boolean> {
   return document.withPage(pageIndex, (page, m) => {
     const annot = m.ccall('FPDFPage_GetAnnot', 'number', ['number', 'number'], [page, index]) as number;

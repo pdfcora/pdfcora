@@ -280,6 +280,27 @@ export type PdfFormField =
   | ({ readonly kind: 'pushButton' | 'signature' } & PdfFormFieldBase)
   | ({ readonly kind: 'unknown'; readonly typeCode: number } & PdfFormFieldBase);
 
+// MARK: - XFDF
+
+export type PdfXfdfSkipReason =
+  | 'unsupportedType' | 'unknownField' | 'readOnlyField' | 'invalidValue'
+  | 'pageOutOfRange' | 'missingAttribute' | 'writeFailed';
+
+/** An XFDF element import did not apply, and why. */
+export interface PdfXfdfSkip {
+  /** The XFDF element name, e.g. `field` or `square`. */
+  readonly element: string;
+  readonly page?: number;
+  readonly reason: PdfXfdfSkipReason;
+}
+
+/** What `importXfdf` applied. Skipped entries are in the order they appear in the XFDF. */
+export interface PdfXfdfReport {
+  readonly fieldsSet: number;
+  readonly annotationsAdded: number;
+  readonly skipped: readonly PdfXfdfSkip[];
+}
+
 // MARK: - Signatures
 
 /** A signature already present in a document. Reading only; nothing here is verified. */
