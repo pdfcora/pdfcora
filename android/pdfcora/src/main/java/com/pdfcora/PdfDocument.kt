@@ -164,6 +164,16 @@ class PdfDocument private constructor(
      */
     suspend fun exportXfdf(): String = com.pdfcora.xfdf.exportXfdf(this)
 
+    /**
+     * Applies XFDF: sets the form values it names and adds the ink, note, highlight, underline
+     * and strikeout annotations it carries, keeping their author, name and dates. Everything
+     * else is listed in the report's `skipped`, with a reason. Malformed XML, a DOCTYPE, or
+     * input over 10 MiB is refused with [PdfError.InvalidOperation] before anything is
+     * written; a write PDFium refuses afterwards is reported as `writeFailed`, and earlier
+     * writes stay. Save with [PdfSaveMode.FULL] to keep the added annotations.
+     */
+    suspend fun importXfdf(xml: String): com.pdfcora.xfdf.PdfXfdfReport = com.pdfcora.xfdf.importXfdf(this, xml)
+
     suspend fun writeTo(file: File, mode: PdfSaveMode = PdfSaveMode.FULL) {
         val bytes = toByteArray(mode)
         try {

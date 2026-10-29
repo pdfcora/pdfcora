@@ -29,6 +29,7 @@ internal object Native {
     @JvmStatic external fun annotationCount(handle: Long, pageIndex: Int): Int
     @JvmStatic external fun annotationInfo(handle: Long, pageIndex: Int, annotIndex: Int): FloatArray
     @JvmStatic external fun annotationString(handle: Long, pageIndex: Int, annotIndex: Int, key: String): String
+    @JvmStatic external fun releasePage(handle: Long, pageIndex: Int)
     @JvmStatic external fun annotationQuads(handle: Long, pageIndex: Int, annotIndex: Int): FloatArray
     @JvmStatic external fun annotationXfdfNumbers(handle: Long, pageIndex: Int, annotIndex: Int): FloatArray
     @JvmStatic external fun setAnnotationString(

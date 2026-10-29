@@ -408,6 +408,18 @@ Java_com_pdfcora_Native_annotationInfo(JNIEnv* env, jclass, jlong handle,
     return out;
 }
 
+// Closes one cached page, so the next read loads it again and PDFium regenerates appearances.
+JNIEXPORT void JNICALL
+Java_com_pdfcora_Native_releasePage(JNIEnv*, jclass, jlong handle, jint pageIndex) {
+    auto* d = asDoc(handle);
+    if (!d) return;
+    auto it = d->pages.find(pageIndex);
+    if (it == d->pages.end()) return;
+    if (d->form) FORM_OnBeforeClosePage(it->second, d->form);
+    FPDF_ClosePage(it->second);
+    d->pages.erase(it);
+}
+
 // A markup annotation's quads, 8 floats each in /QuadPoints order.
 JNIEXPORT jfloatArray JNICALL
 Java_com_pdfcora_Native_annotationQuads(JNIEnv* env, jclass, jlong handle, jint pageIndex, jint annotIndex) {
