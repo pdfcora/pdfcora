@@ -6,8 +6,11 @@ construction; typed errors instead of native crashes. Free and open source under
 [MIT license](LICENSE.md).
 
 **Website:** [pdfcora.pages.dev](https://pdfcora.pages.dev) · **Try it in the browser:**
-[live web demo](https://pdfcora.pages.dev/demo/) · [follow-me demo](https://pdfcora.pages.dev/demo/collab.html)
-(two viewers kept in step: scroll, zoom, pages and annotations)
+[live web demo](https://pdfcora.pages.dev/demo/)
+
+**Collaboration demo:** [follow-me demo](https://pdfcora.pages.dev/demo/collab.html) — a demo
+of collaborative work: two viewers side by side, kept in step. Scroll, zoom, turn a page or
+annotate in one, and the other follows, through the same JSON events an app sends between users.
 
 ```swift
 let doc  = try await PdfDocument(url: url)
