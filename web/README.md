@@ -81,8 +81,9 @@ const report = await other.importXfdf(xfdf);       // { fieldsSet, annotationsAd
 ```
 
 Import sets field values and adds ink, note, highlight, underline and strikeout annotations;
-anything else is listed in `report.skipped` with a reason. Malformed XML, a DOCTYPE or more than
-10 MiB is refused before anything is written. Save with a full save to keep added annotations.
+anything else is listed in `report.skipped` with a reason. Malformed XML, a DOCTYPE, nesting
+deeper than 64 levels or more than 10 MiB is refused before anything is written. Save with a
+full save to keep added annotations. The repository README lists what import ignores.
 
 ## License
 

@@ -560,12 +560,17 @@ Every SDK writes byte-identical XFDF for the same document, checked against
 
 - **Export:** text, check box, radio, combo and list values (radio groups and fields with several
   widgets become one field), and every annotation except widgets and links, with its colour,
-  opacity, flags, name, author, dates, text and geometry.
+  opacity, flags, name, author, dates, text and geometry. A text field with an empty value is
+  left out, so importing that XFDF elsewhere does not clear the field.
 - **Import:** field values, and ink, note, highlight, underline and strikeout annotations with
   their author, name and dates. Other annotation types, unknown or read-only fields and values a
-  field cannot take are listed in the report's `skipped`, each with a reason.
-- **Safety:** XFDF is untrusted input. A DOCTYPE or entity declaration, malformed XML or more than
-  10 MiB is refused before anything is written. PDFium has no transactions, so a write it refuses
+  field cannot take are listed in the report's `skipped`, each with a reason. A field is checked
+  on every widget before anything is written. Import ignores, without reporting them,
+  appearance streams, rich text (the plain `<contents>` is used), replies and review states, an
+  annotation's `flags`, and a note's `icon`.
+- **Safety:** XFDF is untrusted input. A DOCTYPE or entity declaration, malformed XML, nesting
+  deeper than 64 levels, an encoding other than UTF-8, or more than 10 MiB is refused before
+  anything is written. PDFium has no transactions, so a write it refuses
   afterwards is reported as `writeFailed` and earlier writes stay. Import adds annotations; it
   does not merge with ones already there.
 
